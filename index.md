@@ -1,4 +1,6 @@
+---
 title: The Candid Startup
+---
 
 # Projects
 
