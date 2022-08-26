@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: post
 title: Now
 tagline: What I'm doing now
 permalink: /now.html
