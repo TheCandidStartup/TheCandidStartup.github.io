@@ -1,4 +1,5 @@
 theme: jekyll-theme-cayman
-twitter.username: ThCandidStartup
+twitter:
+  username: ThCandidStartup
 plugins:
   - jekyll-feed
