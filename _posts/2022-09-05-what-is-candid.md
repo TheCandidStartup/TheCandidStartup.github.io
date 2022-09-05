@@ -13,4 +13,4 @@ OK, how about "Open Source Startup" instead? Well, that's [already a thing](http
 2. Very honest or frank in what one says or writes
 3. Unposed and informal
 
-A quick search shows that Candid Startups are **NOT** a thing. So, here we are. The Candid Startup is a home for my startup ideas, writing about those ideas, open source prototypes and implementations of those ideas. 
+A quick search shows that Candid Startups are **NOT** a thing. So, here we are. The Candid Startup is a home for my startup ideas, my writing about those ideas, and open source prototypes and implementations of those ideas. 
