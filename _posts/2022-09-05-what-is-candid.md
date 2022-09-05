@@ -1,5 +1,5 @@
 ---
-What is The Candid Startup anyway?
+title: What is The Candid Startup anyway?
 ---
 
 The Candid Startup started as a joke. I was always amused by the people that leave Autodesk for a ["*Stealth Startup*"](https://en.wikipedia.org/wiki/Stealth_startup). There's something a little arrogant in thinking that your idea is so ground breaking, so revolutionary, so original that you have to keep it secret. It doesn't say much for your abilities that you worry that anyone else that hears your idea will be able to implement it better than you can. 
