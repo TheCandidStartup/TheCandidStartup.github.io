@@ -1,6 +1,7 @@
 theme: jekyll-theme-cayman
 title: The Candid Startup
 url: https://www.thecandidstartup.org
+google_analytics: G-W5FLWM10L7
 twitter:
   username: ThCandidStartup
 plugins:
