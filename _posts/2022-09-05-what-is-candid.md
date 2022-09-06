@@ -8,7 +8,9 @@ I decided that if I left Autodesk I would create an Open Startup. I would share 
 
 It turns out that ["*Open Startups*"](https://openstartup.tm/) are [already a thing](https://hackernoon.com/what-does-it-mean-to-be-an-open-startup-f4446984189). However, the thing that they're focused on being open about is their MAUs and revenue rather than their ideas.
 
-OK, how about "Open Source Startup" instead? Well, that's [already a thing](https://www.jumpstartmag.com/what-are-open-source-startups-and-how-do-they-work) too. Closer, but a little too focused on business models for my taste. After all, I'm retired. I'm doing this for fun. Besides, if I'm going to do this I want it to be something new, and more importantly something that I can get the domain for. Time to hit the theasaurus. Frank? Direct? Tranparent? Honest? Candid? Candid. That kind of works. In fact I like it better than open. 
+OK, how about "Open Source Startup" instead? Well, that's [already a thing](https://www.jumpstartmag.com/what-are-open-source-startups-and-how-do-they-work) too. Closer, but a little too focused on business models for my taste. After all, I'm retired. I'm doing this for fun. Besides, if I'm going to do this I want it to be something new, and more importantly something that I can get the domain for. 
+
+Time to hit the theasaurus. Frank? Direct? Tranparent? Honest? Candid? Candid. That kind of works. In fact, I like it better than open. 
 1. Fair, just, impartial
 2. Very honest or frank in what one says or writes
 3. Unposed and informal
