@@ -13,6 +13,7 @@ This site uses
 - [Jekyll](https://github.com/jekyll/jekyll)
 - [Jekyll Feed](https://github.com/jekyll/jekyll-feed)
 - [Cayman Blog](https://github.com/lorepirri/cayman-blog)
+- [Utterances](https://github.com/utterance/utterances)
 - [Google Analytics](https://analytics.google.com)
 
 

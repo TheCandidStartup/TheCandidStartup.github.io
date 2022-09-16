@@ -22,4 +22,21 @@ layout: default
   {% if site.disqus.shortname %}
     {% include disqus_comments.html %}
   {% endif %}
+
+  {% if site.utterances.issue-term %}
+    <script src="https://utteranc.es/client.js"
+      {% if site.utterances.repo %}
+        repo="{{ site.utterances.repo }}"
+      {% else %}
+        repo="{{ site.github.repository_nwo }}"
+      {% endif %}
+      issue-term="{{ site.utterances.issue-term }}"
+      {% if site.utterances.label %}
+        label="{{ site.utterances.label }}"
+      {% endif %}
+      theme="{{ site.utterances.theme | default: 'preferred-color-scheme' }}"
+      crossorigin="{{ site.utterances.crossorigin | default: 'anonymous' }}"
+      async>
+  </script>
+  {% endif %}
 </article>
