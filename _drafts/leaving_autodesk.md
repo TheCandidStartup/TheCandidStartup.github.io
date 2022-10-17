@@ -41,9 +41,46 @@ What would be more fun?
 
 # 3. Opportunity
 
-So, there was this thing called the Covid-19 pandemic. It was a big deal at the time. The first UK national lock down began in March 2020 and I started working from home for the first time. 
+So, there was this thing called the Covid-19 pandemic. It was a big deal at the time. The first UK national lock down began in March 2020 and I started working from home for the first time. I had always assumed that working from home wouldn't work for me. I liked keeping home and work separate. I thought I needed the 30 minute commute to decompress and context switch. 
+
+It turns out I was wrong. Working from home is great. Having a dedicated work space is all the separation I need. I never went back to the office. So, in many ways I'm just part of the [Great Resignation](https://en.wikipedia.org/wiki/Great_Resignation).
+
+I was also conscious of a couple of upcoming anniversaries. Summer 2022 would see both my 55th birthday and my 15th year at Autodesk. 55 is significant in the UK as that's the earliest you can access money in your pension fund. By September 2020 I was seriously thinking about the possibility of retirement. I told my boss of my plans in January 2021. 
 
 # 4. The Tim Principle
+
+The [Peter Principle](https://en.wikipedia.org/wiki/Peter_principle) is a classic management book from 1969. The basic premise is that in a hierarchical organization everyone rises to the level of their incompetence. If you're good at your job, you get promoted to a role that requires new skills. If you lack the skills to excel you will be incompetent in your new role and won't get promoted again. If you do well, you will be promoted again which continues until you reach a level at which you are incompetent. 
+
+I've just invented the Tim Principle. The basic premise is that those, like me, that are [intrinsically motivated](https://en.wikipedia.org/wiki/Motivation) will rise to a level at which they stop enjoying their job. You find a job that you enjoy and that you're good at. You're good at your job, so you get promoted to a role that requires new skills. If you don't find those skills interesting, you stop enjoying yourself which makes you less likely to be promoted again. If the new role is enjoyable, you're likely to continue being promoted until you stop enjoying what you do. 
+
+The way out is to leave or change direction before its too late. I thought I'd done that by getting out of the people management business and following the Software Architecture track. However, in recent years I enjoyed what I was doing less and less. 
+
 # 5. It's the Organization, Stupid!
+
+One of my peers amongst Autodesk's senior Architects said it well. "I don't work on technology problems anymore. All the problems I have are organizational". 
+
+As you grow in your role as a technical leader your responsibilities tend to cover a larger part of the organization. I started out as Architect for Navisworks with a single team of developers. When I left I was Chief Architect for a division of 750 people working on multiple products with more teams than I could keep track of. 
+
+When you work as an Architect with a single team you're almost entirely working on technology problems within the scope of the team. The organization of which you're a part is just another technical constraint. There will be requirements imposed on you from outside that you need to deal with but that's about it. 
+
+When you work as an Architect across multiple teams you're mostly focused on the connection points and gaps between what the teams are working on. I'm a firm believer in [Conway's Law](https://en.wikipedia.org/wiki/Conway%27s_law). Conway's law says that organizations design systems that mirror their communication structure. Usually the technical part of whatever you're working on is straight forward. The difficult thing is fitting the solution to your organizational structure.
+
+I've come up with clean, elegant, understandable technical solutions. The work required maps onto pieces owned by multiple different teams. That's where your problems really start. Do all the teams involved agree on the level of priority? Almost certainly not. Now you need to distort the ideal solution to try to fit it to the parts of the organization interested in working on it. 
+
+Once I had the opposite problem. There was a new product requirement that was technically equivalent to some existing functionality. We could give the whole thing to that team and with some minor changes implement two features for the price of one. Seems like a no-brainer, right? As it happened, the engineering director responsible had another team that needed something new to work on. Organizationally, it fit better to have two separate teams independently developing near duplicate functionality. 
+
+I got fed up dealing with organizational problems.
+
 # 6. The Room Where It Happens
+
+Why did I keep riding the wave away from the technical problems I enjoyed solving to spending much of my time getting frustrated with organizational problems? Remember what I said about working as an architect with a single team. The larger organization is a source of requirements and constraints imposed on you. Some of those requirements and constraints will make no sense or seem flat out crazy. What if you could be in the room where those decisions are made? You could stop the crazy before it gets going. You could steer choices so that they best align technically. 
+
+For most of my time at Autodesk I was on the staff of the leader that made the decisions for my part of the organization. The trade off was worth it. Yes, I had to deal with organizational problems but I was in the room where the decisions were made that could fix those problems. 
+
+Then, with the reorganization following [Autodesk's acquisition of PlanGrid](https://investors.autodesk.com/news-releases/news-release-details/autodesk-completes-plangrid-acquisition), I wasn't in the room any more. When the dust settled the combined PlanGrid and BIM 360 organization was led by the former PlanGrid engineering VP. I continued to report to my existing boss who was on their staff. My new role was Chief Architect for the combined organization. Surely being one step away in the reporting organization doesn't matter? That's what I thought at the time.
+
+Spoiler alert, it does matter. It's hard enough getting to a decision amongst the people in the room. Once that's done everyone is focused on communicating the decision and selling it to the organization. Internally they've moved onto the next thing. It's extraordinarily difficult to force a change or course correction after the fact. 
+
 # 7. Ever Decreasing Circles
+
+Fifteen years is a long time to work for the same company. Over that period of time you start to see history repeating itself. The pendulum swings one way and then back. The same mistakes are made again. 
