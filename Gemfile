@@ -16,6 +16,7 @@ gem "github-pages", group: :jekyll_plugins
 # If you have any plugins, put them here!
 group :jekyll_plugins do
   gem "jekyll-feed", "~> 0.12"
+  gem "jekyll-relative-links"
 end
 
 # Needs to be manually added for GitHub pages if using Ruby 3.X and Jekyll 4.2
