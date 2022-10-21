@@ -23,7 +23,7 @@ layout: default
     {% include disqus_comments.html %}
   {% endif %}
 
-  {% if site.utterances.issue-term %}
+  {% if site.utterances.issue-term and page.utterances_disable != true %}
     <script src="https://utteranc.es/client.js"
       {% if site.utterances.repo %}
         repo="{{ site.utterances.repo }}"

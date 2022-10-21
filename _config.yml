@@ -6,7 +6,7 @@ twitter:
   username: ThCandidStartup
 utterances:
   issue-term: pathname
-  label: blog comment
+  label: "blog comment"
   theme: github-light
 relative_links:
   enabled: false
