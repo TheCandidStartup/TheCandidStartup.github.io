@@ -16,7 +16,7 @@ An easy way of finding my own niche is to make use of my unique experience to ge
 
 ### Interactive Viewing for Large Geometric Models
 
-I spent at least ten years of my life working on Interactive Viewing for Large Geometric Models. First, as a University research project, then developing the technology commercially in a startup and finally ending up with Navisworks. This is a topic I know something about. However, graphics technology has changed massively since then. There's lots that I can learn and potentially do differently.
+I spent getting on for twenty years of my life working on Interactive Viewing for Large Geometric Models. First, as a University research project, then developing the technology commercially in a startup and finally ending up with Navisworks. This is a topic I know something about. However, graphics technology has changed massively since then. There's lots that I can learn and potentially do differently.
 
 ### Indexing and Querying Spatial Data
 
@@ -24,7 +24,7 @@ Going back further in time, my doctorate was titled "A Parallel Architecture for
 
 ### Multi-Tenant Multi-User SaaS
 
-My most recent experience is in the world of Multi-Tenant SaaS products that support multi-user collaboration. I've seen how the sausage is made. I'd love to use that experience to find a simpler, more reliable, more scalable, more open, more flexible and lower cost way of delivering the same benefits to the customer.
+My most recent experience is in the world of [Multi-Tenant](https://en.wikipedia.org/wiki/Multitenancy) [SaaS](https://en.wikipedia.org/wiki/Software_as_a_service) products that support multi-user collaboration. I've seen how the sausage is made. I'd love to use that experience to find a simpler, more reliable, more scalable, more open, more flexible and lower cost way of delivering the same benefits to the customer.
 
 ### ---
 
