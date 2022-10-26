@@ -33,7 +33,7 @@ What does it look like when an organization tries to solve all their problems wi
 
 In contrast to acquisitions, a reorg is the low risk way to make a move. Ship going down? Let's rearrange the deck chairs. 
 
-Now, as a full believer in [Conway's law](https://en.wikipedia.org/wiki/Conway%27s_law), I should be in favor of reorgs. Changing the org structure to encourage your desired software architecture is known as the [*Inverse Conway Maneuver*](https://martinfowler.com/bliki/ConwaysLaw.html#footnote-inv). I've seen this work in practice. We had two teams working on very similar functionality within different products (why? fallout from an acquisition). The teams were in separate parts of the organization. After meeting and discussing the situation in depth they were in full agreement that both projects needed to continue separately. It made no technical sense to try and merge them. A couple of months later there was a reorg and the two teams were merged. Almost overnight they decided that maintaining both projects independently was a waste of time and they needed to be combined.
+Now, as a full believer in [Conway's law](https://en.wikipedia.org/wiki/Conway%27s_law), I should be in favor of reorgs. Changing the org structure to encourage your desired software architecture is known as the [*Inverse Conway Maneuver*](https://martinfowler.com/bliki/ConwaysLaw.html#footnote-inv). I've seen this work in practice. We had two teams working on very similar functionality within different products (why? fallout from an acquisition). The teams were in separate parts of the organization. After meeting and discussing the situation in depth they were in full agreement that both projects needed to continue separately. It made no technical sense to try and merge them. A couple of months later there was a reorg and the two teams were merged. Almost overnight they decided that maintaining both projects independently was a waste of resources and they needed to be combined.
 
 This is not how a VP does a reorg. The Inverse Conway Maneuver is a carefully targeted micro level reorg far below VP level. A VP level reorg generally involves moving responsibility for big chunks of the organization from one member of the VP's staff to another. There is always an intent to make a positive change in the way the organization operates. However, this is often compromised by the need to keep every member of VP staff happy. I've seen some really contrived explanations for parts of reorgs which made no logical sense. The initial quake is followed by aftershocks as the reorg propagates down the organizational hierarchy. The further down you go the more the original intent becomes diluted, with increasing focus on keeping all the managers happy with their slice of the pie. 
 
@@ -43,8 +43,15 @@ Reorgs can work if they're infrequent and time is taken to follow up, see what i
 
 Time to lay down the law. This is the way it's going to be. There will be no exceptions. You will do as I command. I have issued a *Mandate*.
 
-The best example of a big mandate that paid off is Jeff Bezos's [infamous API mandate](https://konghq.com/blog/api-mandate) that eventually resulted in the creation of AWS. The legend around it grew in part because its existence was revealed when an ex-Amazon employee then at Google accidentally publicly posted an [internal memo describing it](https://gist.github.com/chitchcock/1281611). Paraphrased, it says 
+The best example of a big mandate that paid off is Jeff Bezos's infamous [API mandate](https://konghq.com/blog/api-mandate) that eventually resulted in the creation of AWS. The legend around it grew in part because its existence was revealed when an ex-Amazon employee then at Google accidentally publicly posted an [internal memo](https://gist.github.com/chitchcock/1281611) describing it. Paraphrased, it says 
 1. All data and functionality MUST be exposed through APIs. All communication is via those APIs. No back doors. No exceptions.
 2. All APIs MUST be designed so that they can be exposed to external developers. No exceptions.
 3. Anyone who doesn't do this WILL be fired.
 
+What gets less press is some of the color in the original memo that describes what it took to implement. 
+* "*Bezos assigned a couple of Chief Bulldogs to oversee the effort*"
+* "*Over the next couple of years, Amazon transformed internally into a service-oriented architecture*"
+* "*There are dozens, maybe hundreds of individual learnings like these that Amazon had to discover organically*"
+* "*This effort was still underway when I left to join Google*" (three years later) 
+
+Following through on a mandate takes serious effort and commitment. What happens if your VP throws mandates around without the required rigour? People start ignoring them. Obviously, you make all the right noises, make it look like you're doing something, then stall until the eye of Sauron has moved on and forgotten about whatever it was. In the worst case you're landed with a VP that is constantly chasing one shiny ball after another, throwing out mandates that strangely never achieve anything apart from churn and confusion.
