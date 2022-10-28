@@ -1,0 +1,13 @@
+/** Candid Startup Specific Styling */
+.candid-note {
+    margin-left: 30px;
+    margin-right: 30px;
+    border-width: 1px;
+    padding-top: 1em;
+    padding-left: 1em;
+    padding-right: 1em;
+    // No bottom padding as paragraph inside the box has its own trailing em margin
+    border-color: $border-color;
+    border-style: solid;
+    background-color: $code-bg-color;
+}

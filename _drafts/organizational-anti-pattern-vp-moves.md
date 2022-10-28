@@ -5,6 +5,8 @@ title: >
 
 You work in a large organization. The kind that has VPs and SVPs and lots of C-level types. I'm going to use "VP" as short hand for all these leaders at the top of an organization. What do you want from the VPs? Ideally, they provide a consistent sense of direction with a clear strategy. They model the culture of the organization and provide a sense of belonging. They ensure that all the parts of the organization are aligned so that the overall organization is more than just the sum of its parts. 
 
+{% include organizational-anti-patterns-note.html %}
+
 The higher up an organization you go, the less direct influence you have on what happens at the coal face. At the same time, a stray comment can have all sorts of unintended consequences. You need to have a vision and the ability to inspire others to make that vision a reality. It's hard work reinforcing the message and the culture, making considered course corrections, day by day over many years.
 
 What happens when you want to make a big change? At the VP level there's not many levers you can pull to significantly change the direction of the organization. At this point people usually pull out the supertanker analogy - you need a really large input to get it to change direction. You need a *VP Move*. If you haven't come across this phrase before, you use it like this:
