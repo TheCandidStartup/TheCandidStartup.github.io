@@ -6,11 +6,11 @@ I previously described the [general areas for my initial projects]({% link _post
 
 What is a [multi-tenant architecture](https://en.wikipedia.org/wiki/Multitenancy)? In general, it's an architecture that allows multiple independent consumers to share common computing resources. Why would you want to share computing resources? To reduce the cost for each consumer. 
 
-I'm going to look at how multi-tenant architectures have evolved over time to help me figure out where they will go next.
+I'm going to look at how multi-tenant architectures have evolved over time to help me figure out where they might go next.
 
 # History
 
-We've been figuring out how best to share computing resources almost from when we first invented the computer. Let's start at the beginning and take a journey through time.
+We've been figuring out how best to share computing resources almost from when we first invented the computer. Let's start at the beginning.
 
 ## Time Boxing
 
@@ -22,7 +22,7 @@ The early pioneers soon noticed that there were two different types of activity.
 
 Interactive used less in the way of computing resource and could even use dedicated simpler hardware. For example, preparing a paper tape that contained your program and input data. The big expensive iron could then be dedicated to running jobs. Jobs could be scheduled to run one after another using a queue. Initially queues were physical - tapes hung on a washing line or lined up on a shelf. Human operators were employed to monitor the machine and load up the next job after the previous one had finished running.
 
-Over time hardware became more powerful and rudimentary operating systems were developed. Jobs queues were automated and multiple jobs could be run at most.
+Over time hardware became more powerful and rudimentary operating systems were developed. Jobs queues were automated and multiple jobs could be run at once.
 
 ## Time Sharing
 
@@ -36,24 +36,35 @@ It seemed like it would take a long time to move time sharing from academic rese
 
 [Virtualization](https://en.wikipedia.org/wiki/Hardware_virtualization) seems like it must be a relatively recent invention but was actually first implemented in the 1960s. IBM developed hardware that supported full virtualization. You could run software in a virtualized environment without it knowing that it wasn't running directly on the hardware. 
 
-Another team at IBM (working with MIT) realized that virtualization would be a much quicker way to achieve time sharing. They came up with the CP/CMS system. CP refers to the Control Program (now called a hypervisor) which runs on the hardware and implements the virtualization system. CMS is the Console Monitor System, a lightweight single user operating system. CP hosts multiple virtual machines each running a copy of CMS. Each user has access to what looks like a stand alone computer capable of running any software that would run on the bare machine. 
+Another team at IBM (working with MIT) realized that virtualization would be a much quicker way to achieve time sharing. They came up with the [CP/CMS](https://en.wikipedia.org/wiki/History_of_CP/CMS) system. CP refers to the Control Program (now called a hypervisor) which runs on the hardware and implements the virtualization system. CMS is the Console Monitor System, a lightweight single user operating system. CP hosts multiple virtual machines each running a copy of CMS. Each user has access to what looks like a stand alone computer capable of running any software that would run on the bare machine. 
 
-CP/CMS was followed by a whole series of virtualization based operating systems.
+CP/CMS was followed by a whole series of virtualization based operating systems. Eventually, full multi-user, multi-tasking operating systems could be run as virtual machines. 
+
+This is the point at which we see the first introduction of multi-tenant business models. For example, in 1968 a [startup](https://en.wikipedia.org/wiki/National_CSS) had the bright idea of leasing an IBM Mainframe running CP/CMS and reselling computer time. Each tenant had access to a dedicated virtual machine. 
 
 ## Minicomputers
 
-* minicomputers - more advanced monolithic OS supporting multi-user, multi-tasking and virtual memory
+Single chip CPU microprocessors first appeared in the early 1970s. This led to an explosion of new (relatively) inexpensive commercial computers known as minicomputers. Rather than filling a room, a minicomputer took up a single rack cabinet. To fit a CPU on a single microprocessor they had simpler instructions, smaller data words and no room for fancy features like virtualization. 
+
+Fortunately, OS development had come a long way by this time. Minicomputer OSes directly supported time sharing features like multi-tasking, access control and virtual memory. The first version of the Unix operating system was developed for use on a minicomputer.
+
+Minicomputers were cheap enough that individual departments within Universities and large companies could have their own. Small companies could afford their own rather than paying for a tenant in a time shared mainframe. 
 
 ## Microcomputers
 
-* microcomputers - single user, cheap enough that you can have one each
+As the microprocessor revolution continued, microcomputers were developed. They used processors with even simpler instruction sets than minicomputers. They were designed for single person use, priced cheaply enough that (wealthy) individuals could afford them. By the end of the 1980s the Intel based IBM compatible PC that we're still familiar with today was becoming dominant. 
 
-* Client-Server - collaboration software needs sharing. User micro as client, connecting to beefy server (first mini then later server class micro-architectures)
-* Hosted Applications
-* Virtualization round 2
-* Multi-tenant applications
-* Cloud Providers - IaaS
-* Serverless - PaaS and beyond
+Who needs multi-tenant architecture when you can have a computer each?
+
+## Client-Server
+
+Client-Server - collaboration software needs sharing. User micro as client, connecting to beefy server (first mini then later server class micro-architectures)
+
+## Hosted Applications
+## Virtualization, Round 2
+## Multi-tenant applications
+## Cloud Providers - IaaS
+## Serverless - PaaS and beyond
 
 # Current State
 
