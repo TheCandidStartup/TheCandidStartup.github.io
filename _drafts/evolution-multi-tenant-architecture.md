@@ -28,7 +28,7 @@ Over time hardware became more powerful and rudimentary operating systems were d
 
 [Time Sharing](https://en.wikipedia.org/wiki/Time-sharing) is one of those brilliant ideas that seems obvious now but was revolutionary at the time. Computers were too expensive to use interactively for significant periods of time. However, think about how a human interacts with a computer. There are short bursts of activity as the user enters information or executes commands interspersed with long pauses while nothing is happening. A single user does not make efficient user of a computer, but a large group of users together does. If the users are working at the same time the pauses of one user can be filled by the activity of the others. 
 
-Making Time Sharing a reality needed a huge leap forward in operating system capability. Existing OSes were single user focused. To start with you need multi-tasking and access control. Then there's all the other things you need to come up with to make it run well such as interrupt driven context switching and virtual memory. Finally, users would have to rewrite all their programs which assumed complete control of the computer to work with the new operating systems.
+Making time sharing a reality needed a huge leap forward in operating system capability. Existing OSes were single user focused. To start with you need multi-tasking and access control. Then there's all the other things you need to come up with to make it run well such as interrupt driven context switching and virtual memory. Finally, users would have to rewrite all their programs (which assumed complete control of the computer) to work with the new operating systems.
 
 It seemed like it would take a long time to move time sharing from academic research to commercial reality. 
 
@@ -48,28 +48,56 @@ Single chip CPU microprocessors first appeared in the early 1970s. This led to a
 
 Fortunately, OS development had come a long way by this time. Minicomputer OSes directly supported time sharing features like multi-tasking, access control and virtual memory. The first version of the Unix operating system was developed for use on a minicomputer.
 
-Minicomputers were cheap enough that individual departments within Universities and large companies could have their own. Small companies could afford their own rather than paying for a tenant in a time shared mainframe. 
+Minicomputers were cheap enough that individual departments within Universities could have their own. Small companies could afford their own rather than paying for a tenant in a time shared mainframe. 
 
 ## Microcomputers
 
-As the microprocessor revolution continued, microcomputers were developed. They used processors with even simpler instruction sets than minicomputers. They were designed for single person use, priced cheaply enough that (wealthy) individuals could afford them. By the end of the 1980s the Intel based IBM compatible PC that we're still familiar with today was becoming dominant. 
+As the microprocessor revolution continued, microcomputers were developed. They used processors with even simpler instruction sets than minicomputers. They were designed for single person use, priced cheaply enough that individuals could afford them. By the end of the 1980s the Intel based IBM compatible PC that we're still familiar with today was becoming dominant. 
 
 Who needs multi-tenant architecture when you can have a computer each?
 
 ## Client-Server
 
-Client-Server - collaboration software needs sharing. User micro as client, connecting to beefy server (first mini then later server class micro-architectures)
+You still needed a "real" computer for multi-user collaborative applications. You could, however, replace the dumb terminals that users previously used with microcomputers. Now you have a client-server architecture. You can move some compute and most of the smarts needed to run the user interface to the client. 
+
+Initially minicomputers were used as servers. As the microcomputer industry scaled up, minicomputers were unable to compete on price. They were replaced with servers based on microcomputer architectures. 
+
+Computers are inherently unreliable. It's not a huge problem if a client machine dies. One user is inconvenienced and needs a replacement machine. All their important data is safely stored on the server so they can soon be back up and running.
+
+Its a massive problem if a server dies. All users are out of action and their data is at risk. The solution was to make servers more reliable. They used higher end components and used redundancy at the hardware level. Error correcting memory, RAID disk arrays, redundant power supplies and network connections, hot swap capabilities. 
+
+As well as the capital cost for a decent server, you also need skilled personnel to manage it. It needs to be monitored, failing components identified and replaced, software updates applied, periods of down time managed.
+
+There were increasing numbers of customers that didn't write their own software and had a server just to run a handful of critical applications (CRMs, ERPs, and other TLAs). If only there was some way they could access the applications without needing to know anything about servers.
 
 ## Hosted Applications
-## Virtualization, Round 2
-## Multi-tenant applications
-## Cloud Providers - IaaS
-## Serverless - PaaS and beyond
 
-# Current State
+We've reached the 90s. The internet is about to explode in usage. Good network connectivity is becoming table stakes. [Application Service Providers](https://en.wikipedia.org/wiki/Application_service_provider) started to appear that would host popular applications for you. The ASP owns and operates the servers and manages the application software licenses. They provide access to the software to customers that want to use the application without the hassle of managing it themselves. 
 
-SaaS company implements multi-tenant architecture using PaaS from one of the big cloud providers. PaaS platform uses sophisticated virtualization techniques to support multiple SaaS companies. We have multi-tenant at application level on multi-tenant at the PaaS level.
+This is a multi-tenant business model but not yet a multi-tenant architecture. If the application assumes that only one instance is running on a server, then each tenant needs a dedicated server. If you're lucky the software allows you to run multiple instances. However, you need careful management to ensure that each instance has enough resources and you don't end up with one tenant degrading the experience of another.
 
-# Future?
+## Virtualization: Round Two
 
-Time for pendulum to swing again? Customers go direct to cloud provider and create an environment to run serverless open source software. Pay only for what you use. 
+Luckily microprocessors have now matured to the point that the manufacturers are looking for new features they can use to distinguish themselves. Virtualization becomes feasible again. First with some creative approaches in the hypervisors to work round missing features, later with full virtualization support in the hardware. ASPs can use a dedicated virtual machine for each tenant. Tenants are fully isolated from each other and easier to manage. Hypervisors are developed that manage a cluster of physical servers and even allow for virtual machines to be migrated between servers with almost zero downtime.
+
+## Web Applications
+
+By the late 90s dedicated hosted applications were being developed. They were written from the ground up to support multi-tenant hosted business models. Typically they were designed to use web browsers on the client side and so were known as [web applications](https://en.wikipedia.org/wiki/Web_application). The first examples were email services like [Hotmail](https://en.wikipedia.org/wiki/Outlook.com). With a dedicated multi-tenant application you could host many thousands of customers on a single server. 
+
+Tenant isolation was handled entirely at the application level. Application bugs could allow one customer to degrade the experience of another (noisy neighbor syndrome), or even worse allow one customer to gain access to other customer's data. Hotmail, for example, suffered from multiple security vulnerabilities in its first few years.
+
+## Software as a Service (SaaS)
+
+New entrants appeared that used the web application playbook to offer more business critical applications. Rather than single users, each tenant could support multiple collaborating users. [Salesforce](https://en.wikipedia.org/wiki/Salesforce) was an early pioneer of what came to be known as *Software as a Service*.
+
+## Infrastructure as a Service (IaaS)
+
+## Platform as a Service (PaaS)
+
+## Micro-Services
+
+# Now What?
+
+So, I've obviously been skimming a lot of Wikipedia articles. Where has that got me? Well, you'll have to bear with me. 
+
+Next time I'll go deep on how a modern SaaS application is built, look at some of the challenges with that approach and make a modest proposal for how multi-tenant architecture might evolve again.
