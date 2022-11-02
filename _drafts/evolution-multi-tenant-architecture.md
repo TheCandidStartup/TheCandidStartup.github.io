@@ -90,11 +90,21 @@ Tenant isolation was handled entirely at the application level. Application bugs
 
 New entrants appeared that used the web application playbook to offer more business critical applications. Rather than single users, each tenant could support multiple collaborating users. [Salesforce](https://en.wikipedia.org/wiki/Salesforce) was an early pioneer of what came to be known as *Software as a Service*.
 
+The early SaaS vendors managed their own servers. Application architecture was monolithic client-server with one or at most a handful of machines implementing an application instance that served a set of tenants. To scale, buy more servers and get another instance up and running. To keep the load on each instance balanced, migrate tenants from one instance to another. Such migrations involve downtime and need to be planned and agreed with customers.
+
+While the internal architecture has no doubt changed considerably, Salesforce still has an architecture with tenants assigned to explicit application instances which occasionally [need to be migrated](https://help.salesforce.com/s/articleView?id=000386897&type=1).
+
 ## Infrastructure as a Service (IaaS)
 
-## Platform as a Service (PaaS)
+In 2002 Jeff Bezos issued his now infamous [API Mandate](https://konghq.com/blog/api-mandate). Amazon transformed itself into a [service-oriented architecture](https://en.wikipedia.org/wiki/Service-oriented_architecture) where every service was capable of being exposed to third party developers. In 2006 the first services were made publicly available including [Elastic Compute Cloud (EC2)](https://aws.amazon.com/ec2/). 
+
+EC2 allowed SaaS vendors (and anyone else) to rent servers by the hour. Need more capacity? Call an API to spin up another server. EC2 was rapidly followed by services that provided storage and network infrastructure too. [Infrastructure as a Service](https://aws.amazon.com/what-is/iaas/) had arrived. 
+
+The biggest difference that AWS made was removing the barriers to entry as a SaaS vendor. Instead of needing up front capital to build out physical infrastructure all you needed to get started was a credit card and a network connection.  
 
 ## Micro-Services
+
+## Platform as a Service (PaaS)
 
 # Now What?
 
