@@ -66,7 +66,7 @@ Computers are inherently unreliable. It's not a huge problem if a client machine
 
 Its a massive problem if a server dies. All users are out of action and their data is at risk. The solution was to make servers more reliable. They used higher end components and used redundancy at the hardware level. Error correcting memory, RAID disk arrays, redundant power supplies and network connections, hot swap capabilities. 
 
-As well as the capital cost for a decent server, you also need skilled personnel to manage it. It needs to be monitored, failing components identified and replaced, software updates applied, periods of down time managed.
+As well as the capital cost for a decent server, you also need skilled personnel to manage it. The server needs to be monitored, failing components identified and replaced, software updates applied, periods of down time managed.
 
 There were increasing numbers of customers that didn't write their own software and had a server just to run a handful of critical applications (CRMs, ERPs, and other TLAs). If only there was some way they could access the applications without needing to know anything about servers.
 
@@ -84,7 +84,9 @@ Luckily microprocessors have now matured to the point that the manufacturers are
 
 By the late 90s dedicated hosted applications were being developed. They were written from the ground up to support multi-tenant hosted business models. Typically they were designed to use web browsers on the client side and so were known as [web applications](https://en.wikipedia.org/wiki/Web_application). The first examples were email services like [Hotmail](https://en.wikipedia.org/wiki/Outlook.com). With a dedicated multi-tenant application you could host many thousands of customers on a single server. 
 
-Tenant isolation was handled entirely at the application level. Application bugs could allow one customer to degrade the experience of another (noisy neighbor syndrome), or even worse allow one customer to gain access to other customer's data. Hotmail, for example, suffered from multiple security vulnerabilities in its first few years.
+Web applications brought a significant change in the control that customers had. Previously customers decided what version of an application they would run and could schedule updates at a time convenient to them. That's not practical with application level multi-tenant architectures. Now the application service provider decides when to push updates which apply to all tenants. This encourages use of more frequent, smaller deployments to avoid exposing customers to big disruptive changes.
+
+Tenant isolation was handled entirely at the application level. Application bugs could allow one customer to degrade the experience of another (noisy neighbor syndrome), or even worse allow one customer to gain access to another customer's data. Hotmail, for example, suffered from multiple security vulnerabilities in its first few years.
 
 ## Software as a Service (SaaS)
 
@@ -100,11 +102,29 @@ In 2002 Jeff Bezos issued his now infamous [API Mandate](https://konghq.com/blog
 
 EC2 allowed SaaS vendors (and anyone else) to rent servers by the hour. Need more capacity? Call an API to spin up another server. EC2 was rapidly followed by services that provided storage and network infrastructure too. [Infrastructure as a Service](https://aws.amazon.com/what-is/iaas/) had arrived. 
 
-The biggest difference that AWS made was removing the barriers to entry as a SaaS vendor. Instead of needing up front capital to build out physical infrastructure all you needed to get started was a credit card and a network connection.  
+Internally EC2 uses virtualization to carve up a physical server into multiple virtual instances. You can match the size of your virtual server to your workload. You can easily switch to a larger or smaller server as your workload changes. Initially AWS used [Xen](https://en.wikipedia.org/wiki/Xen), an off the shelf virtualization technology. Later it developed its own hypervisors ([Nitro](https://aws.amazon.com/ec2/nitro/), [Firecracker](https://firecracker-microvm.github.io/)) that work in conjunction with dedicated hardware to improve performance, provide greater isolation between tenants and reduce overheads.
 
-## Micro-Services
+AWS also changed the reliability model. Instead of using expensive servers with highly redundant components, they used cheap servers and accepted that occasionally servers would fail. AWS customers are expected to use architectures with multiple redundant servers that can handle failure. Instead of using one big expensive server running your database and app server, use a pair of database servers configured as primary/secondary with automated failover. Use a fleet of stateless app server instances, scaling the number of instances up and down dependent on load. Use AWS's load balancer as a service to route traffic to the app servers and replace any that fail. Treat your servers as [cattle rather than pets](https://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/). 
+
+The biggest difference that AWS made was removing the barriers to entry as a SaaS vendor. Instead of needing up-front capital to build out physical infrastructure all you needed to get started was a credit card and a network connection.  
+
+## Microservices
+
+Your software architecture is strongly influenced by your available infrastructure. Software designed to be installed on a customer's server or a server running a hosted application in your data center will naturally use a [monolithic architecture](https://www.atlassian.com/microservices/microservices-architecture/microservices-vs-monolith). A complete package that is installed as a single unit is simplest to manage.  The early SaaS vendors stuck with the same architecture. The fewer physical servers they had to manage the better.
+
+The introduction of IaaS opened up more choices. The AWS reliability model requires you to deploy your application across multiple servers with a natural division between app servers, databases and workers. You need to choose appropriate instance sizes and think about scaling policies. Deployment becomes more complex with a greater risk of failures due to unintended interactions between different parts of the system. If you have a large application with multiple teams working on it, a monolithic architecture becomes increasingly difficult to manage.
+
+At the same time, it's become far easier to spin up additional server instances. What if we could break the application into separate independently deployable pieces each running on their own set of servers and each managed by a dedicated team? Welcome to the world of [microservices](https://aws.amazon.com/microservices/). Microservices promote agility. Each team can make their own choices about when to deploy, how to scale their service, which technologies they employ.
+
+Of course every architecture has its own challenges. Microservices mean a more complex infrastructure with a proportional increase in testing, deployment and monitoring costs. You need to carefully balance agility and standardization. Too much agility and you end up with a mess of different deployment practices, languages and tools. Too much standardization and you end up with all the rigidity of a monolith at greater cost.
 
 ## Platform as a Service (PaaS)
+
+Naturally cloud providers like AWS, Microsoft and Google didn't stop with IaaS. They built their own services on the infrastructure and made those available to third parties too. Managed versions of popular database engines which handled the redundant setup for you, new cloud native databases which were inherently horizontally scalable, common building blocks like blob storage, queues and in memory cache servers. Then they built higher level services on top of those building blocks and made those available too. 
+
+Similarly, higher level abstractions for compute became available. Rather than managing and configuring a server you could package an app server as a [container](https://www.docker.com/resources/what-container/) that can be deployed as a complete unit on to dedicated infrastructure for container execution. Rather than building an app server capable of handling multiple requests simultaneously together with the logic to scale the number of app servers, build a function that handles a single request. Then rely on infrastructure that can scale the number of running functions for you. Stop having to think about servers at all - go [Serverless](https://en.wikipedia.org/wiki/Serverless_computing). 
+
+Eventually you end up with [Platform as a Service](https://en.wikipedia.org/wiki/Platform_as_a_service). All the friction removed. Making it as simple as possible to deploy, run and scale your application. Even lower barriers to entry for anyone wanting to run a cloud application.
 
 # Now What?
 
