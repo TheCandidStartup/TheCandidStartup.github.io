@@ -14,18 +14,40 @@ So, what have I learnt?
 
 ![Users](/assets/images/blog-users-nov-2022.png)
 
+The analytics console overview page has two cards. The first shows you changes in users (or a choice of other metrics) over time and lets you compare two periods. I can conveniently compare my first and second month of blogging. 
+* I have 1500 users this month with 1400 being new
+* In general I'm consistently increasing my number of users, with rate of growth higher in the second month compared to the first
+* There was a huge increase in users 18th-20th October the impact of which has only just petered out
+
+The other care shows a real time view of users per minute over the last 30 minutes. At my scale its not very exciting. 
+
 # Demographics
 
 ![Users by Country Map](/assets/images/blog-user-countries-nov-2022.png)
-| ![Users by Country List](/assets/images/blog-user-country-list-nov-2022.png) | ![Users by City](/assets/images/blog-user-cities-nov-2022.png) |
+
+The Reports section of the console has three areas of interest for me. The first is Demographics. I have users all over the world! I suspect the distribution is a close match for how Autodesk employees and ex-employees are distributed. 
+
+Great to see so many of you from my town of Sheffield. The friends and family effect at work.
+
+|![Users by Country List](/assets/images/blog-user-country-list-nov-2022.png)|![Users by City](/assets/images/blog-user-cities-nov-2022.png)|
 
 # Posts
 
 * Pages and Screens - 5th September to date
+
+In the Engagement section we have the weirdly named "Pages and screens: Page title and screen class" report. This tells me what you've been looking at. No surprise that my post on leaving Autodesk published on 18th October is in the number one spot. This one clearly resonated with many of you and must have been widely shared to bring in 1200 new users. Now I have a dilemma. Was it the content or the intentionally clickbait title that did the trick?
+
+The *First Visits* metric is interesting. Almost all of the readers for the leaving Autodesk post had it as their first visit. Unfortunately, most of them left without visiting the home page to see if there were any other interesting posts.
+
+The other thing that caught my eye is the *views per user* and *average engagement time* metrics. The lighter posts get most users. However, the longer more technical ones get a greater engagement time and more views from their more select audience.
 
 # Sources
 
 ![Users by Source](/assets/images/blog-user-sources-nov-2022.png)
 
 # Search
+
+![Search Analytics](/assets/images/blog-search-nov-2022.png)
+
+![Search Impact Email](/assets/images/blog-search-impact-nov-2022.png)
 
