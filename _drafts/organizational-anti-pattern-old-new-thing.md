@@ -10,3 +10,29 @@ At some point in your career all the stars will align. You're working on an exci
 Enjoy it. Make the most of it. It won't last. 
 
 Maybe there was a reorg, an acquisition or a mandate that changed the environment. Maybe your project is taking a while to deliver results. Doesn't matter - for whatever reason the new hotness is here. And your project is now the *Old New Thing*. 
+
+Becoming the Old New Thing is not an anti-pattern in and of itself. That's just human nature. The anti-pattern is in how the organization treats the Old New Thing. Here's a few things I've seen that you shouldn't do.
+
+1. [The Leper](#the-leper)
+2. [Rewrite and Reimagine](#rewrite-and-reimagine)
+3. [Acquire a Competitor](#acquire-a-competitor)
+
+## The Leper
+
+## Rewrite and Reimagine
+
+## Acquire a Competitor
+
+# Construction Software at Autodesk
+
+My intention was to keep these articles very general and avoid calling out the guilty. However, in this case I have too good an example to pass up.
+
+* Constructware - Leper
+* Field and Glue - Adjacent space but no attempt to figure out how to make them work with Constructware. Only barely got them to work with each other. Rewrite with Navisworks engine.
+* Next Gen BIM 360 - Rewrite from scratch
+* PlanGrid - Acquire Competitor
+* ACC - Rewrite more intelligently
+* Forma - ???
+
+
+
