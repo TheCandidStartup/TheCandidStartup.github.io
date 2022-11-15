@@ -6,7 +6,9 @@ SaaS company implements multi-tenant architecture using PaaS from one of the big
 
 Time for pendulum to swing again? Customers go direct to cloud provider and create an environment to run serverless open source software. Pay only for what you use. 
 
-![Micro-service Architecture](/assets/images/micro-service-architecture.svg)
+{% include candid-image.html src="/assets/images/micro-service-architecture.svg" alt="Micro-service Architecture" %}
 
-![SaaS Architecture](/assets/images/sass-architecture.svg)
+{% include candid-image.html src="/assets/images/sass-architecture.svg" alt="SaaS Architecture" %}
+
+
 

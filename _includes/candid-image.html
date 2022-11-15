@@ -1,0 +1,24 @@
+<div class="candid-image-div">
+
+{% capture candid_modal_val %}{% increment candid_modal_counter %}{% endcapture %}
+{% capture candid_modal_id %}{{ "candid-modal-" | append: candid_modal_val }}{% endcapture %}
+
+<img src="{{ include.src }}" alt="{{ include.alt }}" class="candid-image" onclick="document.getElementById('{{ candid_modal_id }}').style.display='block'">
+
+{% if include.attrib %}
+<br/>
+<div class="candid-modal-attribution">{{ include.attrib | markdownify }}</div>
+{% endif %}
+
+<div class="candid-modal" id="{{ candid_modal_id }}">
+   <span class="candid-modal-close" onclick="document.getElementById('{{ candid_modal_id }}').style.display='none'">&times;</span>
+   <img src="{{ include.src }}" class="candid-modal-content">
+   <div class="candid-modal-caption">{{ include.alt }}</div>
+   
+   {% if include.attrib %}
+   <br/>
+   <div class="candid-modal-content-attribution">{{ include.attrib | markdownify }}</div>
+   {% endif %}
+</div>
+
+</div>

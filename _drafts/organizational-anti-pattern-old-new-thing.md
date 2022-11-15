@@ -13,6 +13,8 @@ Maybe there was a reorg, an acquisition or a mandate that changed the environmen
 
 Becoming the Old New Thing is not an anti-pattern in and of itself. That's just human nature. The anti-pattern is in how the organization treats the Old New Thing. Here's a few things I've seen that you shouldn't do.
 
+{% include candid-image.html src="/assets/images/Gartner_Hype_Cycle.svg" alt="Gartner Hype Cycle" attrib="Jeremykemp at English Wikipedia, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0), via Wikimedia Commons" %}
+
 1. [The Leper](#the-leper)
 2. [Rewrite and Reimagine](#rewrite-and-reimagine)
 3. [Acquire a Competitor](#acquire-a-competitor)

@@ -11,3 +11,113 @@
     border-style: solid;
     background-color: $code-bg-color;
 }
+
+.candid-image-div {
+    padding-top: 1em;
+}
+
+/* Style the Image Used to Trigger the Modal */
+.candid-image {
+    border-width: 1px;
+    cursor: pointer;
+    transition: 0.3s;
+    border-style: solid;
+    border-color: $border-color;
+    padding: 10px;
+    margin: 0 auto;
+    display: block;
+}
+  
+/* The Modal (background) */
+.candid-modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0);       /* Fallback */
+    background-color: rgba(0,0,0,0.9);  /* Black w/ opacity */
+    background-color: $header-bg-color;
+    background-image: linear-gradient(120deg, $header-bg-color-secondary, $header-bg-color);
+}
+  
+/* Modal Content (Image) */
+.candid-modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    background-color: $background-color;
+    padding: 30px
+}
+  
+.candid-modal-attribution {
+    margin-top: -20px;
+    padding-bottom: 1em;
+    display: block;
+    text-align: center;
+    color: $grey-color;
+    font-size: $small-font-size;
+}
+
+.candid-modal-content-attribution {
+    display:block;
+    text-align: center;
+    margin: auto;
+    color: $grey-color;
+    font-size: $small-font-size;
+    background-color: $background-color;
+}
+
+/* Caption of Modal Image (Image Text) - Same Width as the Image */
+.candid-modal-caption {
+    @include relative-font-size(1.4);
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    text-align: center;
+    color: $header-heading-color;
+    padding: 10px 0;
+    height: 150px;
+}
+  
+/* Add Animation - Zoom in the Modal */
+.candid-modal-content, .candid-modal-caption {
+    animation-name: candid-modal-zoom;
+    animation-duration: 0.6s;
+}
+  
+@keyframes candid-modal-zoom {
+    from {transform:scale(0)}
+    to {transform:scale(1)}
+}
+  
+/* The Close Button */
+.candid-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: $header-heading-color;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+  
+.candid-modal-close:hover,
+.candid-modal-close:focus {
+    color: $grey-color-light;
+    text-decoration: none;
+    cursor: pointer;
+}
+  
+/* 100% Image Width on Smaller Screens */
+@media only screen and (max-width: 700px){
+    .candid-modal-content {
+      width: 100%;
+    }
+}
