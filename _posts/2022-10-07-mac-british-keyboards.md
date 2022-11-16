@@ -10,13 +10,11 @@ Naturally a Macbook from the UK version of the applause store comes with Apple's
 
 ## Standard Layout
 
-![United Kingdom Extended Keyboard](/assets/images/KB_United_Kingdom_Ext.png) 
-<sub>[KeyboardUK, CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0), via Wikimedia Commons</sub>
+{% include candid-image.html src="/assets/images/KB_United_Kingdom_Ext.png" alt="United Kingdom Extended Keyboard" attrib="KeyboardUK, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0), via Wikimedia Commons" %}
 
 ## Apple Layout
 
-![United Kingdom Mac Apple Keyboard](/assets/images/KB_United_Kingdom_Mac_Apple_Keyboard.svg) 
-<sub>[Yes0song, CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0), via Wikimedia Commons</sub>
+{% include candid-image.html src="/assets/images/KB_United_Kingdom_Mac_Apple_Keyboard.svg" alt="United Kingdom Mac Apple Keyboard" attrib="Yes0song, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0), via Wikimedia Commons" %}
 
 The `backslash`[^1] key has moved across the keyboard to where `# ~` used to be. `~` joins `grave`[^2] back where `backslash` should be while `#` is only accessible via `Option-3`. Meanwhile `@` and `"` have swapped places and what used to be the `grave` key (top left corner) is used for two symbols I don't know the names for and have never knowingly used. 
 
@@ -28,8 +26,7 @@ I plugged the keyboard in and it was detected straight away. I was prompted to p
 
 As far as the Mac is concerned there are only three types of keyboard - ANSI, ISO and JIS.
 
-![Physical Keyboard Layouts - ANSI ISO JIS](/assets/images/Physical_keyboard_layouts_comparison_ANSI_ISO_JIS.png)
-<sub>[Brilliantwiki2, CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0), via Wikimedia Commons</sub>
+{% include candid-image.html src="/assets/images/Physical_keyboard_layouts_comparison_ANSI_ISO_JIS.png" alt="Physical Keyboard Layouts - ANSI ISO JIS" attrib="Brilliantwiki2, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0), via Wikimedia Commons" %}
 
 The business of pressing the key to the left of Z was just to check whether physically the keyboard had an ISO layout. Modern keyboards use [USB HID Usage Codes](https://gist.github.com/MightyPork/6da26e382a7ad91b5496ee55fdc73db2) to identify which key was pressed. On my ISO layout keyboard the key to the left of Z is code 0x64 described as "Keyboard Non-US \\ and \|". Which is what is printed on the key. So why does pressing it generate a `grave`? Because it doesn't matter what is printed on the key. All the HID code does is identify a physical key. On my MacBook's built in keyboard the key to the left of Z has "\`" and "~" printed on it. The keyboard still sends code 0x64 when it's pressed. 
 
@@ -61,7 +58,7 @@ It is possible to [apply the mapping based on a keyboard connected event being r
 
 I did what I should have done in the first place. Put some effort into understanding how Karabiner-Elements works and then make a more informed decision. After all, it's [open source](https://github.com/pqrs-org/Karabiner-Elements) so I should be able to find out whatever I need. There's high level [development documentation](https://github.com/pqrs-org/Karabiner-Elements/blob/main/docs/DEVELOPMENT.md) that provides a great overview of how everything fits together together with an explanation of the choices they made.
 
-![Karabiner-Elements architecture](/assets/images/karabiner-elements-processes.svg)
+{% include candid-image.html src="/assets/images/karabiner-elements-processes.svg" alt="Karabiner-Elements architecture" %}
 
 In order to support remapping of all physical keys in all contexts (including during secure input like password entry) Karabiner needs to monitor, grab and post keyboard events at the HID device layer. Monitoring is handled by the observer process, grabbing events by the grabber and posting events using a virtual HID device installed by Karabiner. These are the three components that need privileged access. When a keyboard is grabbed all events flow through the grabber process which applies the defined remapping rules and then posts the modified events to the system via the virtual HID device. This explains why I had to go through the macOS keyboard setup experience again. Karabiner looks like a new keyboard to macOS. 
 
