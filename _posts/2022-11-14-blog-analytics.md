@@ -12,7 +12,7 @@ So, what have I learnt?
 
 # Users
 
-![Users](/assets/images/blog-users-nov-2022.png)
+{% include candid-image.html src="/assets/images/blog-users-nov-2022.png" alt="Change in Users last month vs previous" %}
 
 The analytics console overview page has two cards. The first shows you changes in users (or a choice of other metrics) over time and lets you compare two periods. I can conveniently compare my first and second month of blogging. 
 * I have 1500 users this month with 1400 being new
@@ -23,7 +23,7 @@ The other card shows a real time view of users per minute over the last 30 minut
 
 # Demographics
 
-![Users by Country Map](/assets/images/blog-user-countries-nov-2022.png)
+{% include candid-image.html src="/assets/images/blog-user-countries-nov-2022.png" alt="Users by Country Map" %}
 
 The Reports section of the console has three areas of interest for me. The first is *Demographics*. I have users all over the world! I suspect the distribution is a close match for how Autodesk employees and ex-employees are distributed. 
 
@@ -33,7 +33,7 @@ Great to see so many of you from my town of Sheffield. The friends and family ef
 
 # Posts
 
-![Pages and Screens](/assets/images/blog-posts-nov-2022.png)
+{% include candid-image.html src="/assets/images/blog-posts-nov-2022.png" alt="Pages and Screens" %}
 
 In the Engagement section we have the weirdly named "Pages and screens: Page title and screen class" report. This tells me what you've been looking at. No surprise that my post on leaving Autodesk published on 18th October is in the number one spot. This one clearly resonated with many of you and must have been widely shared to bring in 1200 new users. Now I have a dilemma. Was it the content or the intentionally clickbait title that did the trick?
 
@@ -55,7 +55,7 @@ I particularly want to thank the person at Autodesk that saved a link to the blo
 
 Looks like posting a link to each published article gets onto a lot of people's feeds. LinkedIn has some analytics tools of its own. What can they tell me?
 
-![LinkedIn Impressions](/assets/images/blog-linkedin-impressions.png)
+{% include candid-image.html src="/assets/images/blog-linkedin-impressions.png" alt="LinkedIn Impressions" %}
 
 That's a familiar looking curve. Spot on correlation between the number of impressions of my posts on people's feeds and new users visting the blog.
 
@@ -63,7 +63,7 @@ That's a familiar looking curve. Spot on correlation between the number of impre
 
 What about those 25 users that came via Google?
 
-![Search Analytics](/assets/images/blog-search-nov-2022.png)
+{% include candid-image.html src="/assets/images/blog-search-nov-2022.png" alt="Search Analytics" %}
 
 Google has a [Search Console](https://search.google.com/search-console) that provides some analytics about the search performance of your site. It's a bit of a pain to set up. You create a free account and point it at your domain. You then need to prove you own your domain by adding a magic string to a DNS record. Like Google Analytics its hard to tell whether its working with the added fun of dealing with DNS timeouts when you tweak settings. In my case it took a couple of weeks to get anything on my site indexed and another week to get some initial analytics. That lag has continued for each new post.
 
