@@ -29,17 +29,15 @@ The *Trough of Disillusionment* is where Zombie Products live. They limp along s
 
 Working on a Zombie Product is a thankless task. Your small team (its always a small team) does its best to keep the product alive. People leave and are never replaced. The technology base ages. There's no budget to keep things up to date. 
 
-Zombie Products are often the result of acquisitions that don't work out. When I joined Autodesk with the [Navisworks acquisition](https://investors.autodesk.com/news-releases/news-release-details/autodesk-completes-acquisition-navisworks) in 2007, I thought we were the only construction focused product that Autodesk had. In reality, another group within Autodesk had [acquired Constructware](https://investors.autodesk.com/news-releases/news-release-details/autodesk-completes-acquisition-demand-software-provider) a year earlier. Constructware was a great product. It was highly sticky. Once customers adopted it, it became central to their processes. It was a cloud product before Autodesk went all in on the cloud. Autodesk could have built a cloud construction business around Constructware.
+Zombie Products are often the result of acquisitions that don't work out, or "incubation" projects that fail to scale up. I first encountered a Zombie Product early in my career. It was complementary to the product I was working on. Naively I was excited about the possibility of integrating with it. I was gently steered away. Nothing was explicitly said but everyone else knew that it was the Old New Thing and should be avoided.
 
-Instead, by the time I joined, Constructware was already the Old New Thing. When the Navisworks team found out about it we were excited about integrating with it. Navisworks is a desktop single user collaboration tool. A cloud collaboration platform was a perfect fit. We were gently steered away. Nothing was explicitly said but everyone knew that Constructware was the Old New Thing and should be avoided.
-
-How long can a Zombie Product survive? Constructware was finally shut down this year, fifteen years after becoming the Old New Thing.
+How long can a Zombie Product survive? Most Zombie Products I've encountered are still active. That first one I encountered? It's one of the few that was actually decommissioned. In this case, fifteen years later.
 
 # Competition
 
 Competition is good, right? Well, not if you're the Old New Thing. If there's a fresh, new  project in the same or an overlapping space it's easy for people to see it as the natural successor to your presumably stale, failing project. 
 
-The textbook example is when a VP makes a move and acquires another product. This happened to Constructware when [Autodesk acquired Vela](https://investors.autodesk.com/news-releases/news-release-details/autodesk-positioned-transform-construction-industry-through-vela) which then became BIM 360 Field. As usual there was only partial overlap so Vela couldn't replace Constructware. However, there was enough overlap to reinforce Constructware's position as the now very old new thing and confirm its status as a zombie product.
+The textbook example is when a VP [makes a move]({% link _posts/2022-10-31-organizational-anti-pattern-vp-moves.md %}) and acquires another product. As is almost always the case there is only partial overlap, so the acquired product isn't a ready made replacement. However, some overlap is enough to reinforce your project's position as the old new thing and speed up its progress to either crash and burn or become a zombie product.
 
 The other common play is for another group in the organization to develop an overlapping project (usually without knowing about your project or one of the other five similar projects). The new project gets the hype and the momentum. Once their VP becomes aware of the other projects they express sadness and regret at the pointless duplication and suggest that everyone else abandons their clearly inferior projects. 
 
@@ -55,13 +53,15 @@ Reimagining the product when you rewrite it makes things worse. The designers ma
 
 The end result is that the old product falls back into the *Trough of Disillusionment* to join the other zombie products. The new product starts over from the beginning of the hype cycle. 
 
-Remember BIM 360 Field? It did well. Customers liked it. Autodesk bought and built complementary products. There was BIM 360 Glue, BIM 360 Plan and BIM 360 Docs. As you might expect they didn't work well with each other. Efforts were made to integrate. It was hard going. The developers thought the code base was a mess, all the cool kids were into micro-services rather than boring old monoliths. And so BIM 360 Next Gen was born.
+# Double Team
 
-Unsurprisingly, Next Gen Field didn't have all the features that Field Classic had. Similarly for Glue. They still don't. The classic products continue as zombies with customers waiting for feature parity before moving over to Next Gen. That feature parity well never come. [Autodesk acquired PlanGrid](https://adsknews.autodesk.com/pressrelease/autodesk-to-acquire-plangrid) and then rewrote and reimagined PlanGrid and BIM 360 Next Gen to create Autodesk Construction Cloud. Next Gen joins the other zombies. The classic customers are now waiting for ACC to achieve feature parity.  
+Life not complicated enough? Run two of these plays together. My personal favorite is when a product is making steady progress up the *Slope of Enlightenment* but a VP wants to speed things up. They acquire a competitor (not your biggest, somewhere in the number 2-6 range). There is some strategic thinking involved. The competitor is strong in an area of the market where you're weak and vice versa. It's complementary! They've plugged a hole in your offering and accelerated your progress to market domination.
 
-What next? ACC will make it to the *Plateau of Productivity*, won't it? 
+Your customers don't see it that way. They're confused. Which product should they buy? They know how your organization treats the Old New Thing. They don't want to back a loser. Meanwhile, your number one competitor's offering is looking more attractive and certainly less confusing. 
 
-At Autodesk University this year, Autodesk announced Forma. Forma is the "industry cloud for architecture, engineering, construction, and operations". Will Forma be a rebranded and extended ACC? Or has ACC just become the Old New Thing? 
+There's only one solution. Time to Rewrite, Reimagine and combine the two products into one. You can try your hardest to minimize the change. Perhaps you can cherry pick the best features of each product and just integrate them together. 
 
+Marketing insist that the result needs to be presented as a whole new product. UX want to use a new design language that is consistent across the two halves and distinguishes the new product from the two old ones. The product managers want to enhance the features in the new product to differentiate them from the old products. Everyone is saying *new* product rather than *combined* product.
 
+Before you know it you have two old products going to the Zombie graveyard and a new product that has a long journey ahead of it.
 
