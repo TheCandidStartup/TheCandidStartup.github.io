@@ -25,11 +25,13 @@ Many large companies exist on the back of their original, highly successful prod
 
 # Zombie Product
 
-The *Trough of Disillusionment* is where Zombie Products live. They limp along supporting a small number of customers but never really take off. No VP wants to put in the effort and investment needed to crawl up the *Slope of Enlightenment*. After all, there's a new shiny ball to chase after. No one even wants to talk about them. At the same time, its too much effort to kill them off. There's always at least one important customer that needs to be kept happy.
+The *Trough of Disillusionment* is where Zombie Products live. They limp along supporting a small number of customers but never really take off. No VP wants to put in the effort and investment needed to crawl up the *Slope of Enlightenment*. After all, there's a new shiny ball to chase after. No one even wants to talk about them. At the same time, it's too much effort to kill them off. There's always at least one important customer that needs to be kept happy.
 
-Working on a Zombie Product is a thankless task. Your small team (its always a small team) does its best to keep the product alive. People leave and are never replaced. The technology base ages. There's no budget to keep things up to date. 
+Working on a Zombie Product is a thankless task. Your small team (it's always a small team) does its best to keep the product alive. People leave and are never replaced. The technology base ages. There's no budget to keep things up to date. 
 
-Zombie Products are often the result of acquisitions that don't work out, or "incubation" projects that fail to scale up. I first encountered a Zombie Product early in my career. It was complementary to the product I was working on. Naively I was excited about the possibility of integrating with it. I was gently steered away. Nothing was explicitly said but everyone else knew that it was the Old New Thing and should be avoided.
+Zombie Products are often the result of acquisitions that don't work out, or "incubation" projects that fail to scale up. 
+
+I first encountered a Zombie Product early in my career. It was complementary to the product I was working on. Naively I was excited about the possibility of integrating with it. I was gently steered away. Nothing was explicitly said but everyone else knew that it was the Old New Thing and should be avoided.
 
 How long can a Zombie Product survive? Most Zombie Products I've encountered are still active. That first one I encountered? It's one of the few that was actually decommissioned. In this case, fifteen years later.
 
@@ -47,7 +49,7 @@ Your project has somehow made it through the *Trough of Disillusionment* and is 
 
 It's hard going. You have demanding customers. The code base is in a bit of a mess. The UX designers don't like some of the choices they made in the early stages that are now baked firmly into the product. Progress is slowing down. There are exciting new technologies that weren't available when you started out. There are fashionable new architectural patterns that all the cool kids are using. The engineers suggest that it might be time to rewrite the code. The UX designers are keen to reimagine how the product works. Everyone agrees that you will be able to do it better if you start over.
 
-Do I need to convince you that rewriting from scratch is a terrible idea? Luckily, I don't have to. Go and read [Thinks you Should Never Do, Part 1](https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/) by [Joel Spolsky](https://www.joelonsoftware.com/about-me/) and then come back. 
+Do I need to convince you that rewriting from scratch is a terrible idea? Luckily, I don't have to. Go and read [Things you Should Never Do, Part 1](https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/) by [Joel Spolsky](https://www.joelonsoftware.com/about-me/) and then come back. 
 
 Reimagining the product when you rewrite it makes things worse. The designers may have come up with a new more intuitive way of doing things but it doesn't cover all the edge cases. You no longer have a replacement for the original product, you have an overlapping product. Rebuilding the product takes longer than you thought. You're forced to launch with only a subset of the original features. The new product only meets the needs of a few of your existing customers. They don't like that they have to retrain their users to do things a different way. Someone has the bright idea to find new customers unconstrained by the old ways of doing things. The new customers push for additional features that further diverge the new product from the old one. 
 
