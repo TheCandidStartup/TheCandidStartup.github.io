@@ -1,4 +1,4 @@
----
+cdn---
 title: Modern SaaS Architecture
 ---
 
@@ -28,19 +28,30 @@ How do microservices make use of the cloud provider's platform? Teams make choic
 * Cache - MemoryDB for Redis, Elasticache Redis, Elasticache Memcache, or DAX (DynamoDB only)?
 * Queue - SQS, Kinesis, Amazon MQ?
 * Workers - EC2 instance, Container, Lambda, AWS Step Functions, SWF, AWS Batch
-* Event Bus - SNS, EventBridge
+* Event Bus - SNS, EventBridge, Amazon MQ
+* Blob Storage - S3
+* CDN - CloudFront
 
 Each microservice has its own AWS account (the AWS equivalent of a tenant) and a VPC if deploying any servers. Teams can configure per account limits to match the needs of their services. Its important that each service have its own account in order to prevent noisy neighbor issues between services. 
 
 # The Big Picture
 
+Put it all together and what do you get?
+
 {% include candid-image.html src="/assets/images/sass-architecture.svg" alt="SaaS Architecture" %}
 
-A large organization can have 100s of microservices. 
+A large organization can have 100s of microservices in total. A single product can easily end up with dependencies on 50 or more microservices. 
+
+There are three broad classes of service. First and most importantly are those that manage customer data (shown in red). Most of these take the form of feature services which provide the backend for a particular product feature. Typically there is a corresponding front end UI for each feature managed using a [micro-frontends architecture](https://martinfowler.com/articles/micro-frontends.html).
+
+Once you've distributed customer data across multiple feature services you need some way to aggregate it all together again for analytics, reporting and ML training. You asynchronously replicate all the data into a data lake and make it available to downstream analysis services.
+
+Some features need specialized blob storage for data like files and images. Cloud providers have optimized routes for upload and download using their CDN to avoid having to stream the data through the app servers.
+
+# Data Sovereignty 
+
+# A Modest Proposal
 
 SaaS company implements multi-tenant architecture using PaaS from one of the big cloud providers. PaaS platform uses sophisticated virtualization techniques to support multiple SaaS companies. We have multi-tenant at application level on multi-tenant at the PaaS level.
 
 Time for pendulum to swing again? Customers go direct to cloud provider and create an environment to run serverless open source software. Pay only for what you use. 
-
-# Data Sovereignty 
-
