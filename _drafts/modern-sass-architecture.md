@@ -1,4 +1,4 @@
-cdn---
+---
 title: Modern SaaS Architecture
 ---
 
@@ -14,6 +14,8 @@ In general, they all follow the same pattern. Incoming requests are handled by a
 
 Any microservice that manages customer data needs to implement multi-tenancy. Every row in the database and cache has a tenant identifier. Every incoming request, job in the queue and event raised needs to include a tenant id. App server and worker logic must be carefully written to ensure that requests only have access to data for the corresponding tenant. Systems need to be managed and scaled to ensure that activity from one tenant can't impact the availability of another tenant. 
 
+You need to manage different classes of activity separately to ensure predictable and reliable operation. The most important thing is to separate interactive traffic (handled by the app servers) from batch operations (handled by the workers). Most microservices use [REST APIs](https://aws.amazon.com/what-is/restful-api/) with a synchronous request-response interaction which needs [low overall and tail latency](https://brooker.co.za/blog/2021/04/19/latency.html). You need great care to ensure that each individual request uses a bounded amount of both memory and CPU, and that you can scale up the number of app servers before they become overwhelmed under heavy load.
+
 Microservice architectures are a [solution to an organizational problem](https://martinfowler.com/bliki/MicroservicePremium.html). How do you enable multiple teams to collaborate on a SaaS product without them getting in each other's way? How can you provide incremental value without the bottleneck of coordinating a big release with multiple teams? With microservices each team owns their own service(s) and is responsible for architecture, deployment, monitoring and scaling. Each team can make the best choice for their own service. 
 
 The downside of Microservices is that each team makes their own choices. Humans being what they are, teams will tend to make different choices from each other. Different language stacks (Java, .Net, Python, Ruby, NodeJS, GoLang, Scala, Rust, C++, ...) with different choices for libraries and frameworks. Different choices for databases, caches, queues and compute platforms. Different choices for deployment and monitoring. Different choices for API standards, consistency models and error handling. 
@@ -27,8 +29,8 @@ How do microservices make use of the cloud provider's platform? Teams make choic
 * Database - Relational (Postgres, MySQL, SQL Server or Oracle, RDS or Aurora), Key-Value (DynamoDB), DocumentDB, Column Oriented (Redshift), Graph (Neptune) or Time Series (TimeStream)?
 * Cache - MemoryDB for Redis, Elasticache Redis, Elasticache Memcache, or DAX (DynamoDB only)?
 * Queue - SQS, Kinesis, Amazon MQ?
-* Workers - EC2 instance, Container, Lambda, AWS Step Functions, SWF, AWS Batch
-* Event Bus - SNS, EventBridge, Amazon MQ
+* Workers - EC2 instance, Container, Lambda, AWS Step Functions, SWF, AWS Batch?
+* Event Bus - SNS, EventBridge, Amazon MQ?
 * Blob Storage - S3
 * CDN - CloudFront
 
@@ -47,6 +49,8 @@ There are three broad classes of service. First and most importantly are those t
 Once you've distributed customer data across multiple feature services you need some way to aggregate it all together again for analytics, reporting and ML training. You asynchronously replicate all the data into a data lake and make it available to downstream analysis services.
 
 Some features need specialized blob storage for data like files and images. Cloud providers have optimized routes for upload and download using their CDN to avoid having to stream the data through the app servers.
+
+The next class of services is the platform services (shown in blue). These provide common functionality shared between the feature services. They include admin related services that manage customer accounts, fulfill the creation of tenants, manage licensing and track usage. The admin services need to interface with your organization's back office systems (shown in purple) which involves the painful job of interacting with the IT and finance departments.
 
 # Data Sovereignty 
 
