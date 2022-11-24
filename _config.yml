@@ -4,10 +4,7 @@ url: https://www.thecandidstartup.org
 google_analytics: G-W5FLWM10L7
 twitter:
   username: ThCandidStartup
-author:
-  name: Tim Wiegand
-  twitter: ThCandidStartup
-  picture: /assets/images/tim-waterfall-profile-picture.jpg
+author: Tim Wiegand
 utterances:
   issue-term: pathname
   label: "blog comment"
