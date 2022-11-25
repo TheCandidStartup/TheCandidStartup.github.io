@@ -12,7 +12,7 @@ For me the best lens to look at this with is cost. Cost is the reason we have mu
 
 {% include candid-image.html src="/assets/images/serverless-cost-model.svg" alt="Serverless Cost Model" %}
 
-A truly serverless service will have zero cost when under zero load. If there are dedicated servers you need a minimum number running at all times waiting for incoming requests. If you care about availability and fault tolerance the minimum will be more than one. 
+A truly serverless service will have zero cost when under zero load. If there are dedicated servers you need a minimum number running at all times waiting for incoming requests. If you care about availability and fault tolerance, the minimum will be more than one. 
 
 A truly serverless service will have costs that scale linearly with increasing load. If there are dedicated servers there will be step changes in cost as the number of instances is scaled up to meet demand.
 
@@ -27,3 +27,15 @@ Sometimes the cost model for a service can be a little opaque. It may look like 
 Needing a VPC is a red flag that a service is *not* serverless. If you have to care about IP address ranges you're working at too low a level, stuck in the realm of physical servers.
 
 The most obvious red flag is any service where you have to choose an instance type. That immediately rules out Amazon MQ. Easily confirmed by a quick look at the [pricing page](https://aws.amazon.com/amazon-mq/pricing/). Most of these managed services have transparent pricing, you directly pay for the underlying instances.
+
+# Compute
+
+| Service | VPC? | Instance? | Min Monthly Cost | Cost Model               | Serverless? |
+|---------|------|-----------|------------------|--------------------------|-------------|
+| EC2     | Y    | Y         | $9[^1]           | Per instance per hour    | N           | 
+
+# Footnotes
+
+All costs correct at time of writing based on AWS US East 1 region.
+
+[^1]: 3 x t4g.nano at $0.0042 per hour (cheapest instance available assuming you can live with just 0.5 GB of memory)
