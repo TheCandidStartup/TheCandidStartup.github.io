@@ -130,4 +130,4 @@ Eventually you end up with [Platform as a Service](https://en.wikipedia.org/wiki
 
 So, I've obviously been skimming a lot of Wikipedia articles. Where has that got me? Well, you'll have to bear with me. 
 
-Next time I'll go deep on how a modern SaaS application is built, look at some of the challenges with that approach and make a modest proposal for how multi-tenant architecture might evolve again.
+[Next time]({% link _posts/2022-11-28-modern-saas-architecture.md %}) I'll go deep on how a modern SaaS application is built, look at some of the challenges with that approach and make a modest proposal for how multi-tenant architecture might evolve again.
