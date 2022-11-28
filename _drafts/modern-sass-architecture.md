@@ -34,7 +34,7 @@ How do microservices make use of the cloud provider's platform? Teams make choic
 * File Storage - S3, EBS, EFS?
 * CDN - CloudFront, Third party?
 
-Each microservice has its own AWS account (the AWS equivalent of a tenant) and a VPC if deploying any servers. Teams can configure per account limits to match the needs of their services. Its important that each service have its own account in order to prevent noisy neighbor issues between services. 
+Each microservice has its own AWS account (the AWS equivalent of a tenant) and a VPC if deploying any servers. Teams can configure per account limits to match the needs of their services. It's important that each service has its own account in order to prevent noisy neighbor issues between services. 
 
 # The Big Picture
 
@@ -72,7 +72,7 @@ You need a huge investment in standardization and automation to do it right. You
 
 At one point in my career a large customer asked if we could deploy our SaaS product into their AWS account. How we laughed at their naivety. Since then I've been thinking, was that really such an unreasonable request?
 
-I want to build an open source SaaS product of some sort. Open source and hosted SaaS applications have always seemed an unnatural combination to me. Is it really open source when there's no realistic way for a customer to change anything? And do I really want to operate a SaaS product? Be on call?
+I want to build an open source SaaS product of some sort. Open source and hosted SaaS applications have always seemed an unnatural combination to me. Is it really open source when there's no realistic way for a customer to change anything? And do I really want to operate a SaaS product myself? Be on call 24x7?
 
 Wouldn't it make more sense to build an open source SaaS product that a customer can deploy themselves into their own AWS account? Doesn't it seem odd that cloud providers have implemented incredibly good multi-tenant infrastructure with hardware enforced isolation and then SaaS vendors come along and build their own half-assed multi-tenancy on top? If each customer has their own AWS account I don't need to implement my own multi-tenancy. If each customer has their own dedicated environment they can't interfere with each other and the system only needs to scale to the needs of that customer.
 
