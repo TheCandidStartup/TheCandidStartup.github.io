@@ -32,23 +32,46 @@ The most obvious red flag is any service where you have to choose an instance ty
 
 | Service | VPC | Min Monthly Cost | Mem    | vCPUs | Cost Model | Min Bill Period |   Server-less? |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
-| EC2     | Y   | $18[^1]     | 0.5-12288 GB  | 2-448 | Per instance per hour | 60s[^2]  |  **Not**  | 
-| ECS     | Y   | $18[^1]     | 0.5-12288 GB  | 2-448 | Per instance per hour | 60s[^2]  |  **Not**  |
-| EKS     | Y   | $90[^3]     | 0.5-12288 GB  | 2-448 | Per cluster and instance per hour | 60s[^2]  |  **Not**  |
+| EC2     | Y   | $18[^1]     | 0.5-12288 GB  | 0.1-448 | Per instance per hour | 60s[^2]  |  **Not**  | 
+| ECS     | Y   | $18[^1]     | 0.5-12288 GB  | 0.1-448 | Per instance per hour | 60s[^2]  |  **Not**  |
+| EKS     | Y   | $90[^3]     | 0.5-12288 GB  | 0.1-448 | Per cluster and instance per hour | 60s[^2]  |  **Not**  |
 | ECS Fargate | Y | $21[^4]     | 0.5-120 GB  | 0.25-16 | Per vCPU and GB per hour | 60s[^2]  |  **Not**  |
 | EKS Fargate | Y | $93[^5]     | 0.5-120 GB  | 0.25-16 | Per cluster, vCPU and GB per hour | 60s[^2]  |  **Not**  |
 | Lambda | N | $0     | 128-10240 MB  | 0.072-5.79[^6] | Per GB-second and per request[^7] | 1ms  |  &#10004;  |
 
+It can be hard to compare Lambda and instance based pricing. The closest configurations are a c6gd.medium (1 vCPU, 2 GB) at $0.0384 per hour and a 1769 MB Lambda (1 vCPU, 1769 MB) at 0.0829 per hour. That's a little more than double the cost for Lambda. However, in practice, teams struggle to achieve anywhere close to 50% utilization when managing their own instances.
+
 AWS Batch is a job management service that runs jobs on your choice of EC2 instances, Fargate or Lambda. There is no additional cost over that of the underlying compute.
+
+# File Storage
+
+| Service | AZs | Durability | Max File Size | Max Capacity | Cost Model | Min Bill Period |   Server-less? |
+|---------|-----|-------|-----------|---------------|-------|-----------------------|-----|-----|
+| EBS | 1 | 5 9s | 64 TB | 64 TB | GB and IOPS *provisioned* per month[^f1] | 60s | **Not** |
+| EFS | 3 | 11 9s | 48 TB | Unlimited | Per GB-month and per GB read and written per month[^f2] | 1 Hour | &#10004; |
+| S3 | 3 | 11 9s | 5 TB | Unlimited | Per GB-month, per GB transferred out to internet and per request[^f3] | 1 Hour | &#10004; |
+
+There are no obvious fixed costs associated with any AWS file storage service. However, EBS is not serverless because the pricing model is based on provisioned capacity. Effectively you have to decide in advance how big you want your disk drive to be. The durability and availability model means you'll also need to implement some form of RAID on top of your bare EBS volumes if storing customer data.
+
+# Database
+
+# Queues and Eventing
+
+# Cache
+
+# Traffic Management
 
 # Footnotes
 
 All costs correct at time of writing based on AWS US East 1 region.
 
-[^1]: Min config is 3 x t4g.nano (2 vCPU, 0.5GB) at $0.0042 each per hour (cheapest instance available) with 30GB EBS volumes (base size for AWS Linux) at $3 per month
+[^1]: Min config is 3 x t4g.nano [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 5% utilization, 0.5GB) at $0.0042 each per hour (cheapest instance available) with 30GB EBS volumes (base size for AWS Linux) at $3 per month
 [^2]: You are charged for the time it takes for the OS and language stack to boot up, scale up is far from instant
 [^3]: Min config is 1 cluster at $0.1 per hour and 3 x t4g.nano with 30GB EBS volumes
-[^4]: Min config is 3 x (0.25vCPU, 0.5GB, Linux/Arm) at $0.00329 each per hour
-[^5]: Min config is 1 cluster at $0.1 per hour and 3 x (0.25vCPU, 0.5GB, Linux/Arm) at $0.00329 per hour
+[^4]: Min config is 3 x (0.25vCPU, 0.5GB, Linux/Arm) at $0.099 each per hour
+[^5]: Min config is 1 cluster at $0.1 per hour and 3 x (0.25vCPU, 0.5GB, Linux/Arm) at $0.099 per hour
 [^6]: Lambdas have [access to 2-6 vCPUs but are throttled based on memory size](https://www.sentiatechblog.com/aws-re-invent-2020-day-3-optimizing-lambda-cost-with-multi-threading)
-[^7]: $0.0000133 per GB-second and $0.2 per million requests. For comparison, one hour of compute with 0.5GB memory is $0.024
+[^7]: $0.0000133 per GB-second and $0.2 per million requests
+[^f1]: $0.08 per GB-month and $0.005 IOPS-month over 3000
+[^f2]: $0.30 per GB-month, $0.03 per GB reads and $0.06 per GB writes
+[^f3]: $0.023 per GB-month, $0.09 per GB transferred out to internet, $0.4 per million read requests, $5 per million write requests
