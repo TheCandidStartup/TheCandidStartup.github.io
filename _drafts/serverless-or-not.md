@@ -32,38 +32,12 @@ The most obvious red flag is any service where you have to choose an instance ty
 
 | Service | VPC | Min Monthly Cost | Mem    | vCPUs | Cost Model | Min Bill Period |   Server-less? |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
-| EC2     | Y   | $18[^1]     | 0.5-12288 GB  | 0.1-448 | Per instance per hour | 60s[^2]  |  **Not**  | 
-| ECS     | Y   | $18[^1]     | 0.5-12288 GB  | 0.1-448 | Per instance per hour | 60s[^2]  |  **Not**  |
-| EKS     | Y   | $90[^3]     | 0.5-12288 GB  | 0.1-448 | Per cluster and instance per hour | 60s[^2]  |  **Not**  |
+| EC2     | Y   | $18[^1]     | 0.5-1024 GB  | 0.1-128 | Per instance per hour | 60s[^2]  |  **Not**  | 
+| ECS     | Y   | $18[^1]     | 0.5-1024 GB  | 0.1-128 | Per instance per hour | 60s[^2]  |  **Not**  |
+| EKS     | Y   | $90[^3]     | 0.5-1024 GB  | 0.1-128 | Per cluster and instance per hour | 60s[^2]  |  **Not**  |
 | ECS Fargate | Y | $21[^4]     | 0.5-120 GB  | 0.25-16 | Per vCPU and GB per hour | 60s[^2]  |  **Not**  |
 | EKS Fargate | Y | $93[^5]     | 0.5-120 GB  | 0.25-16 | Per cluster, vCPU and GB per hour | 60s[^2]  |  **Not**  |
 | Lambda | N | $0     | 128-10240 MB  | 0.072-5.79[^6] | Per GB-second and per request[^7] | 1ms  |  &#10004;  |
-
-It can be hard to compare Lambda and instance based pricing. The closest configurations are a c6gd.medium (1 vCPU, 2 GB) at $0.0384 per hour and a 1769 MB Lambda (1 vCPU, 1769 MB) at 0.0829 per hour. That's a little more than double the cost for Lambda. However, in practice, teams struggle to achieve anywhere close to 50% utilization when managing their own instances.
-
-AWS Batch is a job management service that runs jobs on your choice of EC2 instances, Fargate or Lambda. There is no additional cost over that of the underlying compute.
-
-# File Storage
-
-| Service | AZs | Durability | Max File Size | Max Capacity | Cost Model | Min Bill Period |   Server-less? |
-|---------|-----|-------|-----------|---------------|-------|-----------------------|-----|-----|
-| EBS | 1 | 5 9s | 64 TB | 64 TB | GB and IOPS *provisioned* per month[^f1] | 60s | **Not** |
-| EFS | 3 | 11 9s | 48 TB | Unlimited | Per GB-month and per GB read and written per month[^f2] | 1 Hour | &#10004; |
-| S3 | 3 | 11 9s | 5 TB | Unlimited | Per GB-month, per GB transferred out to internet and per request[^f3] | 1 Hour | &#10004; |
-
-There are no obvious fixed costs associated with any AWS file storage service. However, EBS is not serverless because the pricing model is based on provisioned capacity. Effectively you have to decide in advance how big you want your disk drive to be. The durability and availability model means you'll also need to implement some form of RAID on top of your bare EBS volumes if storing customer data.
-
-# Database
-
-# Queues and Eventing
-
-# Cache
-
-# Traffic Management
-
-# Footnotes
-
-All costs correct at time of writing based on AWS US East 1 region.
 
 [^1]: Min config is 3 x t4g.nano [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 5% utilization, 0.5GB) at $0.0042 each per hour (cheapest instance available) with 30GB EBS volumes (base size for AWS Linux) at $3 per month
 [^2]: You are charged for the time it takes for the OS and language stack to boot up, scale up is far from instant
@@ -72,6 +46,77 @@ All costs correct at time of writing based on AWS US East 1 region.
 [^5]: Min config is 1 cluster at $0.1 per hour and 3 x (0.25vCPU, 0.5GB, Linux/Arm) at $0.099 per hour
 [^6]: Lambdas have [access to 2-6 vCPUs but are throttled based on memory size](https://www.sentiatechblog.com/aws-re-invent-2020-day-3-optimizing-lambda-cost-with-multi-threading)
 [^7]: $0.0000133 per GB-second and $0.2 per million requests
-[^f1]: $0.08 per GB-month and $0.005 IOPS-month over 3000
+
+It can be hard to compare Lambda and instance based pricing. The closest configurations are a c6gd.medium (1 vCPU, 2 GB) at $0.0384 per hour and a 1769 MB Lambda (1 vCPU, 1769 MB) at 0.0829 per hour. That's a little more than double the cost for Lambda. However, in practice, teams struggle to achieve anywhere close to 50% utilization when managing their own instances.
+
+AWS Batch is a job management service that runs jobs on your choice of EC2 instances, Fargate or Lambda. There is no additional cost over that of the underlying compute.
+
+# File Storage
+
+| Service | Min Monthly Cost | AZs | Dura-bility | Max File Size | Max Capacity | Cost Model | Min Bill Period |   Server-less? |
+|---------|-----|-------|------|-----|---------------|-------|-----------------------|-----|-----|
+| EBS | $1.60[^f1a] | 1 | 5 9s | 64 TB | 64 TB | GB and IOPS *provisioned* per month[^f1] | 60s | **Not** |
+| EFS | $0.3[^f2a] | 3 | 11 9s | 48 TB | Unlimited | Per GB-month and per GB read and written per month[^f2] | 1 Hour | &#10004; |
+| S3 | $0 | 3 | 11 9s | 5 TB | Unlimited | Per GB-month, per GB transferred out to internet and per request[^f3] | 1 Hour | &#10004; |
+
+[^f1a]: Minimum size is 20GB
+[^f2a]: An empty file system occupies some space so will be charged for at least 1 GB
+[^f1]: $0.08 per GB-month and $0.005 IOPS-month over 3 per GB
 [^f2]: $0.30 per GB-month, $0.03 per GB reads and $0.06 per GB writes
 [^f3]: $0.023 per GB-month, $0.09 per GB transferred out to internet, $0.4 per million read requests, $5 per million write requests
+
+EBS is not serverless because the pricing model is based on provisioned capacity. Effectively you have to decide in advance how big you want your disk drive to be. The durability and availability model means you'll also need to implement some form of RAID on top of your bare EBS volumes if storing customer data.
+
+EFS has a non-zero monthly cost but is low enough for me to count it as serverless.
+
+# Database
+
+| Service | VPC | Min Monthly Cost | Mem    | vCPUs | Cost Model | Min Bill Period |   Server-less? |
+|---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
+| RDS     | Y   | $27.64[^d1]     | 1-1024 GB  | 0.2-128 | Per instance per hour, GB *provisioned* per month | 10m  |  **Not**  | 
+| Aurora  | Y   | $106.12[^d2]     | 4-1024 GB  | 0.4-128 | Per instance per hour, GB per month, per million IOPs | 10m  |  **Not**  |
+| Aurora  Serverless | Y   | $87.40[^d3]     | 1-256 GB  | 0.125-32 | Per [ACU](https://docs.amazonaws.cn/en_us/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.how-it-works.html#aurora-serverless-v2.how-it-works.capacity) per hour, GB per month, per million IOPs | 10m  |  **Not**  |
+| DocumentDB  | Y   | $109.95[^d4]     | 4-768 GB  | 0.4-96 | Per instance per hour, GB per month, per million IOPs | 10m  |  **Not**  |
+| Neptune  | Y   | $134.92[^d5]     | 4-768 GB  | 0.4-96 | Per instance per hour, GB per month, per million IOPs | 10m  |  **Not**  |
+| DynamoDB  | N   | $0     | NA  | NA | Per million [request units](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html), GB per month[^d6] | 1 hour  |  &#10004; |
+| TimeStream  | N   | $0     | NA  | NA | Per million write request units, GB per hour in memory, GB per month stored, GB scanned[^d7] | 1 hour  |  &#10004; |
+
+[^d1]: Min Multi-AZ config is  2 x db.t4g.micro [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 10% utilization, 1GB) at $0.016 each per hour with 20GB of storage at $0.23 per GB-month
+[^d2]: Min Multi-AZ config is 2 x db.t4g.medium [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 20% utilization, 4GB) at $0.073 each per hour with 10GB of storage at $0.1 per GB-month
+[^d3]: Min Multi-AZ config is 2 x 0.5 [ACU](https://docs.amazonaws.cn/en_us/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.how-it-works.html#aurora-serverless-v2.how-it-works.capacity)  (0.125 vCPU, 1 GB) at $0.12 per ACU hour with 10GB of storage at $0.1 per GB-month
+[^d4]: Min Multi-AZ config is 2 x db.t4g.medium [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 20% utilization, 4GB) at $0.07566 each per hour with 10GB of storage at $0.1 per GB-month
+[^d5]: Min Multi-AZ config is 2 x db.t4g.medium [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 20% utilization, 4GB) at $0.093 each per hour with 10GB of storage at $0.1 per GB-month
+[^d6]: $1.25 per million write requests, $0.25 per million read requests, $0.25 per GB-month
+[^d7]: $0.50 per million write requests, $0.036 per GB-hour in memory, $0.03 per GB-month stored, $0.01 per GB scanned
+
+The big surprise here is that "Aurora Serverless" is not actually serverless. It would be better described as "Aurora with auto-vertical scaling of instance types" but I guess that's not catchy enough.
+
+# Queues and Eventing
+
+| Service | VPC | Min Monthly Cost | Cost Model | Min Bill Period |  Server-less? |
+|---------|-----|------------------|-------------|-----|-----|
+| Amazon MQ | Y | $40.94[^q1]     | Per instance per hour, GB per month, GB transferred between instances[^q2] | 60s  |  **Not**  | 
+| Kinesis | N | $28.80[^q3]     | Per stream per hour, GB ingested, GB retrieved[^q4] | 1 hour  |  **Not**  | 
+| SQS | N | $0   | Per million requests[^q5] | NA  |  &#10004; |
+| SNS | N | $0   | Per million requests and GB transferred out[^q6] | NA  |  &#10004; |
+| EventBridge | N | $0   | Per million events published[^q7] | NA  |  &#10004; |
+
+[^q1]: Min Multi-AZ config is 2 x mq.t3.micro [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 10% utilization, 1GB) at $0.02704 each per hour with 20GB of storage at $0.1 per GB-month
+[^q2]: $0.10 per GB for EBS storage, $0.30 for EFS. $0.01 per GB transferred between brokers in multi-az setup
+[^q3]: One stream at $0.04 per hour
+[^q4]: $0.08 per GB ingested, $0.04 per GB retrieved
+[^q5]: $0.40 per million 64KB requests
+[^q6]: $0.50 per million 64KB requests, $0.09 per GB transferred out to SQS or Lambda ($5 per million 64KB events, $0.09 per million 1KB events)
+[^q7]: $1 per million 64KB events
+
+# Cache
+
+MemoryDB for Redis, Elasticache Redis, Elasticache Memcache, or DAX (DynamoDB only)?
+
+# Networking
+
+CloudFront, API Gateway, Load balancer
+
+# Footnotes
+
+All costs correct at time of writing based on AWS US East region.
