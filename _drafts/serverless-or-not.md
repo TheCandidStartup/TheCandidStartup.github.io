@@ -4,7 +4,9 @@ title: Serverless or Not?
 
 I [want to build a Serverless SaaS product]({% link _posts/2022-11-28-modern-saas-architecture.md %}) that can be deployed into a customer's own AWS account. But what exactly does it mean to be Serverless? AWS (other cloud providers are available) has [over 200 different services](https://aws.amazon.com/what-is-aws/). How many of those are serverless?
 
-Like most things, there's a spectrum. There are varying opinions about where the dividing line is. It's definitely not serverless if you have to install and patch operating systems on individual servers. What about a managed service like [Amazon MQ](https://aws.amazon.com/amazon-mq/)? The servers are managed for you. There's nothing to install or configure. However, you do have to decide [how many servers you want and which instance types to use](https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/amazon-mq-creating-configuring-broker.html). 
+Like most things, there's a spectrum. There are varying opinions about where the dividing line is. It's definitely not serverless if you have to install and patch operating systems on individual servers. 
+
+What about a managed service like [Amazon MQ](https://aws.amazon.com/amazon-mq/)? The servers are managed for you. There's nothing to install or configure. However, you do have to decide [how many servers you want and which instance types to use](https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/amazon-mq-creating-configuring-broker.html). 
 
 At the other end of the scale you have services like [S3](https://aws.amazon.com/s3/). There are no decisions to make about numbers or types of instance. The API and console expose nothing related to servers at all. However, we all know there's a massive fleet of servers somewhere behind the scenes.
 
@@ -24,9 +26,9 @@ Let's play a game of *Serverless or Not*.
 
 Sometimes the cost model for a service can be a little opaque. It may look like there are zero fixed costs but when you look at practical implementations you find that you can't do without what you thought were "optional" extra cost items. A good example (and my first red flag) is [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html). VPCs are free to create. However, almost all practical implementations will need a NAT gateway or VPC endpoints. Both are extra cost items with a fixed cost component.
 
-Needing a VPC is a red flag that a service is *not* serverless. If you have to care about IP address ranges you're working at too low a level, stuck in the realm of physical servers.
+Needing a VPC is a red flag that a service is *not* serverless. If you have to care about IP address ranges, you're working at too low a level, stuck in the realm of physical servers.
 
-The most obvious red flag is any service where you have to choose an instance type. That immediately rules out Amazon MQ. Easily confirmed by a quick look at the [pricing page](https://aws.amazon.com/amazon-mq/pricing/). Most of these managed services have transparent pricing, you directly pay for the underlying instances.
+The most obvious red flag is any service where you have to choose an instance type. That immediately rules out Amazon MQ. Easily confirmed by a quick look at the [pricing page](https://aws.amazon.com/amazon-mq/pricing/). Most of these managed services have transparent pricing. You directly pay for the underlying instances.
 
 # Compute
 
@@ -46,6 +48,8 @@ The most obvious red flag is any service where you have to choose an instance ty
 [^5]: Min config is 1 cluster at $0.1 per hour and 3 x (0.25vCPU, 0.5GB, Linux/Arm) at $0.099 per hour
 [^6]: Lambdas have [access to 2-6 vCPUs but are throttled based on memory size](https://www.sentiatechblog.com/aws-re-invent-2020-day-3-optimizing-lambda-cost-with-multi-threading)
 
+Fargate often appears in AWS presentations about serverless architecture. However, the cost model is not serverless. You need a minimum number of containers running at all times in case a request comes in. You can't spin up a container on demand the first time a request arrives.
+
 It can be hard to compare Lambda and instance based pricing. The closest configurations are a c6gd.medium (1 vCPU, 2 GB) at $0.0384 per hour and a 1769 MB Lambda (1 vCPU, 1769 MB) at 0.0829 per hour. That's a little more than double the cost for Lambda. However, in practice, teams struggle to achieve anywhere close to 50% utilization when managing their own instances.
 
 AWS Batch is a job management service that runs jobs on your choice of EC2 instances, Fargate or Lambda. There is no additional cost over that of the underlying compute.
@@ -61,7 +65,7 @@ AWS Batch is a job management service that runs jobs on your choice of EC2 insta
 [^f1a]: Minimum size is 20GB
 [^f2a]: An empty file system occupies some space so will be charged for at least 1 GB
 
-EBS is not serverless because the pricing model is based on provisioned capacity. Effectively you have to decide in advance how big you want your disk drive to be. The durability and availability model means you'll also need to implement some form of RAID on top of your bare EBS volumes if storing customer data.
+EBS is not serverless because the pricing model is based on provisioned capacity. Effectively you have to decide in advance how big you want your disk drive to be and how much IO you will be doing. The durability and availability model means you'll also need to implement some form of RAID on top of your bare EBS volumes if storing customer data.
 
 EFS has a non-zero monthly cost but is low enough for me to count it as serverless.
 
@@ -100,15 +104,19 @@ The big surprise here is that "Aurora Serverless" is not actually serverless. It
 [^q3]: One stream at $0.04 per hour
 [^q6]: $ 0.09 per GB transferred equivalent to $5 per million 64KB events or $0.09 per million 1KB events
 
+Functionally, Kinesis looks like it should be serverless. Again, the cost model reveals the existence of dedicated per stream infrastructure.
+
 # Orchestration
 
 | Service | VPC | Min Monthly Cost  | Cost Model |  Min Bill Period | Server-less? |
 |---------|-----|------|------------|-------|------|-----|
-| SWF | Y[^o1] | $0 | $100 per million workflow executions, $25 per million tasks | NA  |  **Not**  | 
+| SWF | Y | $0 | $100 per million workflow executions, $25 per million tasks | NA  |  **Not**  | 
 | STEP Functions | N | $0 | $25 per million [state transitions](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-transitions.html) | NA  |  &#10004; |
 | STEP Functions Express | N | $0 | $0.00001667 per GB-second and $1 per million requests | 100ms  |  &#10004; |
 
-[^o1]: SWF requires decision logic and task workers to execute on instances which use long polling to communicate with SWF
+In isolation, SWF looks serverless. However, SWF is useless without decision and task workers. SWF requires those decision and task workers to execute on instances which use long polling to communicate with SWF. That in turn makes any system that uses SWF not serverless.
+
+Standard and Express STEP functions look very similar. Both implement orchestration logic based on the STEP state machine definition. The cost models reveal that the implementations are completely different. Standard STEP functions provide exactly once semantics and have a cost model that suggests they're implemented on top of SWF or something with an equivalent architecture. Express STEP functions have at most one or at least once semantics. Their cost model suggests they're implemented using an SQS queue of workflow instances with a lambda that reads an instance and then executes the entire workflow.
 
 # Cache
 
@@ -134,11 +142,11 @@ Quoted memory sizes for MemoryDB and Elasticache are memory available for cachin
 | CloudFront | $0 | $1 per million https requests, $0.085 per GB transferred out to internet | NA |  &#10004; |
 | API Gateway (http API)| $0 | $1 per million 512KB http API calls received, $0.09 per GB transferred out to internet | NA |  &#10004; |
 | API Gateway (WebSocket API)| $0 | $1 per million 32KB messages sent or received by client, $0.25 per million connection minutes | NA |  &#10004; |
-| IoT Core | $0 | $0.30 per million 5KB messages ingested[^n1], $1 per million 5KB messages received, $0.08 per million connection minutes | NA |  &#10004; |
-
-[^n1]: Ingested messages can be forwarded to S3, SNS, SQS, Lambda, DynamoDB, STEP Functions and more 
+| IoT Core | $0 | $0.30 per million 5KB messages ingested, $1 per million 5KB messages received by client, $0.08 per million connection minutes | NA |  &#10004; |
 
 I'm as surprised as you are that load balancers are not serverless. Functionally it looks serverless - no configuration of instance types, smooth and elastic scaling under load. However, the cost model makes it clear there must be some dedicated per customer infrastructure behind the scenes.
+
+Despite the name, IOT Core is a general purpose asynchronous messaging gateway. Messages from clients can be ingested at scale and routed to S3, SNS, SQS, Lambda, DynamoDB, STEP Functions and many more.
 
 # Footnotes
 
