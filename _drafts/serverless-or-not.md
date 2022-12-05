@@ -14,9 +14,9 @@ For me the best lens to look at this with is cost. Cost is the reason we have mu
 
 {% include candid-image.html src="/assets/images/serverless-cost-model.svg" alt="Serverless Cost Model" %}
 
-A truly serverless service will have zero cost when under zero load. If there are dedicated servers you need a minimum number running at all times waiting for incoming requests. If you care about availability and fault tolerance, the minimum will be more than one. 
+A truly serverless service will have zero cost when under zero load. If there are dedicated servers, you need a minimum number running at all times waiting for incoming requests. If you care about availability and fault tolerance, the minimum will be more than one. 
 
-A truly serverless service will have costs that scale linearly with increasing load. If there are dedicated servers there will be step changes in cost as the number of instances is scaled up to meet demand.
+A truly serverless service will have costs that scale linearly with increasing load. If there are dedicated servers, there will be step changes in cost as the number of instances is scaled up to meet demand.
 
 Reduced complexity is a side benefit driven by the serverless cost model. If costs scale linearly, the implementation is likely to be highly elastic with less messy edge cases to deal with. If there are no dedicated servers, then there are no servers for you to manage and no need to be concerned with instance types and numbers of servers. You have a simpler, higher level abstraction to deal with.
 
@@ -50,7 +50,7 @@ The most obvious red flag is any service where you have to choose an instance ty
 
 Fargate often appears in AWS presentations about serverless architecture. However, the cost model is not serverless. You need a minimum number of containers running at all times in case a request comes in. You can't spin up a container on demand the first time a request arrives.
 
-It can be hard to compare Lambda and instance based pricing. The closest configurations are a c6gd.medium (1 vCPU, 2 GB) at $0.0384 per hour and a 1769 MB Lambda (1 vCPU, 1769 MB) at 0.0829 per hour. That's a little more than double the cost for Lambda. However, in practice, teams struggle to achieve anywhere close to 50% utilization when managing their own instances.
+It can be hard to compare Lambda and instance based pricing. The closest configurations are a c6gd.medium (1 vCPU, 2 GB) at $0.0384 per hour and a 1769 MB Lambda (1 vCPU, 1769 MB) at $0.0829 per hour. That's a little more than double the cost for Lambda. However, in practice, teams struggle to achieve anywhere close to 50% utilization when managing their own instances.
 
 AWS Batch is a job management service that runs jobs on your choice of EC2 instances, Fargate or Lambda. There is no additional cost over that of the underlying compute.
 
@@ -116,7 +116,7 @@ Functionally, Kinesis looks like it should be serverless. Again, the cost model 
 
 In isolation, SWF looks serverless. However, SWF is useless without decision and task workers. SWF requires those decision and task workers to execute on instances which use long polling to communicate with SWF. That in turn makes any system that uses SWF not serverless.
 
-Standard and Express STEP functions look very similar. Both implement orchestration logic based on the STEP state machine definition. The cost models reveal that the implementations are completely different. Standard STEP functions provide exactly once semantics and have a cost model that suggests they're implemented on top of SWF or something with an equivalent architecture. Express STEP functions have at most one or at least once semantics. Their cost model suggests they're implemented using an SQS queue of workflow instances with a lambda that reads an instance and then executes the entire workflow.
+Standard and Express STEP functions look very similar. Both implement orchestration logic based on the [STEP state machine definition](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html). The cost models reveal that the implementations are completely different. Standard STEP functions provide exactly once semantics and have a cost model that suggests they're implemented on top of SWF or something with an equivalent architecture. Express STEP functions have at most once or at least once semantics. Their cost model suggests they're implemented using an SQS queue of workflow instances with a lambda that reads an instance and then executes the entire workflow.
 
 # Cache
 
@@ -125,14 +125,18 @@ Standard and Express STEP functions look very similar. Both implement orchestrat
 | MemoryDB for Redis  | Y  | $69.12[^c1]     | 1.37-419.09 GB  | 0.4-64 | Per instance per hour, $0.20 per GB written | 60s  |  **Not**  | 
 | Elasticache  | Y  | $23.04[^c3]     | 0.5-635.61 GB  | 0.2-96 | Per instance per hour | 60s  |  **Not**  | 
 | DAX (DynamoDB accelerator)  | Y  | $57.60[^c4]     | 2-768 GB  | 0.4-96 | Per instance per hour | 60s  |  **Not**  | 
+| API Gateway Caching | N  | $14.40[^c5]     | 0.5-237 GB  | Unknown | Per hour | 60s  |  **Not**  | 
 
 [^c1]: Min Multi-AZ config is  2 x db.t4g.small [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 20% utilization, 1.37GB) at $0.048 each per hour
 [^c3]: Min Multi-AZ config is  2 x cache.t4g.micro [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 10% utilization, 0.5GB) at $0.016 each per hour
 [^c4]: Min Multi-AZ config is  2 x dax.t3.small [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 20% utilization, 2GB) at $0.04 each per hour
+[^c5]: Min config is 0.5GB cache capacity at $0.02 per hour
 
-Surprisingly, there is no serverless application cache available from AWS. Even the DynamoDB specific DAX is instance based.
+Surprisingly, there is no serverless application cache available from AWS. Even the DynamoDB specific DAX and API Gateway integrated caching are instance based. 
 
-Quoted memory sizes for MemoryDB and Elasticache are memory available for caching. DAX quotes the overall memory on the instance, not all of which will be available for caching.
+The only configuration for the API Gateway cache is capacity. However, the [documentation](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html) makes it clear that there is a dedicated instance behind the scenes. It even suggests that you run a load test to ensure that the instance you implicitly selected (based on cache capacity) will cope with your traffic.
+
+Quoted memory sizes for MemoryDB, Elasticache and API Gateway are memory available for caching. DAX quotes the overall memory on the instance, not all of which will be available for caching.
 
 # Networking
 
