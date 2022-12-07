@@ -285,3 +285,200 @@ Mostly a plug for resilience hub.
     * Works by removing AZ from DNS
     * Gives time to diagnose and fix problem
     * Can extend shift or cancel
+
+## Beyond five 9s: Lessons from our highest available data planes
+
+[YouTube](https://youtu.be/es9527rA_8I)
+
+Updated version of a talk that is given every year. Lots more details in the builders library. Recommended.
+
+* Rethinking the nines model
+    * Coarse, not great for systems design. Doesn't fit cell based systems.
+    * Single summary statistic - doesn't give great insight
+    * Instead think about what really matters - how long could an interruption last? RTO? How often could it happen? What is the Rate and Expected Duration? (RED)
+    * Plot rate vs expected duration, minutes per year vs expected duration. Add additional lines for 100% impact, 50% impact, 5% impact, etc.
+    * Nines model comes from mech and civil engineering - physical components have different failure characteristics with no recovery
+    * Nines model would suggest better resiliency using multiple DNS providers but in reality you're now dependent on two providers being up.
+* Compartmentalization and blast radius
+    * Regional and AZ isolation (as in previous talk)
+    * Multiple cells within each AZ
+    * Then add shuffle sharding across cells
+* Simplicity and survival of the fittest
+    * What is simple? Not fewest moving parts (unicycle), fewest needed parts (bike)
+    * Systems need to evolve over time, eliminate faults over time, best patterns reused
+* Constant work and minimizing change
+    * Load spikes have all kinds of nasty effects
+    * Reducing dynamism in systems makes them simpler
+    * Running system at maximum work regardless of load can make it more reliable
+    * Classic example: instead of pushing changes to route 53 on every change, push on a fixed schedule
+* Testing as time travel
+    * "There is no compression algorithm for experience"
+    * For testing no substitute for having lots of tests and running them often
+    * Automated reasoning to prove correctness
+    * Lots and lots of metrics
+*  Operational safety
+    * Most incidents triggered by changes
+    * Safe deployment process is vital - staged deployments at server, AZ, region level. Automated rollback on failure.
+    * Cattle vs pets - systems too big to manage by hand. 
+    * Automation first. Any lesson learned is turned into a tool/automation
+* Technical fearlessness
+    * "culture eats strategy for breakfast"
+    * Elite teams insist on high standards. No budget for quality, quality is embedded in their approach. 
+    * No dumb questions, anyone can be elite with the right support, criticism welcomed
+    * High standards -> maintainability/operability -> elite teams -> repeat
+    * Low standards -> unmaintainable -> unhappy teams -> repeat
+
+## Scaling on AWS for your first 10 million users
+
+[YouTube](https://youtu.be/yrP3M4_13QM)
+
+Updated version of talk given every year by developer advocates responsible for startups. Not very technical but helpful to see the overall story.
+* Journey for startup has changed drastically
+* Used to start with single EC2 instance, then split into layers, distribute across AZs
+* Frontends now all rich clients based on frameworks like react and flutter. Use AWS amplify to take code in repo, transform as needed and deploy to hosted platform behind CloudFront.
+    * continuous workflows, custom domain setup, feature branch deployments, atomic deployments, global availability
+* On backend most people now start with managed compute and managed database
+* APIs exposed via API gateway, ALB or AWS AppSync (GraphQL)
+* AWS App Runner - build/deploy/run containerized web apps and API servers 
+* Database - start with SQL databases (Aurora serverless v2) until you need NoSQL
+* Gives you a single region, multi-AZ, scalable stack to start off with
+* Need to make changes to scale >10K users
+* Frontend: tuning, reducing backend calls, caching content more effectively
+    * Need to measure before we can tune - CloudWatch/X-Ray
+    * ML driven recommendations - DevOps Guru and CodeGuru
+* Database: 
+    * Add read replicas for read heavy traffic, add RDS proxy to manage connection from large number of instances. 
+    * Add caching - ElastiCache
+* Backend:
+    * App Runner uses ECS Fargate. Limited to 200 concurrent requests per instance and 25 instances per service = 5000 concurrent requests
+    * Can squeeze out more by tuning - looking at slow db queries, more caching.
+* Overall gets you to 100K maybe 1M users
+    * Need more scale than App Runner can provide
+    * DB writes start to become a bottleneck
+    * Next step is to break system into multiple micro-services
+    * Before that can look at DB federation. Keep monolithic app server tier but break DB into multiple DBs by function/purpose
+    * At some point will need to look at sharding SQL or shifting to NoSQL
+    * In backend tier may need to directly manage ECS rather than using app runner, look at different forms of compute, move from sync to async, look at event driven architectures
+
+## Architecting secure serverless applications
+
+[YouTube](https://youtu.be/A8iHQjHv8nY)
+
+QR codes with links to further reading embedded in each slide
+
+* Shifting responsibility for security to AWS and shift left to developers in your org
+* Serverless = small pieces, loosely joined
+* Use IAM for access control rather than VPC
+* Use least privilege principles
+* Serverless means AWS handles more infrastructure security responsibilities
+* Lambda: be aware of sandbox reuse during warm start - be careful when storing sensitive data in memory or /tmp
+* shift left: defense in depth, secure each component (e.g. using IAM)
+* Lambda IAM: function policy controls who can invoke function, execution role controls what function can do
+* Start narrow (no privileges) and add stuff. Look carefully at any wildcard * in policy.
+* AWS SAM policy templates cover lots of common least privilege cases
+* New Lambda function urn that can restrict permissions to a specific function urn rather than anything with the appropriate role
+* SQS now supports attribute based access controls (using message attributes)
+* Separate secrets from code. Use AWS secrets manager, not environment variables. Can then restrict permission to load secret to your Lambda. Load secret on init or each invoke as appropriate.
+* Validate untrusted event payloads. Validate before processing, before parsing. Use strict typing, add additional constraints to open ended types like strings.
+* ABAC makes management of large systems more scalable
+    * Policy that requires function to be tagged on create
+* Permission boundaries allows controlled delegation of policy creation to developers
+* Can control Lambda function access to internet by attaching it to a VPC and then using something like AWS network firewall. Expensive/scaling implications - only do if you really need it.
+
+## Designing event-driven integrations using Amazon EventBridge
+
+[YouTube](https://youtu.be/eUjbLFPsATE)
+
+* Event bus - account topologies
+* Service's will typically have their own accounts so have to deal with multi-account topology
+* Most common pattern, especially when starting out is single event bus (in dedicated account) connected to multiple service accounts.
+    * Typically common DevOps team owns the event bus
+    * Lots of coordination to manage rules
+* Other option is multi-bus, multi account
+    * Each service has its own event bus owned by the service team
+    * Service team manages permissions for other services that subscribe to events
+* In both topologies there is actually an event bus in every account. Receiving teams can add their own rules to their event bus.
+* Separation between subscription rules that control what a service is sending to another service and integration rules that control what a service does with incoming events.
+* Limit of 2000 rules per event bus
+* Same content on coupling as "Building next-gen applications with event-driven architectures"
+* An event is
+    * A signal that a system's state has changed
+    * An immutable object
+    * A contract for integrating systems
+* Event types: notification events, state transfer events, domain events - Martin Fowler definitions
+* Roles and responsibilities
+    * One logical publisher for each domain event
+    * Consistent boundary between bounded contexts
+    * Contract between producers and consumers represented as EventBridge schema
+    * Producers responsible for event consistency, conforming to contract, backwards compatibility
+    * Producer needs to know who is subscribing to what version of an event
+    * Producers should make no assumptions about how consumers are using events
+    * Consumers are responsible for specifying events they want to receive, rate at which they process them
+* Implementing in EventBridge
+    * Producer defines schemas
+    * Producer defines policies for who can publish events and who can create rules
+    * Producer creates events and owns archive of published events
+    * Consumer creates rules that route events to consumer's destination
+    * Consumer requests replay of archived events if needed
+* Working with sensitive data - could encrypt payload and use policies to control who has access to keys. Better to avoid including PII in events.
+* Need some conventions for rule naming to avoid multiple consumers clashing
+    * e.g. subscriber domain + target + event source + event type
+    * BUT 64 char limit for rule names
+* Event uniqueness
+    * Consumers need to ensure idempotency
+    * e.g. With idempotency key as event id
+    * Lambda power tools has utilities for recording response from event processing and returning a duplicate response if invoked with duplicate event
+    * Power tools approach only works with near live events as it assumes an idempotency window of 5 minutes (which is TTL for recorded responses)
+    * If you have DLQ or replay events from archive need idempotency window >> 5 min
+    * Assume that events will be duplicated and where possible handle in business logic
+
+## Best practices for advanced serverless developers
+
+[YouTube](https://youtu.be/PiQ_eZFO2GU)
+
+* Platform team enablement
+    * CI/CD pipelines
+    * Security guardrails - AWS control tower, policies, permission boundaries
+    * Reusable infrastructure as code patterns
+* Well architected framework serverless application lens
+* Event State
+    * Async patterns to reduce latency, improve resilience
+    * Use EventBridge
+    * "Events are the language of serverless applications"
+    * Balance between including additional state in event or having receiver call back
+    * Avoid exposing implementation details
+* Service-full Serverless
+    * Instead of event source -> lambda -> destination use direct service integrations where possible to remove the lambda glue logic
+    * Rather than putting all your backend logic in a single lambda, split concerns using api gateway, event bus, queues, STEP, etc. with multiple lambdas each focused on a minimal bit of business logic.
+    * Orchestration and Choreography again
+    * API destinations in EventBridge can directly call any external API
+    * Use lambda to transform not to transport
+* Fabulous Functions
+    * Asynchronous integration built into lambda for SQS, DynamoDB, Kinesis, ... sources
+    * Custom runtimes and lambda extensions for more control over lambda init
+    * Only load what you need during init - another reason for small focused lambdas
+    * Optimize dependencies. Pull in just the specific SDK components you need, can save 100s of ms
+    * NodeJS v3 SDK is 3MB package rather than 8MB for v2. TCP connection use now on by default.
+    * Prefer Graviton instances
+    * Increase memory allocation if lambda is cpu or network constrained. Lambda power tuner is open source tool to find optimal configuration.
+    * Only attach to a VPC if you really need to
+    * Use reserved concurrency to ensure you have your share of account limit, prevent overloading downstream dependencies, emergency level to turn off processing
+    * Understand quotas and how scale up works
+* Configuration as code
+    * Automate provisioning
+    * AWS has SAM and cDK frameworks
+    * IAM access analyzer to check for security problems
+    * SAM outputs CloudFormation and now optionally TerraForm
+    * 75+ templates out of the box. Serverless patterns collection has many more.
+* Prototype to production
+    * Think about testing quickly rather than testing locally
+    * Use mock frameworks locally rather than complete service emulation
+    * Test in the cloud as soon as possible
+    * SAM accelerate makes it practical to develop in cloud - build what's changed locally and sync changes with cloud
+    * Templates for deploying across multiple environments
+    * Use multiple delivery pipelines with shared templates to allow each component to deploy independently 
+    * Test in production - deploy to subset of traffic. AppConfig Feature flags, CloudWatch evidently.
+    * Canaries - CloudWatch synthetics
+    * CloudWatch embedded metrics - auto-extract metrics from log entries
+    * CloudWatch logs insights
+    * Lots of observability stuff in lambda power tools
