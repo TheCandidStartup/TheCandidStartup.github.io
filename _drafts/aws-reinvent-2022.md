@@ -129,7 +129,7 @@ Entertaining, thought provoking, well worth watching.
 
 # Breakout Sessions
 
-So many breakout sessions. No one could possibly look at them all. This is a random sampling of those with a title interesting enough to get me to press play.
+So many breakout sessions. No one could possibly look at them all. This is a random sampling of those with a title interesting enough to get me to press play. To cut the list down further I'm mostly focusing on 300 and 400 level talks.
 
 ## Building next-gen applications with event-driven architectures
 
@@ -482,3 +482,139 @@ QR codes with links to further reading embedded in each slide
     * CloudWatch embedded metrics - auto-extract metrics from log entries
     * CloudWatch logs insights
     * Lots of observability stuff in lambda power tools
+
+## Building real-world serverless applications with AWS SAM
+
+[YouTube](https://youtu.be/jZcS-XRt2Mo)
+
+Same presenter as "Building next-gen applications with event-driven architectures" with the same jokes. Good introduction to SAM if you've never worked with it before.
+
+* SAM basics
+* SAM local
+* SAM accelerate
+* SAM deploy (dev environments)
+* SAM pipeline (CI/CD for staging/production)
+    * Now supports OIDC authorizer (use GitHub without IAM user)
+* Native esbuild support (Node tree shaking)
+* SAM connectors to describe how data and events flow between source/destination
+* [Serverless Land](https://serverlessland.com/)
+    * [Resources for this session](https://serverlessland.com/reinvent2022/svs303)
+* Let SAM name your resources
+* Use SAM delete for cleanup
+
+## Build your application easily & efficiently with serverless containers
+
+[YouTube](https://youtu.be/MqPxzWqttJs)
+
+* Best tools for low concurrency vs high concurrency applications
+* Lambda best for low concurrency,  very spiky load, or high variance in work per request (scales to 0, very responsive, separate VM per request)
+* At higher concurrency need to think about waiting for IO. With lambda you're paying while you wait. ECS better for IO intensive workload where you have consistent baseline load.
+* Need to understand and set limit on number of concurrent requests per container
+* AWS App runner manages that for you on ECS Fargate
+* App Runner internally uses Envoy proxy load balancer
+* App Runner cost model charges for CPU when there are active requests, but only for memory when no requests (once inactive for 1 minute)
+* For highest concurrency run on Fargate directly
+    * Choose what load balancer you wnat to use (ALB, NLB or API gateway)
+    * Choose your own orchestrator (ECS recommended for serverless)
+    * Choose your scaling - Auto Scaling or based on CloudWatch metrics
+    * Fargate charges for containers * time, not traffic
+
+## Advanced serverless workflow patterns and best practices
+
+[YouTube](https://youtu.be/o6-7BAUWaqg)
+[Resources](https://serverlessland.com/reinvent2022/api309)
+
+Heavy focus on using STEP functions and thinking of everything in terms of workflows.
+
+* Step functions first, step functions always when building app
+* How to reduce cost
+* Dive into new distributed map feature
+* Workflow makes it easy to understand what's happening in serverless system - nice ui for looking at history of requests, failures, etc.
+* REST API implemented as express workflow with branch per endpoint
+* Use express workflow when possible (much cheaper)
+* Need standard workflow if duration > 5 minutes, using wait for callback, need exactly once semantics
+* Use hybrid with standard workflow with nested express workflows to optimize cost
+* For example steps to transform input, call downstream service, transform output
+* Use intrinsic functions to avoid having to call out to a lambda for simple transformations
+* Avoid polling loops in STEP using callback pattern and emit and wait pattern
+* Implementing Saga using STEP
+* Circuit breaker as STEP workflow
+* Map-Reduce as STEP workflow
+* Limit of 40 on concurrent executions in map phase. New distributed map state supports 10K concurrent.
+* In distributed mode can choose whether to run map part as standard or express
+* Ability to pass getter for items into the map part rather than querying them all up front (avoids payload limits)
+
+## A day in the life of a billion requests
+
+[YouTube](https://youtu.be/tPr1AgGkvc4)
+
+Deep dive into how IAM implements authentication at a rate of half a billion requests a second. Nothing that you'll be able to use day to day but technically interesting.
+
+* Protocol designed in 2006 before SSL/TLS widely adopted - hence use of explicit signature in request
+* Signature includes timestamp to prevent replay attacks
+* Implement signature using SHA256 based HMAC. Much faster than public-private crypto. Even quantum safe.
+* Developer gets keys from AWS console
+* Problem now is how to validate signature at scale
+* Original solution was authentication request service deployed in each region. ARS called for each request. AWS SigV2. Doesn't scale.
+* AWS SigV4 uses multiple nested hmac customer secret + date + region + service with output from each HMAC treated as the key for the next.
+* Allows each level to be cached at appropriate level (global iam, region, service).
+* As keys are distributed more widely they have less and less scope
+* At IAM scale run into problems with distributing and updating long term key derivatives
+* Solution is STS. Short lived token that includes all state needed for authentication. Nothing stored on AWS side when STS issues a token. No stored state needs to be touched to validate token.
+
+## Zero-privilege operations: Running services without access to data
+
+[YouTube](https://youtu.be/kNbNWxVQP4w)
+
+Describes how AWS works internally to restrict access to customer data.
+
+* Shift in industry to pervasive encryption with fine grained permissions and access limited to only what is needed.
+* Ideally support and admin personnel have zero access to customer data
+* At AWS, customers have to grant explicit access via normal mechanisms for support
+* EC2 Nitro - developers and operators have no access to production EC2 Nitro Instance memory
+* Consider customer data to be radioactive - never want to see or touch it directly
+* Data hosting: strong isolation, defense in depth
+* Least privilege: grant access only when needed, only while it is needed, prove that it is needed
+* Integrate access auditing into all operational practices - always on accountability
+* All network traffic within a between AWS data centers is encrypted with AES256 or equivalent. Always on.
+* All storage systems support encryption at rest (guard against physical theft)
+* No anonymous shared accounts - use IAM roles instead
+* Turn on CloudTrail!
+* Internal service to service calls also use IAM and SigV4
+* All policies used for internal service to service calls are published
+* All changes run through IAM Access Analyzer (prove you need access)
+* Access should be highly specific and conditional. IAM "forward access sessions" - on "behalf of access" requires proof that customer has recently called service.
+* Contigent authorization - rather than granting user admin access, give them access to run just specific tools.
+* Hermetic systems - e.g. Nitro, KMS. Operators have no way of accessing. Root of trust down to hardware. 
+* Nitro has own cpu/storage with no access to general instance memory
+* Instances never share cores or cache lines
+* Nitro enclaves allow customers to create their own isolated sub-instance
+* AWS Nitro Whitepaper just released
+* Long term research into cryptographic computation
+
+## Optimizing performance with CloudFront: Every millisecond matters
+
+[YouTube](https://youtu.be/LkyifXYEtrg)
+
+* DDOS attacks handled by AWS Shield - 10K+ attacks per month, 99%+ automatically mitigated
+* Customer MapBox talks about their journey
+    * 8+ AWS regions active-active behind CloudFront
+    * Route 53 location aware latency based routing with failover
+    * Use cache policies to make caching more specific/effective
+    * Use ETags
+    * Resumable byte range requests for large files
+    * Offload work on origin for cache misses with origin shield (per region cache)
+    * Enable TLS 1.3, faster and more secure than TLS 1.2.
+    * Content compression with Brotli. Faster to compress/decompress, 25% smaller. Setup so client gets Brotli if they support, otherwise gzip.
+    * Use Lambda@edge to move more logic to the edge
+    * Heavy use of analytics derived from CloudFront logs
+        * Key metrics: cache utilization, latency, errors, traffic alerts
+    * 90% of traffic offloaded to CloudFront
+* CloudFront functions (JavaScript) at edge locations, Lambda@edge at regional locations
+* CloudFront functions architecture - process isolation within pool of worker instances. JS runtime restricted to prevent external access or other unsafe operations
+    * Example scenarios: URL redirects, auth token validation
+* New features
+    * Server timing headers - W3C standard supported by most browsers. CloudFront adds server timing headers for CF operations.
+    * JA3 fingerprinting. Way of identifying caller based on SSL handshake. Can be used to identify threat actors or unusual access patterns. CF can add JA3 fingerprint header to incoming request.
+    * CF continuous deployment. Can test new distribution by including specific header, then start moving percentage of traffic to new distribution. Roll back at any time.
+    * http3 (udp based) supported on CF with fallback to http2 and http1.
