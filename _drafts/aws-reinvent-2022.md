@@ -596,6 +596,8 @@ Describes how AWS works internally to restrict access to customer data.
 
 [YouTube](https://youtu.be/LkyifXYEtrg)
 
+Quick intro to CloudFront and summary of new CF features wrapped around a rather garbled customer testimonial. One to skip.
+
 * DDOS attacks handled by AWS Shield - 10K+ attacks per month, 99%+ automatically mitigated
 * Customer MapBox talks about their journey
     * 8+ AWS regions active-active behind CloudFront
@@ -618,3 +620,184 @@ Describes how AWS works internally to restrict access to customer data.
     * JA3 fingerprinting. Way of identifying caller based on SSL handshake. Can be used to identify threat actors or unusual access patterns. CF can add JA3 fingerprint header to incoming request.
     * CF continuous deployment. Can test new distribution by including specific header, then start moving percentage of traffic to new distribution. Roll back at any time.
     * http3 (udp based) supported on CF with fallback to http2 and http1.
+
+## Create real-time, event-driven apps w/Amazon EventBridge & AWS AppSync
+
+[YouTube](https://youtu.be/zFk-iePwyY8)
+
+* Intro to GraphQL
+* Intro to AppSync
+* Focus on real-time apps
+    * Publish-Subscribe async pattern
+    * As it happens
+    * Push not polling
+    * Milliseconds, not seconds
+* Real-time GraphQL subscriptions
+    * Implemented using WebSocket connect to AppSync
+    * Relies on mutations happening through AppSync. AppSync applies mutation and then pushes out events.
+    * Can support out of band request - e.g. direct modification of DynamoDB. You are responsible for reporting the mutation to AppSync (perhaps using lambda with DynamoDB streams) using a "local resolver" so that AppSync doesn't try to update the data source itself and just sends out events.
+    * Metrics sent to CloudWatch
+* Filtering of events
+    * Basic filtering - 5 arguments, simple operators, specified by client in subscription
+    * Enhanced filtering - more operators, defined in resolvers, JSON format
+* Subscription invalidation (filter to decide when client should be disconnected)
+    * e.g. Disconnect client when a delete conversation mutation is received by a chat app
+* EventBridge + AppSync
+    * EventBridge API destination to connect to AppSync
+    * Event turns into AppSync mutation - data persistence is optional
+    * Fan out event to multiple targets
+    * Rich set of rules and filtering capabilities on both sides
+* 10 minute live demo
+
+## Discover Cloudscape, an open-source design system for the cloud
+
+[YouTube](https://youtu.be/4Dvqs8KF9B8)
+
+High level intro
+
+* From 2017 onwards AWS has been trying to standardize on one design system and set of components for AWS console. Now over 90% of console is using CloudScape.
+* Open sourced in July 2022
+* Usual design system spec as set of design tokens and guidance
+* Spacing and margins based on rule of 4
+* 68 React Typescript components
+* [https://cloudscape.design/](https://cloudscape.design/)
+* 27 demos showing how everything fits together in an app
+* Theming via design tokens
+* Light and Dark modes
+* Density modes - comfortable and compact modes
+* Responsive UI
+* Initial use cases for third parties
+    * Product that extends AWS management console
+    * UI for hybrid cloud management system
+    * Data intensive interfaces in general
+
+## Sustainability in the cloud with Rust and AWS Graviton
+
+[YouTube](https://youtu.be/HKAl4tSCp7o)
+
+Focus on how choice of language stack impacts the resources needed at runtime and hence sustainability.
+
+Fascinating table on energy usage (CPU efficiency) and memory use for common language stacks.
+
+| Language | Energy Usage | Memory Usage |
+|----------|--------------|--------------|
+| C#       | Low          | Medium       |
+| Go       | Medium       | Low          |
+| Java     | Low          | Medium       |
+| NodeJS   | Low          | High         |
+| Python   | High         | Low          |
+| Ruby     | Medium       | Medium       |
+| Rust     | Low          | Low          |
+
+Presenters didn't want to talk about how the data was derived.
+
+* Deep dive on Rust vs Java
+* Static compiled vs JVM
+* Stack allocation by default vs heap allocation for most things
+* Monomorphic by default vs dynamic dispatch
+* Rust focus on zero-cost abstractions
+* Rust downsides
+    * Heap allocation not cheap or free
+    * Need new programming style to deal with ownership
+    * No runtime reflection
+    * Very limited dynamic library loading
+* Experiment getting Rust and Java teams to build same app in each language and compare
+    * Tests lots of common frameworks for both languages
+    * Tested Java with JVM and Graal AOT compiler
+* Initial result - all the Rust versions were much faster, up to 3X
+* Java developer rewrote app to use native IO and got Graal compiled version on a par with fastest Rust version
+* Still huge difference in amount of memory used - 15MB for Rust, 64MB for Graal Java, 240MB for JVM Java
+* Some surprises - reminder to benchmark and measure
+* Ran another experiment using 128MB Lambda on Graviton comparing warm start performance
+    * [Standard sample](https://github.com/aws-samples/serverless-rust-demo) available in multiple languages (compare vs Java JVM)
+    * P50 latency 2X for Java, P99 similar (limited by database latency)
+    * Graviton latency slightly worse than x86 at P50, going to 1.5X worse at P99
+    * Rust and Graviton both use less energy
+    * Java cost 2X that of Rust, Graviton cheaper than x86
+
+## What's new for frontend web and mobile developers with AWS Amplify
+
+[YouTube](https://youtu.be/ejzVeq5tkZE)
+
+* Amplify makes it easy for front end developers to build a full stack app
+* Amplify Studio, CLI, Hosting, Libraries
+* Long demo of building an app using Amplify
+* Amplify provisions backend resources you need
+* Model data using GraphQL
+* Add annotations to the schema to define auth rules and relationships between entities
+* Use CLI to provision backend and auth infrastructure
+* Also sets up local project for all your code. Use CLI to push changes to backend.
+* Deploy includes GraphQL endpoint based on your schema
+* New: GraphQL in Amplify Studio UI, real-time data (filtering, selective sync), in-app messages (push notifications)
+* Amplify backend somewhere between backend as a service and self managed infrastructure. The deployed infrastructure is accessible by you and can be extended.
+* Three options for building front end
+    * Generate react components from Figma designs
+    * New: Studio Form Builder UI
+    * Use supplied UI components
+* Support for React, Next.js, Flutter and many more
+* Amplify hosting for static/SPA web apps and now hybrid server-side rendered too
+* New: Connect to backend libraries
+    * Flutter: Rewritten using Dart so your app ends up with single Dart codebase
+    * iOS: Rewritten using Swift. Supports async/await.
+    * Android: Rewritten using Kotlin.
+    * Authenticator component now available for Flutter and React Native
+* Provisioned Architecture
+    * AWS Amplify Hosting with content served from S3 bucket via CloudFront
+    * Amazon Cognito for login
+    * AWS AppSync GraphQL API with notifications via server side filtering
+    * DynamoDB database
+    * Lambda glue logic + your server side logic
+
+## Building a multi-region serverless application with AWS AppSync
+
+[YouTube](https://youtu.be/bUvTxaqWXXs)
+
+Very focused talk on the main implementation choices when building a multi-region AppSync app.
+
+* Base architecture is standard AppSync setup deployed to two regions with replication between the data stores.
+* Two choices for how to build single gateway endpoint
+    * Route 53 routing + API Gateway. Doesn't support subscription.
+    * Route 53 routing + CloudFront with Lambda@Edge. Lambda resolves DNS to determine region and then updates request headers to specify origin to use.
+* Replication choices
+    * Active-Passive with failover when needed
+    * Active-Active with DynamoDB global tables
+* Subscription
+    * Without extra work subscription is limited to subscribers in the same region where the mutation happened
+    * Need to trigger subscriptions by using DynamoDB streams to trigger mutation with local resolver. Works for both direct and replicated changes to DynamoDB.
+* Real-time messaging with WebSockets pub/sub
+    * Publish message to EventBridge
+    * Use EventBridge cross region routing to forward to other region
+    * Event triggers a local resolver mutation in both regions
+* Managing region failures
+    * Route 53 application recovery controller (see earlier talk)
+* API Authorization
+    * API keys and cognito user pools are single region
+    * IAM and lambda authorizer will work cross region
+
+## Accelerate GraphQL API app development & collaboration w/AWS AppSync
+
+[YouTube](https://youtu.be/LyzNM9KIJSU)
+
+Focus on what's new in AppSync
+
+* Merged APIs. Build time generation of a merged read only (queries and subscriptions) API from multiple independently managed source APIs. Intended for multi-team environments where each team maintains ownership of their own GraphQL API but you also want to expose a single combined graph.
+* NodeJs resolvers. Rather than having to use VTL you can now write resolver functions using JavaScript/TypeScript. Uses custom AppSync JS runtime. Like VTL focus is on transformation of request/response payload. AppSync still talks to data source direct. No additional charge.
+
+## What's new with Amazon DocumentDB
+
+[YouTube](https://youtu.be/Eg0tJEAZVhU)
+
+Focus on what's new in DocumentDB
+
+* New regions and instance types supported
+* Query capabilities: Geospatial indices, aggregation operators, Decimal128 type
+* Management features: storage volumes now sized down when you delete data, fast DB cloning, query auditing with DML, performance insights support
+* Elastic Clusters!
+    * Previously topped out at 24xl instance type and 64TB storage
+    * Elastic cluster will support millions of read/write per second, petabytes of 
+    storage, up to 300K connections
+    * Compatible with MongoDB APIs for sharding
+    * Managed sharding - scaling operations take minutes
+    * Each shard is a regular DocumentDB cluster deployed across multiple AZs
+    * Routing layer that routes request using hash sharding
+    * Critical that you choose a good shard key
