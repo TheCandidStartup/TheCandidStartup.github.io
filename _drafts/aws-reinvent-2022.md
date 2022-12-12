@@ -147,6 +147,8 @@ Entertaining presenter. Worth a watch.
 
 [YouTube](https://youtu.be/QeW9wCB36ck)
 
+Interesting to see the evolution of amazon.com. You'll have seen all the patterns used by present day amazon.com before.
+
 * History of amazon.com architecture
 * 1995: Single C executable monolith app server, single database
 * 1998: Split data into multiple databases
@@ -244,6 +246,8 @@ Mostly a plug for resilience hub.
 ## Operating highly available Multi-AZ applications
 
 [YouTube](https://youtu.be/mwUV5skJJ0s)
+
+Good overview of the typical journey to HA and then focuses on the AWS pattern of isolating the infrastructure in each AZ so that your fallback response to any problem is taking an entire AZ out of service. Finishes up as a plug for Route 53 Application Recovery Controller Zonal Shift which automates the process for taking an AZ out of service.
 
 * Start with identifying and mitigating single sources of failure
     * Single server
@@ -364,7 +368,7 @@ Updated version of talk given every year by developer advocates responsible for 
 
 [YouTube](https://youtu.be/A8iHQjHv8nY)
 
-QR codes with links to further reading embedded in each slide
+Lots of recommendations for specific things you can do to get security right for serverless applications. QR codes with links to further reading embedded in each slide. 
 
 * Shifting responsibility for security to AWS and shift left to developers in your org
 * Serverless = small pieces, loosely joined
@@ -388,6 +392,10 @@ QR codes with links to further reading embedded in each slide
 ## Designing event-driven integrations using Amazon EventBridge
 
 [YouTube](https://youtu.be/eUjbLFPsATE)
+
+I've always preferred to use SNS/SQS as an event bus rather than EventBridge because it fits more cleanly into a multi-account architecture with one account per service. Publisher owns SNS topic, sets up IAM permission for subscriber account to access topic, subscriber owns SQS queue and subscribes to topic with whatever filtering rules it wants. Clean and simple. With EventBridge it looks like the publisher has to do everything.
+
+This talk goes deep into how to use EventBridge with multiple accounts, including how you can enable an appropriate division of responsibilities. Still seems like it could be a little messy but there's enough here for me to take another look at EventBridge.
 
 * Event bus - account topologies
 * Service's will typically have their own accounts so have to deal with multi-account topology
@@ -435,6 +443,8 @@ QR codes with links to further reading embedded in each slide
 ## Best practices for advanced serverless developers
 
 [YouTube](https://youtu.be/PiQ_eZFO2GU)
+
+A lot of the same content I've seen in other talks - even some of the same slides. However, there are enough additional nuggets of wisdom to be worth a look.
 
 * Platform team enablement
     * CI/CD pipelines
@@ -505,6 +515,8 @@ Same presenter as "Building next-gen applications with event-driven architecture
 ## Build your application easily & efficiently with serverless containers
 
 [YouTube](https://youtu.be/MqPxzWqttJs)
+
+Answers the question should I use Lambda, App Runner or Fargate? Includes interesting details on App Runner internals and how that's reflected in the cost model.
 
 * Best tools for low concurrency vs high concurrency applications
 * Lambda best for low concurrency,  very spiky load, or high variance in work per request (scales to 0, very responsive, separate VM per request)
@@ -625,6 +637,8 @@ Quick intro to CloudFront and summary of new CF features wrapped around a rather
 
 [YouTube](https://youtu.be/zFk-iePwyY8)
 
+Focus on using AppSync subscriptions for "real-time" notifications to clients. 
+
 * Intro to GraphQL
 * Intro to AppSync
 * Focus on real-time apps
@@ -653,7 +667,7 @@ Quick intro to CloudFront and summary of new CF features wrapped around a rather
 
 [YouTube](https://youtu.be/4Dvqs8KF9B8)
 
-High level intro
+AWS has open sourced its design system and React component library. Now you can build an app with the same look and feel as the AWS console. 
 
 * From 2017 onwards AWS has been trying to standardize on one design system and set of components for AWS console. Now over 90% of console is using CloudScape.
 * Open sourced in July 2022
@@ -718,6 +732,8 @@ Presenters didn't want to talk about how the data was derived.
 ## What's new for frontend web and mobile developers with AWS Amplify
 
 [YouTube](https://youtu.be/ejzVeq5tkZE)
+
+Ever wondered what that Amplify thing is all about? This explains it.
 
 * Amplify makes it easy for front end developers to build a full stack app
 * Amplify Studio, CLI, Hosting, Libraries
