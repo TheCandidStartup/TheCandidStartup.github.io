@@ -39,16 +39,22 @@ The most obvious red flag is any service where you have to choose an instance ty
 | EKS     | Y   | $90[^3]     | 0.5-1024 GB  | 0.1-128 | Per cluster and instance per hour | 60s[^2]  |  **Not**  |
 | ECS Fargate | Y | $21[^4]     | 0.5-120 GB  | 0.25-16 | Per vCPU and GB per hour | 60s[^2]  |  **Not**  |
 | EKS Fargate | Y | $93[^5]     | 0.5-120 GB  | 0.25-16 | Per cluster, vCPU and GB per hour | 60s[^2]  |  **Not**  |
+| App Runner | N | $15[^7]     | 2-4 GB  | 1-2 | Per vCPU hour for active instances, per GB per hour for active and provisioned instances| 60s[^8]  |  **Not**  |
 | Lambda | N | $0     | 128-10240 MB  | 0.072-5.79[^6] | $0.0000133 per GB-second and $0.2 per million requests | 1ms  |  &#10004;  |
+| Amplify Web App Server Side Rendering | N | $0     | Managed | Managed | $0.0000556 per GB-second and $0.3 per million requests | 1ms  |  &#10004;  |
 
 [^1]: Min config is 3 x t4g.nano [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 5% utilization, 0.5GB) at $0.0042 each per hour (cheapest instance available) with 30GB EBS volumes (base size for AWS Linux) at $3 per month
 [^2]: You are charged for the time it takes for the OS and language stack to boot up, scale up is far from instant
 [^3]: Min config is 1 cluster at $0.1 per hour and 3 x t4g.nano with 30GB EBS volumes
 [^4]: Min config is 3 x (0.25vCPU, 0.5GB, Linux/Arm) at $0.099 each per hour
 [^5]: Min config is 1 cluster at $0.1 per hour and 3 x (0.25vCPU, 0.5GB, Linux/Arm) at $0.099 per hour
+[^7]: Min config is 3 x (1vCPU,2GB) provisioned at $0.007 per GB-hour when idle
+[^8]: Responds instantly to incoming requests from provisioned capacity, scales back down to zero active instances after 60s idle
 [^6]: Lambdas have [access to 2-6 vCPUs but are throttled based on memory size](https://www.sentiatechblog.com/aws-re-invent-2020-day-3-optimizing-lambda-cost-with-multi-threading)
 
 Fargate often appears in AWS presentations about serverless architecture. However, the cost model is not serverless. You need a minimum number of containers running at all times in case a request comes in. You can't spin up a container on demand the first time a request arrives.
+
+App Runner is built on Fargate and manages scaling and deployments for you. It has an interesting cost model where it can scale CPU down to zero by CPU throttling the minimum set of provisioned containers. In this state you pay only for the memory used by the containers. CPU can be throttled back up in response to incoming requests.
 
 It can be hard to compare Lambda and instance based pricing. The closest configurations are a c6gd.medium (1 vCPU, 2 GB) at $0.0384 per hour and a 1769 MB Lambda (1 vCPU, 1769 MB) at $0.0829 per hour. That's a little more than double the cost for Lambda. However, in practice, teams struggle to achieve anywhere close to 50% utilization when managing their own instances.
 
@@ -78,6 +84,8 @@ EFS has a non-zero monthly cost but is low enough for me to count it as serverle
 | Aurora  Serverless | Y   | $87.40[^d3]     | 1-256 GB  | 0.125-32 | Per [ACU](https://docs.amazonaws.cn/en_us/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.how-it-works.html#aurora-serverless-v2.how-it-works.capacity) per hour, GB per month, per million IOPs | 10m  |  **Not**  |
 | DocumentDB  | Y   | $109.95[^d4]     | 4-768 GB  | 0.4-96 | Per instance per hour, GB per month, per million IOPs | 10m  |  **Not**  |
 | Neptune  | Y   | $134.92[^d5]     | 4-768 GB  | 0.4-96 | Per instance per hour, GB per month, per million IOPs | 10m  |  **Not**  |
+| Neptune  Serverless | Y   | $579.88[^d6]     | 5-256 GB  | 0.625-32 | Per [NCU](https://docs.aws.amazon.com/neptune/latest/userguide/neptune-serverless-capacity-scaling.html) per hour, GB per month, per million IOPs | 10m  |  **Not**  |
+| OpenSearch  Serverless | Y   | $691.44[^d7]     | 24-240 GB  | 6-60 | Per [OCU](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-scaling.html) per hour, GB per month | 10m  |  **Not**  |
 | DynamoDB  | N   | $0     | NA  | NA | $1.25 per million write requests, $0.25 per million read [requests](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html), $0.25 per GB-month | 1 hour  |  &#10004; |
 | TimeStream  | N   | $0     | NA  | NA | $0.50 per million write requests, $0.036 per GB-hour in memory, $0.03 per GB-month stored, $0.01 per GB scanned | 1 hour  |  &#10004; |
 
@@ -86,8 +94,10 @@ EFS has a non-zero monthly cost but is low enough for me to count it as serverle
 [^d3]: Min Multi-AZ config is 2 x 0.5 [ACU](https://docs.amazonaws.cn/en_us/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.how-it-works.html#aurora-serverless-v2.how-it-works.capacity)  (0.125 vCPU, 1 GB) at $0.12 per ACU hour with 10GB of storage at $0.1 per GB-month
 [^d4]: Min Multi-AZ config is 2 x db.t4g.medium [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 20% utilization, 4GB) at $0.07566 each per hour with 10GB of storage at $0.1 per GB-month
 [^d5]: Min Multi-AZ config is 2 x db.t4g.medium [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 20% utilization, 4GB) at $0.093 each per hour with 10GB of storage at $0.1 per GB-month
+[^d6]: Min Multi-AZ config is 2 x 2.5 [NCU](https://docs.aws.amazon.com/neptune/latest/userguide/neptune-serverless-capacity-scaling.html)  (0.625 vCPU, 5 GB) at $0.1608 per NCU hour with 10GB of storage at $0.1 per GB-month
+[^d7]: Min Multi-AZ config is 4 [OCU](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-scaling.html)  (6 vCPU, 24 GB) at $0.24 per OCU hour with 10GB of storage at $0.024 per GB-month
 
-The big surprise here is that "Aurora Serverless" is not actually serverless. It would be better described as "Aurora with auto-vertical scaling of instance types" but I guess that's not catchy enough.
+The big surprise here is that all the "Serverless" branded databases are not actually serverless. They would be better described as "Auto-vertical scaling of instance types" but I guess that's not catchy enough.
 
 # Queues and Eventing
 
@@ -138,19 +148,26 @@ The only configuration for the API Gateway cache is capacity. However, the [docu
 
 Quoted memory sizes for MemoryDB, Elasticache and API Gateway are memory available for caching. DAX quotes the overall memory on the instance, not all of which will be available for caching.
 
-# Networking
+# Gateway
 
 | Service | Min Monthly Cost | Cost Model | Min Bill Period |  Server-less? |
 |---------|------------------|-------------|-----|-----|
 | Load Balancer | $16.20 | $0.0225 per hour, $0.008 per [LCU](https://aws.amazon.com/elasticloadbalancing/pricing/) hour | 1 hour |  **Not**  |
 | CloudFront | $0 | $1 per million https requests, $0.085 per GB transferred out to internet | NA |  &#10004; |
+| Amplify Web App Hosting | $0 | $0.15 per GB served | NA |  &#10004; |
 | API Gateway (http API)| $0 | $1 per million 512KB http API calls received, $0.09 per GB transferred out to internet | NA |  &#10004; |
 | API Gateway (WebSocket API)| $0 | $1 per million 32KB messages sent or received by client, $0.25 per million connection minutes | NA |  &#10004; |
+| AppSync (queries and mutations)| $0 | $4 per million requests received, $0.09 per GB transferred out to internet | NA |  &#10004; |
+| AppSync (subscriptions)| $0 | $2 per million messages received by client, $0.08 per million connection minutes | NA |  &#10004; |
+| Lambda Function URLs | $0 | No additional charge above the cost of invoking the lambda| NA |  &#10004; |
 | IoT Core | $0 | $0.30 per million 5KB messages ingested, $1 per million 5KB messages received by client, $0.08 per million connection minutes | NA |  &#10004; |
+| Cognito User Pools | $0 | $0.0055 per MAU (first 50k free indefinitely) | NA |  &#10004; |
 
-I'm as surprised as you are that load balancers are not serverless. Functionally it looks serverless - no configuration of instance types, smooth and elastic scaling under load. However, the cost model makes it clear there must be some dedicated per customer infrastructure behind the scenes.
+I'm as surprised as you are that load balancers are not serverless. Functionally it looks serverless - no configuration of instance types, smooth and elastic scaling under load. However, the cost model makes it clear there must be some dedicated per customer infrastructure behind the scenes. 
 
 Despite the name, IOT Core is a general purpose asynchronous messaging gateway. Messages from clients can be ingested at scale and routed to S3, SNS, SQS, Lambda, DynamoDB, STEP Functions and many more.
+
+Whatever you use to implement your gateway, you'll need some form of user authentication. Cognito User Pools is the AWS solution and has an unusual high level cost model aligned with how SaaS vendors typically think about their cost and revenue.
 
 # Footnotes
 
