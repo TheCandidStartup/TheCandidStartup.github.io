@@ -42,6 +42,8 @@ The most obvious red flag is any service where you have to choose an instance ty
 | App Runner | N | $15[^7]     | 2-4 GB  | 1-2 | Per vCPU hour for active instances, per GB per hour for active and provisioned instances| 60s[^8]  |  **Not**  |
 | Lambda | N | $0     | 128-10240 MB  | 0.072-5.79[^6] | $0.0000133 per GB-second and $0.2 per million requests | 1ms  |  &#10004;  |
 | Amplify Web App Server Side Rendering | N | $0     | Managed | Managed | $0.0000556 per GB-second and $0.3 per million requests | 1ms  |  &#10004;  |
+| S3 Object Lambda | N | $0     | 128-10240 MB  | 0.072-5.79[^6] | $0.0000133 per GB-second, $1[^9] per million requests, $0.005 per GB returned | 1ms  |  &#10004;  |
+| S3 Select | N | $0     | NA  | NA | $0.4 per million requests, $0.002 per GB scanned, $0.0007 per GB returned | NA  |  &#10004;  |
 
 [^1]: Min config is 3 x t4g.nano [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 5% utilization, 0.5GB) at $0.0042 each per hour (cheapest instance available) with 30GB EBS volumes (base size for AWS Linux) at $3 per month
 [^2]: You are charged for the time it takes for the OS and language stack to boot up, scale up is far from instant
@@ -51,6 +53,7 @@ The most obvious red flag is any service where you have to choose an instance ty
 [^7]: Min config is 3 x (1vCPU,2GB) provisioned at $0.007 per GB-hour when idle
 [^8]: Responds instantly to incoming requests from provisioned capacity, scales back down to zero active instances after 60s idle
 [^6]: Lambdas have [access to 2-6 vCPUs but are throttled based on memory size](https://www.sentiatechblog.com/aws-re-invent-2020-day-3-optimizing-lambda-cost-with-multi-threading)
+[^9]: $0.4 for the incoming S3 request, $0.2 for invoking the lambda, $0.4 for the S3 request from the lambda
 
 Fargate often appears in AWS presentations about serverless architecture. However, the cost model is not serverless. You need a minimum number of containers running at all times in case a request comes in. You can't spin up a container on demand the first time a request arrives.
 
