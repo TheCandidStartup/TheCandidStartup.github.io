@@ -3,13 +3,13 @@ title: >
   Organizational Anti-Patterns #3: Exceptions
 ---
 
-There's a [VP move]({% link _posts/2022-10-31-organizational-anti-pattern-vp-moves.md %}) under way. A company wide mandate has been issued. Big changes are coming. What's your immediate reaction? Are you excited? Ready for the challenge? Or is you first thought to wonder how you can get an exception?
+There's a [VP move]({% link _posts/2022-10-31-organizational-anti-pattern-vp-moves.md %}) under way. A company wide mandate has been issued. Big changes are coming. What's your immediate reaction? Are you excited? Ready for the challenge? Or is your first thought to wonder how you can get an exception?
 
 {% include organizational-anti-patterns-note.html %}
 
 Exceptions are a common antibody against excessive use of VP mandates. The usual form of exception is to defer something with a deadline to a later date. Perhaps you have a customer commitment that you need to meet first, or maybe most of the team are out on vacation at the same time. Where's the harm in a short, pragmatic extension of the deadline?
 
-No harm at all, perfectly reasonable. Unfortunately,  when the new deadline comes around there's another perfectly valid reason why you need to extend again. Somehow whatever it was keeps being put off until the VP responsible has got bored and moved onto something else. 
+No harm at all, perfectly reasonable. Unfortunately,  when the new deadline comes around there's another perfectly valid reason why you need to extend again. Somehow, whatever it was keeps being put off until the VP responsible has got bored and moved onto something else. 
 
 My first encounter with exceptions came early in my career. I had just joined a new organization and was finding my feet. A mandate came down from on high and keen to show willing I jumped on it. The mandate involved integration of a new common component. It wasn't easy. The documentation wasn't great and it was slow going getting the thing to work. Was nobody else having similar problems? I was based in a small satellite office and didn't know anyone else working on the same thing. I put it down to my inexperience in the new org. 
 
@@ -29,7 +29,7 @@ It should be no surprise that Autodesk had something of an exception culture bac
 
 If your organization is in this mess, how do you get out? Nobody believes you will follow through on any mandate you make. Everyone can see that there are no bad consequences for ignoring a mandate. 
 
-First, you need to reduce the number of mandates being thrown around. Pick something that should be a no-brainer. Something that everyone can agree makes sense in principle. Something that you are prepared to follow up on repeatedly and not drop six months down the line. Make it clear that this one thing is your priority, that things are going to be different around here and that there will be no exceptions. 
+First, you need to reduce the number of mandates being thrown around. Pick something that should be a no-brainer. Something that everyone can agree makes sense in principle. Something that you are prepared to follow up on repeatedly and not drop six months down the line. Make it clear that this **one** thing is your priority, that things are going to be different around here and that there will be no exceptions. 
 
 {% capture mandate_url %}
 {% link _posts/2022-10-31-organizational-anti-pattern-vp-moves.md %}
@@ -37,4 +37,4 @@ First, you need to reduce the number of mandates being thrown around. Pick somet
 
 I've [mentioned]({{ mandate_url | append: "#the-mandate" }}) the Jeff Bezos [API Mandate](https://gist.github.com/chitchcock/1281611) before. Looking at it again, I'm struck by how much time it spends anticipating how people will try to work around it, making it clear there will be no exceptions and spelling out the consequences for non-compliance.
 
-Great, you've made your first mandate stick. Now rinse and repeat. Over time your mandates can become more contentious, maybe you can have more than one active at a time. Just make sure you always follow through, that there are consequences. And, of course, no exceptions. 
+Hopefully you've made your first mandate stick. Now rinse and repeat. Over time your mandates can become more contentious, maybe you can have more than one active at a time. Just make sure you always follow through, that there are consequences. And, of course, no exceptions. 
