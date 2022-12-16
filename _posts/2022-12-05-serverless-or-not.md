@@ -158,7 +158,8 @@ Quoted memory sizes for MemoryDB, Elasticache and API Gateway are memory availab
 | Load Balancer | $16.20 | $0.0225 per hour, $0.008 per [LCU](https://aws.amazon.com/elasticloadbalancing/pricing/) hour | 1 hour |  **Not**  |
 | CloudFront | $0 | $1 per million https requests, $0.085 per GB transferred out to internet | NA |  &#10004; |
 | Amplify Web App Hosting | $0 | $0.15 per GB served | NA |  &#10004; |
-| API Gateway (http API)| $0 | $1 per million 512KB http API calls received, $0.09 per GB transferred out to internet | NA |  &#10004; |
+| API Gateway (REST API)| $0 | $3.5 per million API calls received, $0.09 per GB transferred out to internet | NA |  &#10004; |
+| API Gateway (HTTP API)| $0 | $1 per million 512KB API calls received, $0.09 per GB transferred out to internet | NA |  &#10004; |
 | API Gateway (WebSocket API)| $0 | $1 per million 32KB messages sent or received by client, $0.25 per million connection minutes | NA |  &#10004; |
 | AppSync (queries and mutations)| $0 | $4 per million requests received, $0.09 per GB transferred out to internet | NA |  &#10004; |
 | AppSync (subscriptions)| $0 | $2 per million messages received by client, $0.08 per million connection minutes | NA |  &#10004; |
