@@ -26,6 +26,8 @@ Navisworks has no idea what your models mean. As far as it's concerned they're j
 
 It doesn't matter what industry you're in. If you have big 3D models, Navisworks will be useful. When Navisworks was acquired we had roughly equal numbers of customers from the construction and process plant industries. When Autodesk started bundling their products into industry focused suites and collections, Navisworks was included in nearly every one of them. 
 
+A good tool needs to solve a problem that is universal. It needs to be general and abstract and yet at the same time address real needs across multiple personas and industries. You need deep understanding to generalize specific customer needs into a widely usable tool.
+
 # Solutions
 
 Revit is a solution. A solution tries to understand the complete set of needs for a persona or industry and provide a one stop shop that covers everything. A solution tries to understand how your processes work and model them in the software. A solution assumes that you're going to use it for everything. A solution thinks that you won't need any other tools. A solution tries to do everything, so finds it hard to cover all your needs at the same level of depth. 
@@ -39,8 +41,12 @@ Most large SaaS vendors try to provide solutions. In a lot of ways its a natural
 
 Solutions match [how large SaaS vendors develop software]({% link _posts/2022-11-28-modern-saas-architecture.md %}). Its hard to throw lots of development teams at a tool to speed up progress. A tool is narrow and deep. In contrast, a solution is wide and usually shallow. You can give each team ownership of a feature with a corresponding micro-service and frontend. Want to throw more teams at it? Start work on some new features. 
 
-A good tool needs to solve a problem that is universal. It needs to be general and abstract and yet at the same time applicable across multiple personas and industries. You need deep understanding to generalize specific customer needs into a widely usable tool.
-
 A feature team on a solution targets a specific persona working in a specific industry. The user research team interview a set of potential customers to understand their processes. The user experience designer comes up with a user interface that digitizes those processes and the development team builds it. Then they iterate. What they built doesn't quite fit the needs of the next set of potential customers. They extend it and add complexity. No matter how hard they try, they can't seem to make everyone happy. 
 
 # My Project
+
+[Last time]({% link _posts/2022-11-28-modern-saas-architecture.md %}) I got as far as telling you that I intend to build a Serverless SaaS product that can be deployed into a customer's own AWS account. It should come as no surprise that I'm going to build a tool rather than a solution. But which tool? Well, I've already described it above. No, not that one. 
+
+I'm going to build a spreadsheet.
+
+At this point you might very reasonably point out that Google and Microsoft have a bit of a head start when it comes to cloud based spreadsheets. Which is why next time I'll tell you what will make mine different. 
