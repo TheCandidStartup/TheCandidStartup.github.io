@@ -10,7 +10,7 @@ As anyone who has worked on a large construction project knows, there is never j
 
 "Are you really using all of these?", he asked his host. "We are", came the reply. "And out of all of them there's only two that we like". The first was [Excel](https://en.wikipedia.org/wiki/Microsoft_Excel) and the second was Navisworks.
 
-They liked Excel and Navisworks because they just worked. They each focused on a specific task and did it well. They were easy to fit into the team's specific processes. They integrated well with the other software in use. 
+They liked Excel and Navisworks because they just worked. They each focused on a specific task and did it well. They were easy to fit into the team's existing processes. They integrated well with the other software in use. 
 
 Jim learned what he needed about how Revit was used in practice and as a bonus came away with a new acquisition target for Autodesk's M&A team.
 
@@ -45,8 +45,8 @@ A feature team on a solution targets a specific persona working in a specific in
 
 # My Project
 
-[Last time]({% link _posts/2022-11-28-modern-saas-architecture.md %}) I got as far as telling you that I intend to build a Serverless SaaS product that can be deployed into a customer's own AWS account. It should come as no surprise that I'm going to build a tool rather than a solution. But which tool? Well, I've already described it above. No, not that one. 
+[Last time]({% link _posts/2022-11-28-modern-saas-architecture.md %}) I got as far as telling you that I intend to build a Serverless SaaS product that can be deployed into a customer's own AWS account. It should come as no surprise that I'm going to build a tool rather than a solution. But which tool? Well, I've already mentioned it above. No, not that one. 
 
 I'm going to build a spreadsheet.
 
-At this point you might very reasonably point out that Google and Microsoft have a bit of a head start when it comes to cloud based spreadsheets. Which is why next time I'll tell you what will make mine different. 
+At this point you might very reasonably point out that Google and Microsoft have a bit of a head start when it comes to cloud based spreadsheets. Which is why next time I'll tell you what will make mine different.
