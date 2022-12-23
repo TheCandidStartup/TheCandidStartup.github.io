@@ -2,9 +2,9 @@
 title:  Spreadsheets are the Future of Data Systems
 ---
 
-The final chapter of [Martin Kleppmann's](https://martin.kleppmann.com/) wonderful book [Designing Data-Intensive Applications](https://dataintensive.net/) is called "The Future of Data Systems". In this chapter he talks about data integration between different specialized systems using flows of derivative data, unbundling todays complex databases into simpler specialized data storage components and composing them with dataflow processing systems. At one point, almost as a throw away remark, he mentions that spreadsheets already have most of the dataflow programming capabilities that such a system would need. Of course, a spreadsheet is just a spreadsheet. A real data system needs to be durable, scalable and fault tolerant. It needs to integrate with a wide variety of disparate technologies.
+The final chapter of [Martin Kleppmann's](https://martin.kleppmann.com/) wonderful book [Designing Data-Intensive Applications](https://dataintensive.net/) is called "The Future of Data Systems". In this chapter he talks about data integration between different specialized systems using flows of derivative data, unbundling today's complex databases into simpler specialized data storage components and composing them with dataflow processing systems. At one point, almost as a throw away remark, he mentions that spreadsheets already have most of the dataflow programming capabilities that such a system would need. Of course, a spreadsheet is just a spreadsheet. A real data system needs to be durable, scalable and fault tolerant. It needs to integrate with a wide variety of disparate technologies.
 
-What if the real data system of the future could just be a spreadsheet? Is that such a crazy idea?
+What if the real data system of the future could just be a spreadsheet?
 
 We've all heard stories of insanely complex spreadsheets that large enterprises are inexplicably using to run their core business processes. Head over to [The Daily WTF](https://thedailywtf.com/) if you haven't [already](https://thedailywtf.com/articles/The-Great-Excel-Spreadsheet) [had](https://thedailywtf.com/articles/another-immovable-spreadsheet) [your](https://thedailywtf.com/articles/The-Revealing-Spreadsheet) [fill](https://thedailywtf.com/articles/The_Excel_Worm). Why do users insist on doing this rather than paying a team of programmers for six months (which ends up being two years with overruns) to build a proper system?
 
@@ -14,13 +14,57 @@ Spreadsheets hit a sweet spot. They are easy to get started with and easy to dep
 
 Spreadsheet users may not realize it but they're using a [fully fledged functional programming language](https://thenewstack.io/excel-the-functional-programming-tool-you-didnt-know-you-had/). Spreadsheets are even [Turing Complete](https://www.felienne.com/archives/2974). The live environment that gives users confidence to explore is a natural outcome of the side effect free nature of spreadsheet formulas. It's what makes spreadsheet formulas a far better dataflow processing language than something like SQL.
 
-The question isn't "why do people use spreadsheets?" The real question is why do people stop using spreadsheets and rewrite them as custom applications? What are the barriers they run into?
+The question isn't "why do people use spreadsheets?" The real question is "why do people stop using spreadsheets and rewrite them as custom applications?"
 
-* Why exactly is that? What limits are there?
-    * Scale of data - Excel 365 and Google Sheets limits
-    * Scale of users - before cloud limited by collaboration around file. Can now support live collaboration - limit is more subtle. Lack of access control, data integrity constraints.
-    * Scale of software complexity. Spreadsheets are code if the code is written in basic. Same challenges as regular software engineering without the tools.
-* Spreadsheet-database hybrids. Rigour of a database with the simplicity of a spreadsheet. Biggest problem is that they're not spreadsheets.
+They run into scaling problems. This could be due to the size of the data they're managing, the number of users that need to interact with that data or the size and complexity of their application.
+
+# Data Limits
+
+Most spreadsheets have a file based heritage or have inherited a file based mentality. You save your spreadsheet into a file. When you want to use it, you load it into memory in your client. The features exposed and the way they're implemented are based on the assumption that everything is in memory.
+
+What happens when a spreadsheet gets big too big? It takes a long time to load and save. It becomes less responsive as you navigate around the data. It hangs for a while whenever you update anything.
+
+Well written applications implement limits to stop their users getting themselves in trouble. The limits for Microsoft Excel and Google Sheets are shown below. 
+
+| Limit     | [Microsoft Excel](https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3) | [Google Sheets](https://workspacetips.io/tips/sheets/google-spreadsheet-limitations/) |
+|-----------|-----------------|---------------|
+| Rows      | 1,048,576       | -             |
+| Columns   | 16,384          | 18,278        |
+| Cells     | -               | 10 M          |
+| Cell Size | 32 KB           | 50 K          |
+
+For both products there's an effective limit of around a million rows. Anecdotal reports suggest users run into problems once they get to the hundreds of thousands.
+
+# User Management
+
+When spreadsheets were limited to desktop applications, only a single user could edit at a time. Collaboration was based on shared drives or emailing files to each other. Cloud based spreadsheets like Microsoft 365 and Google Sheets support simultaneous editing. However, both have a [hard limit of 100 simultaneous users](https://support.google.com/a/users/answer/9305987?hl=en) with anecdotal reports suggesting that things become [unworkable with more than 10](https://techcommunity.microsoft.com/t5/office-365/limits-to-number-of-co-authors/m-p/184802).
+
+Collaborative editing is a bit of a red herring. When you're running your enterprise's core business process on a spreadsheet it's much more important that users don't get in each others way. If you're keeping track of sales in a spreadsheet you want multiple users to be able to add records without blocking or interfering with each other. You know, like a real cloud application.
+
+As the developer and maintainer of a spreadsheet you want to give users the ability to add and edit data without screwing up the structure and formulas you've painstakingly created. You might want to set up granular permissions for who can edit or even see specific rows. You might want to define constraints that ensure data integrity is maintained. 
+
+Permissions in [Excel](https://support.microsoft.com/en-us/office/protection-and-security-in-excel-be0b34db-8cb6-44dd-a673-0b3e3475ac2d) and [Google Sheets](https://support.google.com/docs/answer/1218656?hl=en-GB&co=GENIE.Platform%3DDesktop#zippy=%2Cwho-can-protect-a-range-or-sheet%2Cedit-a-copy-of-a-protected-sheet%2Cprotect-a-range-or-sheet) are limited. Where granular permissions are supported they are limited to controlling write access. The permissions are tied to specific cells in the spreadsheet rather than being based on the data.
+
+# Implementation Complexity
+
+Your data's not too large. You can keep your users under control. You have a successful spreadsheet based application. Like all applications you tweak, improve, add new features. You become a victim of your success as the spreadsheet becomes unmaintainable.
+
+As Felienne Hermans showed, [Spreadsheets are Code](https://youtu.be/TMIBfzSqguQ). The problem is most spreadsheets are the equivalent of old school Basic. Instead of `goto 10` you're writing formulas that reference `C:7`. Changes are made live in production. The only source code repo is a folder containing old copies of the spreadsheet. 
+
+These are the same challenges as regular software engineering. You can apply the same patterns of abstraction, reuse and modularity to manage the complexity. We can provide tools to support source code management, testing and deployment pipelines. 
+
+# Spreadsheet-Database Hybrids
+
+I'm not the first person to identify the need for a better spreadsheet. There are loads of startup [Spreadsheet-Database](https://www.jotform.com/blog/database-vs-spreadsheet/) hybrids out there: [AirTable](https://www.airtable.com/), [Jotform](https://www.jotform.com/), [SmartSheet](https://www.smartsheet.com/), [Causal](https://www.causal.app/) and [Spendata](https://www.spendata.com/spendata-database-as-spreadsheet.php) to name just a few from the first page of Google search results. 
+
+They provide the rigour of a database with the ease of use of a spreadsheet. They have lots of additional features that address your workflows. What's not to like?
+
+The biggest problem is that they're not spreadsheets. They're another alternative that still requires you to rewrite your spreadsheet.
+
+I've used a few in my time. Usually when someone in the organization thinks that the problems with our processes can be solved by bringing in a new software solution without actually changing the process. They fall into the trap of trying to be [solutions rather than tools FIXME!](/_drafts/tools-vs-solutions.md). At best they provide some subset of spreadsheet features and focus all their energy on adding new features on top. 
+
+# My Project    
+
 * Last time ... hopefully you understand why I'm interested in building a better spreadsheet.
 * Practical advantages - simple UI, feasible to build this myself. No need to research and design a novel tool and hope its applicable. 
 * Start with a spreadsheet and address the limitations.
