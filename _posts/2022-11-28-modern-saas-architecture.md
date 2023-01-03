@@ -82,4 +82,4 @@ But how is a customer going to cope with the complexity of deploying and monitor
 
 One of the interesting challenges of this project will be figuring out how to make deployment as simple as possible. What's the minimum number of steps needed from a customer pulling out their credit card to setup an AWS account, to having the product up and running?
 
-So, what will this product actually be? I promise I'll finally get round to telling you about that next time.
+So, what will this product actually be? I promise I'll finally get round to telling you about that [next time]({% link _posts/2023-01-03-tools-vs-solutions.md %}).
