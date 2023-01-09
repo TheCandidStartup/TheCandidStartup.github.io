@@ -15,17 +15,21 @@ You're more likely to throw things over the wall where communication structures 
 
 I've heard it said that there's no right or wrong org structure. That it depends on the current situation and [what you want to optimize for](https://hbr.org/1968/11/organizational-choice-product-vs-function). Do you want to optimize for common practices and knowledge sharing within each functional area with a [functional structure](https://www.indeed.com/career-advice/career-development/functional-structure)? Or do you want the increased autonomy and improved time to market of a [product-oriented structure](https://www.capgemini.com/no-no/insights/expert-perspectives/you-build-it-you-run-it-how-to-become-a-product-oriented-organization/)?
 
-You also need to think about what communication is required between the different branches of the organization. What impact will it have if things are thrown over the wall where the communication structure is weak? For a product oriented organization there is little impact. Individual products can be successfully created and released. Any impact is related to areas of overlap and connectivity between products. However, those don't need ongoing tightly coupled communication to solve.
+You also need to think about what communication is required between the different branches of the organization. What impact will it have if things are thrown over the wall between teams that rarely interact? For a product oriented organization there is little impact. Individual products can be successfully created and released. Any impact is related to areas of overlap and connectivity between products. However, those don't need ongoing tightly coupled communication to solve.
 
 A functional organization, on the other hand, can end up in all sorts of trouble. The sales and marketing departments throw their insights and market analysis over the wall to the product management department. The product management department prepare a long and detailed product requirements document which they throw over the wall to the engineering department. The engineering department build ... something.
 
 When I first joined Autodesk, the division I was part of was organized along functional lines. Navisworks was left alone as a product oriented island for a couple of years. Eventually we were deemed ready to be fully integrated. After a small reorg I ended up in the engineering department with a new boss. 
 
-I was surprised by the number of customer visits I was asked to take part in. The engineering managers seemed to spend a lot of their time understanding customer needs and coming up with product requirements. I naively asked why we doing this when there was an entire dedicated product management department. In fact I had just read their annual product requirements document. "Oh, we don't pay any attention to that. It's better to talk to customers directly". 
+I was surprised by the number of customer visits I was asked to take part in. The engineering managers seemed to spend a lot of their time understanding customer needs and coming up with product requirements. I naively asked why we doing this when there was an entire dedicated product management department. In fact, I had just read their annual product requirements document. Don't we already know what we need to do? 
+
+"Oh, we don't pay any attention to that. It's better to talk to customers directly". 
+
+When information is thrown over the wall to you, your instinctive reaction is not to trust it. If you don't really know the people its coming from, its easy to dismiss it out of hand. What a waste.
 
 # The Old New Thing
 
-I've written previously about how every hot new project eventually becomes the [Old New Thing]({% link _posts/2022-11-21-organizational-anti-pattern-old-new-thing.md %}). You're an ambitious up and coming leader. You don't want to be stuck nursing a zombie product. But what can you do?
+I've written previously about how every hot new project eventually becomes the [Old New Thing]({% link _posts/2022-11-21-organizational-anti-pattern-old-new-thing.md %}). You're an ambitious up and coming leader. You don't want to be stuck nursing a zombie product. What can you do?
 
 {% capture vp_url %}
 {% link _posts/2022-10-31-organizational-anti-pattern-vp-moves.md %}
