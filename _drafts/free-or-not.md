@@ -35,7 +35,7 @@ Finally, some services have more limited free trials with a service dependent du
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
 | Lambda | $0.0000133 per GB-second and $0.2 per million requests | 1 million requests and 400K GB-seconds | $5.53 |  Always  |
-| Amplify Web App Server Side Rendering | $0.0000556 per GB-second and $0.3 per million requests | None  | $0 | NA  |
+| Amplify Web App Server Side Rendering | $0.0000556 per GB-second and $0.3 per million requests | 100 GB-hours, 500K requests  | $20.15 | 12 months  |
 | S3 Object Lambda | $0.0000133 per GB-second, $1[^1] per million requests, $0.005 per GB returned | None  | $0 | NA  |
 | S3 Select | $0.4 per million requests, $0.002 per GB scanned, $0.0007 per GB returned |  None  | $0 | NA  |
 
@@ -52,43 +52,75 @@ Finally, some services have more limited free trials with a service dependent du
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
-| DynamoDB  | N   | $0     | NA  | NA | $1.25 per million write requests, $0.25 per million read [requests](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html), $0.25 per GB-month | 1 hour  |  &#10004; |
-| TimeStream  | N   | $0     | NA  | NA | $0.50 per million write requests, $0.036 per GB-hour in memory, $0.03 per GB-month stored, $0.01 per GB scanned | 1 hour  |  &#10004; |
+| DynamoDB  | $1.25 per million write requests, $0.25 per million read [requests](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html), $0.2 per million streams read requests, $0.25 per GB-month | 25 GB, 2.5M streams reads, no reads/writes  | $6.75 | Always |
+| TimeStream  | $0.50 per million write requests, $0.036 per GB-hour in memory, $0.03 per GB-month stored, $0.01 per GB scanned | None  | $0 | NA  |
 
 
 # Queues and Eventing
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
-| SQS | N | $0   | $0.40 per million 64KB requests | NA  |  &#10004; |
-| SNS | N | $0   | $0.50 per million 64KB requests, $0.09 per GB transferred out to SQS or Lambda[^q6] | NA  |  &#10004; |
-| EventBridge | N | $0   | $1 per million 64KB events published | NA  |  &#10004; |
+| SQS | $0.40 per million 64KB requests | 1M requests | $0.40 | Always |
+| SNS | $0.50 per million 64KB requests, $0.09 per GB transferred out to SQS or Lambda[^q1] | 1M requests[^q2] | $0.50 | Always |
+| EventBridge Event Bus | $1 per million 64KB events published | None | $0 | NA |
+| EventBridge Event Replay | $0.1 per GB archived, $0.023 per GB-month stored, $1 per million events replayed | None | $0 | NA |
+| EventBridge Pipes | $0.4 per million 64KB chunks delivered | None | $0 | NA |
+| EventBridge Scheduler | $1 per million invocations | 14M invocations | $14 | Always |
 
-[^q6]: $ 0.09 per GB transferred equivalent to $5 per million 64KB events or $0.09 per million 1KB events
+[^q1]: $ 0.09 per GB transferred equivalent to $5 per million 64KB events or $0.09 per million 1KB events
+[^q2]: Data transfer out to SQS/Lambda is charged at "internet rates" and should be included in the "data transfer out to internet" free tier
 
 # Orchestration
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
-| STEP Functions | N | $0 | $25 per million [state transitions](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-transitions.html) | NA  |  &#10004; |
-| STEP Functions Express | N | $0 | $0.00001667 per GB-second and $1 per million requests | 100ms  |  &#10004; |
+| STEP Functions | $25 per million [state transitions](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-transitions.html) | 4000 state transitions  | $0.10 | Always |
+| STEP Functions Express | $0.00001667 per GB-second and $1 per million requests |  None  | $0 | NA  |
 
 # Gateway
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
-| Data Transfer out to Internet | $0.09 per GB transferred out | 100GB per month | $9 | Always |
+| Route 53 | $3-$306 registration per domain per year depending on TLD[^g1], $0.5 per hosted zone per month, $0-$0.8 per million queries depending on type[^g2], from $0.5 per health check[^g3] per month | 50 basic health checks for AWS resources | $25 | Always |
+| Data Transfer out to Internet | $0.09 per GB transferred out | 100 GB | $9 | Always |
 | Data Transfer to other AWS region | $0.02 per GB transferred out | None | $0 | NA |
-| CloudFront | $0 | $1 per million https requests, $0.085 per GB transferred out to internet | NA |  &#10004; |
-| Amplify Web App Hosting | $0 | $0.15 per GB served | NA |  &#10004; |
-| API Gateway (REST API)| $0 | $3.5 per million API calls received, $0.09 per GB transferred out to internet | NA |  &#10004; |
-| API Gateway (HTTP API)| $0 | $1 per million 512KB API calls received, $0.09 per GB transferred out to internet | NA |  &#10004; |
-| API Gateway (WebSocket API)| $0 | $1 per million 32KB messages sent or received by client, $0.25 per million connection minutes | NA |  &#10004; |
-| AppSync (queries and mutations)| $0 | $4 per million requests received, $0.09 per GB transferred out to internet | NA |  &#10004; |
-| AppSync (subscriptions)| $0 | $2 per million messages received by client, $0.08 per million connection minutes | NA |  &#10004; |
-| Lambda Function URLs | $0 | No additional charge above the cost of invoking the lambda| NA |  &#10004; |
-| IoT Core | $0 | $0.30 per million 5KB messages ingested, $1 per million 5KB messages received by client, $0.08 per million connection minutes | NA |  &#10004; |
-| Cognito User Pools | $0 | $0.0055 per MAU (first 50k free indefinitely) | NA |  &#10004; |
+| CloudFront | $1 per million https requests, $0.085[^g4] per GB transferred out to internet, $0.1 per million function invocations, $0.6 per million lambda@edge requests + $0.00005 per GB-second | 10M requests, 1 TB transfer out, 2M function invocations | $97.14 | Always
+| Amplify Web App Hosting | $0.15 per GB served | 15 GB | $2.25 | 12 months |
+| API Gateway (REST API)| $3.5 per million API calls received | 1M calls received | $3.50 | 12 months |
+| API Gateway (HTTP API)| $1 per million 512KB API calls received | 1M calls received | $1.00 | 12 months |
+| API Gateway (WebSocket API)| $1 per million 32KB messages sent or received by client, $0.25 per million connection minutes | 1M messages, 750K connection minutes | $1.19 | 12 months |
+| AppSync (queries and mutations)| $4 per million requests received | 250K requests | $1 | 12 months |
+| AppSync (subscriptions)| $2 per million messages received by client, $0.08 per million connection minutes | 250K messages, 600K connection minutes | $0.65 | 12 months |
+| Lambda Function URLs | No additional charge above the cost of invoking the lambda | NA | $0 | NA |
+| IoT Core | $0.30 per million 5KB messages ingested, $1 per million 5KB messages received by client, $0.08 per million connection minutes | 250K messages ingested, 500K messages received, 2.25M connection minutes | $0.75 | 12 Months |
+| Cognito User Pools | $0.0055 per MAU | 50K MAUs | $275 | Always |
+
+[^g1]: From $3 for .click to $306 for .movie
+[^g2]: $0 for alias queries that resolve to AWS resources, $0.4 for standard queries, $0.6 for latency based routing queries, $0.7 for geo DNS and GeoProximity queries, $0.8 for IP-based routing queries
+[^g3]: Add $1 for each optional feature: HTTPS, string matching, fast interval, latency measurement
+[^g4]: Depends on location of *client*. $0.85 applies to North America and Europe only. Prices in other regions vary from $0.11 to $0.12.
+
+# Build, Deploy and Manage
+
+| Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
+|---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
+| Amplify Web App Hosting | $0.01 per minute | 1000 minutes | $10 | 12 months |
+| CodeBuild | $0.0034-$0.65[^b1] per instance per minute | 100 minutes on small instance | $0.5 | Always |
+| CodePipeline | $1 per active pipeline per month | One active pipeline | $1.00 | Always |
+| CodeArtifact | $0.05 per GB-month, $5 per million requests | 2GB, 100K requests | $0.6 | Always |
+| CodeDeploy | Free for deployments to Lambda | NA | $0 | NA |
+| X-Ray | $5[^b2] per million traces recorded, $0.5 per million traces retrieved or scanned | 100K traces recorded, 1M traces retrieved or scanned | $1 | Always |
+| CloudWatch Metrics | $0.3 per metric per month, $10 per million API requests | 10 metrics, 1 million API requests | $13 | Always |
+| CloudWatch Dashboard | $3 per dashboard per month | 3 dashboards for up to 50 metrics | $9 | Always |
+| CloudWatch Alarms | $0.1 per standard alarm per month, $0.1 per metric analyzed per month for metric insights, $0.3 per high resolution alarm per month | 10 standard alarms | $1 | Always |
+| CloudWatch Logs | $0.5 per GB ingested, $0.03 per GB stored per month[^b3], $0.005 per GB scanned by log insights queries | 5GB ingested, 5GB stored, 5GB scanned | $2.68 | Always |
+| CloudWatch Contributor Insights | $0.5 per rule per month, $0.02 per million matching log events | 1 rule, 1M matching events | $0.52 | Always |
+| CloudWatch Synthetics | $0.0012 per canary run | 100 canary runs | $0.12 | Always |
+| CloudFormation Hooks | $0.9 per thousand handler operations, $0.00008 per second beyond first 30 seconds per operation | 1000 handler operations | $0.90 | Always |
+
+[^b1]: $0.0034 for linux arm1.small, $0.005 for linux general1.small, $0.01 for linux general1.medium, $0.018 for Windows general1.medium, ..., $0.65 for linux gpu1.large
+[^b2]: Plus $1 per million if X-Ray insights is enabled
+[^b3]: Logs are stored compressed with size about 15% of data ingested
 
 # Footnotes
 
