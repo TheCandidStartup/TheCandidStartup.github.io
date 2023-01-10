@@ -21,7 +21,7 @@ A functional organization, on the other hand, can end up in all sorts of trouble
 
 When I first joined Autodesk, the division I was part of was organized along functional lines. Navisworks was left alone as a product oriented island for a couple of years. Eventually we were deemed ready to be fully integrated. After a small reorg I ended up in the engineering department with a new boss. 
 
-I was surprised by the number of customer visits I was asked to take part in. The engineering managers seemed to spend a lot of their time understanding customer needs and coming up with product requirements. I naively asked why we doing this when there was an entire dedicated product management department. In fact, I had just read their annual product requirements document. Don't we already know what we need to do? 
+I was surprised by the number of customer visits I was asked to take part in. The engineering managers seemed to spend a lot of their time understanding customer needs and coming up with product requirements. I naively asked why we were doing this when there was an entire dedicated product management department. In fact, I had just read their annual product requirements document. Don't we already know what we need to do? 
 
 "Oh, we don't pay any attention to that. It's better to talk to customers directly". 
 
@@ -45,11 +45,11 @@ You haven't fully understood the diabolic genius at work here. The Old New Thing
 {% link _posts/2022-11-21-organizational-anti-pattern-old-new-thing.md %}
 {% endcapture %}
 
-The entire project is thrown over the wall to a new team who have no chance at success. The code base is a mess and makes no sense. Either they try to work with it and end up creating more bugs than they fix, or they try to [rewrite the whole thing]({{ ont_url | append: "#rewrite-and-reimagine" }}).
+The entire project is thrown over the wall to a new team who have no chance at success. The code base is a mess and makes no sense. Every code base someone else wrote is a mess and makes no sense. Doubly so if it was thrown over the wall to you. Either the new team try to work with it and end up creating more bugs than they fix, or they try to [rewrite the whole thing]({{ ont_url | append: "#rewrite-and-reimagine" }}).
 
 In the SaaS world the project is usually an entire microservice. Remember the agile DevOps mantra of ["You build it, you run it"](https://aws.amazon.com/blogs/enterprise-strategy/enterprise-devops-why-you-should-run-what-you-build/)? Surprisingly often, it turns out to be "You build it, you throw it over the wall".
 
-You might think these are exceptional cases. I've seen organizations that have turned it into standard practice. You have a hot new project that needs to build a new service. You turn to your favorite development team which, like the leadership team, is based in the US. They get something up and running quickly. Keeping it running turns out to be a bit of a drag for them. You have another hot new project and your favorite team is so good at getting things done. How do you get out of your dilemma?
+You might think these are exceptional cases. I've seen organizations that have turned it into standard practice. You have a hot new project that needs to build a new service. You turn to your favorite development team which. They get something up and running quickly. Keeping it running turns out to be a bit of a drag for them. You have another hot new project and your favorite team is so good at getting things done. How do you get out of your dilemma?
 
 Simple, you throw the now Old New Thing over the wall to another, less favored, team. One that's cheaper, perhaps based in India or China.
 
