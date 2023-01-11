@@ -6,15 +6,15 @@ Last month I dived into AWS cost models and used that to decide whether AWS serv
 
 When you're working for a large SaaS vendor the AWS free tier is irrelevant. You're operating at a scale where you're more focused on advanced provisioning and volume discounts. However, as someone working on my own project, spending my own money, I'm really curious about what I can get for free. As my hypothetical customers will be self deploying the product, it's also interesting to think about what they can get for free too. It would be wonderful if my customers could deploy and kick the tyres on my spreadsheet without incurring any AWS costs.
 
-The [AWS Free Tier](https://aws.amazon.com/free) is intended to allow customers to explore and try out AWS services without worrying about the potential costs. It doesn't quite achieve that aim as each service varies in what features are available free and for how long. You need to read the description of each service carefully and have a good understanding of your usage model to be sure of avoiding an unexpected bill. Even experienced AWS users find themselves being [caught out](https://www.lastweekinaws.com/blog/sagemaker_is_responsible_for_my_surprise_bill/).
+The [AWS Free Tier](https://aws.amazon.com/free) is intended to allow customers to explore and try out AWS services without worrying about the potential costs. It doesn't quite achieve that aim as each service varies in what features are available free and for how long. You need to read the description of each service carefully and have a good understanding of the usage model to be sure of avoiding an unexpected bill. Even experienced AWS users find themselves being [caught out](https://www.lastweekinaws.com/blog/sagemaker_is_responsible_for_my_surprise_bill/).
 
-Let's arm ourselves with the trusty shield of knowledge by playing a round of Free or Not?
+Let's arm ourselves with the trusty shield of knowledge by playing a round of *Free or Not?*
 
 # Who gets the Free Tier?
 
-How does AWS define customer? Who is eligible for the free tier?
+How does AWS define a customer? Who is eligible for the free tier?
 
-The [AWS Free Tier Terms](https://aws.amazon.com/free/terms/) are pretty clear. The free tier allowances are tied to an AWS account. Anyone creating an account is eligible. If you manage multiple accounts using the AWS Organizations feature then you get one set of free tier allowances which are consumed by all the accounts in the organization. What happens if you create multiple independent accounts without using AWS Organizations? That seems to be somewhat of a gray area.
+The [AWS Free Tier Terms](https://aws.amazon.com/free/terms/) are pretty clear. The free tier allowances are tied to an AWS account. Anyone creating an account is eligible. If you manage multiple accounts using the AWS Organizations feature then you get one set of free tier allowances which are shared by all the accounts in the organization. What happens if you create multiple independent accounts without using AWS Organizations? That seems to be somewhat of a gray area.
 
 The intent is that you should receive only one set of free tier allowances. The terms say "You will not be eligible for any Offers if you or your entity create(s) more than one account to receive additional benefits under the Offers". However, there are anecdotal reports of people creating multiple accounts for perfectly legitimate reasons (e.g. one for each separate project they're working on) and receiving free tier allowances on each account. The identifying information AWS has is the email address, credit card number and mobile phone number you used to sign up for the account. In practice, it will come down to whatever (undocumented) policy AWS applies to identify accounts with common ownership.
 
@@ -28,9 +28,13 @@ In most cases you get a monthly allowance (in whatever form makes sense for the 
 
 Some services have an always free tier with no expiry date. Everyone gets a free allowance each month.
 
-Finally, some services have more limited free trials with a service dependent duration (usually less than a month). These start from the point at which you activate the service.
+Finally, some services have more limited free trials with a service dependent duration (usually a month or two). These start from the point at which you activate the service.
 
-# Compute
+# Analysis
+
+I'm focusing on the Serverless services that I identified [last time]({% link _posts/2022-12-05-serverless-or-not.md %}). I've added a few additional services in the existing categories and a whole new category for Build, Deploy and Management services. For each service I list the base cost model, what (if anything) is included in the free tier, what that's worth in dollars per month and finally how long the free tier lasts. If you don't want to wade through all the tables, you can jump straight to my [conclusions](#conclusion).
+
+## Compute
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
@@ -41,14 +45,14 @@ Finally, some services have more limited free trials with a service dependent du
 
 [^1]: $0.4 for the incoming S3 request, $0.2 for invoking the lambda, $0.4 for the S3 request from the lambda
 
-# File Storage
+## File Storage
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
 | EFS | $0.30 per GB-month, $0.03 per GB reads and $0.06 per GB writes | 5 GB, no reads/writes | $1.5 | 12 months |
-| S3 | $0.023 per GB-month, $0.09 per GB transferred out to internet, $0.4 per million read requests, $5 per million write requests | 5GB, 20K GET requests, 2K PUT requests  | $0.13 | 12 months |
+| S3 | $0.023 per GB-month, $0.4 per million read requests, $5 per million write requests | 5GB, 20K GET requests, 2K PUT requests  | $0.13 | 12 months |
 
-# Database
+## Database
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
@@ -56,7 +60,7 @@ Finally, some services have more limited free trials with a service dependent du
 | TimeStream  | $0.50 per million write requests, $0.036 per GB-hour in memory, $0.03 per GB-month stored, $0.01 per GB scanned | None  | $0 | NA  |
 
 
-# Queues and Eventing
+## Queues and Eventing
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
@@ -70,14 +74,14 @@ Finally, some services have more limited free trials with a service dependent du
 [^q1]: $ 0.09 per GB transferred equivalent to $5 per million 64KB events or $0.09 per million 1KB events
 [^q2]: Data transfer out to SQS/Lambda is charged at "internet rates" and should be included in the "data transfer out to internet" free tier
 
-# Orchestration
+## Orchestration
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
 | STEP Functions | $25 per million [state transitions](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-transitions.html) | 4000 state transitions  | $0.10 | Always |
 | STEP Functions Express | $0.00001667 per GB-second and $1 per million requests |  None  | $0 | NA  |
 
-# Gateway
+## Gateway
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
@@ -100,11 +104,11 @@ Finally, some services have more limited free trials with a service dependent du
 [^g3]: Add $1 for each optional feature: HTTPS, string matching, fast interval, latency measurement
 [^g4]: Depends on location of *client*. $0.85 applies to North America and Europe only. Prices in other regions vary from $0.11 to $0.12.
 
-# Build, Deploy and Manage
+## Build, Deploy and Manage
 
 | Service | Cost Model | Free Tier | Monthly Value | Free Tier Duration |
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
-| Amplify Web App Hosting | $0.01 per minute | 1000 minutes | $10 | 12 months |
+| Amplify Web App Hosting | $0.01 per build minute | 1000 minutes | $10 | 12 months |
 | CodeBuild | $0.0034-$0.65[^b1] per instance per minute | 100 minutes on small instance | $0.5 | Always |
 | CodePipeline | $1 per active pipeline per month | One active pipeline | $1.00 | Always |
 | CodeArtifact | $0.05 per GB-month, $5 per million requests | 2GB, 100K requests | $0.6 | Always |
@@ -122,6 +126,24 @@ Finally, some services have more limited free trials with a service dependent du
 [^b2]: Plus $1 per million if X-Ray insights is enabled
 [^b3]: Logs are stored compressed with size about 15% of data ingested
 
-# Footnotes
+# Conclusion
+
+If you were hoping that the free tier would save you from inadvertently racking up a big bill you're set to be disappointed. Of the 25 services that actually have a free tier, half of them cover a monthly amount of $1 or less. Most of the rest of them come in under the $10 mark. 
+
+Maybe the free tier lets you kick the tyres and learn how a service works without having to pay? Again, you need to be careful and check what's actually covered. The headline for DynamoDB is that you get 25GB of storage for free indefinitely. Sounds great, but you still have to pay for any reads and writes to access your data. S3 covers you for 5GB of storage and a few thousand GETs and PUTs. Want to LIST the content of your bucket? You'll have to pay for that. 
+
+Some services include a corner case feature in the free tier and nothing else. Step forward Route 53, which gives you a generous 50 basic health checks a month (a $25 value!) but makes you pay for everything else. Similarly EventBridge gives you 14M scheduler invocations a month (a $14 value) but excludes event publishing, replay and pipes.
+
+The most generous service? Take a bow Cognito User Pools. As well as having a simple high level cost model of $0.0055 per MAU, you get the first 50K MAUs free every month indefinitely. That works out at up to a $275 value. In practice that means I will never pay a dime for Cognito User Pools and nor will 99% of my hypothetical customers.
+
+The second service that stands out is CloudFront. You get 10 million requests and one terabyte of data out free every month indefinitely. A $97 value. If you're hosting any kind of small to medium scale web app on AWS it will be cheaper as well as higher performance to stick it behind CloudFront rather than using direct access to a public S3 bucket.
+
+In third place we have Amplify Web Hosting. Amplify is a high level, easy to use service that takes care of all the details when hosting a web app. It includes building and deploying the app ($10 value), Server Side Rendering ($20 value) and a CDN for hosting the app ($2.25 value). Amplify is a perfect demonstration of the principle that the higher level services have a more generous free tier. If I was being cynical I might think that's because the higher level services have much bigger margins and can afford to be more generous. Amplify is built on foundations provided by CodeBuild, Lambda and CloudFront. If you used those services directly, the equivalent of the Amplify free tier would cost you $3.40, $4.89 and $1.27 respectively. 
+
+Finally, which is the least generous service? The lowest monthly value of any service that has a free tier is STEP functions with 4000 state transitions worth $0.10. However, STEP Functions free tier is indefinite for everyone and includes all of the standard STEP functionality.
+
+My award for least valuable free tier goes to everyone's favorite service, S3. You have just 12 months to enjoy the benefits of 5GB of storage, 20K GET requests and 2K PUT requests worth $0.13 a month. That's a total of $1.56 for the lifetime of your account.
+
+## Footnotes
 
 All costs correct at time of writing based on AWS US East region.
