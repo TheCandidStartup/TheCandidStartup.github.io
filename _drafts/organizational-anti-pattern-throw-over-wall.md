@@ -19,13 +19,13 @@ You also need to think about what communication is required between the differen
 
 A functional organization, on the other hand, can end up in all sorts of trouble. The sales and marketing departments throw their insights and market analysis over the wall to the product management department. The product management department prepare a long and detailed product requirements document which they throw over the wall to the engineering department. The engineering department build ... something.
 
-When I first joined Autodesk, the division I was part of was organized along functional lines. Navisworks was left alone as a product oriented island for a couple of years. Eventually we were deemed ready to be fully integrated. After a small reorg I ended up in the engineering department with a new boss. 
+When Navisworks was acquired by Autodesk, the division we joined was organized along functional lines. Navisworks was left alone as a product oriented island for a couple of years. Eventually we were deemed ready to be fully integrated. After a small reorg I ended up in the engineering department with a new boss. 
 
 I was surprised by the number of customer visits I was asked to take part in. The engineering managers seemed to spend a lot of their time understanding customer needs and coming up with product requirements. I naively asked why we were doing this when there was an entire dedicated product management department. In fact, I had just read their annual product requirements document. Don't we already know what we need to do? 
 
 "Oh, we don't pay any attention to that. It's better to talk to customers directly". 
 
-When information is thrown over the wall to you, your instinctive reaction is not to trust it. If you don't really know the people its coming from, its easy to dismiss it out of hand. What a waste.
+When information is thrown over the wall to you, your instinctive reaction is not to trust it. If you don't really know the people its coming from, its easy to dismiss it out of hand.
 
 # The Old New Thing
 
@@ -39,7 +39,7 @@ The classic move is to wait for a [reorg]({{ vp_url | append: "#the-reorg" }}) t
 
 So far, so normal. What's the problem if the  Old New Thing team get a new boss? 
 
-You haven't fully understood the diabolic genius at work here. The Old New Thing project and code base are moving to the new organization. The team are staying here. After all, culturally they're a better fit here. And I have a hot new project they can work on ...
+You haven't fully understood the diabolical genius at work here. The Old New Thing project and code base are moving to the new organization. The team are staying here. After all, culturally they're a better fit here. And I have a hot new project they can work on ...
 
 {% capture ont_url %}
 {% link _posts/2022-11-21-organizational-anti-pattern-old-new-thing.md %}
@@ -49,7 +49,7 @@ The entire project is thrown over the wall to a new team who have no chance at s
 
 In the SaaS world the project is usually an entire microservice. Remember the agile DevOps mantra of ["You build it, you run it"](https://aws.amazon.com/blogs/enterprise-strategy/enterprise-devops-why-you-should-run-what-you-build/)? Surprisingly often, it turns out to be "You build it, you throw it over the wall".
 
-You might think these are exceptional cases. I've seen organizations that have turned it into standard practice. You have a hot new project that needs to build a new service. You turn to your favorite development team which. They get something up and running quickly. Keeping it running turns out to be a bit of a drag for them. You have another hot new project and your favorite team is so good at getting things done. How do you get out of your dilemma?
+You might think these are exceptional cases. I've seen organizations that have turned it into standard practice. You have a hot new project that needs to build a new service. You turn to your favorite development team. They get something up and running quickly. Keeping it running turns out to be a bit of a drag for them. You have another hot new project and your favorite team is so good at getting things done. How do you get out of your dilemma?
 
 Simple, you throw the now Old New Thing over the wall to another, less favored, team. One that's cheaper, perhaps based in India or China.
 
