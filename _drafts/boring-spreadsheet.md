@@ -6,7 +6,7 @@ What's the best way to get started with a big new project? Something like buildi
 
 I like to start with a simple motivating example. Something I can get my head round that lets me get a deeper understanding of the problem space. Once I've extracted what I can from that I can make it more complex or look at something in a neighboring space. To that end, let me show you round the world's most boring spreadsheet. 
 
-{% include candid-image.html src="/assets/images/boring-spreadsheet.png" alt="Serverless Cost Model" %}
+{% include candid-image.html src="/assets/images/boring-spreadsheet.png" alt="The World's Most Boring Spreadsheet" %}
 
 I built it in Excel 2007 running on Windows 11. No Microsoft, I do not want to take up your kind offer of an upgrade to a Microsoft 365 subscription. Excel 2007 was the version that introduced the Office Open XML format still used today, increased limits to 1,048,576 rows and 16,384 columns and introduced a multi-threaded calculation engine. It will do just fine for our purposes. 
 
