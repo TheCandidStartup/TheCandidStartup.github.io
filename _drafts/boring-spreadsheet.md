@@ -64,11 +64,11 @@ Similarly, there is no [common subexpression elimination](https://en.wikipedia.o
 
 There's no hidden magic to formula calculation. The calculation is performed literally as written. When all your data is directly accessible in memory, its amazing how well brute force can work. 
 
-Of course these are all simple formulas with `O(n)` complexity. My initial version of the spreadsheet tried to determine the number of distinct item values. Perhaps the store owner wants to be sure they notice if they ever sell something other than nails. There's no built in function that provides a distinct count. Like most people, I turned to Google and found the [standard Excel idiom for this task](https://exceljet.net/formulas/count-unique-values-in-a-range-with-countif): `SUMPRODUCT(1/COUNTIF(range,range))`.
+Of course these are all simple formulas with [*O(n)* complexity](https://en.wikipedia.org/wiki/Big_O_notation). My initial version of the spreadsheet tried to determine the number of distinct item values. Perhaps the store owner wants to be sure they notice if they ever sell something other than nails. There's no built in function that provides a distinct count. Like most people, I turned to Google and found the [standard Excel idiom for this task](https://exceljet.net/formulas/count-unique-values-in-a-range-with-countif): `SUMPRODUCT(1/COUNTIF(range,range))`.
 
 Seems simple enough. That repeated range looks a bit weird but what's the worst that can happen? 
 
-If you try this on a spreadsheet with more than a few thousand rows it will lock up and hang as it tries to recalculate. This formula is `O(n^2)`. Each cell in the range is compared with the value of every other cell in the range. In my case that's a million comparisons per cell repeated a million times. Each step operates on an array of a million counts which are then inverted and summed together at the end. 
+If you try this on a spreadsheet with more than a few thousand rows it will lock up and hang as it tries to recalculate. This formula is *O(n<sup>2</sup>)*. Each cell in the range is compared with the value of every other cell in the range. In my case that's a million comparisons per cell repeated a million times. Each step operates on an array of a million counts which are then inverted and summed together at the end.
 
 # Test Cases
  
@@ -80,11 +80,12 @@ I've got what I wanted out of this exercise. I have a better understanding of ho
 | Full Recalc | 19,000,000 | 5,000,010 | 15,000,001 | 5,000,010 |
 | New Row | 9,000,005 | 14 | 10,000,006 | 20 |
 | Sum Column | 1,000,000 | 1 | 1,000,000 | 1 |
+| Running Total | 2,000,000 | 1,000,000 | 1,000,000 | 1,000,000 |
 | Distinct Idiom | 1,000,000,000,0000 | 1 | 2,000,002,000,0000 | 1 |
 | Export | 10,000,000 | 0 | 0 | 0 |
 
-I should be able to import my boring spreadsheet as is and do a full recalculation to validate that it's working. Inserting a new row will be a frequent operation and should be quick and easy. To support that I need a scalable way of summing a column (or performing any other simple `O(n)` function). My users will also want the confidence that they can export their spreadsheet at any time and go back to Excel or Google Sheets.
+I should be able to import my boring spreadsheet as is and do a full recalculation to validate that it's working. Inserting a new row will be a frequent operation and should be quick and easy. To support that I need a scalable way of summing a column (or performing any other simple *O(n)* function). I need to handle cases with long chains of dependent formulas like the running total column. My users will also want the confidence that they can export their spreadsheet at any time and go back to Excel or Google Sheets.
 
-What about the distinct idiom? At a minimum I need to fail gracefully if I encounter `O(n^2)` (or worse) formulas that can't be calculated in a reasonable time. My spreadsheet certainly can't hang while it racks up a ridiculous AWS bill. Long term, I need to come up with some way for users to achieve common tasks like this at scale. 
+What about the distinct idiom? At a minimum I need to fail gracefully if I encounter *O(n<sup>2</sup>)* (or worse) formulas that can't be calculated in a reasonable time. My spreadsheet certainly can't hang while it racks up a ridiculous AWS bill. Long term, I need to come up with some way for users to achieve common tasks like this at scale. 
 
 Coming up next time: let's brainstorm some ideas and benchmark them against our test cases.
