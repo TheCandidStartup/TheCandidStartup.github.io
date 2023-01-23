@@ -140,7 +140,7 @@ The second service that stands out is CloudFront. You get 10 million requests an
 
 In third place we have Amplify Web Hosting. Amplify is a high level, easy to use service that takes care of all the details when hosting a web app. It includes building and deploying the app ($10 value), Server Side Rendering ($20 value) and a CDN for hosting the app ($2.25 value). Amplify is a perfect demonstration of the principle that the higher level services have a more generous free tier. If I was being cynical I might think that's because the higher level services have much bigger margins and can afford to be more generous. Amplify is built on foundations provided by CodeBuild, Lambda and CloudFront. If you used those services directly, the equivalent of the Amplify free tier would cost you $3.40, $4.89 and $1.27 respectively. 
 
-Finally, which is the least generous service? The lowest monthly value of any service that has a free tier is STEP functions with 4000 state transitions worth $0.10. However, STEP Functions free tier is indefinite for everyone and includes all of the standard STEP functionality.
+Finally, which is the least generous service? The lowest monthly value of any service that has a free tier is STEP functions with 4000 state transitions worth $0.10. However, STEP Functions free tier is always free and includes all of the standard STEP functionality.
 
 My award for least valuable free tier goes to everyone's favorite service, S3. You have just 12 months to enjoy the benefits of 5GB of storage, 20K GET requests and 2K PUT requests worth $0.13 a month. That's a total of $1.56 for the lifetime of your account.
 
