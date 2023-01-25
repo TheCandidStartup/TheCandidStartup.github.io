@@ -13,11 +13,11 @@ Let's say you work for a large organization that, for [whatever]({{vp_url | stri
 
 {% include organizational-anti-patterns-note.html %}
 
-If only we had a common platform there would be no need for all this pointless duplication. Teams would be more productive. They could focus on delivering business value rather than doing undifferentiated heavy lifting. We can bake in company policy so that teams will automatically do the right thing. 
+"If only we had a common platform there would be no need for all this pointless duplication. Teams would be more productive. They could focus on delivering business value rather than doing undifferentiated heavy lifting. We can bake in company policy so that teams will automatically do the right thing."
 
-Sounds great. How do we get started? All the product teams are fully loaded working on customer commitments and sales blockers. 
+"Sounds great. How do we get started? All the product teams are fully loaded working on customer commitments and sales blockers."
 
-No problem, we'll set up a platform group to build it. They can take the time to figure out what we really need without being constrained by all these short term requirements. They can look ahead and build the future platform we're eventually going to need. After all, we all [want to skate to where the puck is going](https://archive.canadianbusiness.com/blogs-and-comment/stop-using-gretzky-where-the-puck-is-quote/).
+"No problem, we'll set up a platform group to build it. They can take the time to figure out what we really need without being constrained by all these short term requirements. They can look ahead and build the future platform we're eventually going to need. After all, we [want to skate to where the puck is going](https://archive.canadianbusiness.com/blogs-and-comment/stop-using-gretzky-where-the-puck-is-quote/)."
 
 What could go wrong?
 
@@ -30,7 +30,9 @@ The biggest problem is the assumption that a common platform will prevent duplic
 
 # Conflicting Priorities
 
-We need to unpack the last point further. Why would a team rather build their own version of something that already exists in a usable form? Because they've been burnt before. 
+We need to unpack that last point further. Why would a team rather build their own version of something that already exists in a usable form? 
+
+Because they've been burnt before. 
 
 # Solving the Wrong Problem Too Late
 

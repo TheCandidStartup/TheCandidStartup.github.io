@@ -20,7 +20,7 @@ The store owner likes to keep track of a running total in each row which now and
 
 In all the years the store has been in business, the prices, tax rate and fees have never changed. Perhaps that's why they've been so successful and have just recorded their millionth sale.
 
-That give us a spreadsheet with 1 million rows and 10 million cells. Right at the limits of what Excel and Google Sheets allow. So, how does it perform?
+That gives us a spreadsheet with 1 million rows and 10 million cells. Right at the limits of what Excel and Google Sheets allow. So, how does it perform?
 
 Surprisingly well. I have a reasonable spec Windows desktop: a Ryzen 5600X with 6 dual-threaded cores, 16GB of RAM and a fast M.2 NVMe SSD. The spreadsheet is 60MB on disk using the default .xlsx format or 20MB in the optimized binary .xlsb format. Opening the spreadsheet takes 10 seconds and requires 400MB of RAM. After that, performance is pretty much interactive. A full recalculation of the entire spreadsheet takes about half a second - just enough time for Excel to bring up a progress bar and report that it's calculating using 12 threads.  
 
@@ -44,7 +44,7 @@ The [Excel calculation engine consists of three parts](https://learn.microsoft.c
 
 Second, a system that uses the dependency graph to determine which formulas need to be calculated in which order (the "calculation chain"). Excel doesn't update the calculation chain as the spreadsheet is edited. Instead, it updates it dynamically during the calculation process. It starts with the calculation chain used last time and if it encounters a formula with dependents that are still dirty, it moves the formula further down the chain. 
 
-Finally, there's a system that calculates all the formulas and updates the values in the corresponding cells. Each formula for a dirty cell is calculated in calculation chain order. The cell value is updated and the cell marked as complete.
+Finally, there's the system that calculates all the formulas and updates the values in the corresponding cells. Each formula for a dirty cell is calculated in calculation chain order. The cell value is updated and the cell marked as complete.
 
 For now, we're going to treat the first two systems as a black box and focus on the calculation of the formulas. 
 
@@ -81,10 +81,13 @@ I've got what I wanted out of this exercise. I have a better understanding of ho
 | New Row | 9,000,005 | 14 | 10,000,006 | 20 |
 | Sum Column | 1,000,000 | 1 | 1,000,000 | 1 |
 | Running Total | 2,000,000 | 1,000,000 | 1,000,000 | 1,000,000 |
+| Edit First Row | 10,000,010 | 1,000,013 | 10,000,006 | 1,000,013 |
 | Distinct Idiom | 1,000,000,000,0000 | 1 | 2,000,002,000,0000 | 1 |
 | Export | 10,000,000 | 0 | 0 | 0 |
 
 I should be able to import my boring spreadsheet as is and do a full recalculation to validate that it's working. Inserting a new row will be a frequent operation and should be quick and easy. To support that I need a scalable way of summing a column (or performing any other simple *O(n)* function). I need to handle cases with long chains of dependent formulas like the running total column. My users will also want the confidence that they can export their spreadsheet at any time and go back to Excel or Google Sheets.
+
+What's the most amount of work I can trigger with a simple change? Try editing quantity in the first row. The spreadsheet needs to recalculate that row, then update everything in the running total column and all but the first summary column. It's amazing to me that changing a single cell can trigger the evaluation of a million formulas resulting in 10 million reads, 10 million floating point operations and a million writes. And as far as the user is concerned it all happens instantly.
 
 What about the distinct idiom? At a minimum I need to fail gracefully if I encounter *O(n<sup>2</sup>)* (or worse) formulas that can't be calculated in a reasonable time. My spreadsheet certainly can't hang while it racks up a ridiculous AWS bill. Long term, I need to come up with some way for users to achieve common tasks like this at scale. 
 
