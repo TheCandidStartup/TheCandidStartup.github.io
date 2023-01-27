@@ -1,6 +1,11 @@
 theme: jekyll-theme-cayman
 title: The Candid Startup
 url: https://www.thecandidstartup.org
+header_page_refs: 
+  - blog
+  - about
+  - contact
+  - now
 google_analytics: G-W5FLWM10L7
 twitter:
   username: ThCandidStartup
@@ -15,6 +20,9 @@ relative_links:
 feed:
   posts_limit: 20
   excerpt_only: true
+paginate: 10
+paginate_path: "/blog/page:num/"
 plugins:
   - jekyll-feed
   - jekyll-relative-links
+  - jekyll-paginate

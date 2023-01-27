@@ -8,10 +8,8 @@ layout: default
 
   <h2>Latest Posts</h2>
 
-  <div>&nbsp;</div>
-
   <ul class="post-list">
-    {% for post in site.posts %}
+    {% for post in site.posts limit:3 %}
       <li>
 
         {% assign date_format = site.cayman-blog.date_format | default: "%b %-d, %Y" %}
@@ -25,6 +23,14 @@ layout: default
 
       </li>
     {% endfor %}
+
+    {% assign blog_page = site.pages | where: "ref", "blog" | first %}
+      <li>
+        <span class="post-meta">Older Posts</span>
+        <h2>
+          <a class="post-link" href="{{ blog_page.url | absolute_url }}">More ...</a>
+        </h2>
+      </li>
   </ul>
 
 </div>

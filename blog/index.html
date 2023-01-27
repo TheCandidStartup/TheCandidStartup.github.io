@@ -1,0 +1,75 @@
+---
+layout: page
+title: Blog
+tagline: Every post from The Candid Startup
+ref: blog
+---
+
+{% if paginator.total_pages > 1 %}
+<div class="candid-pagination">
+  {% if paginator.previous_page %}
+    <a class="candid-page-link" href="{{ paginator.previous_page_path | relative_url }}">&laquo; Prev</a>
+  {% else %}
+    <span class="candid-page-link">&laquo; Prev</span>
+  {% endif %}
+
+  {% for page in (1..paginator.total_pages) %}
+    {% if page == paginator.page %}
+      <span class="candid-page-link"><b>{{ page }}</b></span>
+    {% elsif page == 1 %}
+      <a class="candid-page-link" href="{{ '/blog' | relative_url }}">{{ page }}</a>
+    {% else %}
+      <a class="candid-page-link" href="{{ site.paginate_path | relative_url | replace: ':num', page }}">{{ page }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if paginator.next_page %}
+    <a class="candid-page-link" href="{{ paginator.next_page_path | relative_url }}">Next &raquo;</a>
+  {% else %}
+    <span class="candid-page-link">Next &raquo;</span>
+  {% endif %}
+</div>
+{% endif %}
+
+<ul class="post-list">
+{% for post in paginator.posts %}
+<li>
+
+    {% assign date_format = site.cayman-blog.date_format | default: "%b %-d, %Y" %}
+    <span class="post-meta">{{ post.date | date: date_format }}</span>
+
+    <h2>
+      <a class="post-link" href="{{ post.url | absolute_url }}" title="{{ post.title }}">{{ post.title | escape }}</a>
+    </h2>
+
+    {{ post.excerpt | markdownify  }}
+
+</li>
+{% endfor %}
+</ul>
+
+{% if paginator.total_pages > 1 %}
+<div class="candid-pagination">
+  {% if paginator.previous_page %}
+    <a class="candid-page-link" href="{{ paginator.previous_page_path | relative_url }}">&laquo; Prev</a>
+  {% else %}
+    <span class="candid-page-link">&laquo; Prev</span>
+  {% endif %}
+
+  {% for page in (1..paginator.total_pages) %}
+    {% if page == paginator.page %}
+      <span class="candid-page-link"><b>{{ page }}</b></span>
+    {% elsif page == 1 %}
+      <a class="candid-page-link" href="{{ '/blog' | relative_url }}">{{ page }}</a>
+    {% else %}
+      <a class="candid-page-link" href="{{ site.paginate_path | relative_url | replace: ':num', page }}">{{ page }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if paginator.next_page %}
+    <a class="candid-page-link" href="{{ paginator.next_page_path | relative_url }}">Next &raquo;</a>
+  {% else %}
+    <span class="candid-page-link">Next &raquo;</span>
+  {% endif %}
+</div>
+{% endif %}

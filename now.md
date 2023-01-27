@@ -5,10 +5,9 @@ title: Now
 tagline: What I'm doing now
 permalink: /now.html
 ref: now
-order: 2
-date: 2022-10-21
+date: 2023-01-27
 ---
 
-Trying (and failing) to get into a cadence where I post something at least once a week. I'm in awe of Raymond Chen at [The Old New Thing](https://devblogs.microsoft.com/oldnewthing/) who manages to post high quality technical content **every** day while also holding down a full time job.
+Now that I've nailed a weekly publishing cadence, I'll soon have more than 20 posts. Time for some quality time fiddling with the blog. Going to give the home page more of its own identity with just the most recent posts directly available, add pagination to the full list of posts and see what I can do in the way of tagging. 
 
 [Go to the Home Page]({{ '/' | absolute_url }})

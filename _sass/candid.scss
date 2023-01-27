@@ -12,6 +12,24 @@
     background-color: $code-bg-color;
 }
 
+.candid-pagination {
+    text-align: center;
+    margin: 40px 0;
+}
+
+.candid-page-link {
+    -webkit-transition: background-color 75ms ease-out; 
+    transition: background-color 75ms ease-out; 
+    border: 2px solid $border-color; 
+    margin: 0 2px; 
+    padding: 5px 15px; 
+    text-decoration: none;
+}
+
+.candid-page-link:hover, .candid-page-link:focus { 
+    background: $grey-color-light;
+}
+
 .candid-image-div {
     padding-top: 1em;
 }
