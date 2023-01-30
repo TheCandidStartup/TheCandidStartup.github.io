@@ -1,0 +1,28 @@
+---
+layout: default
+---
+
+<div>
+
+  {{ content }}
+
+  {% assign topic = page.id | split: "/" | last %}
+
+  <ul class="post-list">
+    {% for post in site.tags[topic] %}
+      <li>
+
+        {% assign date_format = site.cayman-blog.date_format | default: "%b %-d, %Y" %}
+        <span class="post-meta">{{ post.date | date: date_format }}</span>
+
+        <h2>
+          <a class="post-link" href="{{ post.url | absolute_url }}" title="{{ post.title }}">{{ post.title | escape }}</a>
+        </h2>
+
+        {{ post.excerpt | markdownify }}
+
+      </li>
+    {% endfor %}
+  </ul>
+
+</div>

@@ -1,0 +1,19 @@
+---
+layout: page
+title: Topics
+tagline: What are we talking about?
+ref: topics
+---
+
+<ul class="post-list">
+{% for topic in site.topics %}
+<li>
+    <a class="candid-topic-link" href="{{ topic.url | absolute_url }}" title="{{ topic.title }}">{{ topic.title | escape }}</a>
+
+    <div class="candid-topic-meta">{{ topic.tagline }}</div>
+
+    {{ topic.excerpt | markdownify  }}
+
+</li>
+{% endfor %}
+</ul>

@@ -1,5 +1,6 @@
 ---
 title: What's with the weird profile picture?
+tags: autodesk
 ---
 
 When did profile pictures become a thing? I don't remember needing a profile picture for anything before I joined Autodesk in 2007. Any collaboration software you used just needed a user name and password. Maybe your real name if it was particularly "user friendly". On my first day in what was now an Autodesk office, the facilities manager came round with a cheap digital camera taking everyone's picture. "Don't worry", they said, "it's for your badge and your profile. You can change it later". 

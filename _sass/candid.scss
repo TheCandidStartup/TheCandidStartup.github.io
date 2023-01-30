@@ -30,6 +30,18 @@
     background: $grey-color-light;
 }
 
+.candid-topic-meta {
+    font-size: $small-font-size;
+    color: $grey-color;
+    margin-bottom: 0.4rem;
+  }
+  
+  .candid-topic-link {
+    display: block;
+    @include relative-font-size(1.5);
+    margin-bottom: 0rem;
+  }
+
 .candid-image-div {
     padding-top: 1em;
 }
