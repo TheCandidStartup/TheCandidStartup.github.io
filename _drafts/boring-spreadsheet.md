@@ -34,7 +34,7 @@ What if I could get the spreadsheet to time itself? Excel includes a [`NOW()` fu
 
 It works. Kind of. You have to make sure that whichever formula is evaluated first has a dependency on the cell with the start `NOW()` and that the cell with the end `NOW()` depends on the cells that will be evaluated last. The calculation is multi-threaded so you can't give the calculation engine any wiggle room if you want accurate results. In addition, at least with my copy of Excel, `NOW()` only has a resolution of 10ms.
 
-Luckily I found a better way. While trying to understand how the Excel calculation engine works I stumbled across Microsoft documentation on [making workbooks calculate faster](https://learn.microsoft.com/en-us/office/vba/excel/concepts/excel-performance/excel-improving-calculation-performance#making-workbooks-calculate-faster), which includes some handy VBA macros for timing calculation performance including full recalc, incremental recalc and recalc of a specified range of cells. Even better they use the system high-resolution timer for microsecond accuracy.
+Luckily, I found a better way. While trying to understand how the Excel calculation engine works I stumbled across Microsoft documentation on [making workbooks calculate faster](https://learn.microsoft.com/en-us/office/vba/excel/concepts/excel-performance/excel-improving-calculation-performance#making-workbooks-calculate-faster), which includes some handy VBA macros for timing calculation performance including full recalc, incremental recalc and recalc of a specified range of cells. Even better, they use the system high-resolution timer for microsecond accuracy.
 
 After all that I can tell you that a full recalculation of the spreadsheet takes 0.57 seconds (there are more decimal places but they vary from run to run).
 
@@ -76,14 +76,14 @@ I've got what I wanted out of this exercise. I have a better understanding of ho
 
 | Test Case | Reads | Formulas Evaluated | Floating Point Operations | Writes |
 | - | - | - | - | - |
-| Import | 0 | 0 | 0 | 10,000,000 |
+| Import | 0 | 0 | 0 | 10,000,030 |
 | Full Recalc | 19,000,000 | 5,000,010 | 15,000,001 | 5,000,010 |
 | New Row | 9,000,005 | 14 | 10,000,006 | 20 |
 | Sum Column | 1,000,000 | 1 | 1,000,000 | 1 |
 | Running Total | 2,000,000 | 1,000,000 | 1,000,000 | 1,000,000 |
 | Edit First Row | 10,000,010 | 1,000,013 | 10,000,006 | 1,000,013 |
 | Distinct Idiom | 1,000,000,000,0000 | 1 | 2,000,002,000,0000 | 1 |
-| Export | 10,000,000 | 0 | 0 | 0 |
+| Export | 10,000,030 | 0 | 0 | 0 |
 
 I should be able to import my boring spreadsheet as is and do a full recalculation to validate that it's working. Inserting a new row will be a frequent operation and should be quick and easy. To support that I need a scalable way of summing a column (or performing any other simple *O(n)* function). I need to handle cases with long chains of dependent formulas like the running total column. My users will also want the confidence that they can export their spreadsheet at any time and go back to Excel or Google Sheets.
 
