@@ -2,6 +2,21 @@
 layout: default
 ---
 
+{% capture temptags %}
+  {% for tag in site.tags %}
+    {{ tag[1].size | plus: 10000 }}#{{ tag[0] }}#{{ tag[1].size }}
+  {% endfor %}
+{% endcapture %}
+{% assign sortedtemptags = temptags | split:' ' | sort | reverse %}
+
+{% capture sortedtemptagnames %}
+{% for temptag in sortedtemptags %}
+  {% assign tagitems = temptag | split: '#' %}
+  {{ tagitems[1] }}
+{% endfor %}
+{% endcapture %}
+{% assign sortedtagnames = sortedtemptagnames | split:' ' %}
+
 <div>
 
   {{ content }}
@@ -16,6 +31,7 @@ layout: default
         <span class="candid-post-meta">{{ post.date | date: date_format }}</span>
       
         {% for tag in post.tags %}
+        {% assign sortedtagnames = sortedtagnames | where_exp:"item", "item != tag" %}
         {% assign topic-page = site.topics | where: "topic", tag | first %}
         {% if topic-page %}
           <a class="candid-topic-tag" href="{{ topic-page.url | absolute_url }}" title="{{ topic-page.title }}">{{ topic-page.title | escape }}</a>
@@ -27,33 +43,40 @@ layout: default
         </h2>
 
         {{ post.excerpt | markdownify | truncatewords: 30 }}
-
+        
+        {% assign last-post = post %}
       </li>
     {% endfor %}
 
     {% assign blog_page = site.pages | where: "ref", "blog" | first %}
       <li>
-        <span class="post-meta">Older Posts</span>
+        {% assign first-post = site.posts | last %}
+        <span class="candid-post-meta">{{ first-post.date | date: date_format }} - {{last-post.previous.date | date: date_format }}</span>
+
+        {% for tag in sortedtagnames limit: 5%}
+        {% assign topic-page = site.topics | where: "topic", tag | first %}
+        {% if topic-page %}
+          <a class="candid-topic-tag" href="{{ topic-page.url | absolute_url }}" title="{{ topic-page.title }}">{{ topic-page.title | escape }}</a>
+        {% endif %}
+        {% endfor %}
+        {% capture topic-index-url %}{% link topic-index.html %}{% endcapture %}
+        <a class="candid-topic-tag" href="{{ topic-index-url }}" title="...">...</a>
+
         <h2>
-          <a class="post-link" href="{{ blog_page.url | absolute_url }}">More ...</a>
+          <a class="post-link" href="{{ blog_page.url | absolute_url }}">More Posts</a>
         </h2>
+
+        <p>There's another {{ site.posts | size | minus: 3 }} posts covering {{ sortedtagnames | size }} more <a href="{{ topic-index-url }}">topics</a>.</p>
       </li>
   </ul>
 
 <h2>Hot Topics</h2>
 
-{% capture temptags %}
-  {% for tag in site.tags %}
-    {{ tag[1].size | plus: 1000 }}#{{ tag[0] }}#{{ tag[1].size }}
-  {% endfor %}
-{% endcapture %}
-{% assign sortedtemptags = temptags | split:' ' | sort | reverse %}
-
 <div class="candid-topic-cloud">
 {% for temptag in sortedtemptags %}
   {% assign tagitems = temptag | split: '#' %}
   {% capture tagname %}{{ tagitems[1] }}{% endcapture %}
-  {% capture tagcount %}{{ tagitems[0] | minus: 1000 }}{% endcapture %}
+  {% capture tagcount %}{{ tagitems[0] | minus: 10000 }}{% endcapture %}
   {% assign topic-page = site.topics | where: "topic", tagname | first %}
   {% if topic-page %}
     {% capture topic-title %}{{ topic-page.title }} ({{ tagcount }}){% endcapture %}
