@@ -94,4 +94,4 @@ You don't want to end up as the weird old guy muttering to themselves in the cor
 
 I've got some great examples to share but this post is long enough already. It also wouldn't be fair to include them in a piece about leaving Autodesk. I suspect most of them are a feature of any large organization. 
 
-Look for a future series of posts on *Organizational Anti-Patterns*.
+Look for a future series of posts on [Organizational Anti-Patterns]({% link _topics/org-anti-patterns.md %}).
