@@ -1,5 +1,6 @@
 ---
 title: Making sense of British keyboard layouts on the Mac
+tags: mac autodesk
 ---
 
 So, I have a MacBook. Never owned a Mac before. There are two reasons why I now have one. The reason I like to give is that it will make development for iOS and the cloud easier than a Windows machine. The real reason is that I had a lot of Autodesk applause points to spend before I retired. 

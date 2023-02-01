@@ -1,6 +1,7 @@
 ---
 title: >
   Organizational Anti-Patterns #1: VP Moves
+tags: org-anti-patterns aws
 ---
 
 You work in a large organization. The kind that has VPs and SVPs and lots of C-level types. I'm going to use "VP" as short hand for all these leaders at the top of an organization. What do you want from the VPs? Ideally, they provide a consistent sense of direction with a clear strategy. They model the culture of the organization and provide a sense of belonging. They ensure that all the parts of the organization are aligned so that the overall organization is more than just the sum of its parts. 

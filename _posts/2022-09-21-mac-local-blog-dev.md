@@ -1,5 +1,6 @@
 ---
 title: Setting up my Mac for local blog development
+tags: blog mac
 ---
 
 I intend to cover a variety of topics here. For example, deep thinking about industry trends and startup ideas, juicy gossip from my days at Autodesk or lab journal entries documenting my progress. Full disclosure - there's no deep thinking or juicy gossip today.

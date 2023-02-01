@@ -1,5 +1,6 @@
 ---
 title: The Evolution of Multi-Tenant Architecture
+tags: cloud-architecture
 ---
 
 I previously described the [general areas for my initial projects]({% link _posts/2022-10-24-what-projects.md %}). Today I want to dive a little deeper into the multi-tenant SaaS project. This is the project I'm most excited about and the one that will need the most explanation.

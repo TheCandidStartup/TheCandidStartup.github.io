@@ -1,5 +1,6 @@
 ---
 title: How's that blog of yours working out?
+tags: blog
 ---
 
 Thanks for asking. It's been a couple of months since I left Autodesk. I've made a few posts, started to settle into a rhythm. Time to have a look at the analytics and see if anyone is reading this stuff.

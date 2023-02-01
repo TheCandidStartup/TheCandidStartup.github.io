@@ -1,5 +1,6 @@
 ---
 title: Modern SaaS Architecture
+tags: cloud-architecture aws
 ---
 
 Last time we looked at the [evolution of multi-tenant architectures]({% link _posts/2022-11-07-evolution-multi-tenant-architecture.md %}). So, what does the architecture of a modern multi-tenant SaaS product look like? Well, for a start, its a [microservice architecture](https://martinfowler.com/microservices/) deployed on one of the big three cloud providers (most commonly AWS).

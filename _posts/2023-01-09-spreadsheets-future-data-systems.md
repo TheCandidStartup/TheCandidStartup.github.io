@@ -1,5 +1,6 @@
 ---
-title:  Spreadsheets are the Future of Data Systems
+title: Spreadsheets are the Future of Data Systems
+tags: spreadsheets cloud-architecture
 ---
 
 The final chapter of [Martin Kleppmann's](https://martin.kleppmann.com/) wonderful book [Designing Data-Intensive Applications](https://dataintensive.net/) is called "The Future of Data Systems". In this chapter he talks about data integration between different specialized systems using flows of derivative data, unbundling today's complex databases into simpler specialized data storage components and composing them with dataflow processing systems. At one point, almost as a throw away remark, he mentions that spreadsheets already have most of the dataflow programming capabilities that such a system would need. Of course, a spreadsheet is just a spreadsheet. A real data system needs to be durable, scalable and fault tolerant. It needs to integrate with a wide variety of disparate technologies.

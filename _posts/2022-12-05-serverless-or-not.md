@@ -1,5 +1,6 @@
 ---
 title: Serverless or Not?
+tags: aws cloud-architecture
 ---
 
 I [want to build a Serverless SaaS product]({% link _posts/2022-11-28-modern-saas-architecture.md %}) that can be deployed into a customer's own AWS account. But what exactly does it mean to be Serverless? AWS (other cloud providers are available) has [over 200 different services](https://aws.amazon.com/what-is-aws/). How many of those are serverless?

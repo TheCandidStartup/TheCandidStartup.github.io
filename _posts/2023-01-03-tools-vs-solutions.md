@@ -1,5 +1,6 @@
 ---
 title: Tools vs Solutions
+tags: navisworks autodesk spreadsheets
 ---
 
 [James Awe](https://www.linkedin.com/in/james-awe-4630a94/) is the first Software Architect I met at Autodesk. He was involved in the acquisition process for [Navisworks](https://en.wikipedia.org/wiki/Navisworks), where I was then CTO. Some years later he shared the story of how he first became aware of Navisworks. 

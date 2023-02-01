@@ -1,5 +1,6 @@
 ---
 title: Free or Not?
+tags: aws
 ---
 
 Last month I dived into AWS cost models and used that to decide whether AWS services are [Serverless or Not]({% link _posts/2022-12-05-serverless-or-not.md %}). As I get closer to actually trying to implement my [open source, serverless, customer deployed, scalable spreadsheet]({% link _posts/2023-01-09-spreadsheets-future-data-systems.md %}) I've found myself wondering about the AWS free tier.  

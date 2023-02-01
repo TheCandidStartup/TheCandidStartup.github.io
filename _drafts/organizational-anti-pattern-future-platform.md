@@ -1,6 +1,7 @@
 ---
 title: >
   Organizational Anti-Patterns #5: The Future Platform
+tags: org-anti-patterns
 ---
 
 {% capture vp_url %}

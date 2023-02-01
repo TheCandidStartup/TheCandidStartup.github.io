@@ -1,5 +1,6 @@
 ---
 title: The Seven Reasons why I REALLY left Autodesk
+tags: autodesk
 ---
 
 When I announced my retirement I included this explanation :

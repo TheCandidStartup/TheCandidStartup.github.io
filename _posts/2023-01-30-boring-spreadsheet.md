@@ -1,5 +1,6 @@
 ---
 title: The World's Most Boring Spreadsheet
+tags: spreadsheets
 ---
 
 What's the best way to get started with a big new project? Something like building an [open source, serverless, customer deployed, scalable spreadsheet]({% link _posts/2023-01-09-spreadsheets-future-data-systems.md %}) from scratch? 

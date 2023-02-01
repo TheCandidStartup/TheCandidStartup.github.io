@@ -1,5 +1,6 @@
 ---
 title: You've left Autodesk ... now what?
+tags: autodesk navisworks cambridge
 ---
 
 OK, Tim. You've described the [ethos behind The Candid Startup]({% link _posts/2022-09-05-what-is-candid.md %} ), you've explained [why you left Autodesk]({% link _posts/2022-10-18-leaving-autodesk.md %}). You think you'll have more fun working on your own projects. So, what are those projects?

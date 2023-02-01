@@ -1,6 +1,7 @@
 ---
 title: >
   Organizational Anti-Patterns #4: Throwing it over the wall
+tags: org-anti-patterns
 ---
 
 [Throwing it over the wall](https://wordspy.com/index.php?word=throw-it-over-the-wall) is a common business idiom for "passing a project or problem to another person without consulting with them or coordinating the transfer". It's commonly considered to be a bad thing.
