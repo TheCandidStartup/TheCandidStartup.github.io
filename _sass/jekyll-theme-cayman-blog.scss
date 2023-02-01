@@ -3,7 +3,6 @@
 @import "variables";
 @import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
 @import "blog";
-@import "candid";
 
 @mixin large {
   @media screen and (min-width: #{$large-breakpoint}) {
@@ -22,6 +21,8 @@
     @content;
   }
 }
+
+@import "candid";
 
 * {
   box-sizing: border-box;

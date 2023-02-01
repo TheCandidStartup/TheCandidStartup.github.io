@@ -1,0 +1,25 @@
+{% assign paginator = include.paginator %}
+
+{% if paginator.total_pages > 1 %}
+  {% if paginator.previous_page %}
+    <a class="candid-header-link" href="{{ paginator.previous_page_path | relative_url }}">&laquo; Prev</a>
+  {% else %}
+    <span class="candid-header-item">&laquo; Prev</span>
+  {% endif %}
+
+  {% for page in (1..paginator.total_pages) %}
+    {% if page == paginator.page %}
+      <span class="candid-header-item"><b>{{ page }}</b></span>
+    {% elsif page == 1 %}
+      <a class="candid-header-link" href="{{ '/blog' | relative_url }}">{{ page }}</a>
+    {% else %}
+      <a class="candid-header-link" href="{{ site.paginate_path | relative_url | replace: ':num', page }}">{{ page }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if paginator.next_page %}
+    <a class="candid-header-link" href="{{ paginator.next_page_path | relative_url }}">Next &raquo;</a>
+  {% else %}
+    <span class="candid-header-item">Next &raquo;</span>
+  {% endif %}
+{% endif %}

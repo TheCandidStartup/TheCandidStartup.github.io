@@ -12,22 +12,113 @@
     background-color: $code-bg-color;
 }
 
-.candid-pagination {
+.candid-header-nav {
     text-align: center;
-    margin: 40px 0;
+    line-height: 2.0;
+
+    @include large {
+        margin-top: 3rem;
+        margin-bottom: -4rem;
+      }
+    
+      @include medium {
+        margin-top: 1.5rem;
+        margin-bottom: -2.25rem;
+      }
+    
+      @include small {
+        margin-top: 0.75rem;
+        margin-bottom: -1.5rem;
+      }
 }
 
-.candid-page-link {
-    -webkit-transition: background-color 75ms ease-out; 
-    transition: background-color 75ms ease-out; 
-    border: 2px solid $border-color; 
+.candid-header-item {
+    border: 1px solid; 
+    border-radius: 0.3rem;
     margin: 0 2px; 
     padding: 5px 15px; 
     text-decoration: none;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(255, 255, 255, 0.2);
+    font-weight: normal;
+    opacity: 0.7;
+  
+    @include large {
+      font-size: 0.9rem;
+    }
+  
+    @include medium {
+      font-size: 0.65rem;
+    }
+  
+    @include small {
+      font-size: 0.55rem;
+    }
 }
 
-.candid-page-link:hover, .candid-page-link:focus { 
-    background: $grey-color-light;
+.candid-header-link {
+    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+    border: 2px solid; 
+    border-radius: 0.3rem;
+    margin: 0 2px; 
+    padding: 5px 15px; 
+    text-decoration: none;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    font-weight: normal;
+    opacity: 0.7;
+  
+    @include large {
+      font-size: 0.9rem;
+    }
+  
+    @include medium {
+      font-size: 0.65rem;
+    }
+  
+    @include small {
+      font-size: 0.55rem;
+    }
+}
+
+.candid-header-link:hover, .candid-header-link:focus { 
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.candid-page-footer {
+    color: $header-heading-color;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
+
+    background-color: $header-bg-color;
+    background-image: linear-gradient(120deg, $header-bg-color-secondary, $header-bg-color);
+  
+    @include large {
+      padding: 1rem;
+    }
+  
+    @include medium {
+      padding: 0.75rem;
+    }
+  
+    @include small {
+      padding: 0.5rem;
+    }
+  }
+
+.candid-post-meta {
+    font-size: $small-font-size;
+    color: $grey-color;
+    margin-right: 10px
 }
 
 .candid-topic-meta {
@@ -36,11 +127,33 @@
     margin-bottom: 0.4rem;
   }
   
-  .candid-topic-link {
+.candid-topic-link {
     display: block;
     @include relative-font-size(1.5);
     margin-bottom: 0rem;
-  }
+}
+
+.candid-topic-tag {
+    display: inline-block;
+    color: $grey-color;
+    font-size: $small-font-size;
+    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+    border: 2px solid $border-color; 
+    border-radius: 0.25rem;
+    margin: 1px 1px; 
+    padding: 0px 6px; 
+    text-decoration: none;
+}
+
+.candid-topic-tag:hover, .candid-topic-tag:focus { 
+    background: $grey-color-light;
+    text-decoration: none;
+    border-color: darken($border-color,10%);
+}
+
+.candid-topic-summary {
+    margin-bottom: 30px;
+}
 
 .candid-image-div {
     padding-top: 1em;
