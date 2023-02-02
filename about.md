@@ -7,7 +7,7 @@ ref: about
 order: 0
 ---
 
-This is _The Candid Startup_ Blog. This site is generated using GitHub pages via Jekyll. You can find the source code for the blog and all my projects at: [TheCandidStartup](https://github.com/TheCandidStartup)
+This is _The Candid Startup_ Blog. This site is generated using [GitHub Pages](https://pages.github.com/) via Jekyll. You can find the source code for the blog and all my projects at: [TheCandidStartup](https://github.com/TheCandidStartup)
 
 This site uses
 - [Jekyll](https://github.com/jekyll/jekyll)
