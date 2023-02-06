@@ -121,7 +121,7 @@ I'm glad you asked as I was wondering that too. If you look more closely at `def
 
 ## Pagination
 
-The first change I made was to enable pagination. The [standard pagination plugin](https://jekyllrb.com/docs/pagination/) included with Jekyll has some limitations. For a start it only works with html source files. It works by repeatedly processing the source file for each page, setting up a `paginator` liquid object with metadata for the current page. It is hardcoded to paginate posts - you can't use it to paginate any other collections of pages you may define. There is a more recent [jekyll-paginate-v2] plugin with more features, but it isn't supported by GitHub pages. 
+The first change I made was to enable pagination. The [standard pagination plugin](https://jekyllrb.com/docs/pagination/) included with Jekyll has some limitations. For a start it only works with html source files. It works by repeatedly processing the source file for each page, setting up a `paginator` liquid object with metadata for the current page. It is hardcoded to paginate posts - you can't use it to paginate any other collections of pages you may define. There is a more recent [jekyll-paginate-v2](https://github.com/sverrirs/jekyll-paginate-v2) plugin with more features, but it isn't supported by GitHub pages. 
 
 My home page is defined using Markdown and includes introductory content that makes no sense to duplicate on each page of posts. Clearly, I needed to define a separate area for my paginated list of posts. I created a new html source page using the `page` layout and added the front matter needed to add it to the site menu.
 
