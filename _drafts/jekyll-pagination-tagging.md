@@ -3,7 +3,7 @@ title: Implementing Pagination and Tagging with Jekyll
 tags: blog
 ---
 
-I previously gave you a guided tour of all the recent changes to the blog. I moved the full list of posts from the home page into a separate paginated *Posts* area and organized them into *Topics*. But how was it implemented?
+I previously gave you a [guided tour of all the recent changes to the blog]({% link _posts/2023-02-06-blog-posts-topics.md %}). I moved the full list of posts from the home page into a separate paginated *Posts* area and organized them into *Topics*. But how was it implemented?
 
 The old home page came as standard with the [Cayman Blog](https://github.com/lorepirri/cayman-blog) Jekyll theme for [GitHub Pages](https://pages.github.com/). [Jekyll](https://github.com/jekyll/jekyll) has built in support for [Pagination](https://jekyllrb.com/docs/pagination/) and [Tags](https://jekyllrb.com/docs/posts/#tags-and-categories), so that was the obvious starting point. 
 
