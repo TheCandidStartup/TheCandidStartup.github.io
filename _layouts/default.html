@@ -85,10 +85,11 @@
                 • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ page_author }}</span></span>
                 {% endif %}
             </h2>
-            {% include post-nav.html %}
             {% endif %}
-            {% if paginator %}
-              {% include pagination.html paginator=paginator %}
+            {% if page.include_header %}
+              {% include {{ page.include_header }} paginator=paginator %}
+            {% elsif layout.include_header %}
+              {% include {{ layout.include_header }} paginator=paginator %}
             {% endif %}
             <!-- End: Post tagline -->
         </section>
