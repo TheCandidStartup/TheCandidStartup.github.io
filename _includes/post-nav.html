@@ -1,3 +1,11 @@
+{% if page.previous or page.tags or page.next %}
+
+{% if include.footer %}
+  <div class="candid-page-footer"">
+{% else %}
+  <div class="candid-header-nav">
+{% endif %}
+
 {% assign date_format = site.cayman-blog.date_format | default: "%b %-d, %Y" %}
 {% if page.previous %}
   <a class="candid-header-item candid-header-link" href="{{ page.previous.url | absolute_url }}">&laquo; {{ page.previous.date | date: date_format }}</a>
@@ -10,4 +18,8 @@
 {% endfor %}
 {% if page.next %}
   <a class="candid-header-item candid-header-link" href="{{ page.next.url | absolute_url }}">{{ page.next.date | date: date_format }} &raquo;</a>
+{% endif %}
+
+</div>
+
 {% endif %}

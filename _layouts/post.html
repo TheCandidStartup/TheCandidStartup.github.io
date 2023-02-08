@@ -19,11 +19,7 @@ layout: default
     {{ content }}
   </div>
 
-  {% if page.previous or page.tags or page.next %}
-  <div class="candid-page-footer">
-    {% include post-nav.html %}
-  </div>
-  {% endif %}
+  {% include post-nav.html footer=true %}
 
   {% if site.disqus.shortname %}
     {% include disqus_comments.html %}

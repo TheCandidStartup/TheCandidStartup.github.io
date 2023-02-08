@@ -1,6 +1,12 @@
 {% assign paginator = include.paginator %}
 
 {% if paginator.total_pages > 1 %}
+{% if include.footer %}
+  <div class="candid-page-footer">
+{% else %}
+  <div class="candid-header-nav">
+{% endif %}
+
   {% if paginator.previous_page %}
     <a class="candid-header-link" href="{{ paginator.previous_page_path | relative_url }}">&laquo; Prev</a>
   {% else %}
@@ -22,4 +28,6 @@
   {% else %}
     <span class="candid-header-item">Next &raquo;</span>
   {% endif %}
+
+  </div>
 {% endif %}

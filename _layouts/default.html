@@ -85,14 +85,10 @@
                 • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ page_author }}</span></span>
                 {% endif %}
             </h2>
-            <div class="candid-header-nav">
-                {% include post-nav.html %}
-            </div>
+            {% include post-nav.html %}
             {% endif %}
             {% if paginator %}
-            <div class="candid-header-nav">
               {% include pagination.html paginator=paginator %}
-            </div>
             {% endif %}
             <!-- End: Post tagline -->
         </section>
