@@ -84,9 +84,9 @@ After some fiddling with the site config to enable the paginator, it worked. Jek
 
 # Site Menu
 
-By default, Cayman Blog constructs the site menu by looking for `ref` and (optionally) `order` properties in page front matter. It uses a liquid expression to sort the list of pages by `order` property and then extract the value of each page's ref property, resulting in an array of ref values: `site.pages | sort: "order" | map: "ref"`. Once the pagination plugin has run there are two pages with a `ref: blog` property which results in "Posts" appearing twice in the site menu.
+By default, Cayman Blog constructs the site menu by looking for `ref` and (optionally) `order` properties in page front matter. It uses the liquid expression `site.pages | sort: "order" | map: "ref"` to sort the list of pages by `order` property and then extract the value of each page's ref property, resulting in an array of ref values. Once the pagination plugin has run there are two pages with a `ref: blog` property which results in "Posts" appearing twice in the site menu.
 
-My first thought was that I needed to hack in some de-duplication so that only one copy was included for each value of `ref`. Then I noticed that Cayman blog supports an alternate way of defining the site menu. You can use the site wide config file to directly define the array of `ref` values instead. That avoids the duplicate problem and has the added bonus of defining the site menu all in one place with no need to fiddle around with `order` properties on multiple pages.
+My first thought was that I needed to hack in some de-duplication so that only one copy was included for each value of `ref`. Then I noticed that Cayman blog supports an alternative way of defining the site menu. You can use the site wide config file to directly define the array of `ref` values instead. That avoids the duplicate problem and has the added bonus of defining the site menu all in one place, with no need to fiddle around with `order` properties on multiple pages.
 
 ```
 header_page_refs: 
@@ -118,7 +118,7 @@ I used the style sheet from the [Mozilla Release Management Blog](https://releas
 
 I noticed that the Cayman theme includes a button (used to add a "View on GitHub" button to the home page of project repo documentation). The button styling looks great but is intended to be part of the site header. Then I realized I could solve my second problem too, by moving the navigation controls into the bottom margin of the site header.
 
-Unfortunately, that does involve hacking extra logic into `default.html`. However, I was able to make the changes generically. Here's the sum total of the logic I added.
+Unfortunately, that does involve hacking extra logic into `default.html`. However, I was able to make the changes generic. Here's the sum total of the logic I added.
 
 {% raw %}
 ```
@@ -158,13 +158,13 @@ include_header: pagination.html
 
 # Tags
 
-The [Jekyll documentation](https://jekyllrb.com/docs/posts/#tags-and-categories) is very detailed when explaining how to add tags to a post. It's very sketchy when it comes to explaining how to process tagged posts to add topic badges to post references and generate pages for each topic with corresponding lists of posts. After consulting the wisdom of the internet, it seems there are two options. Either use the [jekyll-tagging plugin](https://github.com/pattex/jekyll-tagging) that does all the work for you (which isn't supported by GitHub Pages), or do most of the [heavy](https://longqian.me/2017/02/09/github-jekyll-tag/) [lifting](https://peterroelants.github.io/posts/adding-tags-to-github-pages/) by hand. 
+The [Jekyll documentation](https://jekyllrb.com/docs/posts/#tags-and-categories) is very detailed when explaining how to add tags to a post. It's very sketchy when it comes to explaining how to process tagged posts to add topic badges to post excerpts and generate pages for each topic with corresponding lists of post excerpts. After consulting the wisdom of the internet, it seems there are two options. Either use the [jekyll-tagging plugin](https://github.com/pattex/jekyll-tagging) that does all the work for you (which isn't supported by GitHub Pages), or do most of the [heavy](https://longqian.me/2017/02/09/github-jekyll-tag/) [lifting](https://peterroelants.github.io/posts/adding-tags-to-github-pages/) by hand. 
 
 Doing it by hand is particularly awkward due to the way that Jekyll manages tags. You tag a post by adding a white space separated list of tags as a `tags` property in the front matter. Jekyll processes all the tagged pages to create a global list of all tags in `site.tags`. For each tag you get access to the name and a list of posts with that tag. So far so good. Presumably I can write liquid expressions like `site.tags | sort: "pages.size" | map "name"` to get a list of tag names in popularity order?
 
 Well, no. Each tag in the `site.tags` array is itself an array with two elements. The first element is the name and the second is an array of pages. Which as well as being clunky, is immensely frustrating because you can't use any of the nice liquid filters that operate on arrays of objects. One of the limitations of jekyll is that you can't define objects yourself, you only have access to the ones provided by core jekyll and plugins. So, you can't make your life easier by building your own collection of tag objects.
 
-You also can't generate a page per tag without using a script or plugin. If you use a script or plugin, it won't be supported by GitHub pages. You need to manually create a page for each topic.
+You also can't generate a page per tag without using a script or plugin. If you use a script or plugin, it won't be supported by GitHub pages. I needed to manually create a page for each topic.
 
 # Topics
 
@@ -190,7 +190,7 @@ layout: default
 ```
 {% endraw %}
 
-There's one bit of magic here that I can't explain. It's not documented anywhere I can see, but [both]((https://longqian.me/2017/02/09/github-jekyll-tag/)) [examples](https://peterroelants.github.io/posts/adding-tags-to-github-pages/) of manually implementing tagging that I looked at use it. They access the collection of posts with a specific tag by accessing an item in the site.tags array *by name*. Somehow that is interpreted by Jekyll/Liquid to iterate over the pairs in the array for one where the first element matches the name and to return the second element. 
+There's one bit of magic here that I can't explain. It's not documented anywhere I can see, but [both]((https://longqian.me/2017/02/09/github-jekyll-tag/)) [examples](https://peterroelants.github.io/posts/adding-tags-to-github-pages/) of manually implementing tagging that I looked at use it. They access the collection of posts with a specific tag by indexing into the site.tags array *by name*. Somehow that is interpreted by Jekyll/Liquid to iterate over the `[tag, pages]` pairs in the array looking for one where the first element matches the name and to return the second element. 
 
 Each topic page can now be defined with some simple markdown.
 
@@ -207,9 +207,26 @@ Building and managing the blog.
 
 I use the Jekyll [Collections](https://jekyllrb.com/docs/collections/) feature to manage the topic pages. You put the pages that are part of the collection in a subfolder and Jekyll creates a site variable containing all the pages in the collection. In my case, `site.topics`. That makes it simple to create the "Topics" page that lists all topics. 
 
-# In Post Navigation Controls
+# In-Post Navigation Controls
 
-We've already done the groundwork for adding navigation controls to each post. All the logic is in a separate `post-nav.html` file which is included into the `post.html` layout in the same way as the pagination controls described above. The in-post navigation controls include next and previous post as well as the topics for this post.
+We've already done the groundwork for adding navigation controls to each post. All the logic is in a separate `post-nav.html` file which is included into the `post.html` layout.
+
+{% raw %}
+```
+---
+layout: default
+include_header: post-nav.html
+---
+  
+<div itemprop="articleBody">
+  {{ content }}
+</div>
+
+{% include post-nav.html footer=true %}
+```
+{% endraw %}
+
+The in-post navigation controls include next and previous post as well as the topics for the post.
 
 {% raw %}
 ```
@@ -228,7 +245,7 @@ We've already done the groundwork for adding navigation controls to each post. A
 ```
 {% endraw %}
 
-The only point of interest is that I use the tags to lookup the corresponding topic page. The title of the topic page is used to render the control rather than the "internal" tag name. If there's no corresponding topic, the tag is ignored.
+The only point of interest is that I use the tags to lookup the corresponding topic page. The title of the topic page is used to render the button rather than the "internal" tag name. If there's no corresponding topic, the tag is ignored.
 
 # Topic Badges
 
@@ -236,7 +253,9 @@ I use the same approach to add topic badges to the post excerpts on the home pag
 
 # Topic Cloud
 
-So far, the logic has looked pretty clean. That's all going to change now the time has come to explain how you actually get a list of topics in popularity order. In order to sort anything you need an array of things that can you can apply the `sort` filter to. Those things need to either by objects (in which case you can sort by any property of the object), or strings. As mentioned above, there are no tag objects and no way to make any. Which leaves strings. I need to generate a string for each tag which includes number of posts and tag name in such a way that sorting the strings will get them in number of posts order. I can then iterate over the sorted array, splitting each string to retrieve the ordered tag names.
+So far, the logic has looked pretty clean. That's all going to change now the time has come to explain how you actually get a list of topics in popularity order. In order to sort anything you need an array of things that can you can apply the `sort` filter to. Those things need to either be objects (in which case you can sort by any property of the object), or strings. As mentioned above, there are no tag objects and no way to make any. 
+
+Which leaves strings. I need to generate a string for each tag which includes number of posts and tag name in such a way that sorting the strings will get them in number of posts order. I can then iterate over the sorted array, splitting each string to retrieve the ordered tag names.
 
 {% raw %}
 ```
@@ -256,3 +275,29 @@ So far, the logic has looked pretty clean. That's all going to change now the ti
 {% assign sortedtagnames = sortedtemptagnames | split:' ' %}
 ```
 {% endraw %}
+
+This will take some unpacking. The first block generates strings like `10005#blog`, one per line, then captures the whole thing as a variable. The variable is then split on white space into an array of strings which are then sorted from largest to smallest. Adding 10000 to the number of posts for each tag ensures that every string has the same number of digits. That means a string based sort will work correctly.
+
+The second block iterates over the sorted strings, splitting out the tag name part and then doing the capture and split trick again to get a sorted array of tag names. 
+
+Believe me, I've looked for alternatives, but the wisdom of the internet hasn't revealed anything better. If the Jekyll maintainers happen to be reading this, it would be great if you could add support for {% raw %}`{% captureyaml %}`{% endraw %}. This would capture rendered text as normal, then parse it as YAML and store the resulting structure in the variable. You already have a YAML parser for the front matter that does the same thing for site and page variables. I would then have a way of creating objects with name and count properties which I can use with the sort and map filters.
+
+Once I have the sorted tag names, the rest of it is simple enough. I generate the badges in the topic cloud in the normal way, by iterating over the sorted tag names. The only difference is that I add the number of posts to each topic title using {% raw %}`{{ topic-page.title }} ({{ site.tags[tagname] | size }})`{% endraw %}
+
+For the badges on the "More Posts" link (filtered to remove those used on the first three post excerpts) I use:
+
+{% raw %}
+```
+{% assign tagsleft = sortedtagnames %}
+{% for post in site.posts limit:3 %}
+  {% for tag in post.tags %}
+    {% assign tagsleft = tagsleft | where_exp:"item", "item != tag" %}
+  {% endfor %}
+{% endfor %}
+
+{% for tag in tagsleft limit: 5%}
+  ...
+```
+{% endraw %}
+
+And that's it. More than you ever wanted to know about pagination and tagging with Jekyll.
