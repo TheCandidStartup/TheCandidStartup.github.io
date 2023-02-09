@@ -209,6 +209,50 @@ I use the Jekyll [Collections](https://jekyllrb.com/docs/collections/) feature t
 
 # In Post Navigation Controls
 
+We've already done the groundwork for adding navigation controls to each post. All the logic is in a separate `post-nav.html` file which is included into the `post.html` layout in the same way as the pagination controls described above. The in-post navigation controls include next and previous post as well as the topics for this post.
+
+{% raw %}
+```
+{% if page.previous %}
+  <a href="{{ page.previous.url }}">&laquo; {{ page.previous.date }}</a>
+{% endif %}
+{% for tag in page.tags %}
+  {% assign topic-page = site.topics | where: "topic", tag | first %}
+  {% if topic-page %}
+    <a href="{{ topic-page.url }}">{{ topic-page.title | escape }}</a>
+  {% endif %}
+{% endfor %}
+{% if page.next %}
+  <a href="{{ page.next.url }}">{{ page.next.date }} &raquo;</a>
+{% endif %}
+```
+{% endraw %}
+
+The only point of interest is that I use the tags to lookup the corresponding topic page. The title of the topic page is used to render the control rather than the "internal" tag name. If there's no corresponding topic, the tag is ignored.
+
 # Topic Badges
 
+I use the same approach to add topic badges to the post excerpts on the home page, paginated posts page and topic pages. I was tempted to pull this common logic into another include. Instead I heeded the [warning](https://jekyllrb.com/docs/includes/#passing-parameters-to-includes) in the Jekyll documentation to avoid using too many includes. Site build time in incremental mode is currently 0.6 seconds. I want to keep it under one second for a responsive *write, build, check* development cycle.
+
 # Topic Cloud
+
+So far, the logic has looked pretty clean. That's all going to change now the time has come to explain how you actually get a list of topics in popularity order. In order to sort anything you need an array of things that can you can apply the `sort` filter to. Those things need to either by objects (in which case you can sort by any property of the object), or strings. As mentioned above, there are no tag objects and no way to make any. Which leaves strings. I need to generate a string for each tag which includes number of posts and tag name in such a way that sorting the strings will get them in number of posts order. I can then iterate over the sorted array, splitting each string to retrieve the ordered tag names.
+
+{% raw %}
+```
+{% capture temptags %}
+  {% for tag in site.tags %}
+    {{ tag[1].size | plus: 10000 }}#{{ tag[0] }}#{{ tag[1].size }}
+  {% endfor %}
+{% endcapture %}
+{% assign sortedtemptags = temptags | split:' ' | sort | reverse %}
+
+{% capture sortedtemptagnames %}
+{% for temptag in sortedtemptags %}
+  {% assign tagitems = temptag | split: '#' %}
+  {{ tagitems[1] }}
+{% endfor %}
+{% endcapture %}
+{% assign sortedtagnames = sortedtemptagnames | split:' ' %}
+```
+{% endraw %}
