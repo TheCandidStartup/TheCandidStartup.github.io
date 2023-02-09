@@ -8,16 +8,16 @@
 
 {% assign date_format = site.cayman-blog.date_format | default: "%b %-d, %Y" %}
 {% if page.previous %}
-  <a class="candid-header-item candid-header-link" href="{{ page.previous.url | absolute_url }}">&laquo; {{ page.previous.date | date: date_format }}</a>
+  <a class="candid-header-link" href="{{ page.previous.url | absolute_url }}">&laquo; {{ page.previous.date | date: date_format }}</a>
 {% endif %}
 {% for tag in page.tags %}
   {% assign topic-page = site.topics | where: "topic", tag | first %}
   {% if topic-page %}
-    <a class="candid-header-item candid-header-link" href="{{ topic-page.url | absolute_url }}" title="{{ topic-page.title }}">{{ topic-page.title | escape }}</a>
+    <a class="candid-header-link" href="{{ topic-page.url | absolute_url }}" title="{{ topic-page.title }}">{{ topic-page.title | escape }}</a>
   {% endif %}
 {% endfor %}
 {% if page.next %}
-  <a class="candid-header-item candid-header-link" href="{{ page.next.url | absolute_url }}">{{ page.next.date | date: date_format }} &raquo;</a>
+  <a class="candid-header-link" href="{{ page.next.url | absolute_url }}">{{ page.next.date | date: date_format }} &raquo;</a>
 {% endif %}
 
 </div>
