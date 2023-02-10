@@ -43,18 +43,16 @@ Here's the `page` layout in full.
 layout: default
 ---
 <article>
-
   <div>
     {{ content }}
   </div>
-
 </article>
 ```
 {% endraw %}
 
 Hold on, doesn't the site header look different for home, posts and pages? How is that done? 
 
-I'm glad you asked as I was wondering that too. If you look more closely at `default.html`, you'll see lots of conditional content like {% raw %}`{% if page.layout == 'home' %}`{% endraw %}.
+I'm glad you asked, as I was wondering that too. If you look more closely at `default.html`, you'll see lots of conditional content like {% raw %}`{% if page.layout == 'home' %}`{% endraw %}.
 
 # Pagination
 
@@ -84,7 +82,7 @@ After some fiddling with the site config to enable the paginator, it worked. Jek
 
 # Site Menu
 
-By default, Cayman Blog constructs the site menu by looking for `ref` and (optionally) `order` properties in page front matter. It uses the liquid expression `site.pages | sort: "order" | map: "ref"` to sort the list of pages by `order` property and then extract the value of each page's ref property, resulting in an array of ref values. Once the pagination plugin has run there are two pages with a `ref: blog` property which results in "Posts" appearing twice in the site menu.
+By default, Cayman Blog constructs the site menu by looking for `ref` and (optionally) `order` properties in page front matter. It uses the liquid expression `site.pages | sort: "order" | map: "ref"` to sort the list of pages by `order` and then extract the value of each page's ref property, resulting in an array of ref values. Once the pagination plugin has run there are two pages with a `ref: blog` property which results in "Posts" appearing twice in the site menu.
 
 My first thought was that I needed to hack in some de-duplication so that only one copy was included for each value of `ref`. Then I noticed that Cayman blog supports an alternative way of defining the site menu. You can use the site wide config file to directly define the array of `ref` values instead. That avoids the duplicate problem and has the added bonus of defining the site menu all in one place, with no need to fiddle around with `order` properties on multiple pages.
 
@@ -101,7 +99,7 @@ Cayman Blog then iterates over the array of refs and retrieves the corresponding
 
 {% raw %}
 ```
-{% for ref in page_refs %}
+{% for ref in header_page_refs %}
   {% assign my_page = site.pages | where: "ref", ref | first %}
   ...
 {% endif %}
@@ -168,7 +166,9 @@ You also can't generate a page per tag without using a script or plugin. If you 
 
 # Topics
 
-I ended up with a structure that I'm pretty happy with. The advantage of having an explicit page per topic is that you can add additional content, like a paragraph describing the topic. I put all the complex logic in a new `topic.html` layout. I can't paginate these pages, so over time I will need to manage my use of tags to keep the number of posts with each tag under control.
+I ended up with a structure that I'm pretty happy with. The one advantage of having an explicit page per topic is that you can add additional content, like a paragraph describing the topic. 
+
+I put all the complex logic in a new `topic.html` layout. I can't paginate these pages, so over time I will need to manage my use of tags to keep the number of posts with each tag under control.
 
 {% raw %}
 ```
@@ -253,7 +253,7 @@ I use the same approach to add topic badges to the post excerpts on the home pag
 
 # Topic Cloud
 
-So far, the logic has looked pretty clean. That's all going to change now the time has come to explain how you actually get a list of topics in popularity order. In order to sort anything you need an array of things that can you can apply the `sort` filter to. Those things need to either be objects (in which case you can sort by any property of the object), or strings. As mentioned above, there are no tag objects and no way to make any. 
+So far, the logic has looked pretty clean. That's all going to change now the time has come to explain how you actually get a list of topics in popularity order. In order to sort anything you need an array of things that you can apply the `sort` filter to. Those things need to either be objects (in which case you can sort by any property of the object), or strings. As mentioned above, there are no tag objects and no way to make any. 
 
 Which leaves strings. I need to generate a string for each tag which includes number of posts and tag name in such a way that sorting the strings will get them in number of posts order. I can then iterate over the sorted array, splitting each string to retrieve the ordered tag names.
 
@@ -280,7 +280,7 @@ This will take some unpacking. The first block generates strings like `10005#blo
 
 The second block iterates over the sorted strings, splitting out the tag name part and then doing the capture and split trick again to get a sorted array of tag names. 
 
-Believe me, I've looked for alternatives, but the wisdom of the internet hasn't revealed anything better. If the Jekyll maintainers happen to be reading this, it would be great if you could add support for {% raw %}`{% captureyaml %}`{% endraw %}. This would capture rendered text as normal, then parse it as YAML and store the resulting structure in the variable. You already have a YAML parser for the front matter that does the same thing for site and page variables. I would then have a way of creating objects with name and count properties which I can use with the sort and map filters.
+Believe me, I've looked for alternatives, but in this case the wisdom of the internet hasn't revealed anything better. If the Jekyll maintainers happen to be reading this, it would be great if you could add support for {% raw %}`{% captureyaml %}`{% endraw %}. This would capture rendered text as normal, then parse it as YAML and store the resulting structure in the variable. You already have a YAML parser for the front matter that does the same thing for site and page variables. I would then have a way of creating objects with name and count properties which I can use with the sort and map filters.
 
 Once I have the sorted tag names, the rest of it is simple enough. I generate the badges in the topic cloud in the normal way, by iterating over the sorted tag names. The only difference is that I add the number of posts to each topic title using {% raw %}`{{ topic-page.title }} ({{ site.tags[tagname] | size }})`{% endraw %}
 

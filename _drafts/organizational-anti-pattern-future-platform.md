@@ -41,13 +41,15 @@ What about open source or [inner source](https://en.wikipedia.org/wiki/Inner_sou
 
 You've convinced your managers to look at the bigger picture and make something sharable. Other teams have started using your shared component. Now it gets really hard. Your team and your management chain have to commit resources to maintaining the component for the long term. You may fully intend to be in it for the long haul but priorities change. It's particularly hard for product teams. Your VP has goals related to product and when resources get tight, what are they going to cut?
 
-So that's why we should have a platform group, right? Their priority is to build and maintain shared components. Like everyone else, the platform group have more feature requests than they can implement. They have to prioritize. What happens when the component your team depends on becomes the [Old New Thing]({% link _posts/2022-11-21-organizational-anti-pattern-old-new-thing.md %})?
+So that's why we should have a platform group, right? Their priority is to build and maintain shared components. 
+
+Like everyone else, the platform group have more feature requests than they can implement. They have to prioritize. What happens when the component your team depends on becomes the [Old New Thing]({% link _posts/2022-11-21-organizational-anti-pattern-old-new-thing.md %})?
 
 Once you've been burnt a couple of times you stop trusting internally developed components. There's a lot of overlap with [Exception Culture]({% link _posts/2022-12-19-organizational-anti-pattern-exception.md %}). You read the political weather to try and figure out whether a potential dependency is going to last. You avoid being the first consumer. Wait until there are enough users that it becomes hard to kill off. If that's too much effort, you'll stick to components developed close to home where you have more influence on their long term survival.
 
 # Solving the Wrong Problem Too Late
 
-Your organization is doing it regardless. They've set up a dedicated platform group and tasked them with building the Future Platform. What sort of platform are they going to build? Hopefully they're going to talk to the product teams and find out what they need, what their pain points are, what will unlock value for them. Surprisingly, that's not always a given. Then what? 
+Your organization is doing it regardless. They've set up a dedicated platform group and tasked them with building the Future Platform. What sort of platform are they going to build? Hopefully they're going to talk to the product teams and find out what they need, what their pain points are, what will unlock value for them. Then what? 
 
 Well, you've asked them to build the future platform. They're energized. They're ambitious. They're ready to take on the challenge of building something new, something groundbreaking, something that will solve everyone's problems. They're looking two to three years ahead. Figuring out where the puck is going. Deciding which exciting new technology is the future.
 
