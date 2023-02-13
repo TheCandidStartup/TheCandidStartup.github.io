@@ -4,10 +4,10 @@ layout: default
 
 {% capture temptags %}
   {% for tag in site.tags %}
-    {{ tag[1].size | plus: 10000 }}#{{ tag[0] }}#{{ tag[1].size }}
+    {{ 20000 | minus: tag[1].size }}#{{ tag[0] }}#{{ tag[1].size }}
   {% endfor %}
 {% endcapture %}
-{% assign sortedtemptags = temptags | split:' ' | sort | reverse %}
+{% assign sortedtemptags = temptags | split:' ' | sort %}
 
 {% capture sortedtemptagnames %}
 {% for temptag in sortedtemptags %}

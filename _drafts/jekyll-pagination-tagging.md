@@ -278,10 +278,10 @@ Which leaves strings. I need to generate a string for each tag which includes nu
 ```text
 {% capture temptags %}
   {% for tag in site.tags %}
-    {{ tag[1].size | plus: 10000 }}#{{ tag[0] }}#{{ tag[1].size }}
+    {{ 20000 | minus: tag[1].size }}#{{ tag[0] }}#{{ tag[1].size }}
   {% endfor %}
 {% endcapture %}
-{% assign sortedtemptags = temptags | split:' ' | sort | reverse %}
+{% assign sortedtemptags = temptags | split:' ' | sort %}
 
 {% capture sortedtemptagnames %}
 {% for temptag in sortedtemptags %}
@@ -294,7 +294,7 @@ Which leaves strings. I need to generate a string for each tag which includes nu
 
 {% endraw %}
 
-This will take some unpacking. The first block generates strings like `10005#blog`, one per line, then captures the whole thing as a variable. The variable is then split on white space into an array of strings which are then sorted from largest to smallest. Adding 10000 to the number of posts for each tag ensures that every string has the same number of digits. That means a string based sort will work correctly.
+This will take some unpacking. The first block generates strings like `19995#blog`, one per line, then captures the whole thing as a variable. The variable is split on white space into an array of strings which are then sorted in alphanumeric order. Subtracting the number of posts from 20000 for each tag does two things. First, it ensures that every string has the same number of digits (as long as there are less than 10000 posts per tag). That means a string based sort will work correctly. Second, it means that the tags will be sorted from largest to smallest number of posts per tag, then alphabetically by tag name where tags have the same number of posts.
 
 The second block iterates over the sorted strings, splitting out the tag name part and then doing the capture and split trick again to get a sorted array of tag names. 
 
