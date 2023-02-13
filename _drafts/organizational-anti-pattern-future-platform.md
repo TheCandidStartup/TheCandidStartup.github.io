@@ -61,7 +61,7 @@ There's a database that lots of teams are using. They need help monitoring and m
 
 The organization has mandated use of a common identity system. Every client needs to implement a login dialog integrated with the new identity service backend. Can the platform team provide some common login components? *We're building a complete front end framework. All you need to do is rewrite your client to extract all the business logic and plug it in. It'll be ready in two years.*
 
-What happens when the shiny new platform is finally delivered? The product teams have moved on. They've found simpler solutions to their problems using existing technology. They have no interest in rewriting what they have to adopt the new platform. They have serious reservations about quality and lack of documentation. 
+What happens when the shiny new platform is finally delivered? The product teams have moved on. They've found simpler solutions to their problems using existing technology. They have no interest in rewriting what they have to adopt the new platform. They're nervous about the one size fits all approach. They have serious reservations about quality and lack of documentation. 
 
 The platform teams are frustrated because the product teams won't adopt their wonderful new platform. The product teams are frustrated because the platform teams won't build anything they can use. 
 
