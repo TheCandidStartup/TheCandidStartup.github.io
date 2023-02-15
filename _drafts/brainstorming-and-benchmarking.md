@@ -53,7 +53,7 @@ We also need to add some time to download the spreadsheet from S3 and upload the
 
 I'm going to go with the nice round 100Mbps number for now. Which would make 1.6s to read from S3, 10s to load (decompress and parse) into memory, 5s to recalculate, 3s to save (serialize and compress) and 1.6s to write back to S3. Which makes a total of 21.2 seconds and a cost for the Lambda of $0.0005 (S3 costs are negligible in comparison).
 
-That's just about tolerable for a one off import and recalculate scenario. However, 75% of the time and cost apply to *any* change, no matter how trivial. If you then try to scale up 10-100 times you exceed the Lambda max duration of 15 minutes and the max memory of 10GB.
+That's just about tolerable for a one off import and recalculate scenario. However, 75% of the time and cost apply to *any* change, no matter how trivial. If you then try to scale up 10-100 times you exceed the Lambda max duration of 15 minutes and the max memory of 10GB. Concurrent editing, as in Google Sheets and Office 365, needs a separate system that periodically saves new versions of the file. 
 
 We can rule this idea out.
 
@@ -63,12 +63,46 @@ Let's go to the other extreme and look at the classic web app architecture. Thin
 
 How are we going to model a spreadsheet using a database? The smallest independently updatable element in a spreadsheet is a cell. Using a separate item for each cell would naturally support concurrent updates from multiple clients, last writer wins. Of course, that would result in 10 million items for our example boring spreadsheet. DynamoDB's `BatchWriteItem` allows us to write up to 25 items in a single call. If we use a separate partition key for each row and a sort key for the columns, we can use a single `Query` to retrieve all the cells in a row (at least for our 10 column spreadsheet).
 
-We could look at more complex schemes that pack multiple cells into a single DynamoDB item. However, that would mean all updates need to use a read-modify-write approach using `UpdateItem` which can't be batched. The [cost for writes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughput.html#ItemSizeCalculations.Writes) is based on the total size of the item, in 1KB units, not the size of the update. So, you end up with this unfortunate tension between wanting to pack as much into an item as possible for more efficient bulk writes but also wanting to keep items just below 1KB to minimize costs for individual writes.
+We could look at more complex schemes that pack multiple cells into a single DynamoDB item. However, that would mean all updates need to use a read-modify-write approach using `UpdateItem` which can't be batched. The [cost for writes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughput.html#ItemSizeCalculations.Writes) is based on the total size of the item, in 1KB units, not the size of the update. You end up with this unfortunate tension between wanting to pack as much into an item as possible for more efficient bulk writes, but also wanting to keep items just below 1KB to minimize costs for individual writes.
 
 How much data will we need to store in DynamoDB? The compressed binary format spreadsheet is 20MB. The same data will be stored in DynamoDB uncompressed. Excel files are actually ZIP archives containing either XML or a custom binary format. The extracted content of the ZIP archive is 585MB for the normal Excel file and 350MB for the binary version. The binary version is a good proxy for the amount of data that would be stored in DynamoDB. For 10 million cells that works out at 37 bytes per cell.
 
-As the DynamoDB pricing model rounds everything up to the nearest 1KB, it doesn't cost us anything extra to pack 10 cells into each item. That includes plenty of room for the [minimum 100 byte overhead](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CapacityUnitCalculations.html) that DynamoDB adds. So, we end up using one item per spreadsheet row with about 500 bytes per row.
+As the DynamoDB pricing model rounds everything up to the nearest 1KB, it doesn't cost us anything extra to pack 10 cells into each item. That includes plenty of room for the [minimum 100 byte overhead](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CapacityUnitCalculations.html) that DynamoDB adds. That means we can use one item per spreadsheet row with about 500 bytes per row.
+
+Enough preamble, time for some benchmarking. How will importing a spreadsheet work? The typical approach with a thin client is to upload the spreadsheet file to S3 and then trigger a server side import process. Upload, parse and validate is the same as the [previous approach](#big-disk-drive-in-the-sky). We then need to write a million rows to DynamoDB. As these are initial writes we can use `BatchWriteItem` and write 25 rows at a time. That's 40000 requests. Lambda has an effective limit of around 1000 concurrent requests. There is a [hard limit](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html) of 1024 file descriptors, each network socket has a file descriptor and some file descriptors will be needed for other purposes. DynamoDB claims single digit millisecond response times. If we say 10ms round trip for each request, with 1000 concurrent requests, we could in theory complete 40000 requests in 0.4 seconds. 
+
+In practice we will be limited by the available network bandwidth. The XML representation of the spreadsheet is a good proxy for REST API request size, coming in at 61 bytes per cell. With 10 cells per row, 25 rows per request and some extra for http headers that comes to about 16KB per request. Using the same 100Mbps figure for bandwidth that we used before, it works out to 800 requests per second. Which is 50 seconds for 40000 requests. 
+
+What will that cost? Each row written is charged separately, regardless of batching. Writing a million rows each below 1KB in size comes to $1.25 (the lambda cost is insignificant in comparison). Storage costs for 350MB of data come to $0.085 a month. For context, storage costs are 100 times more expensive than the previous approach and processing costs are 1000 times more.
+
+There is some good news. Opening a spreadsheet in a web client is really cheap. Load just what is needed for the current view. We can retrieve 100 rows in a single call to DynamoDB using `BatchReadItem` returning 64KB of data.
+
+After that things go down hill quickly. Neither of the interactive editing scenarios are anywhere near interactive. Inserting a row requires reading a million rows to update the summary row. Again, network bandwidth is the bottleneck needing tens of seconds to read all the required data. Cost is an issue again: $0.25 every time you insert a row. 
+
+What if we try to incrementally update the summary row? If we design the API well, we'll know that this change is just insertion of a new row. Most of the formulas in the summary row can be incrementally updated based on the existing summary value and the newly inserted value. The only tricky one is average where we need to keep track of sum and count separately and then calculate `average = sum/count`. 
+
+It becomes more tricky when you start to think about multiple clients and concurrent updates. DynamoDB transactions are limited to 100 items - we can have updates that recalculate millions of cells. That means we need to live with eventual consistency. We'll make a change and then kick off an asynchronous process that recalculates any dependent cells. Formulas are strictly functional so it doesn't matter if we overlap recalculation from different changes. Eventually we'll get the correct result, but only if we *fully evaluate* each formula. Incremental update tricks only work if the spreadsheet is in a consistent state.
+
+Even if we find a way round that, we hit a dead end with the update of a cell in the first row. That triggers recalculation of a million cells which results in a million writes.
+
+This approach is clearly a non-starter. It's way too expensive and doesn't handle our benchmarks, even for our starting point of a million row spreadsheet, let alone scaling 10-100 times. 
 
 ## Event Sourcing
+
+Well, this is all very depressing. If we use a fat client with the spreadsheet file in S3, we get reasonable costs and interactive performance but we can't persist fine grained updates to the server and have no way to add server side validation and integrity checks. If we store the spreadsheet in a database, we can do simple fine grained updates and server side validation but at excessive cost and with no way to handle complex interactive updates.
+
+What if instead of storing the current state of the spreadsheet as our source of truth, we store the sequence of operations that were applied to the spreadsheet? This is the idea behind [Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html). To load the spreadsheet we replay the sequence of operations. Here's what would be stored in the database after running our benchmarks.
+
+|-|-|
+| Event Id | Event |
+|-|-|
+| 1 | Import from Excel Spreadsheet stored in S3 |
+|-|-|
+| 2 | Insert new row (A=Nails,B=0.01,C=80,E=15%,H=0.08) after 1000001 |
+|-|-|
+| 3 | Set C2=100 |
+|-|-|
+
+Which seems absurdly simple. We're back to our fat client with reasonable costs and interactive in-memory performance. We still need a reasonable network connection to download the imported spreadsheet but now that spreadsheet is immutable. We can cache it locally and never need to download it again. We're persisting fine grained updates to the server. If someone else edits the spreadsheet we only need to download their changes. We can do server side validation of the changes.
 
 ## Footnotes
