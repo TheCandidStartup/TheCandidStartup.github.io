@@ -73,7 +73,7 @@ Enough preamble, time for some benchmarking. How will importing a spreadsheet wo
 
 In practice we will be limited by the available network bandwidth. The XML representation of the spreadsheet is a good proxy for REST API request size, coming in at 61 bytes per cell. With 10 cells per row, 25 rows per request and some extra for http headers that comes to about 16KB per request. Using the same 100Mbps figure for bandwidth that we used before, it works out to 800 requests per second. Which is 50 seconds for 40000 requests. 
 
-What will that cost? Each row written is charged separately, regardless of batching. Writing a million rows each below 1KB in size comes to $1.25 (the lambda cost is insignificant in comparison). Storage costs for 350MB of data come to $0.085 a month. For context, storage costs are 100 times more expensive than the previous approach and processing costs are 1000 times more.
+What will that cost? Each item written is charged separately, regardless of batching. Writing a million rows each below 1KB in size comes to $1.25 (the lambda cost is insignificant in comparison). Storage costs for 350MB of data come to $0.085 a month. For context, storage costs are 100 times more expensive than the previous approach and processing costs are 1000 times more.
 
 There is some good news. Opening a spreadsheet in a web client is really cheap. Load just what is needed for the current view. We can retrieve 100 rows in a single call to DynamoDB using `BatchReadItem` returning 64KB of data.
 
@@ -117,6 +117,6 @@ Nothing is blocked while a snapshot is being created. You can carry on making ch
 
 With the original approach we have to write the entire spreadsheet on each save to ensure consistency of each version. With this approach the event log is the source of truth. Once records are written they are immutable. That opens up all kinds of options for creating snapshots that reuse the unmodified parts of earlier snapshots. As each snapshot is consistent we can use incremental recalculation of formulas. We can store intermediate results from partial evaluation of formulas in the snapshot to support incremental recalculation of formulas like `average`.
 
-I think we have a winner. Or at least something that clears the initial bar. We need to go to the next level of detail to see if it continues to stand up. Next time we'll dive deeper into the different options for how we structure snapshots. 
+I think we have a winner. Or at least something that clears the initial bar. We need to go to the next level of detail to see if it continues to stand up. Next time, we'll dive deeper into the different options for how we structure snapshots. 
 
 ## Footnotes
