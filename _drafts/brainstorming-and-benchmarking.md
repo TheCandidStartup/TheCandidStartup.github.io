@@ -103,6 +103,20 @@ What if instead of storing the current state of the spreadsheet as our source of
 | 3 | Set C2=100 |
 |-|-|
 
-Which seems absurdly simple. We're back to our fat client with reasonable costs and interactive in-memory performance. We still need a reasonable network connection to download the imported spreadsheet but now that spreadsheet is immutable. We can cache it locally and never need to download it again. We're persisting fine grained updates to the server. If someone else edits the spreadsheet we only need to download their changes. We can do server side validation of the changes.
+Which seems absurdly simple. We're back to our fat client with reasonable costs and interactive in-memory performance. We still need a reasonable network connection to download the imported spreadsheet but now that spreadsheet is immutable. We can cache it locally and never need to download it again. 
+
+We're persisting fine grained updates to the server. We don't have to make complex decisions about whether we store data at cell or row or some other granularity. We're storing data at the perfect granularity for writes - one write per user update. We can do server side validation of those updates. If someone else edits the spreadsheet we only need to download their changes. 
+
+How is this going to work once we've accumulated lots of changes? For example, if we started with an empty spreadsheet and eventually got to a million rows? Well, every so often we need to create and store a snapshot of the state of the spreadsheet at that event. We can then load the spreadsheet by loading the most recent snapshot and then replaying changes from that point. 
+
+Hold on. Isn't this just the [big disk drive in the sky](#big-disk-drive-in-the-sky) with a record of events bolted on the side? We discounted that idea because it won't scale. 
+
+No. There are some significant differences here. For a start, we don't have to create a new version of the spreadsheet for every change. Depending on how we tune the system we could get away with a snapshot every 100 or even 1000 changes. 
+
+Nothing is blocked while a snapshot is being created. You can carry on making changes and adding events to the log. We have as much time as we need to structure the snapshot in a more optimal way. For example, we could break it into multiple chunks to support incremental/partial loading. We could have multiple lambdas each recalculating their own chunk in parallel (lots of interesting work needed to figure out dependencies between chunks). 
+
+With the original approach we have to write the entire spreadsheet on each save to ensure consistency of each version. With this approach the event log is the source of truth. Once records are written they are immutable. That opens up all kinds of options for creating snapshots that reuse the unmodified parts of earlier snapshots. As each snapshot is consistent we can use incremental recalculation of formulas. We can store intermediate results from partial evaluation of formulas in the snapshot to support incremental recalculation of formulas like `average`.
+
+I think we have a winner. Or at least something that clears the initial bar. We need to go to the next level of detail to see if it continues to stand up. Next time we'll dive deeper into the different options for how we structure snapshots. 
 
 ## Footnotes
