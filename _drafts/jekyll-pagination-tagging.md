@@ -9,7 +9,7 @@ The old home page came as standard with the [Cayman Blog](https://github.com/lor
 
 ## Jekyll Primer
 
-Jekyll is a great example of a tool that builds on other tools while making itself open to extension by means of a plugin mechanism. Jekyll sites are defined using a set of input files which are read, optionally transformed and written out as static web content. Transforms are supported for Markdown, HTML, Sass/Scss and CoffeeScript files. Sass/Scss source is compiled into a CSS stylesheet. CoffeeScript is converted to JavaScript. Where it gets interesting is the [rendering process](https://jekyllrb.com/docs/rendering-process/) for Markdown and HTML.
+Jekyll is a great example of a tool that builds on other tools while making itself open to extension by means of a plugin mechanism. Jekyll sites are defined using a set of input files which are read, optionally transformed and written out as static web content. Transforms are supported for Markdown, HTML, Sass/Scss and CoffeeScript files. Sass/Scss source is compiled into a CSS stylesheet. CoffeeScript is converted to JavaScript. The [rendering process](https://jekyllrb.com/docs/rendering-process/) for Markdown and HTML is where it gets interesting.
 
 Each source file starts with a YAML front matter section which can be used to define page specific variables and configuration. These are accessible to the next stage which interprets Liquid expressions in the file. [Liquid](https://shopify.github.io/liquid/) is a templating language developed by Shopify. Liquid expressions use `{{ "{{ " }}}}` tags to insert content and `{{ "{% " }}%}` tags for logic and control flow. The language supports number, string, object and array variables with a decent selection of iteration and filtering constructs.
 
@@ -54,7 +54,7 @@ layout: default
 
 Hold on, doesn't the site header look different for home, posts and pages? How is that done?
 
-I'm glad you asked, as I was wondering that too. If you look more closely at `default.html`, you'll see lots of conditional content like {% raw %}`{% if page.layout == 'home' %}`{% endraw %}.
+I'm glad you asked, as I was wondering that too. If you look more closely at [`default.html`](https://github.com/lorepirri/cayman-blog/blob/master/_layouts/default.html), you'll see lots of conditional content like {% raw %}`{% if page.layout == 'home' %}`{% endraw %}.
 
 ## Pagination
 
@@ -170,7 +170,7 @@ The [Jekyll documentation](https://jekyllrb.com/docs/posts/#tags-and-categories)
 
 Doing it by hand is particularly awkward due to the way that Jekyll manages tags. You tag a post by adding a white space separated list of tags as a `tags` property in the front matter. Jekyll processes all the tagged pages to create a global list of all tags in `site.tags`. For each tag you get access to the name and a list of posts with that tag. So far so good. Presumably I can write liquid expressions like `site.tags | sort: "pages.size" | map "name"` to get a list of tag names in popularity order?
 
-Well, no. Each tag in the `site.tags` array is itself an array with two elements. The first element is the name and the second is an array of pages. Which as well as being clunky, is immensely frustrating because you can't use any of the nice liquid filters that operate on arrays of objects. One of the limitations of jekyll is that you can't define objects yourself, you only have access to the ones provided by core jekyll and plugins. So, you can't make your life easier by building your own collection of tag objects.
+Well, no. Each tag in the `site.tags` array is itself an array with two elements. The first element is the name and the second is an array of pages. This is both clunky and immensely frustrating because you can't use any of the nice liquid filters that operate on arrays of objects. One of the limitations of jekyll is that you can't define objects yourself, you only have access to the ones provided by core jekyll and plugins. So, you can't make your life easier by building your own collection of tag objects.
 
 You also can't generate a page per tag without using a script or plugin. If you use a script or plugin, it won't be supported by GitHub pages. I needed to manually create a page for each topic.
 
