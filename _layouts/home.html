@@ -61,13 +61,16 @@ layout: default
         {% endif %}
         {% endfor %}
         {% capture topic-index-url %}{% link topic-index.html %}{% endcapture %}
+        {% assign numtagsleft = tagsleft | size %}
+        {% if numtagsleft > 5 %}
         <a class="candid-topic-tag" href="{{ topic-index-url }}" title="...">...</a>
+        {% endif %}
 
         <h2>
           <a class="post-link" href="{{ blog_page.url | absolute_url }}">More Posts</a>
         </h2>
 
-        <p>There's another {{ site.posts | size | minus: 3 }} posts covering {{ sortedtagnames | size }} more <a href="{{ topic-index-url }}">topics</a>.</p>
+        <p>There's another {{ site.posts | size | minus: 3 }} posts covering {{ numtagsleft }} more <a href="{{ topic-index-url }}">topics</a>.</p>
       </li>
   </ul>
 
