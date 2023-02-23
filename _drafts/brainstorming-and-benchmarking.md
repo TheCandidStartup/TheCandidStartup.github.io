@@ -55,7 +55,7 @@ I'm going to go with the nice round 100Mbps number for now. Which would make 1.6
 
 That's just about tolerable for a one off import and recalculate scenario. However, 75% of the time and cost apply to *any* change, no matter how trivial. If you then try to scale up 10-100 times you exceed the Lambda max duration of 15 minutes and the max memory of 10GB. Concurrent editing, as in Google Sheets and Office 365, needs a separate system that periodically saves new versions of the file. 
 
-We can rule this idea out.
+OK, what else could we try?
 
 ## Classic Web App
 
@@ -63,11 +63,11 @@ Let's go to the other extreme and look at the classic web app architecture. Thin
 
 How are we going to model a spreadsheet using a database? The smallest independently updatable element in a spreadsheet is a cell. Using a separate item for each cell would naturally support concurrent updates from multiple clients, last writer wins. Of course, that would result in 10 million items for our example boring spreadsheet. DynamoDB's `BatchWriteItem` allows us to write up to 25 items in a single call. If we use a separate partition key for each row and a sort key for the columns, we can use a single `Query` to retrieve all the cells in a row (at least for our 10 column spreadsheet).
 
-We could look at more complex schemes that pack multiple cells into a single DynamoDB item. However, that would mean all updates need to use a read-modify-write approach using `UpdateItem` which can't be batched. The [cost for writes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughput.html#ItemSizeCalculations.Writes) is based on the total size of the item, in 1KB units, not the size of the update. You end up with this unfortunate tension between wanting to pack as much into an item as possible for more efficient bulk writes, but also wanting to keep items just below 1KB to minimize costs for individual writes.
+We could look at more complex schemes that pack multiple cells into a single DynamoDB item. However, that would mean all updates need to use a read-modify-write approach using `UpdateItem`, which can't be batched. The [cost for writes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughput.html#ItemSizeCalculations.Writes) is based on the total size of the item, in 1KB units, not the size of the update. You end up with this unfortunate tension between wanting to pack as much into an item as possible for more efficient bulk writes, but also wanting to keep items just below 1KB to minimize costs for individual writes.
 
 How much data will we need to store in DynamoDB? The compressed binary format spreadsheet is 20MB. The same data will be stored in DynamoDB uncompressed. Excel files are actually ZIP archives containing either XML or a custom binary format. The extracted content of the ZIP archive is 585MB for the normal Excel file and 350MB for the binary version. The binary version is a good proxy for the amount of data that would be stored in DynamoDB. For 10 million cells that works out at 37 bytes per cell.
 
-As the DynamoDB pricing model rounds everything up to the nearest 1KB, it doesn't cost us anything extra to pack 10 cells into each item. That includes plenty of room for the [minimum 100 byte overhead](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CapacityUnitCalculations.html) that DynamoDB adds. That means we can use one item per spreadsheet row with about 500 bytes per row.
+As the DynamoDB pricing model rounds everything up to the nearest 1KB, it doesn't cost us anything extra to pack 10 cells into each item. That includes plenty of room for the [minimum 100 byte overhead](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CapacityUnitCalculations.html) that DynamoDB adds. We can use one item per spreadsheet row with about 500 bytes per row.
 
 Enough preamble, time for some benchmarking. How will importing a spreadsheet work? The typical approach with a thin client is to upload the spreadsheet file to S3 and then trigger a server side import process. Upload, parse and validate is the same as the [previous approach](#big-disk-drive-in-the-sky). We then need to write a million rows to DynamoDB. As these are initial writes we can use `BatchWriteItem` and write 25 rows at a time. That's 40000 requests. Lambda has an effective limit of around 1000 concurrent requests. There is a [hard limit](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html) of 1024 file descriptors, each network socket has a file descriptor and some file descriptors will be needed for other purposes. DynamoDB claims single digit millisecond response times. If we say 10ms round trip for each request, with 1000 concurrent requests, we could in theory complete 40000 requests in 0.4 seconds. 
 
@@ -77,7 +77,7 @@ What will that cost? Each item written is charged separately, regardless of batc
 
 There is some good news. Opening a spreadsheet in a web client is really cheap. Load just what is needed for the current view. We can retrieve 100 rows in a single call to DynamoDB using `BatchReadItem` returning 64KB of data.
 
-After that things go down hill quickly. Neither of the interactive editing scenarios are anywhere near interactive. Inserting a row requires reading a million rows to update the summary row. Again, network bandwidth is the bottleneck needing tens of seconds to read all the required data. Cost is an issue again: $0.25 every time you insert a row. 
+After that things go down hill quickly. Neither of the interactive editing scenarios are anywhere near interactive. Inserting a row requires reading a million rows to update the summary row. Again, network bandwidth is the bottleneck, needing tens of seconds to read all the required data. Cost is an issue again: $0.25 every time you insert a row. 
 
 What if we try to incrementally update the summary row? If we design the API well, we'll know that this change is just insertion of a new row. Most of the formulas in the summary row can be incrementally updated based on the existing summary value and the newly inserted value. The only tricky one is average where we need to keep track of sum and count separately and then calculate `average = sum/count`. 
 
