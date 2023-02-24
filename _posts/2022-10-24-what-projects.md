@@ -15,7 +15,7 @@ Of course the projects need to be technically interesting. The whole point is to
 
 An easy way of finding my own niche is to make use of my unique experience to get a head start. I want to learn something new so I won't just be repeating my greatest hits in open source form. Which of my experience is relevant? There are three areas that I want to explore.
 
-### Interactive Viewing for Large Geometric Models
+### [Interactive Viewing for Large Geometric Models]({% link _topics/computer-graphics.md %})
 
 I spent getting on for twenty years of my life working on Interactive Viewing for Large Geometric Models. First, as a University research project, then developing the technology commercially in a startup and finally ending up with Navisworks. This is a topic I know something about. However, graphics technology has changed massively since then. There's lots that I can learn and potentially do differently.
 
@@ -23,7 +23,7 @@ I spent getting on for twenty years of my life working on Interactive Viewing fo
 
 Going back further in time, my doctorate was titled "A Parallel Architecture for Storage and Retrieval of Spatial Data". The core of it was data structures and algorithms for indexing and querying multi-dimensional data. I used parts of it to implement the 3D bounding box index in Navisworks. I want to try applying some of the ideas to more general multi-dimensional data.
 
-### Multi-Tenant Multi-User SaaS
+### [Multi-Tenant Multi-User SaaS]({% link _topics/cloud-architecture.md %})
 
 My most recent experience is in the world of [Multi-Tenant](https://en.wikipedia.org/wiki/Multitenancy) [SaaS](https://en.wikipedia.org/wiki/Software_as_a_service) products that support multi-user collaboration. I've seen how the sausage is made. I'd love to use that experience to find a simpler, more reliable, more scalable, more open, more flexible and lower cost way of delivering the same benefits to the customer.
 
