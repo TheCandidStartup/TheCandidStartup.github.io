@@ -11,7 +11,7 @@ Just like the spreadsheet project, I'm going to take my time and work my way up 
 
 The basic principles used for realtime 3D rendering have stayed pretty much unchanged. Your application has some representation of a 3D scene that it needs to render to a 2D screen. The [graphics pipeline](https://en.wikipedia.org/wiki/Graphics_pipeline) is a conceptual model that describes the steps required to get there. 
 
-**IMAGE HERE**
+{% include candid-image.html src="/assets/images/Graphics-Pipeline.svg" alt="Graphics Pipeline" %}
 
 There are many ways that a scene can be represented depending on the needs of your application. Often this takes the form of a [hierarchical scene graph](https://en.wikipedia.org/wiki/Scene_graph). Your application may support multiple types of geometry and material which can be reused by multiple objects.
 
