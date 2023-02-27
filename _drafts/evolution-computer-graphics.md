@@ -19,7 +19,7 @@ The first step in the pipeline is to *Flatten* the rich scene description into i
 
 The remaining stages of the pipeline are view dependent. A camera definition defines how 3D coordinates are projected into 2D space. 
 
-Once we've defined a view we can start *Culling*. We want to remove any instances that will not contribute to the final rendered result. This is purely a performance optimization but with large models is necessary to achieve realtime rendering speeds. There are many forms of culling. The most basic is frustum culling where any instance outside the camera's viewing volume (frustum) can be ignored. Over time, more sophisticated forms were introduced, as implementations became more capable. 
+Once we've defined a view we can start *Culling*. We want to remove any instances that will not contribute to the final rendered result. This is purely a performance optimization but with large models is necessary to achieve realtime rendering speeds. There are many forms of culling. The most basic is frustum culling where any instance outside the camera's viewing volume (frustum) can be ignored. Over time, as implementations became more capable, more sophisticated forms of culling were introduced.
 
 Next we move on to *Simplification*. The flattened geometry definitions may be further restructured in a view dependent way. This could include selecting which [level of detail](https://en.wikipedia.org/wiki/Level_of_detail_(computer_graphics)) to use or [tessellating](https://en.wikipedia.org/wiki/Tessellation_(computer_graphics)) a high level surface definition into triangles.
 
