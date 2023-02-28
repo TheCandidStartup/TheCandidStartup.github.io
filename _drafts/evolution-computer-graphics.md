@@ -66,3 +66,21 @@ Second, the evolution of graphics hardware from hard coded fixed functions to mo
 Finally, the evolution of graphics APIs. Applications don't access graphics hardware directly. They use an API. It doesn't matter if a capability exists in the hardware if the API doesn't let you make use of it. 
 
 ## History
+
+{% include candid-image.html src="/assets/images/compact-graphics-pipeline.svg" alt="Graphics Pipeline Key" %}
+
+Let's scrunch up my version of the graphics pipeline to make it more manageable. I will use variations of this diagram to illustrate how implementations have evolved over time. Stages will be color coded blue for fixed function hardware, orange for programmable hardware and green for software. A vertical dashed line will shown the boundary between application code and graphics API.
+
+### 1991-2000 : The Fixed Function Pipeline 
+
+{% include candid-image.html src="/assets/images/opengl-graphics-pipeline.svg" alt="Graphics Pipeline Key" %}
+
+### 2001-2005 : Dedicated Vertex and Pixel Shaders
+
+### 2006-2010 : Unified Shader Model
+
+### 2011-2015 : Tesselation and Compute Shaders
+
+### 2016-2020 : New APIs for General Purpose GPUs
+
+### 2021+ : Ray Tracing and Machine Learning
