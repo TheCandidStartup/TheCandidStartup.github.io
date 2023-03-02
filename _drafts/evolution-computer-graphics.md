@@ -83,9 +83,31 @@ Let's scrunch up my version of the graphics pipeline to make it more manageable.
 
 {% include candid-image.html src="/assets/images/opengl-graphics-pipeline.svg" alt="Fixed Function Graphics Pipeline" %}
 
+My first encounter with realtime 3D graphics was in 1991, using [Silicon Graphics](https://en.wikipedia.org/wiki/Silicon_Graphics) unix workstations with their proprietary [IRIS GL](https://en.wikipedia.org/wiki/IRIS_GL) API. It seemed like every manufacturer had their own API coupled to the details of whatever graphics hardware they had.
+
+A year later SGI released [OpenGL](https://en.wikipedia.org/wiki/OpenGL), a cross platform rework of IrisGL. OpenGL was quickly adopted by other unix workstation manufacturers, soon followed by Microsoft and Apple. OpenGL abstracted away the details of the hardware and provided an API that covered Vertex Processing, Rasterization, Fragment Processing and Post Processing. The API covered the feature set of the then top of the line Silicon Graphics workstations. 
+
+The OpenGL driver was required to provide a software implementation of any missing hardware features. Applications using OpenGL could be confident that their application would run against a wide range of hardware, or even without any dedicated hardware. Even better, as hardware improved over time, applications would continue to be compatible while seeing improved performance. The downside was that the driver was heavyweight, having to handle the backend of the Simplify stage in order to map the common interface exposed by the API to the vagaries of the hardware. 
+
+SGI provided a complete software implementation which was actually usable in production rather than being just a reference implementation or toy. In the PC space, machines varied from having no dedicated graphics hardware, to rasterization and basic fragment processing and eventually, by the end of the decade, complete hardware implementations. 
+
+The OpenGL pipeline was fixed function (although with a wide range of features and options that could be enabled and disabled) with corresponding hardware implementations. Vertex Processing included transform and project using 4x4 homogenous matrices, per vertex lighting and clipping to the window bounds. Rasterization supported triangle, line and point primitives. Fragments had color and depth with Fragment Processing supporting depth and stencil tests, texture mapping and blending. Post processing included anti-aliasing, an accumulation buffer for combining multiple renders and with OpenGL 1.2 a set of image processing features. 
+
+Microsoft being Microsoft decided that they needed control over their own graphics API. They launched Direct3D, initially targeting consumer hardware and games. The initial version of the API covered far less scope than OpenGL and it rapidly evolved during the course of the decade before finally reaching OpenGL parity with Direct3D 7.
+
 ### 2001-2005 : Programmable Vertex and Fragment Shaders
 
 {% include candid-image.html src="/assets/images/graphics-pipeline-programmable-shaders.svg" alt="Programmable Vertex and Fragment Shaders" %}
+
+The next major innovation was the introduction of programmable vertex and fragment shaders. The fixed function pipeline was too complex to extend efficiently. There were huge numbers of combinations of options to test, only a small set of which were actually used. It was simpler, more efficient and ultimately higher performance to provide a set of programmable execution units and a simple [SIMD](https://en.wikipedia.org/wiki/Single_instruction,_multiple_data) instruction set. GPUs had two types of execution units specialized for vertex processing and fragment processing respectively. 
+
+Initially, programmers had to work directly with each GPUs instruction set via extensions to OpenGL and Direct3D. OpenGL 1.4 and Direct3D 8 introduced high level [Shader Languages](https://en.wikipedia.org/wiki/High-Level_Shader_Language) which were compiled into GPU instructions by the driver. It would be incredibly inefficient if shaders were recompiled on every use, which drove the move to maintain material definitions (included compiled shaders) on the GPU so that they can be reused.
+
+Hardware of this era had many limits including the number of instructions that could be executed by a shader and the number and form of resources that could be accessed. The hardware still included a complete implementation of the fixed pipeline as the programmable shaders were not capable of replicating the complete set of features.
+
+This era also saw the introduction of the first features to target earlier parts of the pipeline. [Occlusion queries](https://www.khronos.org/opengl/wiki/Query_Object#Occlusion_queries) allow the application to test whether an instance would be visible if rendered. In theory, applications could use this in combination with a [bounding volume hierarchy](https://en.wikipedia.org/wiki/Bounding_volume_hierarchy) in order to cull groups of instances that would not be visible.
+
+In practice, occlusion queries are hard to use efficiently. Hardware implementations are literally pipelines. If you issue an occlusion query and wait for the result, you leave execution units idle that could have been busy rendering. 
 
 ### 2006-2010 : Unified Shader Model
 
