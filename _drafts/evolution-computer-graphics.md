@@ -31,7 +31,7 @@ Flattening may also include view independent restructuring of geometry and mater
 
 ### Cull
 
-The remaining stages of the pipeline are view dependent. A camera definition defines how 3D coordinates are projected into 2D space. 
+The remaining stages of the pipeline are view dependent. A camera definition describes how 3D coordinates are projected into 2D space. 
 
 Once we've defined a view we can start culling. We want to remove any instances that will not contribute to the final rendered result. This is purely a performance optimization but with large models is necessary to achieve realtime rendering speeds. There are many forms of culling. The most basic is frustum culling where any instance outside the camera's viewing volume can be ignored. Over time, as implementations became more capable, more sophisticated forms of culling were introduced.
 
@@ -41,7 +41,7 @@ Next we move on to simplification. The flattened geometry definitions may be fur
 
 ### Vertex Processing
 
-At this point all the geometry has been simplified into simple primitives (e.g. triangles, lines and points) defined by vertices. Vertices are defined using an (X,Y,Z) position together with an a set of application specific vertex attributes. They can include colors, normals, tangents, UV coordinates for texture mapping, object ids, and so on. The vertex processing stage transforms primitives in 3D local coordinates into primitives in 2D device coordinates (X and Y in pixels). Typically this will include transforming vertices into world space, evaluating lighting, projecting vertices into 2D, and clipping against the window boundary. Input vertex attributes are copied and/or transformed into output vertex attributes.
+At this point all the geometry has been simplified into simple primitives (e.g. triangles, lines and points) defined by vertices. Vertices are defined using an (X,Y,Z) position together with a set of application specific vertex attributes. They can include colors, normals, tangents, UV coordinates for texture mapping, object ids, and so on. The vertex processing stage transforms primitives in 3D local coordinates into primitives in 2D device coordinates (X and Y in pixels). Typically this will include transforming vertices into world space, evaluating lighting, projecting vertices into 2D, and clipping against the window boundary. Input vertex attributes are copied and/or transformed into output vertex attributes.
 
 The user friendly camera definition is converted into a [4x4 homogeneous matrix](https://en.wikipedia.org/wiki/Transformation_matrix). This means that the full vertex transformation from local coordinates to 2D device coordinates can be implemented as a matrix multiplication. 
 
@@ -69,7 +69,7 @@ Second, the evolution of graphics hardware from hard coded fixed functions to mo
 
 Third, as hardware becomes more generalized, computation moves further right in the pipeline. There are multiple reasons for this trend. It allows for higher quality rendering (e.g. evaluating lighting per fragment rather than per vertex), it can make better use of highly parallel hardware and it can be more efficient to delay expensive computation until we know the results are going to be used (e.g. only shade visible fragments).
 
-Fourth, as hardware becomes more capable and the transfer of data from CPU to GPU becomes more of a bottleneck, increasing amounts of data are maintained on the GPU. Initially all the data needed to render a frame (transforms, geometry, materials) was sent to the GPU every frame. This approach is sometimes called immediate mode graphics. First textures, then entire material definitions were transferred once and then reused for subsequent frames. The trend has continued with geometry, transforms, and even bounding volume hierarchies now seen GPU side.
+Fourth, as hardware becomes more capable and the transfer of data from CPU to GPU becomes more of a bottleneck, increasing amounts of data are maintained on the GPU. Initially all the data needed to render a frame (transforms, geometry, materials) was sent to the GPU every frame. This approach is sometimes called immediate mode graphics. First textures, then entire material definitions, were transferred once and then reused for subsequent frames. The trend has continued with geometry, transforms, and even bounding volume hierarchies now seen GPU side.
 
 Finally, the evolution of graphics APIs. Applications don't access graphics hardware directly. They use an API. It doesn't matter if a capability exists in the hardware if the API doesn't let you make use of it.
 
@@ -93,7 +93,7 @@ SGI provided a complete software implementation which was actually usable in pro
 
 The OpenGL pipeline was fixed function (although with a wide range of features and options that could be enabled and disabled) with corresponding hardware implementations. Vertex Processing included transform and project using 4x4 homogenous matrices, per vertex lighting and clipping to the window bounds. Rasterization supported triangle, line and point primitives. Fragments had color and depth with Fragment Processing supporting depth and stencil tests, texture mapping and blending. Post processing included anti-aliasing, an accumulation buffer for combining multiple renders and with OpenGL 1.2 a set of image processing features. 
 
-Microsoft being Microsoft decided that they needed control over their own graphics API. They launched Direct3D, initially targeting consumer hardware and games. The initial version of the API covered far less scope than OpenGL and it rapidly evolved during the course of the decade before finally reaching OpenGL parity with Direct3D 7.
+Microsoft (being Microsoft) decided that they needed control over their own graphics API. They launched Direct3D, initially targeting consumer hardware and games. The initial version of the API covered far less scope than OpenGL and it rapidly evolved during the course of the decade before finally reaching OpenGL parity with Direct3D 7.
 
 ### 2001-2005 : Programmable Vertex and Fragment Shaders
 
@@ -101,11 +101,11 @@ Microsoft being Microsoft decided that they needed control over their own graphi
 
 The next major innovation was the introduction of programmable vertex and fragment shaders. The fixed function pipeline was too complex to extend efficiently. There were huge numbers of combinations of options to test, only a small set of which were actually used. It was simpler, more efficient and ultimately higher performance to provide a set of programmable execution units and a simple [SIMD](https://en.wikipedia.org/wiki/Single_instruction,_multiple_data) instruction set. GPUs had two types of execution units specialized for vertex processing and fragment processing respectively. 
 
-Initially, programmers had to work directly with each GPU's instruction set via extensions to OpenGL and Direct3D. OpenGL 1.4 and Direct3D 8 introduced high level [Shader Languages](https://en.wikipedia.org/wiki/High-Level_Shader_Language) which were compiled into GPU instructions by the driver. It would be incredibly inefficient if shaders were recompiled on every use, which drove the move to maintain material definitions (including compiled shaders) on the GPU so that they can be reused.
+Initially, programmers had to work directly with each GPU's instruction set via extensions to OpenGL and Direct3D. OpenGL 1.4 and Direct3D 8 introduced high level [Shader Languages](https://en.wikipedia.org/wiki/High-Level_Shader_Language) which were compiled into GPU instructions by the driver. It would be incredibly inefficient if shaders were recompiled on every use, which drove the move to maintain material definitions (including compiled shaders) on the GPU, so that they can be reused.
 
 Applications used the new capabilities to implement more sophisticated and specialized lighting models. Increasingly, lighting models were evaluated in the fragment shader so that lighting was calculated per pixel, rather than per vertex and then interpolated. Applications also started to use multiple rendering passes per frame. For example, rendering a shadow map for each light, and then using the shadow maps as input textures during the final render pass.
 
-Hardware of this era had many limits including the number of instructions that could be executed by a shader and the number and form of resources that could be accessed. The hardware still included a complete implementation of the fixed pipeline for backwards compatibility, as the programmable shaders were not capable of replicating the complete set of features.
+Hardware of this era had many limits, including the number of instructions that could be executed by a shader and the number and form of resources that could be accessed. The hardware still included a complete implementation of the fixed pipeline for backwards compatibility, as the programmable shaders were not capable of replicating the complete set of features.
 
 This era also saw the introduction of the first features to target earlier parts of the pipeline. [Occlusion queries](https://www.khronos.org/opengl/wiki/Query_Object#Occlusion_queries) allow the application to test whether an instance would be visible if rendered. In theory, applications could use this in combination with a [bounding volume hierarchy](https://en.wikipedia.org/wiki/Bounding_volume_hierarchy) in order to cull groups of instances that would not be visible.
 
@@ -115,7 +115,7 @@ In practice, occlusion queries are hard to use efficiently. Hardware implementat
 
 {% include candid-image.html src="/assets/images/graphics-pipeline-unified-shader.svg" alt="Unified Shader Model" %}
 
-Successive generations of hardware added new instructions and removed limits, which also reduced the differences between vertex and fragment execution units. Separate execution units can also be inefficient. Vertex heavy processing would leave the fragment processors under utilized, fragment heavy processing would leave the vertex processors under utilized. The solution was to move to a unified shader model architecture with only one type of execution unit. Vertex and fragment processing are dynamically allocated to execution units with a scheduler that tries to keep all the execution units busy.
+Successive generations of hardware added new instructions and removed limits, which also reduced the differences between vertex and fragment execution units. Having separate types of execution unit is inefficient. Vertex heavy processing would leave the fragment processors under utilized, fragment heavy processing would leave the vertex processors under utilized. The solution was to move to a unified shader model architecture with only one type of execution unit. Vertex and fragment processing are dynamically allocated to execution units with a scheduler that tries to keep all the execution units busy.
 
 The fixed function pipeline was largely removed once the programmable execution units were capable of exactly replicating the old behavior. Only rasterization and post processing blend operations remained as fixed function hardware.
 
@@ -129,7 +129,7 @@ Applications started to move computation into the post processing stage. [Deferr
 
 {% include candid-image.html src="/assets/images/graphics-pipeline-tesselate-compute.svg" alt="Tesselation and Compute Shaders" %}
 
-THe pattern for hardware is now well established. Fix some minor blockers from the previous generation and then focus most of your attention on cramming in more execution units. APIs also continued with the evolutionary approach, adding support for Tesselation and Compute shaders.
+The pattern for hardware is now well established. Fix some minor blockers from the previous generation and then focus most of your attention on cramming in more execution units. APIs also continued with the evolutionary approach, adding support for Tesselation and Compute shaders.
 
 As GPUs became ever faster, it got harder and harder to keep them fed. Tesselation adds a set of shaders that take coarse grained geometry as input and generate much finer grained geometry. In principle this expands hardware support further left in the graphics pipeline into the Simplify stage. In practice, to make use of tesselation you need to change the way that content is created so that it matches the expected inputs for tesselation. You need to take extra care where separately tessellated objects meet to ensure that they are tessellated the same way and there are no cracks. For most purposes, tesselation was too difficult to make use of.
 
@@ -145,7 +145,7 @@ The established APIs with their high level abstraction of the hardware were show
 
 Applications now directly assemble long lists of commands for the GPU to execute. Applications manage the synchronization of access to memory shared by CPU and GPU. The commands access data from buffers that the application has directly filled using formats it controls. Outputs are written to additional application controlled buffers which can be used as input for further computation.
 
-Crucially, it was now practical for compute shaders to generate inputs for rendering without having to transfer data via the CPU. This opens the door for [GPU Driven Rendering](https://vkguide.dev/docs/gpudriven/gpu_driven_engines/). There's now no sensible place to draw an API boundary across the graphics pipeline. Each stage of the pipeline can use the GPU for intensive data parallel work and the CPU for orchestration. Crucially, the flattened representation of the 3D scene can be managed entirely on the GPU. Data is only transferred between CPU and GPU when the scene is initially loaded and when it is updated.
+Crucially, it was now practical for compute shaders to generate inputs for rendering without having to transfer data via the CPU. This opens the door for [GPU Driven Rendering](https://vkguide.dev/docs/gpudriven/gpu_driven_engines/). There's now no sensible place to draw an API boundary across the graphics pipeline. Each stage of the pipeline can use the GPU for intensive data parallel work and the CPU for orchestration. The flattened representation of the 3D scene can be managed entirely on the GPU. Data is only transferred between CPU and GPU when the scene is initially loaded and when it is updated.
 
 GPU driven pipelines have the potential to remove almost the entire burden of rendering from the CPU, leaving it free to concentrate on whatever the application does beyond rendering. 
 
@@ -164,3 +164,7 @@ In theory, a scene can be rendered entirely using ray tracing. In practice that'
 Which brings us neatly to the second type of new execution unit, the AI core. AI cores execute a pre-trained [machine learning inference model](https://learn.microsoft.com/en-us/windows/ai/directml/dml-intro). You can use this for a wide variety of non-graphics machine learning requirements. Within the graphics pipeline, AI cores are most commonly used for post processing tasks such as de-noising ray traced images, anti-aliasing, upscaling and even [generating entire intermediate frames](https://www.nvidia.com/en-gb/geforce/technologies/dlss/) to boost perceived frame rate.
 
 Finally, GPU usage has made it all the way to the Load stage of the pipeline with [DirectStorage](https://github.com/microsoft/DirectStorage). DirectStorage allows data to be loaded into the GPU at high speeds from SSD storage, with minimal CPU involvement. This includes the ability to decompress data in the GPU.
+
+## Conclusion
+
+We've come a long way from the days of the fixed function pipeline. Hardware is fully programmable, new APIs give greater control and its feasible to maintain all your graphics related data on the GPU. I'm excited to explore what's now possible.
