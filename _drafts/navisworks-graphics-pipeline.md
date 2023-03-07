@@ -31,11 +31,11 @@ And that's about it. We've added a couple more features since then (Point Cloud 
 
 ### Amusing Anecdote
 
-I made my first trip to Autodesk headquarters in San Francisco shortly after we'd first got the OGS integration working. I wangled a meeting with Autodesk's CTO, Jeff Kowalski, by offering to answer any questions he might have about Navisworks. He welcomed me to his office and asked his first question.
+I made my first trip to Autodesk headquarters in San Francisco shortly after we'd got the OGS integration working. I wangled a meeting with Autodesk's CTO, Jeff Kowalski, by offering to answer any questions he might have about Navisworks. He welcomed me to his office and asked his first question.
 
 "Why are the graphics in Navisworks so crappy?"
 
-I tried to explain that Navisworks was a working tool, not a Media & Entertainment product. It's more valuable for customer's to color code objects so they can understand what role they play in the building, rather than to have things look pretty. 
+I tried to explain that Navisworks was a working tool, not a Media & Entertainment product. It's more valuable for customers to color code objects so they can understand what role they play in the building, rather than to have things look pretty. 
 
 He wasn't buying it. Luckily, I had a demo of the OGS integration with me and was able to show him the OGS SSAO post-processing effect. [SSAO](https://en.wikipedia.org/wiki/Screen_space_ambient_occlusion) gives an impression of diffuse lighting by darkening creases, holes and surfaces that are close to each other. To my mind it just makes the model look grubby, but it seemed to make Jeff happy.
 
@@ -48,5 +48,9 @@ I swiftly moved on to what I thought was a minor feature. Navisworks had the abi
 Pandemonium. Whooping and cheering. People high-fiving each other. Which is how I learned that VPs don't always know what customers want.
 
 ## Details
+
+There's an overriding philosophy behind  Navisworks that is different from most graphics engines. Most engines, particularly those used for games, take a 3D scene and try to render it as fast as possible. If the model is too big, frame rates are low. If that happens, you go back to the Prepare stage and change the model to make it less complex. 
+
+The idea behind Navisworks is to handle any model, no matter how big, without having to change it to make it work. In construction models are changing all the time. There's no time to optimize a model for viewing. By the time you were done, it would be out of date. Navisworks lets you set a desired frame rate. Navisworks renders models in priority order, most important objects first, and stops rendering for that frame when it runs out of time. Detail drops out while you interact with the model, then fills in when you stop interacting.
 
 ### Prepare
