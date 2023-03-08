@@ -21,4 +21,6 @@ Nanite is particularly interesting because it's the first time I've seen a games
 > Without those limitations artists could directly use film quality assets without wasting any time manually optimizing for use in real-time.
 > It’s ridiculous how much time is wasted in optimizing art content to hit framerate.
 
+The engine source code is [easily accessible](https://www.unrealengine.com/en-US/ue-on-github). While not Open Source, the license allows you to read, build and modify the source for your own purposes. You can freely distribute any product you build using the engine (as long as any revenue you receive is below $1,000,000). In theory, this gives me a state of the art GPU rendering pipeline to experiment with.  
+
 {% include candid-image.html src="/assets/images/nanite-graphics-pipeline.svg" alt="Nanite Graphics Pipeline" %}

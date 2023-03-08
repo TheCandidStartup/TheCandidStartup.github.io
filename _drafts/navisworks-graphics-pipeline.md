@@ -29,7 +29,7 @@ Above the device abstraction layer, OGS provided a complete scene graph implemen
 
 And that's about it. We've added a couple more features since then (Point Cloud support and a software occlusion buffer) which I'll cover when I go through the pipeline in detail. However, the main structure hasn't changed for over ten years.
 
-### Amusing Anecdote
+### If you're going to San Francisco ...
 
 I made my first trip to Autodesk headquarters in San Francisco shortly after we'd got the OGS integration working. I wangled a meeting with Autodesk's CTO, Jeff Kowalski, by offering to answer any questions he might have about Navisworks. He welcomed me to his office and asked his first question.
 
@@ -54,3 +54,35 @@ There's an overriding philosophy behind  Navisworks that is different from most 
 The idea behind Navisworks is to handle any model, no matter how big, without having to change it to make it work. In construction models are changing all the time. There's no time to optimize a model for viewing. By the time you were done, it would be out of date. Navisworks lets you set a desired frame rate. Navisworks renders models in priority order, most important objects first, and stops rendering for that frame when it runs out of time. Detail drops out while you interact with the model, then fills in when you stop interacting.
 
 ### Prepare
+
+A lot happens during the Prepare stage. All automatic. The end user experience is that they open a CAD model (in one of many supported formats), then append another, then another, building up an aggregated model of their entire project. Behind the scenes, Navisworks is hard at work. 
+
+The CAD model is converted into the optimized Navisworks format. The logical structure of the model is represented using a scene graph. Any complex geometry (solid models, NURBS surfaces, ...) is tessellated into triangle meshes. These meshes, together with any meshes directly represented in the CAD model, are next conditioned ready for rendering. 
+
+The conditioning process first cleans up the meshes. Duplicate and degenerate triangles are removed. Triangles are oriented consistently and normals are generated if missing. Any large meshes (more than a few thousand triangles) are split into smaller pieces. Many features in Navisworks (e.g. prioritized traversal, clash detection) depend on reasonable size geometry for good performance. Meshes are first split into separate [manifold](https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2019/ENU/MSHMXR/files/GUID-7B6A26A2-1E8A-4352-99A5-6C4026D5B89D-htm.html) connected pieces. If still too large, a spatial subdivision is used. 
+
+The scene is flattened in advance. The scene graph is traversed to create a list of instances and then a bounding volume hierarchy is built for the instances. 
+
+Finally, everything is serialized to a compressed on disk format (the Navisworks NWC or NWD file). The files are structured to that geometry (and properties) can be streamed in and decompressed on the fly.
+
+### Load
+
+Navisworks can load NWC/NWD files from disk or directly from a network location (e.g. from a web server using http). Navisworks loads everything apart from geometry and object properties up front. Typically that's about 10% of the file, with geometry and properties each taking about 45%. Geometry and properties are loaded on demand. Geometry is streamed in. In most circumstances, Navisworks knows what geometry will be needed in advance. When rendering, it knows what order the instances will be traversed in, so can make IO requests early enough that the data will be loaded by the time it's needed.
+
+### Flatten
+
+Navisworks only maintains material definitions on the GPU. The rest of the flattened scene is created during Prepare and Loaded from the file. The only required Flattening operation is to create GPU materials (which includes compiling shaders) using the OGS library.
+
+When modifications are made to the scene (moving an object, overriding a material or reloading one of the models in the aggregate), the flattened representation is updated to match and the BVH updated.
+
+### Cull
+
+### Simplify
+
+### Vertex Processing
+
+### Rasterize
+
+### Fragment Processing
+
+### Post Processing
