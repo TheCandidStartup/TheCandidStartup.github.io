@@ -3,9 +3,9 @@ title: A Trip Down The Graphics Pipeline
 tags: computer-graphics
 ---
 
-It seems like a long time since I described the [general areas for my initial projects]({% link _posts/2022-10-24-what-projects.md %}). I've talked a lot about my [cloud based, open source, serverless, customer deployed, scalable spreadsheet project]({% link _topics/spreadsheets.md %}). Today I'm going to switch gears and make a start on Interactive Viewing for Large Geometric Models. That's a bit of a mouthful, so let's call it [Computer Graphics]({% link _topics/computer-graphics.md %}) for short. 
+It seems like a long time since I described the [general areas]({% link _posts/2022-10-24-what-projects.md %}) for my initial projects. I've talked a lot about my [cloud based, open source, serverless, customer deployed, scalable spreadsheet project]({% link _topics/spreadsheets.md %}). Today I'm going to switch gears and make a start on Interactive Viewing for Large Geometric Models. 
 
-Just like the spreadsheet project, I'm going to take my time and work my way up to the big reveal. First of all, what do I mean by Computer Graphics? How does it work? How has it changed over time?
+Just like the spreadsheet project, I'm going to take my time and work my way up to the big reveal. First of all, how is the kind of realtime 3D rendering needed for interactive viewing done? How has it changed over time?
 
 ## 3D Graphics Pipeline
 
@@ -133,7 +133,7 @@ The pattern for hardware is now well established. Fix some minor blockers from t
 
 As GPUs became ever faster, it got harder and harder to keep them fed. Tesselation adds a set of shaders that take coarse grained geometry as input and generate much finer grained geometry. In principle this expands hardware support further left in the graphics pipeline into the Simplify stage. In practice, to make use of tesselation you need to change the way that content is created so that it matches the expected inputs for tesselation. You need to take extra care where separately tessellated objects meet to ensure that they are tessellated the same way and there are no cracks. For most purposes, tesselation was too difficult to make use of.
 
-Historically APIs had been single threaded. Only a single CPU core could be used to interact with the graphics API. That core spent most of its time at 100% utilization. This generation of APIs added limited support for multi-threading. While only one thread could communicate with the GPU, other threads could be used to fill command and vertex buffers ready to be transferred over.
+Historically, APIs had been single threaded. Only a single CPU core could be used to interact with the graphics API. That core spent most of its time at 100% utilization. This generation of APIs added limited support for multi-threading. While only one thread could communicate with the GPU, other threads could be used to fill vertex buffers ready to be transferred over.
 
 Finally, the APIs added support for compute shaders. These provide the ability to use the GPU's parallel execution units for arbitrary non-graphical computation. For realtime 3D that could include things like physics and simulation engines. Each frame, the CPU had to invoke the compute shader, get the results, use them to update the 3D scene and then coordinate the rest of the graphics pipeline to render the new scene.
 
