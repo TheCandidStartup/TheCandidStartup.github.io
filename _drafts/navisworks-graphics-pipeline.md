@@ -51,7 +51,9 @@ Pandemonium. Whooping and cheering. People high-fiving each other. Which is how 
 
 There's an overriding philosophy behind  Navisworks that is different from most graphics engines. Most engines, particularly those used for games, take a 3D scene and try to render it as fast as possible. If the model is too big, frame rates are low. If that happens, you go back to the Prepare stage and change the model to make it less complex. 
 
-The idea behind Navisworks is to handle any model, no matter how big, without having to change it to make it work. In construction models are changing all the time. There's no time to optimize a model for viewing. By the time you were done, it would be out of date. Navisworks lets you set a desired frame rate. Navisworks renders models in priority order, most important objects first, and stops rendering for that frame when it runs out of time. Detail drops out while you interact with the model, then fills in when you stop interacting.
+The idea behind Navisworks is to handle any model, no matter how big, without having to change it to make it work. In construction, models are changing all the time. There's no time to optimize a model for viewing. By the time you were done, it would be out of date. 
+
+Navisworks lets you set a desired frame rate. Navisworks renders models in priority order, most important objects first, and stops rendering for that frame when it runs out of time. Detail drops out while you interact with the model, then fills in when you stop interacting.
 
 ### Prepare
 
@@ -61,9 +63,13 @@ The CAD model is converted into the optimized Navisworks format. The logical str
 
 The conditioning process first cleans up the meshes. Duplicate and degenerate triangles are removed. Triangles are oriented consistently and normals are generated if missing. Any large meshes (more than a few thousand triangles) are split into smaller pieces. Many features in Navisworks (e.g. prioritized traversal, clash detection) depend on reasonable size geometry for good performance. Meshes are first split into separate [manifold](https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2019/ENU/MSHMXR/files/GUID-7B6A26A2-1E8A-4352-99A5-6C4026D5B89D-htm.html) connected pieces. If still too large, a spatial subdivision is used. 
 
+There are two special cases. First, there are some shapes which appear repeatedly. Cylinders are the most common example, frequently used in piping models. Cylinders need to be finely tessellated to look perfectly smooth, even when up close. Navisworks represents shapes like these using parametric geometry. A cylinder can be represented using two points and a radius. There is corresponding code in the Simplify stage to handle parametric geometry.
+
+The other special case is point clouds imported from [ReCap](https://www.autodesk.com/products/recap/overview). ReCap files are truly massive. ReCap has its own point cloud specific support for incremental load and render of point clouds. Each point cloud is spatially divided into cubes. The points in each cube can be independently loaded at an appropriate level of detail. Navisworks creates a dedicated instance for each cube, again with corresponding code in the Simplify stage.
+
 The scene is flattened in advance. The scene graph is traversed to create a list of instances and then a bounding volume hierarchy is built for the instances. 
 
-Finally, everything is serialized to a compressed on disk format (the Navisworks NWC or NWD file). The files are structured to that geometry (and properties) can be streamed in and decompressed on the fly.
+Finally, everything is serialized to a compressed on disk format (the Navisworks NWC or NWD file). The files are structured so that geometry (and properties) can be streamed in and decompressed on the fly.
 
 ### Load
 
@@ -77,12 +83,44 @@ When modifications are made to the scene (moving an object, overriding a materia
 
 ### Cull
 
+The heart of Navisworks is the prioritized traversal algorithm. The bounding volume hierarchy is traversed in such a way that instances are visited in priority order. Priority is view dependent. Objects nearer the camera are higher priority than those further away. Objects that appear large on the screen are higher priority than those that only cover a few pixels. If Navisworks runs out of time, the remaining unvisited low priority instances are culled. 
+
+The BVH traversal includes standard view frustum culling too.
+
+The most recent change to the Navisworks pipeline was the introduction of a software occlusion buffer. I had previously implemented various forms of hardware occlusion culling. Unfortunately, there were always scenes where the extra overhead of issuing occlusion queries cost more than rendering the geometry that was culled. Hardware occlusion ended up as one of those features hidden behind a global option that most people never turn on. 
+
+Over the same time, mainstream CPUs went from having a single core, to dual cores, then quad cores or more. The Navisworks pipeline could only make use of two cores. One that implemented the traversal algorithm and another that handled feeding the selected instances to the graphics API. On most machines there were at least two spare cores not doing anything. Coincidentally, Intel had released [sample code](https://www.intel.com/content/www/us/en/developer/articles/technical/software-occlusion-culling.html) for software occlusion culling using streaming SIMD extensions (SSE). 
+
+I used the sample as the basis for adding software occlusion culling to Navisworks. In Navisworks, the occlusion culler runs on a dedicated core. There is a small fixed length queue of occluders to render and occlusion tests to perform. Of course, the software renderer can't keep up with the GPU and the queue is often full. When that happens, Navisworks bypasses the occlusion culler and sends the instance straight to the GPU for rendering. This ensures that the GPU always stays busy. 
+
+There's no downside to running the occlusion culler so it can be enabled by default. What's surprising is how well it works on most scenes.  The initial instances chosen by the prioritized traversal tend to be the most significant occluders. The end result is a 2-3 times reduction in the time required to render.
+
 ### Simplify
+
+The output of the cull phase is a stream of instances to be rendered. The vast majority of these instances have triangle mesh geometry. It's important to minimize the number of draw calls to the graphics API due to the significant overhead of the graphics driver. Most Navisworks models have huge numbers of small instances. 
+
+Geometry is dynamically consolidated into [Vertex Buffer Objects](https://www.khronos.org/opengl/wiki/Vertex_Specification#Vertex_Buffer_Object) (VBO). Navisworks maintains a pool of fixed size VBOs. Geometry from multiple incoming instances can be accumulated into the same VBO and only sent to the GPU when the buffer is full. Instances can only be consolidated if they use the same material and rendering state. 
+
+Shaded materials are implemented using a single GPU material with per vertex colors. Color is copied from the instance's material when the geometry is written into the VBO. Similarly, simple transforms (translate and/or scale) are applied so that the vertices in the buffer have a common coordinate space. The end result is that most instances in a typical model can be consolidated together.
+
+Navisworks tessellates parametric objects to a view dependent LOD, writing the generated triangles into the VBO. With a more modern pipeline it would be possible to use tesselation shaders or generate a buffer of instances. Unfortunately, it turns out that parametric objects are rarer than we thought. For most input formats its too difficult to identify geometry that could be parametric. Further optimization isn't worth it.
+
+For instances that correspond to ReCap point cubes, Navisworks uses the ReCap library to determine the appropriate LOD and then copies the points into a dedicated points VBO.
 
 ### Vertex Processing
 
+The Vertex Processing stage is simple. The vertex shader is generated by the OGS library based on the material in use. For simple shaded materials it just transforms, projects and clips the vertices. For more complex materials it might generate additional vertex properties such as texture coordinates (UVs) and tangents.
+
 ### Rasterize
+
+Nothing special to see here. Good old fixed function hardware.
 
 ### Fragment Processing
 
+The fragment shader is also generated by the OGS library based on the material and lighting model in use. Most instances will use simple shaded materials. More complex materials (applied using Presenter or imported from CAD formats that support advanced materials) use special purpose shaders from the OGS library. 
+
+OGS supports shadow casting lights. If enabled in the 3D scene, the generated shader will sample shadow maps to determine whether the fragment is visible from the corresponding light. As most geometry in Navisworks is static, shadow maps are updated when the model changes and then cached. 
+
 ### Post Processing
+
+Finally, any post processing effects the user may have enabled are applied. These could include antialiasing, SSAO, tone mapping or any other effect in the OGS library.
