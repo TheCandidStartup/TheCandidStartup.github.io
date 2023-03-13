@@ -6,7 +6,7 @@ tags: computer-graphics navisworks
 The [Navisworks Graphics Pipeline]({% link _drafts/navisworks-graphics-pipeline.md %}) last got a serious overhaul more then ten years ago. I want to find out how you could implement something like Navisworks with a modern pipeline. As a starting point, I've decided to have a look at the [Nanite](https://docs.unrealengine.com/5.1/en-US/nanite-virtualized-geometry-in-unreal-engine/) pipeline introduced with [Unreal Engine 5](https://docs.unrealengine.com/5.1/en-US/).
 
 {% capture pipelines_url %}
-{% link _drafts/evolution-computer-graphics.md  %}
+{% link _posts/2023-03-13-trip-graphics-pipeline.md %}
 {% endcapture %}
 
 Unreal is a mainstream games engine with a [long history](https://en.wikipedia.org/wiki/Unreal_Engine). It has been through the evolution from [Fixed Function Pipelines]({{pipelines_url | strip | append: "#1991-2000--the-fixed-function-pipeline"}}), through [Programmable Shaders]({{pipelines_url | strip | append: "#2001-2005--programmable-vertex-and-fragment-shaders"}}), onto [Deferred Shading]({{pipelines_url | strip | append: "#2006-2010--unified-shader-model"}}) and now to [GPU Driven Rendering]({{pipelines_url | strip | append: "#2016-2020--new-apis-for-general-purpose-gpus"}}). 

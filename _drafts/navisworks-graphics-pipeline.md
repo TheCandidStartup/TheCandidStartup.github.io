@@ -3,12 +3,12 @@ title: The Navisworks Graphics Pipeline
 tags: navisworks computer-graphics autodesk
 ---
 
-[Last time]({% link _drafts/evolution-computer-graphics.md %}) we looked at the evolution of the graphics pipeline over the last 30 years or so. Given that framework, what does the [Navisworks]({% link _topics/navisworks.md %}) graphics pipeline look like?
+[Last time]({% link _posts/2023-03-13-trip-graphics-pipeline.md %}) we looked at the evolution of the graphics pipeline over the last 30 years or so. Given that framework, what does the [Navisworks]({% link _topics/navisworks.md %}) graphics pipeline look like?
 
 {% include candid-image.html src="/assets/images/navisworks-graphics-pipeline.svg" alt="Navisworks Graphics Pipeline" %}
 
 {% capture pipelines_url %}
-{% link _drafts/evolution-computer-graphics.md  %}
+{% link _posts/2023-03-13-trip-graphics-pipeline.md  %}
 {% endcapture %}
 
 It should look familiar. It's basically a [Unified Shader Model]({{pipelines_url | strip | append: "#2006-2010--unified-shader-model"}}) pipeline. Standard stuff from the graphics API boundary onwards. All the magic happens on the application side.
