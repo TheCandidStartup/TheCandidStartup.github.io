@@ -86,7 +86,7 @@ Welcome to you all. What were you looking for?
 
 There's clearly a market out there for information on SaaS architecture. Shame so few got to the third page of Google results and clicked through. 
 
-What were the most relevant search results with the highest position?
+What were the search results with the highest position? Presumably the ones where Google thought my content was most relevant.
 
 | Query | Position | Impressions | Clicks | Page |
 |-|-|-|-|
