@@ -43,7 +43,7 @@ Most posts follow the same pattern. An initial flurry of views in the first week
 
 {% include candid-image.html src="/assets/images/blog-analytics-march-2023/future-platform-views-per-day.png" alt="Future Platform - Views per Day" %}
 
-You would expect the top 10 posts to change every month. "Seven Reasons" is one exception as the after shocks keep coming. The other, weirdly, is "Modern SaaS Architecture". I don't think I could have come up with a less clickbait title and yet there it is with a very respectable 250 views in its first two months and another 50 in the following two. 
+You would expect the top posts to change every couple of months. "Seven Reasons" is one exception as the after shocks keep coming. The other, weirdly, is "[Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %})". I don't think I could have come up with a less clickbait title and yet there it is with a very respectable 250 views in its first two months and another 50 in the following two. 
 
 ## Sources
 
@@ -86,4 +86,38 @@ Welcome to you all. What were you looking for?
 
 There's clearly a market out there for information on SaaS architecture. Shame so few got to the third page of Google results and clicked through. 
 
-The best result I could find was the query "candid startup", average position 4th, where 12 of you (17%) clicked through to the home page.
+What were the most relevant search results with the highest position?
+
+| Query | Position | Impressions | Clicks | Page |
+|-|-|-|-|
+| *upstream vs downstream service* | 1 | 7 | 0 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| *what are downstream services* | 1 | 3 | 0 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| *upstream services* | 1 | 2 | 0 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| *sass architecture* | 1 | 2 | 0 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| *client service architecture* | 1 | 1 | 0 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| candid startup | 4 | 69 | 12 | [The Candid Startup]({{ '/' | absolute_url }}) |
+| *vp move* | 5 | 1 | 0 | [Organizational Anti-Patterns #1: VP Moves]({% link _posts/2022-10-31-organizational-anti-pattern-vp-moves.md %}) |
+| modern saas architecture | 7 | 31 | 1 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| *paas architecture diagram* | 7 | 1 | 0 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| *saas load balancer* | 10 | 1 | 0 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| *demographics via candid* | 10 | 1 | 0 | [How's that blog of yours working out?](/_posts/2022-11-14-blog-analytics.md) |
+| *is google sheets turing complete* | 11 | 10 | 0 | [Spreadsheets are the Future of Data Systems]({% link _posts/2023-01-09-spreadsheets-future-data-systems.md %}) |
+| thecandid | 15 | 59 | 1 | [The Candid Startup]({{ '/' | absolute_url }}) |
+| cell based architecture aws | 27 | 6  | 0 | [AWS re:invent 2022]({% link _posts/2022-12-12-aws-reinvent-2022.md %}) |
+| sass microservices architecture | 30 | 44 | 0 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| aws cell based architecture | 30 | 10 | 0 | [AWS re:invent 2022]({% link _posts/2022-12-12-aws-reinvent-2022.md %}) |
+| saas backend architecture | 30 | 4 | 0 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| the candid | 31 | 16 | 0 | [The Candid Startup]({{ '/' | absolute_url }}) |
+| saas product architecture | 41 | 358 | 1 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| aws replay 2022 | 42 | 3  | 0 | [AWS re:invent 2022]({% link _posts/2022-12-12-aws-reinvent-2022.md %}) |
+| aws sam appsync | 43 | 4  | 0 | [AWS re:invent 2022]({% link _posts/2022-12-12-aws-reinvent-2022.md %}) |
+| tim wiegand | 43 | 1 | 0 | [Now]({% link now.md %}) |
+| saas architecture | 45 | 903 | 1 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| saas deployment architecture | 45 | 101 | 1 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+| cloud saas architecture | 45 | 16 | 0 | [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) |
+
+Look at that. Number one for some surprisingly generic search terms. But only for a small number of impressions. Wonder what happens when I use those search terms now? 
+
+Ahh. Some weird hiccup in the Google algorithm. I've marked the queries that no longer return results for the blog in italic. 
+
+At least I totally own "candid startup" and "modern saas architecture". If not "tim wiegand".
