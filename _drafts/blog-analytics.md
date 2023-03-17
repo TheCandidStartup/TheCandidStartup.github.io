@@ -51,7 +51,7 @@ You would expect the top posts to change every couple of months. "Seven Reasons"
 
 As might be expected, direct traffic and traffic from LinkedIn fell proportionally with the overall fall in users. Twitter was flat, but traffic from Google more than doubled. At last, something to be optimistic about.
 
-There's still a handful of users from GitHub, Teams and Bing. However, judging by the number of sessions, you're all regularly returning visitors.
+There's still a handful of users from GitHub, Teams and Bing. Judging by the number of sessions, you're all regularly returning visitors.
 
 ## LinkedIn
 
@@ -86,7 +86,7 @@ Welcome to you all. What were you looking for?
 
 There's clearly a market out there for information on SaaS architecture. Shame so few got to the third page of Google results and clicked through. 
 
-What were the search results with the highest position? Presumably the ones where Google thought my content was most relevant.
+What were the search results with the highest position? Presumably these are the ones where Google thought my content was most relevant.
 
 | Query | Position | Impressions | Clicks | Page |
 |-|-|-|-|
