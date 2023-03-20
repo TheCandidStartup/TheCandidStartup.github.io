@@ -1,5 +1,5 @@
 ---
-title: Blog Analytics - Six Months In
+title: Six Months In
 tags: blog
 ---
 
@@ -13,7 +13,9 @@ I've settled into a cadence of posting weekly on a Monday. That gives me a chanc
 
 I've extended the comparison window to a bit over 90 days, so that the preceding period includes the initial flurry of activity when I spammed half of Autodesk with news of my retirement. 
 
-Oh dear. That doesn't look too healthy. Last time I had 1500 users over two months, now I'm down to 650 over three months. There are two massive outliers in the first two months data. The first spike is all the people at Autodesk who read my retirement announcement and followed the link to the blog. The second, massive spike, is when my "[Seven Reasons why I REALLY left Autodesk]({% link _posts/2022-10-18-leaving-autodesk.md %})" post went viral (in an understated way) on LinkedIn. The smaller spikes to the right are all aftershocks where someone sparks a new round of sharing. Maybe I should have kept going with the clickbait titles?
+Oh dear. That doesn't look too healthy. Last time I had 1500 users over two months, now I'm down to 650 over three months. 
+
+There are two big outliers in the first two months data. The first spike is all the people at Autodesk who read my retirement announcement and followed the link to the blog. The second, massive spike, is when my "[Seven Reasons why I REALLY left Autodesk]({% link _posts/2022-10-18-leaving-autodesk.md %})" post went viral (in an understated way) on LinkedIn. The smaller spikes to the right are all aftershocks where someone sparks a new round of sharing. Maybe I should have kept going with the clickbait titles?
 
 {% include candid-image.html src="/assets/images/blog-analytics-march-2023/users-60-days.png" alt="Change in Users last 60 days vs previous" %}
 
