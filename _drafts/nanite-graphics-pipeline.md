@@ -41,7 +41,7 @@ There are no limits on the size of meshes (apart from disk space to store them).
 
 Unreal has a rich collection of utilities for scene preparation, centered around the Unreal Editor. Models can be imported from a variety of sources. Like Navisworks, complex geometry is tessellated into triangle meshes. The meshes are then further subdivided into clusters of 128 triangles or less. 
 
-Clusters are the basis for Nanite's LOD generation algorithm. At each LOD level clusters are arranged into groups of 8 to 32 clusters. Each group is decimated to half the number of triangles and then split into 4 to 16 new clusters. The boundary of each group is left unchanged so that there will be no cracks when rendering adjacent clusters at LOD level *L* and *L-1*. The process repeats at the next level up with the key difference that a different set of groups with different boundaries is used. This ensures that all boundaries will eventually be decimated.
+Clusters are the basis for Nanite's LOD generation algorithm. At each LOD level, clusters are arranged into groups of 8 to 32 clusters. Each group is decimated to half the number of triangles and then split into 4 to 16 new clusters. The boundary of each group is left unchanged so that there will be no cracks when rendering adjacent clusters at LOD level *L* and *L-1*. The process repeats at the next level up with the key difference that a different set of groups with different boundaries is used. This ensures that all boundaries will eventually be decimated.
 
 LOD generation doubles the total number of triangles stored, so it is important to be as space efficient as possible. Similarly to Navisworks, everything is serialized to a compressed on disk format designed so that geometry can be streamed in and decompressed on the fly. 
 
@@ -55,11 +55,15 @@ The on disk format is designed so that it can be efficiently decompressed using 
 
 Like all GPU Driven pipelines, Unreal maintains the entire scene (from instance list down) on the GPU. As the application modifies the scene graph, Unreal updates the GPU scene to match.
 
-As well as having a compressed disk format, Nanite has a separate compressed in-memory format. The in-memory format is used directly for rendering so needs to have near instance decode time. Vertex attributes are quantized and bit packed. The disk representation is transcoded into the in-memory format as it is read in. 
+As well as having a compressed disk format, Nanite has a separate compressed in-memory format. The in-memory format is used directly for rendering so needs to have near instant decode time. Vertex attributes are quantized and bit packed. The disk representation is transcoded into the in-memory format as it is read in. 
 
-Geometry is managed within a GPU page buffer. Clusters are allocated to 128KB pages based on spatial locality and level in the LOD structure. The first page contains the top level(s) of the LOD structure and is always resident so that there is always something to render. The resident set is updated based on feedback from the Cull stage.
+Geometry is managed within a GPU page buffer. Clusters are allocated to 128KB pages based on spatial locality and level in the LOD structure. The first page contains the top level(s) of the LOD structure and is always resident, so there is always something to render. The resident set is updated based on feedback from the Cull stage.
 
 ### Cull
+
+Nanite uses a [hierarchical depth buffer](https://miketuritzin.com/post/hierarchical-depth-buffers/) with a two pass algorithm. In the first pass instances and then clusters (if the parent instance is visible) are tested against the HZB from the previous frame (using the previous frame's transforms). The assumption is that objects that would have been visible in the last frame are highly likely to be visible in this frame. Visible instances and clusters are rasterized. The HZB for the current frame is built based on what was just rasterized. 
+
+In the second pass, all the instances and clusters found to be occluded based on the previous HZB are retested with the current HZB and transforms and those that are now visible are rasterized. Finally, the HZB is built again ready for the next frame. In normal circumstances (camera navigating smoothly through the scene), the second pass is a small fraction of the main pass, just handling those objects that became visible in the current frame. 
 
 ### Simplify
 
