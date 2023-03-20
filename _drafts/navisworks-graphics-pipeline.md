@@ -93,7 +93,7 @@ Over the same time, mainstream CPUs went from having a single core, to dual core
 
 I used the sample as the basis for adding software occlusion culling to Navisworks. In Navisworks, the occlusion culler runs on a dedicated core. There is a small fixed length queue of occluders to render and occlusion tests to perform. Of course, the software renderer can't keep up with the GPU and the queue is often full. When that happens, Navisworks bypasses the occlusion culler and sends the instance straight to the GPU for rendering. This ensures that the GPU always stays busy. 
 
-There's no downside to running the occlusion culler so it can be enabled by default. What's surprising is how well it works on most scenes.  The initial instances chosen by the prioritized traversal tend to be the most significant occluders. The end result is a 2-3 times reduction in the time required to render.
+There's no downside to running the occlusion culler so it can be enabled by default. What's surprising is how well it works on most scenes.  The initial instances chosen by the prioritized traversal tend to be the most significant occluders. The end result is up to three times reduction in the time required to render.
 
 ### Simplify
 
@@ -103,7 +103,7 @@ Geometry is dynamically consolidated into [Vertex Buffer Objects](https://www.kh
 
 Shaded materials are implemented using a single GPU material with per vertex colors. Color is copied from the instance's material when the geometry is written into the VBO. Similarly, simple transforms (translate and/or scale) are applied so that the vertices in the buffer have a common coordinate space. The end result is that most instances in a typical model can be consolidated together.
 
-Navisworks tessellates parametric objects to a view dependent LOD, writing the generated triangles into the VBO. With a more modern pipeline it would be possible to use tesselation shaders or generate a buffer of instances. Unfortunately, it turns out that parametric objects are rarer than we thought. For most input formats its too difficult to identify geometry that could be parametric. Further optimization isn't worth it.
+Navisworks tessellates parametric objects to a view dependent LOD, writing the generated triangles into the VBO. With a more modern pipeline it would be possible to use tesselation shaders or generate a buffer of instances. Unfortunately, it turns out that parametric objects are rarer than we thought. For most input formats it's too difficult to identify geometry that could be parametric. Further optimization isn't worth it.
 
 For instances that correspond to ReCap point cubes, Navisworks uses the ReCap library to determine the appropriate LOD and then copies the points into a dedicated points VBO.
 
