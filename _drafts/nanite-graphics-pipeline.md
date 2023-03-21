@@ -23,9 +23,9 @@ Nanite is particularly interesting because it's the first time I've seen a games
 
 The engine source code is [easily accessible](https://www.unrealengine.com/en-US/ue-on-github). While not Open Source, the [license](https://www.unrealengine.com/en-US/eula/unreal) allows you to read, build and modify the source for your own purposes. You can freely distribute any product you build using the engine (as long as any revenue you receive is below $1,000,000). In theory, this gives me a state of the art GPU rendering pipeline to experiment with.  
 
-{% include candid-image.html src="/assets/images/nanite-graphics-pipeline.svg" alt="Nanite Graphics Pipeline" %}
+## The Nanite Pipeline
 
-## Details
+{% include candid-image.html src="/assets/images/nanite-graphics-pipeline.svg" alt="Nanite Graphics Pipeline" %}
 
 How does Nanite achieve its aim of handling whatever geometry you can throw at it? There's nothing like the Navisworks prioritized traversal to ensure that you hit a desired framerate. 
 
@@ -41,7 +41,7 @@ There are no limits on the size of meshes (apart from disk space to store them).
 
 Unreal has a rich collection of utilities for scene preparation, centered around the Unreal Editor. Models can be imported from a variety of sources. Like Navisworks, complex geometry is tessellated into triangle meshes. The meshes are then further subdivided into clusters of 128 triangles or less. 
 
-Clusters are the basis for Nanite's LOD generation algorithm. At each LOD level, clusters are arranged into groups of 8 to 32 clusters. Each group is decimated to half the number of triangles and then split into 4 to 16 new clusters. The boundary of each group is left unchanged so that there will be no cracks when rendering adjacent clusters at LOD level *L* and *L-1*. The process repeats at the next level up with the key difference that a different set of groups with different boundaries is used. This ensures that all boundaries will eventually be decimated.
+Clusters are the basis for Nanite's LOD generation algorithm. At each LOD level, clusters are arranged into groups of 8 to 32 clusters. Each group is decimated to half the number of triangles and then split into 4 to 16 new clusters. The boundary of each group is left unchanged so that there will be no cracks when rendering adjacent clusters at LOD level *L* and *L-1*. The process repeats at the next level up with the key difference that a different set of groups with different boundaries is used. This ensures that all boundaries will eventually be decimated. The resulting clusters are organized using a bounding volume hierarchy per mesh. 
 
 LOD generation doubles the total number of triangles stored, so it is important to be as space efficient as possible. Similarly to Navisworks, everything is serialized to a compressed on disk format designed so that geometry can be streamed in and decompressed on the fly. 
 
@@ -61,13 +61,23 @@ Geometry is managed within a GPU page buffer. Clusters are allocated to 128KB pa
 
 ### Cull
 
-Nanite uses a [hierarchical depth buffer](https://miketuritzin.com/post/hierarchical-depth-buffers/) with a two pass algorithm. In the first pass instances and then clusters (if the parent instance is visible) are tested against the HZB from the previous frame (using the previous frame's transforms). The assumption is that objects that would have been visible in the last frame are highly likely to be visible in this frame. Visible instances and clusters are rasterized. The HZB for the current frame is built based on what was just rasterized. 
+Nanite performs frustum culling and occlusion culling. Occlusion culling uses a [hierarchical depth buffer](https://miketuritzin.com/post/hierarchical-depth-buffers/) (HZB) with a two pass algorithm. In the first pass instances and then clusters (if the parent instance is visible) are tested against the HZB from the previous frame (using the previous frame's transforms). The assumption is that objects that would have been visible in the last frame are highly likely to be visible in this frame. Visible instances and clusters are rasterized. The HZB for the current frame is built based on what was just rasterized. 
 
-In the second pass, all the instances and clusters found to be occluded based on the previous HZB are retested with the current HZB and transforms and those that are now visible are rasterized. Finally, the HZB is built again ready for the next frame. In normal circumstances (camera navigating smoothly through the scene), the second pass is a small fraction of the main pass, just handling those objects that became visible in the current frame. 
+In the second pass, all the instances and clusters found to be occluded based on the previous HZB are retested with the current HZB and those that are now visible are rasterized. Finally, the HZB is built again ready for the next frame. In normal circumstances (camera navigating smoothly through the scene), the second pass is a small fraction of the main pass, just rasterizing those objects that became visible in the current frame. 
 
 ### Simplify
 
-Imposters - 40KB per mesh! Texture atlas of 12x12 images each 12x12 pixels storing depth and triangle id. Drawn directly in instance culling pass if instance is too small on screen.
+The output from the preparation phase is a set of clusters at different LOD levels. At runtime Nanite needs to select which LOD level to use for each part of each mesh. Nanite uses an error function which calculates how many pixels of error would result if a cluster is rendered. The error function is setup so that the error for any parent cluster (lower LOD) is higher than any of its children. This property ensures that LOD selection can be determined locally and independently (and in parallel if desired) for each cluster. A cluster should be rendered if its parent's error is larger than a pixel and its own error is smaller than a pixel.
+
+For efficiency there is a combined implementation for the cluster Cull and Simplify stages. The cluster BVH is traversed and at each node the HZB is tested for visibility and the LOD error function evaluated to determine whether traversal needs to continue to a more detailed LOD. Identifiers for the selected LODs are also written into an output buffer which is used by the Load stage for the next frame. 
+
+Recursively traversing a tree structure using the highly parallel set of execution units provided by the GPU is an interesting problem. Nanite's solution is to implement its own job scheduling system. It manages a GPU buffer as a queue, seeded with the root cluster for each instance. Each execution unit repeatedly reads a node from the queue, performs an occlusion and LOD selection test and then either culls the node, adds the children back into the queue or adds the clusters to a buffer of clusters to be rendered.  
+
+What happens when there are many small instances? You could end up drawing lots of sub-pixel triangles. This is a known limitation for Nanite. The root LOD is 128 triangles (or all the triangles in the mesh for small meshes). 
+
+The current partial solution is to use [imposters](https://www.gamedeveloper.com/programming/imposters). It's a partial solution because it only offers a constant factor improvement. Instead of drawing the 128 triangles of the root LOD, you draw a single textured quad. Nanite's imposters consist of a texture atlas with 12x12 images (rendered from different directions) each of 12x12 pixels storing depth and triangle id. A total of 40KB per mesh, which is kept resident in GPU memory. This only makes sense for large meshes and/or meshes that are frequently used. 
+
+A 128 triangle cluster, where each triangle is just under pixel sized, could easily cover a 10x10 pixel square on screen. If an imposter is used, it gets rendered into the target buffer directly, bypassing vertex processing and rasterization. The appropriate image is selected depending on viewing angle, and copied into the projected rectangle in screen space, scaling and skewing the image as required. 
 
 ### Vertex Processing
 
@@ -76,3 +86,5 @@ Imposters - 40KB per mesh! Texture atlas of 12x12 images each 12x12 pixels stori
 ### Fragment Processing
 
 ### Post Processing
+
+## Shadows and Multi-view Rendering
