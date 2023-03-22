@@ -57,11 +57,11 @@ Like all GPU Driven pipelines, Unreal maintains the entire scene (from instance 
 
 As well as having a compressed disk format, Nanite has a separate compressed in-memory format. The in-memory format is used directly for rendering so needs to have near instant decode time. Vertex attributes are quantized and bit packed. The disk representation is transcoded into the in-memory format as it is read in. 
 
-Geometry is managed within a GPU page buffer. Clusters are allocated to 128KB pages based on spatial locality and level in the LOD structure. The first page contains the top level(s) of the LOD structure and is always resident, so there is always something to render. The resident set is updated based on feedback from the Cull stage.
+Geometry is managed within a GPU page buffer. Clusters are allocated to 128KB pages based on spatial locality and level in the LOD structure. The first page contains the top level(s) of the LOD structure and is always resident, so there is always something to render. The resident set is updated based on feedback from the Simplify stage.
 
 ### Cull
 
-Nanite performs frustum culling and occlusion culling. Occlusion culling uses a [hierarchical depth buffer](https://miketuritzin.com/post/hierarchical-depth-buffers/) (HZB) with a two pass algorithm. In the first pass instances and then clusters (if the parent instance is visible) are tested against the HZB from the previous frame (using the previous frame's transforms). The assumption is that objects that would have been visible in the last frame are highly likely to be visible in this frame. Visible instances and clusters are rasterized. The HZB for the current frame is built based on what was just rasterized. 
+Nanite performs frustum culling and occlusion culling. Occlusion culling uses a [hierarchical depth buffer](https://miketuritzin.com/post/hierarchical-depth-buffers/) (HZB) with a two pass algorithm. In the first pass instances and then clusters (if the parent instance is visible) are tested against the HZB from the previous frame (using the previous frame's transforms). The assumption is that objects that would have been visible in the last frame are highly likely to be visible in this frame. Visible clusters are rasterized. The HZB for the current frame is built based on what was just rasterized. 
 
 In the second pass, all the instances and clusters found to be occluded based on the previous HZB are retested with the current HZB and those that are now visible are rasterized. Finally, the HZB is built again ready for the next frame. In normal circumstances (camera navigating smoothly through the scene), the second pass is a small fraction of the main pass, just rasterizing those objects that became visible in the current frame. 
 
@@ -69,7 +69,7 @@ In the second pass, all the instances and clusters found to be occluded based on
 
 The output from the preparation phase is a set of clusters at different LOD levels. At runtime Nanite needs to select which LOD level to use for each part of each mesh. Nanite uses an error function which calculates how many pixels of error would result if a cluster is rendered. The error function is setup so that the error for any parent cluster (lower LOD) is higher than any of its children. This property ensures that LOD selection can be determined locally and independently (and in parallel if desired) for each cluster. A cluster should be rendered if its parent's error is larger than a pixel and its own error is smaller than a pixel.
 
-For efficiency there is a combined implementation for the cluster Cull and Simplify stages. The cluster BVH is traversed and at each node the HZB is tested for visibility and the LOD error function evaluated to determine whether traversal needs to continue to a more detailed LOD. Identifiers for the selected LODs are also written into an output buffer which is used by the Load stage for the next frame. 
+For efficiency there is a combined implementation for the cluster Cull and Simplify stages. The cluster BVH is traversed and at each node the HZB is tested for visibility and the LOD error function evaluated to determine whether traversal needs to continue to a more detailed LOD. Identifiers for the selected LODs are also written into an output buffer which is used by the Load-Flatten stages to update the resident set for the next frame. 
 
 Recursively traversing a tree structure using the highly parallel set of execution units provided by the GPU is an interesting problem. Nanite's solution is to implement its own job scheduling system. It manages a GPU buffer as a queue, seeded with the root cluster for each instance. Each execution unit repeatedly reads a node from the queue, performs an occlusion and LOD selection test and then either culls the node, adds the children back into the queue or adds the clusters to a buffer of clusters to be rendered.  
 
@@ -79,12 +79,32 @@ The current partial solution is to use [imposters](https://www.gamedeveloper.com
 
 A 128 triangle cluster, where each triangle is just under pixel sized, could easily cover a 10x10 pixel square on screen. If an imposter is used, it gets rendered into the target buffer directly, bypassing vertex processing and rasterization. The appropriate image is selected depending on viewing angle, and copied into the projected rectangle in screen space, scaling and skewing the image as required. 
 
+The output from this stage is a list of visible clusters to rasterize.
+
 ### Vertex Processing
+
+In contrast, Vertex Processing is as simple as it gets. There are no per vertex attributes to worry about. Vertices are transformed, projected and clipped.
 
 ### Rasterize
 
+If everything is working as designed, there will be huge numbers of pixel sized triangles to rasterize. Tiny triangles are worst case for typical fixed function hardware rasterizers. Hardware rasterizers are designed to be parallel in pixels rather than triangles. They usually output in 2x2 pixel quads as that makes interpolation of vertex properties easier. There's a lot of overhead and waste if most triangles are tiny.
+
+Nanite includes a dedicated programmable rasterizer for clusters whose triangles are less than 32 pixels long. All 128 triangles in a cluster are processed in parallel, one per execution unit (most modern GPUs will process many clusters at the same time). 
+
+This rasterizer is three times faster on average than the hardware rasterizer for small triangles. The hardware rasterizer is still used for any clusters with large triangles. The programmable rasterizer follows the same spec for rasterization as the hardware so there are no cracks between clusters rendered using different rasterizers.
+
 ### Fragment Processing
 
+Nanite's render target is a [visibility buffer](https://jcgt.org/published/0002/02/04/) with a 64 bit [atomic](https://microsoft.github.io/DirectX-Specs/d3d/HLSL_SM_6_6_Int64_and_Float_Atomics.html) for each pixel. A visibility buffer stores the minimum information needed to be able to defer everything else to Post Processing. Each pixel has 30 bits for depth, 27 for visible cluster index and 7 for triangle index. Updates have to be atomic as multiple execution units could be updating the depth buffer at the same time where triangles overlap. Fragments generated from both rasterizers are written to the same visibility buffer.
+
 ### Post Processing
+
+The first step in Post Processing is to generate a material depth buffer. Each material is assigned a unique depth value. To generate the buffer use the visible cluster index from the visibility buffer to lookup the corresponding instance id and cluster id. Use the cluster id and triangle id from the visibility buffer to lookup a material slot id. Finally lookup the material id assigned to that material slot for this instance.
+
+The second step is to generate a [G-Buffer](https://en.wikipedia.org/wiki/Glossary_of_computer_graphics#g-buffer). Nanite draws a full screen quad for each material in the scene at that material's unique depth value. The depth test is set to "equals" so only pixels with the corresponding material id are selected. To recover the normal inputs to the material shader, Nanite adds a preamble that looks up the instance and cluster id using the visibility buffer, loads the instance transform, loads the triangle vertices, transforms them to screen space, derives barycentric coordinates for the pixel and then loads and interpolates any required vertex attributes.
+
+A scene can have many materials so there's potentially a huge amount of redundant work for pixels which don't match the current material id. By using the depth test to select pixels, Nanite benefits from any early out optimizations provided by the hardware. Many materials only cover a small portion of the screen. The full screen quad is actually drawn as a grid of tiles. Tiles that don't contain any pixels with that material are culled in the vertex shader using a per tile bit mask built with the material depth buffer.
+
+The rest of Post Processing is conventional deferred shading. In fact, its the same implementation as the Unreal 4 engine. This allows applications to use both Nanite and the previous Unreal 4 pipeline on a per instance basis, with the two pipelines merging at the G-Buffer. Applications can easily migrate from Unreal 4 to Unreal 5 and incrementally enable Nanite. It also has the effect of decoupling Nanite from the lighting system which doesn't know or care how the G-Buffer was produced. 
 
 ## Shadows and Multi-view Rendering
