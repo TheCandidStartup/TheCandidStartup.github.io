@@ -123,7 +123,7 @@ While the hardware changed radically, there were only incremental changes to the
 
 OpenGL 3 and Direct3D 10 added Geometry shaders to the vertex processing stage. Geometry shaders have a complete primitive (triangle, line or point) as input with the ability to output a different primitive or set of primitives.
 
-Applications started to move computation into the post processing stage. [Deferred shading](https://en.wikipedia.org/wiki/Deferred_shading) became mainstream. As lighting models became more complex, an increasing amount of time was spent in fragment shading. That work is wasted if the fragment ends up not being visible, which is common in complex scenes. In deferred shading, the fragment shader writes fragment attributes such as normal and material id to the render target in addition to color and depth. This "G-Buffer" is then used as the input for post-processing, where lighting can be calculated per visible pixel.
+Applications started to move computation into the post processing stage. [Deferred shading](https://en.wikipedia.org/wiki/Deferred_shading) became mainstream. As lighting models became more complex, an increasing amount of time was spent in fragment shading. That work is wasted if the fragment ends up not being visible, which is common in complex scenes. In deferred shading, the fragment shader writes fragment attributes such as normal and material attributes to the render target in addition to color and depth. This "G-Buffer" is then used as the input for post-processing, where lighting can be calculated per visible pixel.
 
 ### 2011-2015 : Tesselation and Compute
 
