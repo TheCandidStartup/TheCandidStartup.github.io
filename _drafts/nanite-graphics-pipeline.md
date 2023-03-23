@@ -9,7 +9,7 @@ The [Navisworks Graphics Pipeline]({% link _drafts/navisworks-graphics-pipeline.
 {% link _posts/2023-03-13-trip-graphics-pipeline.md %}
 {% endcapture %}
 
-Unreal is a mainstream games engine with a [long history](https://en.wikipedia.org/wiki/Unreal_Engine). It has been through the evolution from [Fixed Function Pipelines]({{pipelines_url | strip | append: "#1991-2000--the-fixed-function-pipeline"}}), through [Programmable Shaders]({{pipelines_url | strip | append: "#2001-2005--programmable-vertex-and-fragment-shaders"}}), onto [Deferred Shading]({{pipelines_url | strip | append: "#2006-2010--unified-shader-model"}}) and now to [GPU Driven Rendering]({{pipelines_url | strip | append: "#2016-2020--new-apis-for-general-purpose-gpus"}}). 
+Unreal is a mainstream games engine with a [long history](https://en.wikipedia.org/wiki/Unreal_Engine). It has been through the evolution from [Fixed Function Pipelines]({{pipelines_url | strip | append: "#1991-2000--the-fixed-function-pipeline"}}), then [Programmable Shaders]({{pipelines_url | strip | append: "#2001-2005--programmable-vertex-and-fragment-shaders"}}), onto [Deferred Shading]({{pipelines_url | strip | append: "#2006-2010--unified-shader-model"}}) and now to [GPU Driven Rendering]({{pipelines_url | strip | append: "#2016-2020--new-apis-for-general-purpose-gpus"}}). 
 
 Nanite is particularly interesting because it's the first time I've seen a games engine with a similar philosophy to Navisworks. Brian Karis, engineering fellow at Epic Games, describes their thinking in his [SIGGRAPH Presentation](https://advances.realtimerendering.com/s2021/Karis_Nanite_SIGGRAPH_Advances_2021_final.pdf) from 2021. 
 
@@ -31,7 +31,7 @@ How does Nanite achieve its aim of handling whatever geometry you can throw at i
 
 Nanite starts from the basis that there's a fixed number of pixels on the screen, so if you're perfectly efficient, rendering cost would be fixed for a given resolution. As far as possible, Nanite tries to ensure that you only rasterize triangles that will be visible and that you only shade fragments that will contribute to the final result. 
 
-There are three things that Nanite needs to make this work. First, using deferred shading so that only pixels in the G-Buffer need to be shaded during Post Processing. Second, using a dynamic LOD structure to ensure that all triangles drawn are at least pixel size. Finally, using occlusion culling to avoid drawing triangles that are hidden.
+There are three things that Nanite needs to make this work. First, using deferred shading so that only visible pixels need to be shaded during Post Processing. Second, using a dynamic LOD structure to ensure that all triangles drawn are at least pixel size. Finally, using occlusion culling to avoid drawing triangles that are hidden.
 
 All instances including transforms, materials and at least the root of the per mesh LOD structure need to fit in GPU memory. All instances are processed by the GPU driven pipeline each frame. Which means there is a limit on the number of instances that can be used in a scene. The Nanite SIGGRAPH presentation mentions that Nanite can comfortably handle a million instances (assuming reasonable hardware). I've seen [stress tests](https://youtu.be/v9kynURWW_I) that get close to 10 million instances before running out of memory (32GB RAM, 11GB VRAM), while still maintaining 30 fps.
 
@@ -67,19 +67,17 @@ In the second pass, all the instances and clusters found to be occluded based on
 
 ### Simplify
 
-The output from the preparation phase is a set of clusters at different LOD levels. At runtime Nanite needs to select which LOD level to use for each part of each mesh. Nanite uses an error function which calculates how many pixels of error would result if a cluster is rendered. The error function is setup so that the error for any parent cluster (lower LOD) is higher than any of its children. This property ensures that LOD selection can be determined locally and independently (and in parallel if desired) for each cluster. A cluster should be rendered if its parent's error is larger than a pixel and its own error is smaller than a pixel.
+The output from the preparation phase is a set of clusters at different LOD levels. At runtime Nanite needs to select which LOD level to use for each part of each mesh. Nanite uses an error function which calculates how many pixels of error would result if a cluster at a particular LOD level is used. The error function is setup so that the error for any parent cluster (lower LOD) is higher than any of its children. This property ensures that LOD selection can be determined locally and independently (and in parallel if desired) for each cluster. A cluster should be rendered if its parent's error is larger than a pixel and its own error is smaller than a pixel.
 
 For efficiency there is a combined implementation for the cluster Cull and Simplify stages. The cluster BVH is traversed and at each node the HZB is tested for visibility and the LOD error function evaluated to determine whether traversal needs to continue to a more detailed LOD. Identifiers for the selected LODs are also written into an output buffer which is used by the Load-Flatten stages to update the resident set for the next frame. 
 
-Recursively traversing a tree structure using the highly parallel set of execution units provided by the GPU is an interesting problem. Nanite's solution is to implement its own job scheduling system. It manages a GPU buffer as a queue, seeded with the root cluster for each instance. Each execution unit repeatedly reads a node from the queue, performs an occlusion and LOD selection test and then either culls the node, adds the children back into the queue or adds the clusters to a buffer of clusters to be rendered.  
+Recursively traversing a tree structure using the highly parallel set of execution units provided by the GPU is an interesting problem. Nanite's solution is to implement its own job scheduling system. It manages a GPU buffer as a queue, seeded with the root cluster for each instance. Each execution unit repeatedly reads a node from the queue, performs an occlusion and LOD selection test and then either culls the node, adds the children back into the queue or adds the clusters to a list of visible clusters to rasterize.  
 
-What happens when there are many small instances? You could end up drawing lots of sub-pixel triangles. This is a known limitation for Nanite. The root LOD is 128 triangles (or all the triangles in the mesh for small meshes). 
+What happens when there are many small instances? You could end up drawing lots of sub-pixel triangles into the same pixel. This is a known limitation for Nanite. 
 
-The current partial solution is to use [imposters](https://www.gamedeveloper.com/programming/imposters). It's a partial solution because it only offers a constant factor improvement. Instead of drawing the 128 triangles of the root LOD, you draw a single textured quad. Nanite's imposters consist of a texture atlas with 12x12 images (rendered from different directions) each of 12x12 pixels storing depth and triangle id. A total of 40KB per mesh, which is kept resident in GPU memory. This only makes sense for large meshes and/or meshes that are frequently used. 
+The current partial solution is to use [imposters](https://www.gamedeveloper.com/programming/imposters). It's a partial solution because it only offers a constant factor improvement. Instead of drawing the 128 triangles of the root LOD, you draw a single textured quad. Nanite's imposters consist of a texture atlas with 12x12 images (rendered from different directions) each of 12x12 pixels storing depth and triangle id. A 128 triangle cluster, where each triangle is just under pixel sized, could end up covering a 12x12 pixel square on screen. 
 
-A 128 triangle cluster, where each triangle is just under pixel sized, could easily cover a 10x10 pixel square on screen. If an imposter is used, it gets rendered into the target buffer directly, bypassing vertex processing and rasterization. The appropriate image is selected depending on viewing angle, and copied into the projected rectangle in screen space, scaling and skewing the image as required. 
-
-The output from this stage is a list of visible clusters to rasterize.
+Imposters use 40KB per mesh, which is kept resident in GPU memory. This only makes sense for large meshes and/or meshes that are frequently used. If an imposter is used, it gets rendered into the target buffer directly, bypassing vertex processing and rasterization. The appropriate image is selected depending on viewing angle, and copied into the projected rectangle in screen space, scaling and skewing the image as required. 
 
 ### Vertex Processing
 
@@ -99,12 +97,38 @@ Nanite's render target is a [visibility buffer](https://jcgt.org/published/0002/
 
 ### Post Processing
 
+Post Processing does a lot of heavy lifting. It needs to go from a simple visibility buffer to a final rendered scene with materials, lighting, shadows and anti-aliasing. 
+
+#### Material Depth Buffer
+
 The first step in Post Processing is to generate a material depth buffer. Each material is assigned a unique depth value. To generate the buffer use the visible cluster index from the visibility buffer to lookup the corresponding instance id and cluster id. Use the cluster id and triangle id from the visibility buffer to lookup a material slot id. Finally lookup the material id assigned to that material slot for this instance.
+
+#### G-Buffer
 
 The second step is to generate a [G-Buffer](https://en.wikipedia.org/wiki/Glossary_of_computer_graphics#g-buffer). Nanite draws a full screen quad for each material in the scene at that material's unique depth value. The depth test is set to "equals" so only pixels with the corresponding material id are selected. To recover the normal inputs to the material shader, Nanite adds a preamble that looks up the instance and cluster id using the visibility buffer, loads the instance transform, loads the triangle vertices, transforms them to screen space, derives barycentric coordinates for the pixel and then loads and interpolates any required vertex attributes.
 
 A scene can have many materials so there's potentially a huge amount of redundant work for pixels which don't match the current material id. By using the depth test to select pixels, Nanite benefits from any early out optimizations provided by the hardware. Many materials only cover a small portion of the screen. The full screen quad is actually drawn as a grid of tiles. Tiles that don't contain any pixels with that material are culled in the vertex shader using a per tile bit mask built with the material depth buffer.
 
-The rest of Post Processing is conventional deferred shading. In fact, its the same implementation as the Unreal 4 engine. This allows applications to use both Nanite and the previous Unreal 4 pipeline on a per instance basis, with the two pipelines merging at the G-Buffer. Applications can easily migrate from Unreal 4 to Unreal 5 and incrementally enable Nanite. It also has the effect of decoupling Nanite from the lighting system which doesn't know or care how the G-Buffer was produced. 
+#### Lighting
 
-## Shadows and Multi-view Rendering
+Lighting is implemented with conventional deferred shading. It's based on the same G-buffer format as the Unreal 4 engine. This allows applications to use both Nanite and the previous Unreal 4 pipeline on a per instance basis, with the two pipelines merging at the G-Buffer. Applications can easily migrate from Unreal 4 to Unreal 5 and incrementally enable Nanite for objects that will benefit from it. It also has the effect of decoupling Nanite from the lighting system which doesn't know or care how the G-Buffer was produced. 
+
+#### Temporal Anti-aliasing
+
+You may be wondering if there are "popping" artefacts due to the huge number of triangle clusters being rendered, with continual changes in LOD level as the camera moves through the scene. Nanite takes great care to ensure LOD errors are less than one pixel, which means the difference when switching between LOD levels is barely perceptible. On top of that, Unreal uses [temporal anti-aliasing](https://en.wikipedia.org/wiki/Temporal_anti-aliasing) to blend subpixel differences over time.
+
+#### Virtual Shadow Maps
+
+Nanite enables the use of incredibly detailed, complex geometry. That means that the lighting system needs to support high resolution shadow maps to capture all that detail to ensure accurate shadows. Unreal 5 supports virtual shadow [mipmaps](https://en.wikipedia.org/wiki/Mipmap) with up to 16k x 16k resolution. The shadow maps are virtualized and sparse. Each map is divided into 128 x 128 texel pages, so the highest level mipmap contains 128 x 128 pages. 
+
+Pages are allocated only where needed. Each frame, the G-Buffer is processed. The engine determines the lights affecting each pixel, projects the position into shadow map space, picks the mip level where 1 texel matches the size of 1 screen pixel and marks that page in that level as needed. Pages are cached so that the only regions of the shadow map that are updated each frame are those where objects are moving or where the change in camera position brings new areas into view. 
+
+Each light may need multiple shadow maps (1 for spot lights, 6 for point lights) and multiple mipmap levels rendered. Nanite is a deep pipeline with significant per render overhead. That overhead is tiny compared to the cost of rendering the primary view. However, it would soon add up if each shadow map level was rendered separately. Instead, the Nanite pipeline supports multi-view rendering. Nanite can render all shadow maps for every light to every required mipmap level at once. For extreme scenes, this gives a 100x speedup compared to rendering each shadow map level individually.
+
+When rendering shadow maps, Nanite performs an additional culling test. As well as testing bounding rectangles against the HZB, it also tests them against the shadow map needed pages mask. If an instance or cluster doesn't overlap a needed page, it can be culled.
+
+The combination of virtual shadow maps with Nanite's rendering pipeline means that shadow cost scales roughly with screen resolution rather than scene complexity. Shadow map pages are needed where 1 texel maps to 1 pixel in the primary view. That means the number of pages and texels is proportional to screen pixels. The Nanite pipeline tries to ensure that the number of triangles rasterized to the shadow map is proportional to the number of shadow texels.
+
+## Conclusion
+
+Nanite is hugely impressive technology. It's going to be fascinating to see how well Nanite works with Navisworks style scenes which have huge numbers of (by Nanite standards) very simple instances. 
