@@ -41,6 +41,8 @@ There are no limits on the size of meshes (apart from disk space to store them).
 
 Unreal has a rich collection of utilities for scene preparation, centered around the Unreal Editor. Models can be imported from a variety of sources. Like Navisworks, complex geometry is tessellated into triangle meshes. The meshes are then further subdivided into clusters of 128 triangles or less. 
 
+{% include candid-image.html src="/assets/images/nanite-2023/lod-build-step.png" alt="One step in LOD build process" attrib="SIGGRAPH 2021, [A Deep Dive into Nanite Virtualized Geometry](https://advances.realtimerendering.com/s2021/Karis_Nanite_SIGGRAPH_Advances_2021_final.pdf), slide 46" %}
+
 Clusters are the basis for Nanite's LOD generation algorithm. At each LOD level, clusters are arranged into groups of 8 to 32 clusters. Each group is decimated to half the number of triangles and then split into 4 to 16 new clusters. The boundary of each group is left unchanged so that there will be no cracks when rendering adjacent clusters at LOD level *L* and *L-1*. The process repeats at the next level up with the key difference that a different set of groups with different boundaries is used. This ensures that all boundaries will eventually be decimated. The resulting clusters are organized using a bounding volume hierarchy per mesh. 
 
 LOD generation doubles the total number of triangles stored, so it is important to be as space efficient as possible. Similarly to Navisworks, everything is serialized to a compressed on disk format designed so that geometry can be streamed in and decompressed on the fly. 
@@ -57,6 +59,8 @@ Like all GPU Driven pipelines, Unreal maintains the entire scene (from instance 
 
 As well as having a compressed disk format, Nanite has a separate compressed in-memory format. The in-memory format is used directly for rendering so needs to have near instant decode time. Vertex attributes are quantized and bit packed. The disk representation is transcoded into the in-memory format as it is read in. 
 
+{% include candid-image.html src="/assets/images/nanite-2023/geometry-pages.png" alt="Geometry Pages" attrib="SIGGRAPH 2021, [A Deep Dive into Nanite Virtualized Geometry](https://advances.realtimerendering.com/s2021/Karis_Nanite_SIGGRAPH_Advances_2021_final.pdf), slide 124" %}
+
 Geometry is managed within a GPU page buffer. Clusters are allocated to 128KB pages based on spatial locality and level in the LOD structure. The first page contains the top level(s) of the LOD structure and is always resident, so there is always something to render. The resident set is updated based on feedback from the Simplify stage.
 
 ### Cull
@@ -67,6 +71,8 @@ In the second pass, all the instances and clusters found to be occluded based on
 
 ### Simplify
 
+{% include candid-image.html src="/assets/images/nanite-2023/cluster-lods.png" alt="LOD clusters selected for different sizes of mesh" attrib="SIGGRAPH 2021, [A Deep Dive into Nanite Virtualized Geometry](https://advances.realtimerendering.com/s2021/Karis_Nanite_SIGGRAPH_Advances_2021_final.pdf), slide 27" %}
+
 The output from the preparation phase is a set of clusters at different LOD levels. At runtime Nanite needs to select which LOD level to use for each part of each mesh. Nanite uses an error function which calculates how many pixels of error would result if a cluster at a particular LOD level is used. The error function is setup so that the error for any parent cluster (lower LOD) is higher than any of its children. This property ensures that LOD selection can be determined locally and independently (and in parallel if desired) for each cluster. A cluster should be rendered if its parent's error is larger than a pixel and its own error is smaller than a pixel.
 
 For efficiency there is a combined implementation for the cluster Cull and Simplify stages. The cluster BVH is traversed and at each node the HZB is tested for visibility and the LOD error function evaluated to determine whether traversal needs to continue to a more detailed LOD. Identifiers for the selected LODs are also written into an output buffer which is used by the Load-Flatten stages to update the resident set for the next frame. 
@@ -74,6 +80,8 @@ For efficiency there is a combined implementation for the cluster Cull and Simpl
 Recursively traversing a tree structure using the highly parallel set of execution units provided by the GPU is an interesting problem. Nanite's solution is to implement its own job scheduling system. It manages a GPU buffer as a queue, seeded with the root cluster for each instance. Each execution unit repeatedly reads a node from the queue, performs an occlusion and LOD selection test and then either culls the node, adds the children back into the queue or adds the clusters to a list of visible clusters to rasterize.  
 
 What happens when there are many small instances? You could end up drawing lots of sub-pixel triangles into the same pixel. This is a known limitation for Nanite. 
+
+{% include candid-image.html src="/assets/images/nanite-2023/imposters.png" alt="Texture Atlas with 12x12 images of an imposter" attrib="SIGGRAPH 2021, [A Deep Dive into Nanite Virtualized Geometry](https://advances.realtimerendering.com/s2021/Karis_Nanite_SIGGRAPH_Advances_2021_final.pdf), slide 97" %}
 
 The current partial solution is to use [imposters](https://www.gamedeveloper.com/programming/imposters). It's a partial solution because it only offers a constant factor improvement. Instead of drawing the 128 triangles of the root LOD, you draw a single textured quad. Nanite's imposters consist of a texture atlas with 12x12 images (rendered from different directions) each of 12x12 pixels storing depth and triangle id. A 128 triangle cluster, where each triangle is just under pixel sized, could end up covering a 12x12 pixel square on screen. 
 
@@ -86,6 +94,8 @@ In contrast, Vertex Processing is as simple as it gets. There are no per vertex 
 ### Rasterize
 
 If everything is working as designed, there will be huge numbers of pixel sized triangles to rasterize. Tiny triangles are worst case for typical fixed function hardware rasterizers. Hardware rasterizers are designed to be parallel in pixels rather than triangles. They usually output in 2x2 pixel quads as that makes interpolation of vertex properties easier. There's a lot of overhead and waste if most triangles are tiny.
+
+{% include candid-image.html src="/assets/images/nanite-2023/small-triangle-rasterizer.png" alt="Rasterizing Small Triangles" attrib="SIGGRAPH 2021, [A Deep Dive into Nanite Virtualized Geometry](https://advances.realtimerendering.com/s2021/Karis_Nanite_SIGGRAPH_Advances_2021_final.pdf), slide 85" %}
 
 Nanite includes a dedicated programmable rasterizer for clusters whose triangles are less than 32 pixels long. All 128 triangles in a cluster are processed in parallel, one per execution unit (most modern GPUs will process many clusters at the same time). 
 
@@ -100,6 +110,8 @@ Nanite's render target is a [visibility buffer](https://jcgt.org/published/0002/
 Post Processing does a lot of heavy lifting. It needs to go from a simple visibility buffer to a final rendered scene with materials, lighting, shadows and anti-aliasing. 
 
 #### Material Depth Buffer
+
+{% include candid-image.html src="/assets/images/nanite-2023/material-depth.png" alt="Tiled Material Depth Buffer" attrib="SIGGRAPH 2021, [A Deep Dive into Nanite Virtualized Geometry](https://advances.realtimerendering.com/s2021/Karis_Nanite_SIGGRAPH_Advances_2021_final.pdf), slide 104" %}
 
 The first step in Post Processing is to generate a material depth buffer. Each material is assigned a unique depth value. To generate the buffer use the visible cluster index from the visibility buffer to lookup the corresponding instance id and cluster id. Use the cluster id and triangle id from the visibility buffer to lookup a material slot id. Finally lookup the material id assigned to that material slot for this instance.
 
@@ -119,7 +131,9 @@ You may be wondering if there are "popping" artefacts due to the huge number of 
 
 #### Virtual Shadow Maps
 
-Nanite enables the use of incredibly detailed, complex geometry. That means that the lighting system needs to support high resolution shadow maps to capture all that detail to ensure accurate shadows. Unreal 5 supports virtual shadow [mipmaps](https://en.wikipedia.org/wiki/Mipmap) with up to 16k x 16k resolution. The shadow maps are virtualized and sparse. Each map is divided into 128 x 128 texel pages, so the highest level mipmap contains 128 x 128 pages. 
+{% include candid-image.html src="/assets/images/nanite-2023/shadows.png" alt="Tiled Material Depth Buffer" attrib="SIGGRAPH 2021, [A Deep Dive into Nanite Virtualized Geometry](https://advances.realtimerendering.com/s2021/Karis_Nanite_SIGGRAPH_Advances_2021_final.pdf), slide 111" %}
+
+Nanite enables the use of incredibly detailed, complex geometry. That means that the lighting system needs to support high resolution shadow maps to capture enough detail for accurate shadows. Unreal 5 supports virtual shadow [mipmaps](https://en.wikipedia.org/wiki/Mipmap) with up to 16k x 16k resolution. The shadow maps are virtualized and sparse. Each map is divided into pages of 128 x 128 texels, with the highest level mipmap containing 128 x 128 pages. 
 
 Pages are allocated only where needed. Each frame, the G-Buffer is processed. The engine determines the lights affecting each pixel, projects the position into shadow map space, picks the mip level where 1 texel matches the size of 1 screen pixel and marks that page in that level as needed. Pages are cached so that the only regions of the shadow map that are updated each frame are those where objects are moving or where the change in camera position brings new areas into view. 
 
