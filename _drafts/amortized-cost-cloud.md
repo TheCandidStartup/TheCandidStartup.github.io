@@ -29,11 +29,31 @@ The benefits of garbage collection are programmer convenience, greater safety (n
 
 For most garbage collection algorithms, the costs are proportional to the amount of memory in use, not the amount of garbage. The more memory you have available, the longer you can leave it before triggering garbage collection and the less it costs for each memory block reclaimed. In fact, if you have enough memory available, you can [reduce the costs to an arbitrarily low level](https://www.cs.princeton.edu/~appel/papers/45.pdf), less than a single machine instruction per block. 
 
+In the real world, garbage collectors are tuned to minimize the amount of memory needed and to spread the cost with more frequent, lower impact garbage collection phases.
+
 ## Tail Latency
 
 You may be wondering what relevance all this has for [cloud architecture]({% link _topics/cloud-architecture.md %}). Amortized cost algorithms work because they amortize the uneven costs of individual operations across an overall computation. If you're adding 1000 items to a vector, it doesn't matter that adding the 513th item costs much more than adding the 514th, as long as the overall cost is acceptable. Similarly, it doesn't matter if your computation is occasionally paused while garbage collection happens, as long as the overall cost of computation plus garbage collection is acceptable. 
 
 In the cloud, the primary unit of computation is a [request to a microservice]({% link _posts/2022-11-28-modern-saas-architecture.md %}). The main metric we use to understand the performance and health of a service is request latency. How long does it take to get a response to our request (if we get one at all)? 
+
+Typically, the amount of work done by a request is too small to amortize costs across. An in memory database using a vector like container will add an element per request. An app server using a garbage collected language stack will process many requests between each garbage collection cycle. The end result is that a small number of requests will have a much higher latency than the others. They're the requests that triggered a reallocation in the database. They're the requests waiting for the garbage collector to complete before they can be processed by the app server.
+
+{% include candid-image.html src="/assets/images/request-latency-distribution.svg" alt="Request latency distribution" %}
+
+The distribution of response times for a typical service will look something like this. It starts off looking like a [normal distribution](https://en.wikipedia.org/wiki/Normal_distribution) but is skewed to the right with a [long tail](https://en.wikipedia.org/wiki/Long_tail). The [measured distribution](https://newrelic.com/blog/best-practices/expected-distributions-website-response-times) for a real service will be noisier and may have multiple peaks if there are multiple types of request with different behaviors.
+
+When monitoring a service, teams will typically use [percentile](https://en.wikipedia.org/wiki/Percentile) metrics to help them understand what is happening in the tail. For example, a P99 metric is the response time which 99% of requests fall below. Only 1 in a 100 requests have a higher response time. Why do teams care about the odd high latency request?
+
+It turns out that there are lots of reasons why tail latency is important. First, tail latency is a [canary in the coal mine](https://en.wiktionary.org/wiki/canary_in_a_coal_mine). An increase in tail latency can be an early warning sign that the system is approaching capacity. A small increase in load may tip the system over the edge.
+
+Second, systems involve more than a single request to a single microservice. Clients may make multiple requests in parallel to one or more services. The time to complete the overall operation is that of the slowest request. If you make 100 requests in parallel, the [majority of operations will be limited by the P99 response time](http://highscalability.com/blog/2012/3/12/google-taming-the-long-latency-tail-when-more-machines-equal.html). This isn't just a theoretical problem. If you look at [load times for typical web pages](https://bravenewgeek.com/everything-you-know-about-latency-is-wrong/), they are almost all constrained by the P99 response time. The [more you scale systems up](https://cacm.acm.org/magazines/2013/2/160173-the-tail-at-scale/abstract) and rely on more parallelism, the worse this effect gets. You need to care about P99.9 or even beyond.
+
+In a microservice architecture, it's common for one microservice to call another, leading to chains of calls in series. The overall response time is the sum of all the calls. Again, tail latency has a [disproportionate impact](https://brooker.co.za/blog/2021/04/19/latency.html) on the behavior of the entire system. In addition, the longer an intermediate service is waiting for a response, the more resources are tied up. If 1% of requests are severely delayed, it can [double the resources needed](https://robertovitillo.com/why-you-should-measure-tail-latencies/) to manage those requests.
+
+Finally, there's the impact on the human using the client. Humans are [very sensitive to long latency](https://www.section.io/blog/preventing-long-tail-latency/) (anything over 100ms). The ninety-nine times when everything works as expected aren't memorable, the one time when there's a pause stands out. 
+
+Amortized cost algorithms increase tail latency. Mitigating this effect requires more complex implementations that increase overall latency, or accepting lower utilization of CPU and memory, or both. Increasingly, those operating at high scale are looking at [replacing amortized cost algorithms with fixed cost alternatives](https://aws.amazon.com/blogs/opensource/sustainability-with-rust/).
 
 ## Databases
 
