@@ -1,6 +1,6 @@
 ---
 title: Amortized Cost and the Cloud
-tags: cloud-architecture
+tags: cloud-architecture aws
 ---
 
 I first came across the concept of [amortized cost](https://en.wikipedia.org/wiki/Amortized_analysis) when I learnt about the [vector](https://cplusplus.com/reference/vector/vector/) class in [C++](https://en.wikipedia.org/wiki/C%2B%2B). At that point I was largely a self-taught programmer without much in the way of theoretical foundation. I was used to using [linked lists](https://en.wikipedia.org/wiki/Linked_list) and understood that the cost of adding a new element was constant, regardless of the size of the list. Vectors seemed like witchcraft to me. 
