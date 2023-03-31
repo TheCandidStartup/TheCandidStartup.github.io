@@ -41,7 +41,7 @@ Looking around, the cheapest deal I could find was with Vodafone. "Full Fibre" b
 
 Looks like I had no choice but to accept a significantly better service. Now I had to decide between FTTC and FTTP. My first thought was FTTC. Most of the time, ADSL worked well for us. The occasional bit of buffering when streaming. Having to wait on the rare occasions we did a large download or upload. Four times faster download and fifteen times faster upload would be more than enough. Even better, as both Vodafone and my old supplier use Openreach, no need for a physical installation.
 
-It turns out that we're in a "full fibre" area. A few months ago, I noticed the Openreach engineers installing new kit at the top of the telegraph poles on our street including the [Connectorised Block Terminals](https://www.increasebroadbandspeed.co.uk/fttp-full-fibre-broadband-installation) that the final fibre connection to your home is run from. 
+It turns out that we're in a "full fibre" area. A few months ago, I noticed the Openreach engineers installing new kit at the top of the telegraph poles on our street, including the [Connectorised Block Terminals](https://www.increasebroadbandspeed.co.uk/fttp-full-fibre-broadband-installation) that the final fibre connection to your home is run from. 
 
 {% include candid-image.html src="/assets/images/broadband-2023/telegraph-pole-cbt.jpg" alt="Telegraph Pole with CBT ready for Full Fibre Broadband" %}
 

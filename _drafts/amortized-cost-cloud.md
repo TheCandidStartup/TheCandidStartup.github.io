@@ -37,7 +37,7 @@ You may be wondering what relevance all this has for [cloud architecture]({% lin
 
 In the cloud, the primary unit of computation is a [request to a microservice]({% link _posts/2022-11-28-modern-saas-architecture.md %}). The main metric we use to understand the performance and health of a service is request latency. How long does it take to get a response to our request (if we get one at all)? 
 
-Typically, the amount of work done by a request is too small to amortize costs across. An in memory database using a vector like container will add an element per request. An app server using a garbage collected language stack will process many requests between each garbage collection cycle. The end result is that a small number of requests will have a much higher latency than the others. They're the requests that triggered a reallocation in the database. They're the requests waiting for the garbage collector to complete before they can be processed by the app server.
+Typically, the amount of work done by a request is too small to amortize costs across. An in-memory database using a vector like container will add an element per request. An app server using a garbage collected language stack will process many requests between each garbage collection cycle. The end result is that a small number of requests will have a much higher latency than the others. They're the requests that triggered a reallocation in the database. They're the requests waiting for the garbage collector to complete before they can be processed by the app server.
 
 {% include candid-image.html src="/assets/images/request-latency-distribution.svg" alt="Request latency distribution" %}
 
@@ -61,7 +61,7 @@ Let's have a closer look at a typical microservice. Where does tail latency real
 
 {% include candid-image.html src="/assets/images/micro-service-architecture.svg" alt="Microservice Architecture" %}
 
-Tail latency matters for anything on the synchronous client request handling path. Requests are routed to an app sever via a load balancer, the app server might look something up in a cache, query a database, perhaps add a job to a queue to be processed later. Your cloud provider will have obvious off the shelf choices for load balancers, queues and caches. Your biggest impact will be the choices you make around app servers and databases.
+Tail latency matters most for anything on the synchronous client request handling path. Requests are routed to an app sever via a load balancer, the app server might look something up in a cache, query a database, perhaps add a job to a queue to be processed later. Your cloud provider will have obvious off the shelf choices for load balancers, queues and caches. Your biggest impact will be the choices you make around app servers and databases.
 
 The most important thing is to do as little as possible in the app servers. Offload as much work as possible to jobs that can run asynchronously. Ideally all interactions with other services would happen here. [Domain Driven Design](https://martinfowler.com/bliki/DomainDrivenDesign.html) and the idea of [Bounded Contexts](https://martinfowler.com/bliki/BoundedContext.html) provide useful tools that help structure microservices to work in this way. Removing interactions with other services from the synchronous path reduces the magnifying effect of tail latency. 
 

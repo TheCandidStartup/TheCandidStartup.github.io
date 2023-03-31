@@ -45,7 +45,7 @@ Unreal has a rich collection of utilities for scene preparation, centered around
 
 Clusters are the basis for Nanite's LOD generation algorithm. At each LOD level, clusters are arranged into groups of 8 to 32 clusters. Each group is decimated to half the number of triangles and then split into 4 to 16 new clusters. The boundary of each group is left unchanged so that there will be no cracks when rendering adjacent clusters at LOD level *L* and *L-1*. The process repeats at the next level up with the key difference that a different set of groups with different boundaries is used. This ensures that all boundaries will eventually be decimated. The resulting clusters are organized using a bounding volume hierarchy per mesh. 
 
-LOD generation doubles the total number of triangles stored, so it is important to be as space efficient as possible. Similarly to Navisworks, everything is serialized to a compressed on disk format designed so that geometry can be streamed in and decompressed on the fly. 
+LOD generation doubles the total number of triangles stored, so it is important to be as space efficient as possible. Similar to Navisworks, everything is serialized to a compressed on disk format designed so that geometry can be streamed in and decompressed on the fly. 
 
 ### Load
 
