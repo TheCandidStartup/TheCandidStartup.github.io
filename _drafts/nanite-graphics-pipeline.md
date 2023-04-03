@@ -61,7 +61,7 @@ As well as having a compressed disk format, Nanite has a separate compressed in-
 
 {% include candid-image.html src="/assets/images/nanite-2023/geometry-pages.png" alt="Geometry Pages" attrib="SIGGRAPH 2021, [A Deep Dive into Nanite Virtualized Geometry](https://advances.realtimerendering.com/s2021/Karis_Nanite_SIGGRAPH_Advances_2021_final.pdf), slide 124" %}
 
-Geometry is managed within a GPU page buffer. Clusters are allocated to 128KB pages based on spatial locality and level in the LOD structure. The first page contains the top level(s) of the LOD structure and is always resident, so there is always something to render. The resident set is updated based on feedback from the Simplify stage.
+Geometry is managed within a GPU page buffer. Clusters are allocated to 128KB pages based on spatial locality and level in the LOD structure. The first page contains the top level(s) of the LOD structure and is always resident, so there is always something to render. The [resident set](https://en.wikipedia.org/wiki/Resident_set_size) is updated based on feedback from the Simplify stage.
 
 ### Cull
 
@@ -119,7 +119,9 @@ The first step in Post Processing is to generate a material depth buffer. Each m
 
 The second step is to generate a [G-Buffer](https://en.wikipedia.org/wiki/Glossary_of_computer_graphics#g-buffer). Nanite draws a full screen quad for each material in the scene at that material's unique depth value. The depth test is set to "equals" so only pixels with the corresponding material id are selected. To recover the normal inputs to the material shader, Nanite adds a preamble that looks up the instance and cluster id using the visibility buffer, loads the instance transform, loads the triangle vertices, transforms them to screen space, derives barycentric coordinates for the pixel and then loads and interpolates any required vertex attributes.
 
-A scene can have many materials so there's potentially a huge amount of redundant work for pixels which don't match the current material id. By using the depth test to select pixels, Nanite benefits from any early out optimizations provided by the hardware. Many materials only cover a small portion of the screen. The full screen quad is actually drawn as a grid of tiles. Tiles that don't contain any pixels with that material are culled in the vertex shader using a per tile bit mask built with the material depth buffer.
+A scene can have many materials so there's potentially a huge amount of redundant work for pixels which don't match the current material id. By using the depth test to select pixels, Nanite benefits from any early out optimizations provided by the hardware. 
+
+Many materials only cover a small portion of the screen. The full screen quad is actually drawn as a grid of tiles. Tiles that don't contain any pixels with that material are culled in the vertex shader using a per tile bit mask built with the material depth buffer.
 
 #### Lighting
 
