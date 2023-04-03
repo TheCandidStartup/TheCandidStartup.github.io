@@ -5,7 +5,9 @@ tags: cloud-architecture aws
 
 I first came across the concept of [amortized cost](https://en.wikipedia.org/wiki/Amortized_analysis) when I learnt about the [vector](https://cplusplus.com/reference/vector/vector/) class in [C++](https://en.wikipedia.org/wiki/C%2B%2B). At that point I was largely a self-taught programmer without much in the way of theoretical foundation. I was used to using [linked lists](https://en.wikipedia.org/wiki/Linked_list) and understood that the cost of adding a new element was constant, regardless of the size of the list. Vectors seemed like witchcraft to me. 
 
-A vector is basically an array that dynamically changes size as you add elements to it. How can that possibly be efficient? To increase the size of an array, you have to allocate a new block of memory and copy all the elements from the old block. If you do that every time you add an element, the cost will be ridiculous. 
+A vector is basically an array that dynamically changes size as you add elements to it. How can that possibly be efficient? To increase the size of an array, you have to allocate a new block of memory and copy all the elements from the old block. If you do that every time you add an element, the cost will be ridiculous[^a].
+
+[^a]: Where ridiculous is defined as *O(n<sup>2</sup>)*
 
 The trick, of course, is that you don't resize the array every time you add an element. Instead you over allocate the size of the array and whenever you do fill it, you allocate a new array double the size. 
 

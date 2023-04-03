@@ -9,7 +9,7 @@ As I went through the process of selecting a new provider and deciding on a pack
 
 ## Background
 
-Before I go further, some basic background. The broadband market in the UK is split into network infrastructure and internet service providers. The dominant player in network infrastructure is Openreach, with pretty much 100% coverage across the UK. [Openreach](https://www.openreach.com/) is the latest name for what was previously British Telecom and before that the Post Office. The former state run monopoly telecommunications provider. They're the people that installed and maintain your old copper phone line. 
+Before I go further, some basic background. The broadband market in the UK is split into network infrastructure and internet service providers. The dominant player in network infrastructure is Openreach, with pretty much 100% coverage across the UK. [Openreach](https://www.openreach.com/) is the latest name for what was previously British Telecom and before that the Post Office. They're the former state run monopoly telecommunications provider. They're the people that installed and maintain your old copper phone line. 
 
 The second network infrastructure player is Virgin Media with around 60% coverage. They're the only significant survivor of the introduction of cable tv to the UK market. In addition, there are a few smaller companies that serve specific local areas.
 
@@ -17,7 +17,7 @@ The vast majority of ISPs in the UK use Openreach as their network infrastructur
 
 Switching between ISPs that use Openreach is quick and easy. You sign up with the new ISP and they handle the coordination of the move with the old ISP. If you can reuse the existing physical network connection the whole thing can be done remotely. You just need to swap the old ISP's router with a new one that's couriered out to you. 
 
-If you're changing network infrastructure provider, the process is more complicated. You need to coordinate the process, getting the new package installed and then terminating the subscription to the old one. Leave it too long and you'll be paying for both for days or weeks. Try to make it all happen on the day and you run the risk of being left with no broadband if there's an installation delay.
+If you're changing network infrastructure provider, the process is more complicated. You need to do the coordination, getting the new package installed and then terminating the subscription to the old one. Leave it too long and you'll be paying for both for days or weeks. Try to make it all happen on the day and you run the risk of being left with no broadband if there's an installation delay.
 
 ## Package Types
 
@@ -27,7 +27,7 @@ There are three types of consumer broadband package available in the UK.
 |-|-|-|-|
 | ADSL[^1] | 10Mbps | 1Mbps | Basic, Standard | Copper phone line to the local exchange |
 | FTTC[^2] | 38Mbps | 15Mbps | Fibre, Superfast | Copper phone line to cabinet in the street then fibre optic to local exchange |
-| FTTP[^3] | 300Mbps | 50Mbps | Full Fibre, Ultrafast | Fibre optic cable from the house to local exchange |
+| FTTP[^3] | 300Mbps | 50Mbps | Full Fibre, Ultrafast | Fibre optic cable from the house direct to local exchange |
 
 ADSL and FTTC both use the existing telephone cables (typically overhead lines via telegraph poles) and don't need any physical on site installation. FTTP uses a fibre optic cable to the premises and will require on site installation if switching from ADSL or FTTC. 
 
@@ -83,7 +83,7 @@ To summarize
 
 We had some decisions to make. Where did we want the ONT fitted? The router will be in the home office, so that's the obvious place to put it. Fortunately, the home office is at the front of the house just under where the current copper cable connects to the house. 
 
-Simple. Run the cable down the outside wall for a meter or so, slap on the external junction box nicely out of the way, drill through coming out in the corner of the room under the fitted desk, put the ONT there where no one needs to look at it. 
+Simple. Run the cable down the outside wall for a meter or so. Slap on the external junction box nicely out of the way. Drill through, coming out in the corner of the room under the fitted desk. Put the ONT there where no one needs to look at it. 
 
 During the month that we waited I received two emails from Vodafone, two texts from Vodafone and four texts from Openreach to remind me to be in between 8AM and 1PM on the installation day. 
 
@@ -125,7 +125,7 @@ No? It has to be at ground level. Which is why I have a new fibre optic cable ru
 
 "It's a good job you decided to keep the copper cable", he said. He'd just come down the telegraph pole, after connecting the new fibre to the CBT. Apparently, I was the first person to use the CBT on that pole. "It's all done by contractors. Never works first time. Ninety percent of the time Openreach have to come out and fix it".
 
-The last step was to fit the external junction box and connect the two cables he'd just fitted. Which seems like a complete waste of effort to me. Why not just use one cable and run it straight to the ONT? 
+The last step was to fit the external junction box and connect the two cables he'd just fitted. Which seems like a complete waste of effort to me. Why not use one cable and run it straight to the ONT? 
 
 We trooped back upstairs to see if it was working. I don't know who was more surprised to see that all the lights on the ONT were green. "That's definitely working", said the engineer. And left as quickly as he could. All in, it had taken him about an hour.
 
