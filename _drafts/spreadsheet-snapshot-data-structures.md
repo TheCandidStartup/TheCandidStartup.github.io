@@ -32,6 +32,8 @@ What happens for cells with large values, like files or images? There will need 
 
 A segment is an immutable set of chunks that represent a sequence of operations in the event log. A snapshot could consist of a single segment that represents the effects of all operations, or could be be made of multiple segments. 
 
+In the diagrams below, the event log is shown in yellow with each batch of transactions numbered in order. Segments are shown in purple, with each segment labeled with the batch number that caused it to be created.
+
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/single-segment.svg" alt="Creating a complete new segment after each batch of operations" %}
 
 The simplest approach is to use a single segment. Every *k* operations we create a new segment by reading in the old one chunk by chunk, applying all the accumulated operations and writing out a new set of chunks that represent the *n* total operations to date. There's a single segment, so loading an initial view is *O(1)*, which is good. However, keeping the snapshots up to date is *O(n<sup>2</sup>)*, which is bad.
@@ -40,14 +42,36 @@ The simplest approach is to use a single segment. Every *k* operations we create
 
 The other extreme is to only include the latest *k* operations in each new segment. Keeping the snapshots up to date is now *O(n)*, which is good. However, loading the initial view needs a chunk from each segment and is *O(n/k)*, which is bad.
 
-If you've been keeping up to date with the blog, then you may think that this sounds similar to the C++ vector class in my [amortized cost]({% link _drafts/amortized-cost-cloud.md %}) post. And you'd be right. There's a middle ground that balances lookup and update costs. The trick is to maintain a set of segments at different sizes, where each size is a constant factor larger than the previous. There are lots of variations depending on how you want to trade off space used vs cost. The simplest is where you have at most one segment at each size and where each size is double the previous.
+If you've been keeping up to date with the blog, then you may think that this sounds similar to the C++ vector class discussed in my [amortized cost]({% link _drafts/amortized-cost-cloud.md %}) post. And you'd be right. There's a middle ground that balances lookup and update costs. The trick is to maintain a set of segments at different sizes, where each size is a constant factor larger than the previous. There are lots of variations depending on how you want to trade off space used vs cost. The simplest is where you have at most one segment at each size and where each size is double the previous.
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/lsm-segments.svg" alt="LSM-tree style doubling segment sizes" %}
 
 Every *k* operations you write out a new segment of size *k*. If there's an existing segment of the same size, you merge the two together into a segment of size *2k*. Repeat until you have at most one segment of each size. Keeping the snapshots up to date is *O(nlogn)*, which is good enough. Loading an initial view is *O(log(n/k))*, which is also good enough. This is the same cost model you see for most global sorted order data structures and databases.
 
-Of course, there's [nothing new under the sun](https://www.dictionary.com/browse/nothing-new-under-the-sun). This is the same principle used by [log structured merge trees](http://www.benstopford.com/2015/02/14/log-structured-merge-trees/), first made popular by [Google Big Table](http://static.googleusercontent.com/media/research.google.com/en//archive/bigtable-osdi06.pdf), and since used by many more [NoSQL](https://en.wikipedia.org/wiki/NoSQL) databases.
+Of course, there's [nothing new under the sun](https://www.dictionary.com/browse/nothing-new-under-the-sun). This is the same principle used by [log structured merge (LSM) trees](http://www.benstopford.com/2015/02/14/log-structured-merge-trees/), first made popular by [Google Big Table](http://static.googleusercontent.com/media/research.google.com/en//archive/bigtable-osdi06.pdf), and since used by many more [NoSQL](https://en.wikipedia.org/wiki/NoSQL) databases.
 
 ## Tiles
 
-## Trees
+So far I've been deliberately vague about how the cells in a spreadsheet are allocated to chunks. A spreadsheet is a 2D grid, so each chunk will correspond to a tile on the grid. 
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/full-width-tiles.svg" alt="Full width tiles with variable number of rows" %}
+
+The simplest approach would be to add rows to a full width tile, up to some limit. This is equivalent to a row in an LSM database, with row index as the key. Unfortunately, that won't work for spreadsheets with millions of columns. A single row would be too large to fit in a chunk. Even at more reasonable sizes, only a small number of rows would fit. You would need to load many chunks for the initial view with most of the data loaded being out of sight.
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/square-tiles.svg" alt="Fixed size square tiles" %}
+
+Another simple approach is to use fixed size squares. A 128 x 128 tile would need 600KB at 37 bytes per cell. In most cases the cells needed for an initial view would fit within a single tile. Fixed size tiles make it easy to identify the tile to load for any cell. No need for an explicit index with an appropriate naming convention. The problem with fixed size tiles is that chunk size would be highly variable. If all the cells were the maximum 4KB size, a 128 x 128 tile would need 64MB. At the other extreme, if the spreadsheet was sparsely occupied, each tile could contain just a single populated cell using a handful of bytes.
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/quad-tree-tiles.svg" alt="Quadtree based tiles" %}
+
+[Quadtrees](https://en.wikipedia.org/wiki/Quadtree) are a well known data structure that is more adaptive than a fixed tiling while still retaining some of the simplicity. The problem with quadtrees is that they're not simple enough to justify their lack of flexibility. You now need some kind of index to identify the correct tile for a cell. The cost for an index is pretty much the same whether you're using a quadtree or a more flexible data structure.
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/fixed-width-stripe-tiles.svg" alt="Fixed width stripes" %}
+
+What if we used fixed widths but allowed the height of each tile to vary? You end up with tiles arranged in vertical stripes, where each stripe is equivalent to an LSM based table. A 128 cell wide stripe could use anywhere from 512KB per row to a handful of bytes, and cover anything from one to millions of rows, making it easy to hit a target chunk size between 512KB and 1MB. 
+
+This is getting closer and would work even for very sparse spreadsheets, as long as you had plenty of rows. A sparse million column spreadsheet with a single row would still have poor utilization, but how likely is that? 
+
+More likely than you might think. We will create a segment every *k* operations. If the user is editing a million row by million column spreadsheet the pattern formed by the last *k* edited cells could end up looking pretty sparse. I would feel more comfortable with an approach that ensures that number of chunks is always proportional to number of populated cells in the segment. 
+
+## Index
