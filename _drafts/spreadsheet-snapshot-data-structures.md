@@ -26,8 +26,6 @@ How much spreadsheet would fit in a chunk? Our test spreadsheet used about 37 by
 
 What happens for cells with large values, like files or images? There will need to be an upper limit on the size of value that we can store directly. Anything bigger is stored as a separate S3 object. The limit should be large enough that we can embed preview text or images in the main chunk that can be displayed in the main grid view. That way the complete large value will only need to be downloaded on demand if the user looks at the cell in detail. If we go with a limit of 4KB, that gives enough room for a 32x32 thumbnail image or lots of text, while minimizing the number of tiny S3 objects we need to deal with.
 
-
-
 ## Segments
 
 A segment is an immutable set of chunks that represent a sequence of operations in the event log. A snapshot could consist of a single segment that represents the effects of all operations, or could be be made of multiple segments. 
@@ -60,7 +58,7 @@ The simplest approach would be to add rows to a full width tile, up to some limi
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/square-tiles.svg" alt="Fixed size square tiles" %}
 
-Another simple approach is to use fixed size squares. A 128 x 128 tile would need 600KB at 37 bytes per cell. In most cases the cells needed for an initial view would fit within a single tile. Fixed size tiles make it easy to identify the tile to load for any cell. No need for an explicit index with an appropriate naming convention. The problem with fixed size tiles is that chunk size would be highly variable. If all the cells were the maximum 4KB size, a 128 x 128 tile would need 64MB. At the other extreme, if the spreadsheet was sparsely occupied, each tile could contain just a single populated cell using a handful of bytes.
+Another simple approach is to use fixed size squares. A 128 x 128 tile would need 600KB at 37 bytes per cell. In most cases the cells needed for an initial view would fit within a single tile. Fixed size tiles make it easy to identify the tile to load for any cell. No need for an explicit index if you have an appropriate tile naming convention. The problem with fixed size tiles is that chunk size would be highly variable. If all the cells were the maximum 4KB size, a 128 x 128 tile would need 64MB. At the other extreme, if the spreadsheet was sparsely occupied, each tile could contain just a single populated cell using a handful of bytes.
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/quad-tree-tiles.svg" alt="Quadtree based tiles" %}
 
