@@ -44,7 +44,7 @@ If you've been keeping up to date with the blog, then you may think that this so
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/lsm-segments.svg" alt="LSM-tree style doubling segment sizes" %}
 
-Every *k* operations you write out a new segment of size *k*. If there's an existing segment of the same size, you merge the two together into a segment of size *2k*. Repeat until you have at most one segment of each size. Keeping the snapshots up to date is *O(nlogn)*, which is good enough. Loading an initial view is *O(log(n/k))*, which is also good enough. This is the same cost model you see for most global sorted order data structures and databases.
+Every *k* operations you write out a new segment of size *k*. If there's an existing segment of the same size, you merge the two together into a segment of size *2k*. Repeat until you have at most one segment of each size. Keeping the snapshots up to date is *O(nlogn)*, which is good enough. Loading an initial view requires loading chunks from *O(log(n/k))* segments, which is also good enough. This is the same cost model you see for most global sorted order data structures and databases.
 
 Of course, there's [nothing new under the sun](https://www.dictionary.com/browse/nothing-new-under-the-sun). This is the same principle used by [log structured merge (LSM) trees](http://www.benstopford.com/2015/02/14/log-structured-merge-trees/), first made popular by [Google Big Table](http://static.googleusercontent.com/media/research.google.com/en//archive/bigtable-osdi06.pdf), and since used by many more [NoSQL](https://en.wikipedia.org/wiki/NoSQL) databases.
 
@@ -68,8 +68,34 @@ Another simple approach is to use fixed size squares. A 128 x 128 tile would nee
 
 What if we used fixed widths but allowed the height of each tile to vary? You end up with tiles arranged in vertical stripes, where each stripe is equivalent to an LSM based table. A 128 cell wide stripe could use anywhere from 512KB per row to a handful of bytes, and cover anything from one to millions of rows, making it easy to hit a target chunk size between 512KB and 1MB. 
 
-This is getting closer and would work even for very sparse spreadsheets, as long as you had plenty of rows. A sparse million column spreadsheet with a single row would still have poor utilization, but how likely is that? 
+Breaking the problem down into a set of LSM tables is attractive. You can then reuse a lot of accumulated knowledge from the implementation of LSM databases. Dividing first by columns works well with the most common uses for spreadsheets where you have a fixed set of columns storing entity properties and a row per entity. In future you could imagine using knowledge about column types to pick split points more intelligently.
+
+This is looking good and would work even for very sparse spreadsheets, as long as you had plenty of rows. A sparse million column spreadsheet with a single row would still have poor utilization, but how likely is that? 
 
 More likely than you might think. We will create a segment every *k* operations. If the user is editing a million row by million column spreadsheet the pattern formed by the last *k* edited cells could end up looking pretty sparse. I would feel more comfortable with an approach that ensures that number of chunks is always proportional to number of populated cells in the segment. 
 
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/variable-width-stripe-tiles.svg" alt="Variable width stripes" %}
+
+Let's give ourselves some more flexibility. We'll still divide the grid into stripes, use fixed widths where possible, but allow wider stripes where data is sparse. The downside is that we lose the ability to treat each snapshot as a set of LSM tables. Each segment may have different width stripes, so they no longer align 1:1 when merging segments. However, *spoiler alert*, we'll see next time that you don't always get 1:1 alignment with fixed width stripes either.
+
 ## Index
+
+I've talked myself into using variable width and variable height tiles. That means we're going to need some kind of index to identify the correct tiles to load for any particular view. As we divide a segment first into stripes, then into tiles, we have a two level index. First, to identify the stripe, then to identify the tile within the stripe. 
+
+I'm going to use a naming convention for chunks which uses a consistent format including a constant prefix, snapshot id, segment id, start column index and start row index. The segment index just needs to determine the start column index and start row index of the containing tile (if any) for a given cell.
+
+We need variable size tiles to allow for sparse data and variable size values. However, regular data is common and we want to be able to take advantage of it when possible. I'm going to setup the index so that it can efficiently handle runs of tiles with the same width or height.
+
+The simplest index is an array of pairs of integers. The first integer is the start index of a tile. The second integer is how many tiles of the same size there are. A value of 0 means there's a gap in the grid containing unused cells. The pairs are sorted in ascending index order. To query, use [binary chop](https://en.wikipedia.org/wiki/Binary_search_algorithm) to find the entry that covers the range you're interested in. 
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/segment-index.svg" alt="Segment Index" %}
+
+Here's what the index would look like for a simple example. The column index entries are shown in orange and the row index entries in yellow. Each index entry in the diagram is positioned to show which stripes and tiles they correspond to. 
+
+The column index has two entries. The first entry specifies two stripes starting at index 0. The next entry starts at 256 so we know that each tile must be 128 wide to cover a width of 256 between them.
+
+Each stripe has its own index. The first index tells us that we have 3 tiles starting at row 0, row 112 and row 384. The second that we have two tiles starting at row 0 and row 176. Both stripes end at row 512. 
+
+What's the cost of using an index like this? Binary chop over a sorted array is *O(logn)*. However, we have *O(logn)* segments to query which gives us an overall cost of *O(log<sup>2</sup>n)*. This is the [standard cost model](https://ee.usc.edu/~redekopp/cs104/slides/L22_MergeTrees.pdf) for LSM trees. LSM databases typically use [bloom filters](https://en.wikipedia.org/wiki/Bloom_filter) to get the cost closer to *O(logn)* for most queries. 
+
+A bloom filter is a large bit array combined with *k* hash functions. Every key within the segment is added to the bloom filter. The *k* hash functions are evaluated and the corresponding bits in the array set to 1. At query time, the same *k* hash functions are applied to the query key and the corresponding bits checked. If any of them are zero, we know that the segment can't contain the key. If all of the bits are ones, the segment *may* contain the key and needs to be loaded. The probability of there being a false positive (you load the segment and find it doesn't contain the key) depends on the number of bits in the bloom filter and the number of hash functions, *k*. There are formulas that determine the optimum values to use for a desired false positive rate. For example, to achieve a false positive rate of 0.01 you need 10 bits per key in the segment and 7 hash functions. 
