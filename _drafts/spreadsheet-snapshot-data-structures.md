@@ -64,6 +64,8 @@ Another simple approach is to use fixed size squares. A 128 x 128 tile would nee
 
 [Quadtrees](https://en.wikipedia.org/wiki/Quadtree) are a well known data structure that is more adaptive than a fixed tiling while still retaining some of the simplicity. The problem with quadtrees is that they're not simple enough to justify their lack of flexibility. You now need some kind of index to identify the correct tile for a cell. The cost for an index is pretty much the same whether you're using a quadtree or a more flexible data structure.
 
+## Stripes
+
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/fixed-width-stripe-tiles.svg" alt="Fixed width stripes" %}
 
 What if we used fixed widths but allowed the height of each tile to vary? You end up with tiles arranged in vertical stripes, where each stripe is equivalent to an LSM based table. A 128 cell wide stripe could use anywhere from 512KB per row to a handful of bytes, and cover anything from one to millions of rows, making it easy to hit a target chunk size between 512KB and 1MB. 
@@ -80,7 +82,7 @@ Let's give ourselves some more flexibility. We'll still divide the grid into str
 
 ## Index
 
-I've talked myself into using variable width and variable height tiles. That means we're going to need some kind of index to identify the correct tiles to load for any particular view. As we divide a segment first into stripes, then into tiles, we have a two level index. First, to identify the stripe, then to identify the tile within the stripe. 
+I've talked myself into using variable width and variable height tiles. That means we're going to need some kind of index to identify the correct tiles to load for any particular view. As we divide a segment first into stripes, then into tiles, we have a two stage index. First, to identify the stripe, then to identify the tile within the stripe. 
 
 I'm going to use a naming convention for chunks which uses a consistent format including a constant prefix, snapshot id, segment id, start column index and start row index. The segment index just needs to determine the start column index and start row index of the containing tile (if any) for a given cell.
 
@@ -96,6 +98,51 @@ The column index has two entries. The first entry specifies two stripes starting
 
 Each stripe has its own index. The first index tells us that we have 3 tiles starting at row 0, row 112 and row 384. The second that we have two tiles starting at row 0 and row 176. Both stripes end at row 512. 
 
+## Bloom Filters
+
 What's the cost of using an index like this? Binary chop over a sorted array is *O(logn)*. However, we have *O(logn)* segments to query which gives us an overall cost of *O(log<sup>2</sup>n)*. This is the [standard cost model](https://ee.usc.edu/~redekopp/cs104/slides/L22_MergeTrees.pdf) for LSM trees. LSM databases typically use [bloom filters](https://en.wikipedia.org/wiki/Bloom_filter) to get the cost closer to *O(logn)* for most queries. 
 
-A bloom filter is a large bit array combined with *k* hash functions. Every key within the segment is added to the bloom filter. The *k* hash functions are evaluated and the corresponding bits in the array set to 1. At query time, the same *k* hash functions are applied to the query key and the corresponding bits checked. If any of them are zero, we know that the segment can't contain the key. If all of the bits are ones, the segment *may* contain the key and needs to be loaded. The probability of there being a false positive (you load the segment and find it doesn't contain the key) depends on the number of bits in the bloom filter and the number of hash functions, *k*. There are formulas that determine the optimum values to use for a desired false positive rate. For example, to achieve a false positive rate of 0.01 you need 10 bits per key in the segment and 7 hash functions. 
+A bloom filter is a large bit array combined with *k* hash functions. Every key within the segment is added to the bloom filter. The *k* hash functions are evaluated and the corresponding bits in the array set to one. At query time, the same *k* hash functions are applied to the query key and the corresponding bits checked. If any of them are zero, we know that the segment can't contain the key. If all of the bits are ones, the segment *may* contain the key and needs to be loaded. The probability of there being a false positive (you load the segment and find it doesn't contain the key) depends on the number of bits in the bloom filter and the number of hash functions, *k*. There are formulas that determine the optimum values to use for a desired false positive rate. For example, to achieve a false positive rate of 1% you need 10 bits per key stored and 7 hash functions. 
+
+Most LSM databases are designed to run on dedicated nodes. All the data is available locally, either in memory or on disk. In contrast, we're building a system where chunks of data are downloaded on demand. We don't have any dedicated server side nodes. The trade offs are likely to be different.
+
+Let's look at some concrete numbers. If we serialize an index as is, using 64 bit integers, we can fit 64K entries into a 1MB chunk. With a minimum stripe width of 128 that means we can index at least 12M columns[^1]. With careful encoding and compression we can double or triple that. Whatever, its already way beyond the capacity of any existing spreadsheet.
+
+[^1]: Worst case is alternating 128 and 256 wide stripes. If all stripes are 128 wide, the index would only need a single entry.
+
+Rows are going to need more than that. In the worst case of 4KB cells, a 128 wide tile would only have enough room for 2 rows. A single chunk would index a minimum of 96K rows. What can we do with a two level index? We can add a root chunk which indexes a set of up to 64K leaf index chunks. That gets us to 6000 million rows in the worst case. Again, way beyond the capacity of any existing spreadsheet.
+
+That means we need to download a grand total of 4 chunks in order to load any tile within a 12 million column by 6000 million row spreadsheet. In contrast, to do an early out test with a bloom filter, we'd need to load 7 chunks[^2]. Clearly not worth it in our case. 
+
+[^2]: We need to check bits in the bloom filter for 7 different hash functions. At 10 bits per entry, the filter will be spread across a huge number of chunks. Good hash functions will ensure the bits to test will be at random positions in the bit array, so highly unlikely to be in the same chunk.
+
+## Packaging
+
+We have a lot of flexibility in how we package each snapshot segment into chunks. A small segment might only need a single chunk with the index included. 
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/package-single-chunk.svg" alt="Segment packaged into a single chunk" %}
+
+Eventually a segment will need two or more chunks but can still include the index in the first chunk. 
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/package-multiple-chunks.svg" alt="Segment that includes index in first chunk" %}
+
+Once the index gets big enough it can be split out into a dedicated chunk. 
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/package-index-chunk.svg" alt="Segment with dedicated index chunk" %}
+
+Eventually you'll need separate chunks for the column and row indices.
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/package-column-row-index-chunks.svg" alt="Segment with dedicated column and row index chunks" %}
+
+Finally the index gets so large that you need multiple levels.
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/package-two-level-index-chunks.svg" alt="Segment with two level row index and separate column index" %}
+
+## Conclusion
+
+This is still looking promising. Next time we'll see what breaks when we look at merging segments and how we cope with the unique to spreadsheets row/column insert and delete operations.
+
+## Footnotes
+
+
+
