@@ -44,7 +44,7 @@ If you've been keeping up to date with the blog, then you may think that this so
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/lsm-segments.svg" alt="LSM-tree style doubling segment sizes" %}
 
-Every *k* operations you write out a new segment of size *k*. If there's an existing segment of the same size, you merge the two together into a segment of size *2k*. Repeat until you have at most one segment of each size. Keeping the snapshots up to date is *O(nlogn)*, which is good enough. Loading an initial view requires loading chunks from *O(log(n/k))* segments, which is also good enough. This is the same cost model you see for most global sorted order data structures and databases.
+Every *k* operations you write out a new segment of size *k*. If there's an existing segment of the same size, you merge the two together into a segment of size *2k*. Repeat until you have at most one segment of each size. Keeping the snapshots up to date is *O(nlogn)*, which is good enough. Loading an initial view requires loading chunks from *O(log(n/k))* segments, which is also good enough. This is the same cost model you see for most globally sorted order data structures and databases.
 
 Of course, there's [nothing new under the sun](https://www.dictionary.com/browse/nothing-new-under-the-sun). This is the same principle used by [log structured merge (LSM) trees](http://www.benstopford.com/2015/02/14/log-structured-merge-trees/), first made popular by [Google Big Table](http://static.googleusercontent.com/media/research.google.com/en//archive/bigtable-osdi06.pdf), and since used by many more [NoSQL](https://en.wikipedia.org/wiki/NoSQL) databases.
 
@@ -70,7 +70,7 @@ Another simple approach is to use fixed size squares. A 128 x 128 tile would nee
 
 What if we used fixed widths but allowed the height of each tile to vary? You end up with tiles arranged in vertical stripes, where each stripe is equivalent to an LSM based table. A 128 cell wide stripe could use anywhere from 512KB per row to a handful of bytes, and cover anything from one to millions of rows, making it easy to hit a target chunk size between 512KB and 1MB. 
 
-Breaking the problem down into a set of LSM tables is attractive. You can then reuse a lot of accumulated knowledge from the implementation of LSM databases. Dividing first by columns works well with the most common uses for spreadsheets where you have a fixed set of columns storing entity properties and a row per entity. In future you could imagine using knowledge about column types to pick split points more intelligently.
+Breaking the problem down into a set of LSM tables is attractive. You can then reuse a lot of accumulated knowledge from the implementation of LSM databases. Dividing first by column works well with the most common uses for spreadsheets where you have a fixed set of columns storing entity properties and a row per entity. In future you could imagine using knowledge about column types to pick split points more intelligently.
 
 This is looking good and would work even for very sparse spreadsheets, as long as you had plenty of rows. A sparse million column spreadsheet with a single row would still have poor utilization, but how likely is that? 
 
