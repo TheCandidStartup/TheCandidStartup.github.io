@@ -40,7 +40,7 @@ The simplest approach is to use a single segment. Every *k* operations we create
 
 The other extreme is to only include the latest *k* operations in each new segment. Keeping the snapshots up to date is now *O(n)*, which is good. However, loading the initial view needs a chunk from each segment and is *O(n/k)*, which is bad.
 
-If you've been keeping up to date with the blog, then you may think that this sounds similar to the C++ vector class discussed in my [amortized cost]({% link _drafts/amortized-cost-cloud.md %}) post. And you'd be right. There's a middle ground that balances lookup and update costs. The trick is to maintain a set of segments at different sizes, where each size is a constant factor larger than the previous. There are lots of variations depending on how you want to trade off space used vs cost. The simplest is where you have at most one segment at each size and where each size is double the previous.
+If you've been keeping up to date with the blog, then you may think that this sounds similar to the C++ vector class discussed in my [amortized cost]({% link _posts/2023-04-17-amortized-cost-cloud.md %}) post. And you'd be right. There's a middle ground that balances lookup and update costs. The trick is to maintain a set of segments at different sizes, where each size is a constant factor larger than the previous. There are lots of variations depending on how you want to trade off space used vs cost. The simplest is where you have at most one segment at each size and where each size is double the previous.
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/lsm-segments.svg" alt="LSM-tree style doubling segment sizes" %}
 
