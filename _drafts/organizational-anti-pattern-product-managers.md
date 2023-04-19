@@ -50,9 +50,9 @@ What can happen when you have a PM running the show?
 
 {% include candid-image.html src="/assets/images/Project-triangle-en.svg" alt="The Project Management Triangle" %}
 
-The [project management triangle](https://en.wikipedia.org/wiki/Project_management_triangle) describes the constraints of project management. The idea is that any change in one constraint (scope, cost, time) will need a corresponding change in the other constraints, otherwise quality will suffer. Given that no one has worked out how to accurately estimate the cost of a software project, you end up having to trade off scope against time. Assuming we've all learnt the lesson of [The Mythical Man Month](https://en.wikipedia.org/wiki/The_Mythical_Man-Month) and aren't going to make the mistake of throwing extra resources at an overrunning project. Not that there's any realistic prospect of there being extra resources to spare.
+The [project management triangle](https://en.wikipedia.org/wiki/Project_management_triangle) describes the constraints of project management. The idea is that any change in one constraint (scope, cost, time) will need a corresponding change in the other constraints, otherwise quality will suffer. Given that no one has worked out how to accurately estimate the cost of a software project, you end up having to trade off scope against time. That's assuming we've all learnt the lesson of [The Mythical Man Month](https://en.wikipedia.org/wiki/The_Mythical_Man-Month) and aren't going to make the mistake of throwing extra resources at an overrunning project. Not that there's any realistic prospect of there being extra resources to spare.
 
-This dilemma is often summarized as Quality - Scope - Time, pick two. With the assumption that you're always going to pick quality.
+This dilemma is often summarized as Quality - Scope - Time, pick two. With the assumption that one of your picks is always going to be quality.
 
 Enter the ambitious Product Manager. They may say that quality is important, but it's one of those hard to quantify things that engineers keep going on about when they want to inflate their estimates. The PM has already promised customers that all the expected features will be included in the next release. The next release has to go out in time for the big trade show, or the company's annual marketing event, or before our competitor's next release[^2].
 
@@ -98,17 +98,17 @@ Many years ago, the organization I was working for hired a PM with a chequered r
 
 The new PM behaved very like the CEO of an early stage startup. Ready to do whatever was needed to make their dream a reality. They had no mandate to build a new product. They had no development team. They did it anyway. 
 
-Their expense account was legendary. They toured the world, visiting all the company offices. They told teams whatever they needed to hear. Whatever was needed to sway them into working on the new product. Their top secret new product that would change the world. 
+Their expense account was legendary. They toured the world, visiting all the company offices. They told teams whatever they needed to hear, whatever was needed to sway them into working on the new product. Their top secret new product that would change the world. 
 
 Needless to say, the result was chaos. Teams were mysteriously running behind with the features they were supposed to be working on. The platform group had changed their priorities and no one could understand why. 
 
 ### Pitch to win
 
-Our rogue PM understood the power of a good story and a smoke and mirrors demo. The power of the big lie. When they were finally unmasked, they had their pitch ready. Our charismatic CEO PM had managed what no one else in the company could have done. They'd conceived of and built the perfect product for our target market. With the company's backing they would be ready to launch after the company's big annual marketing event. Just look at the demo. 
+Our rogue PM understood the power of a good story and a smoke and mirrors demo. When they were finally unmasked, they had their pitch ready. Our charismatic CEO PM had managed what no one else in the company could have done. They'd conceived of and built the perfect product for our target market. With the company's backing they would be ready to launch after the big annual marketing event. Just look at the demo. 
 
 The VP bought it. The product was announced to huge fanfare at the marketing event. Strangely enough, the product didn't ship on time. Turns out there's a lot more work than you might think in turning a smoke and mirrors demo into a real product. 
 
-One of the downsides of working for a large organization is that you are beholden to the rules of financial accounting. In particular the mysteries of [Revenue Recognition](https://en.wikipedia.org/wiki/Revenue_recognition). If you publicly announce the release of a new product, customers may make buying decisions based on that knowledge. You can't recognize revenue until you've followed through on your commitment. The accountants don't like it when the revenue can't be recognized. The accountants say you damn well better release your product within six months of the announcement. 
+One of the downsides of working for a large organization is that you are beholden to the rules of financial accounting. In particular, the mysteries of [Revenue Recognition](https://en.wikipedia.org/wiki/Revenue_recognition). If you publicly announce the release of a new product, customers may make buying decisions based on that knowledge. You can't recognize revenue until you've followed through on your commitment. The accountants don't like it when revenue can't be recognized. The accountants say you damn well better release your product within six months of the announcement. 
 
 Everything else was put on hold. Everyone pitched in. The product was released exactly six months after the announcement. It was utter garbage. Features had been scoped back to the bone. It was riddled with bugs. 
 
