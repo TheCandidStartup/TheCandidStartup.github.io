@@ -8,6 +8,8 @@ Obviously, I'm not suggesting that the entire role of Product Manager is an anti
 
 However, with great emotional intelligence, comes great responsibility. Product Manager is such a critical role that any imbalance in the PM's skills or division of responsibilities with other roles can give rise to a wide selection of entertaining anti-patterns.
 
+{% include organizational-anti-patterns-note.html %}
+
 ## The Non-technical Product Manager
 
 "Hi! I'm Robin[^1], the new Product Manager. I expect we'll be working closely together. I'm not technical".
@@ -20,7 +22,7 @@ My heart sank. I worked for a technology company. Our product used cutting edge 
 
 Non-technical PMs have no understanding of how things work under the hood. In turn, they have no idea of what might be hard or easy to implement. They have no conception of whether what they're proposing is brilliant or bonkers. When you work with a non-technical PM you'll spend a lot of time responding to proposals for product features that make no sense technically. It's critical that you learn how to respond correctly.
 
-Typically, software architects and engineers are problem solvers. We like to find solutions. You will naturally find yourself responding, "Yes, we could do that but here's a long list of technical reasons why that isn't such a great idea".
+Typically, software architects and engineers are problem solvers. We like to find solutions. You will naturally find yourself responding, "Yes, we could do that but here's a long list of technical reasons why that isn't such a good idea".
 
 "Great! Let's do it", says the PM.
 
@@ -42,11 +44,11 @@ The Harvard Business Review [describes]((https://hbr.org/2017/12/what-it-takes-t
 
 How do you make a partnership model work? After all, somebody has to be in charge. One organization I worked for believed in partnership so strongly that all management roles were in triplicate. At each level there was a PM, an engineering manager and a UX manager. I think that's taking things too far. 
 
-The model that I saw work best in practice was where engineering, PM and UX on a product all reported to a strong, impartial leader. It's important that the organization isn't too large so that the leader has good visibility. And, of course, it only works with the right person in charge.
+The model that I saw work best in practice was where engineering, PM and UX on a product all reported to a strong, impartial leader. It's important that the organization isn't too large, so that the leader has good visibility. And, of course, it only works with the right person in charge.
 
 What can happen when you have a PM running the show?
 
-### Event Driven Development
+### Trade Show Driven Development
 
 {% include candid-image.html src="/assets/images/Project-triangle-en.svg" alt="The Project Management Triangle" %}
 
@@ -68,7 +70,7 @@ I'm going to let you in on a secret. Actually, two secrets.
 
 ### Competitive Estimates
 
-Once you've lived through a few cycles of event driven development one of two things happen.
+Once you've lived through a few cycles of trade show driven development one of two things happen.
 
 {% capture ont_url %}
 {% link _posts/2022-11-21-organizational-anti-pattern-old-new-thing.md %}
@@ -94,7 +96,7 @@ The product manager as CEO of the product [sounds powerful and strategic](https:
 
 ### Making it happen
 
-Many years ago, the organization I was working for hired a PM with a chequered reputation. Our VP at the time was looking for a "change agent" and that's certainly what they got. 
+I'm reminded of the story of an organization that hired a PM with a chequered reputation. Their VP at the time was looking for a "change agent" and that's certainly what they got. 
 
 The new PM behaved very like the CEO of an early stage startup. Ready to do whatever was needed to make their dream a reality. They had no mandate to build a new product. They had no development team. They did it anyway. 
 
@@ -104,7 +106,7 @@ Needless to say, the result was chaos. Teams were mysteriously running behind wi
 
 ### Pitch to win
 
-Our rogue PM understood the power of a good story and a smoke and mirrors demo. When they were finally unmasked, they had their pitch ready. Our charismatic CEO PM had managed what no one else in the company could have done. They'd conceived of and built the perfect product for our target market. With the company's backing they would be ready to launch after the big annual marketing event. Just look at the demo. 
+Our rogue PM understood the power of a good story and a smoke and mirrors demo. When they were finally unmasked, they had their pitch ready. Our charismatic CEO PM had managed what no one else in the company could have done. They'd conceived of and built the perfect product for their target market. With the company's backing they would be ready to launch after the big annual marketing event. Just look at the demo. 
 
 The VP bought it. The product was announced to huge fanfare at the marketing event. Strangely enough, the product didn't ship on time. Turns out there's a lot more work than you might think in turning a smoke and mirrors demo into a real product. 
 
@@ -112,12 +114,14 @@ One of the downsides of working for a large organization is that you are beholde
 
 Everything else was put on hold. Everyone pitched in. The product was released exactly six months after the announcement. It was utter garbage. Features had been scoped back to the bone. It was riddled with bugs. 
 
-It was also now too big to fail. The VP's credibility was on the line. There was no option but to double down. It took years of effort to win back credibility with our target market. Other products had to be starved of investment. 
+It was also now too big to fail. The VP's credibility was on the line. There was no option but to double down. It took years of effort to win back credibility with their target market. Other products had to be starved of investment. 
 
-To make matters worse, the new product had a lot of overlap with existing products both in our organization and other parts of the company. It wasn't long before we were [rewriting and reimaging](({{ ont_url | append: "#rewrite-and-reimagine" }})) the product portfolio to try and merge everything back together. More years of effort followed.
+To make matters worse, the new product had a lot of overlap with existing products both in their organization and other parts of the company. It wasn't long before they were [rewriting and reimaging](({{ ont_url | append: "#rewrite-and-reimagine" }})) the product portfolio to try and merge everything back together. More years of effort followed.
 
 ## The moral of this story ...
 
-With great emotional intelligence, comes great responsibility. Product Manager is a critical role. Make sure you hire someone good. And it would be great if they had a basic technical understanding of what they're working on. 
+With great emotional intelligence, comes great responsibility. Product Manager is a critical role. Make sure you hire someone that wants to work in partneship with engineering and UX. Someone that understands there need to be boundaries. 
+
+And it would be great if they had a basic technical understanding of what they're working on. 
 
 ## Footnotes
