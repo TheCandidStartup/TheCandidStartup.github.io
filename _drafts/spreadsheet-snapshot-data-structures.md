@@ -4,7 +4,7 @@ tags: spreadsheets cloud-architecture aws
 ---
 
 {% capture bb_url %}{% link _posts/2023-02-27-brainstorming-and-benchmarking.md %}{% endcapture %}
-So, I have a plan. After a round of [brainstorming and benchmarking]({{ bb_url }}), I've decided to use [Event Sourcing]({{ bb_url | append: "#event-sourcing" }}) to store the sequence of operations applied to a spreadsheet. Every so often I'll create snapshots of the current spreadsheet state. I can then load the spreadsheet at any point in time by loading a snapshot and applying changes from that point on in the event log. 
+I have a plan. After a round of [brainstorming and benchmarking]({{ bb_url }}), I've decided to use [Event Sourcing]({{ bb_url | append: "#event-sourcing" }}) to store the sequence of operations applied to a spreadsheet. Every so often I'll create snapshots of the current spreadsheet state. I can then load the spreadsheet at any point in time by loading a snapshot and applying changes from that point on in the event log. 
 
 Now I need to figure out how I'm going to represent these snapshots. 
 
