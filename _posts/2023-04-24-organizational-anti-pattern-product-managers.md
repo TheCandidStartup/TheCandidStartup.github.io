@@ -120,7 +120,7 @@ To make matters worse, the new product had a lot of overlap with existing produc
 
 ## The moral of this story ...
 
-With great emotional intelligence, comes great responsibility. Product Manager is a critical role. Make sure you hire someone that wants to work in partneship with engineering and UX. Someone that understands there need to be boundaries. 
+With great emotional intelligence, comes great responsibility. Product Manager is a critical role. Make sure you hire someone that wants to work in partnership with engineering and UX. Someone that understands there need to be boundaries. 
 
 And it would be great if they had a basic technical understanding of what they're working on. 
 
