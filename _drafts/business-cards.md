@@ -33,7 +33,7 @@ We had lots of visitors from industry, one of whom was a director of LightWork D
 
 [LightWork Design](https://en.wikipedia.org/wiki/Lightwork_Design_Ltd.) had two existing products. LightWorks was a photorealistic rendering toolkit and MachineWorks was a CNC machining simulation toolkit. Their business model was to license their toolkits to other software companies that create end user software. It was clear that I would be working on a software toolkit for large model viewing called *Something*Works. 
 
-Business cards now came in color! It's pretty restrained, certainly in comparison with websites at the time. I don't know who was responsible for adding "PhD". I've never used my doctoral title professionally. 
+Business cards now came in color! It's pretty restrained, certainly in comparison with websites at the time. I don't know who was responsible for adding "PhD". I've never used my doctoral title professionally (outside of academia).
 
 I spent a couple of years working on a large model viewing toolkit. LightWork Design found it hard to get their existing CAD system customer base interested. I created a large model viewing application to use as a testbed and demo for the toolkit. We still didn't have any takers for the toolkit but found lots of people interested in using the viewer with their own models. And so [NavisWorks]({% link _topics/navisworks.md %}) was born. 
 
@@ -41,5 +41,29 @@ Fast forward a couple more years and we had a small development team, a product 
 
 ## NavisWorks Ltd (2002-2007)
 
+![First Profile Picture](/assets/images/tim-first-profile-picture.png)
+
+My favorite business card. I do miss the old NavisWorks logo. This is from before my title changed to the more grandiose "Chief Technology Officer". You won't get taken seriously as a startup if you don't all give yourselves C-level titles. 
+
+NavisWorks grew steadily and eventually came to [the notice of Autodesk]({% link _posts/2023-01-03-tools-vs-solutions.md %}). The LightWork Design founders' plan came to fruition and NavisWorks became the first of their companys to be sold. 
+
 ## Autodesk (2007-2022)
+
+![First Profile Picture](/assets/images/tim-first-profile-picture.png)
+
+That is one ugly business card. Lots of things were set up for us after acquisition, business cards included. Whatever junk had been entered in the HR system was splurged across the card. Good job I only have one second name. I have no idea what "Global controlership" refers to. 
+
+![First Profile Picture](/assets/images/tim-first-profile-picture.png)
+
+As part of the acquisition process everyone was mapped to the equivalent Autodesk role. At Navisworks I had been a combination of engineering manager, software architect, program manager and systems admin. At Autodesk the closest box was engineering manager. I soon realized that I wasn't cut out to be a people manager and switched lanes to Software Architect.
+
+Clearly, I'd hated the old business card enough to get a new one when I changed title. This one I ordered myself. There was no choice of design but I could change the content. 
+
+## The Candid Startup (2022-)
+
+![First Profile Picture](/assets/images/business-cards/candid-startup.png)
+
+So far, I've had no reason to make myself a Candid Startup business card. Just for fun I used the first "make your own business card" [site](https://www.moo.com/uk/business-cards) that Google found for me, to mock one up. I used my [profile picture]({% link _posts/2022-09-26-profile-pictures.md %}) to [create a QR code](https://www.realtimerendering.com/blog/cooler-qr-codes/) for the blog and used the blog's favicon for the other side. 
+
+What do you think? I'm glad to see that you no longer need to order 1000 at a time. Is it worth £28 plus p&p to run off 100?
 
