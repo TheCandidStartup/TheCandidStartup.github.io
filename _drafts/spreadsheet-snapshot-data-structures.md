@@ -84,7 +84,7 @@ Let's give ourselves some more flexibility. We'll still divide the grid into str
 
 I've talked myself into using variable width and variable height tiles. That means we're going to need some kind of index to identify the correct tiles to load for any particular view. As we divide a segment first into stripes, then into tiles, we have a two stage index. First, to identify the stripe, then to identify the tile within the stripe. 
 
-I'm going to use a naming convention for chunks which uses a consistent format including a constant prefix, snapshot id, segment id, start column index and start row index. The segment index just needs to determine the start column index and start row index of the containing tile (if any) for a given cell.
+I'm going to use a naming convention for chunks which uses a consistent format including a fixed prefix, snapshot id, segment id, start column index and start row index. The segment index just needs to determine the start column index and start row index of the containing tile (if any) for a given cell.
 
 We need variable size tiles to allow for sparse data and variable size values. However, regular data is common and we want to be able to take advantage of it when possible. I'm going to setup the index so that it can efficiently handle runs of tiles with the same width or height.
 
@@ -104,7 +104,7 @@ What's the cost of using an index like this? Binary chop over a sorted array is 
 
 A bloom filter is a large bit array combined with *k* hash functions. Every key within the segment is added to the bloom filter. The *k* hash functions are evaluated and the corresponding bits in the array set to one. At query time, the same *k* hash functions are applied to the query key and the corresponding bits checked. If any of them are zero, we know that the segment can't contain the key. If all of the bits are ones, the segment *may* contain the key and needs to be loaded. The probability of there being a false positive (you load the segment and find it doesn't contain the key) depends on the number of bits in the bloom filter and the number of hash functions, *k*. There are formulas that determine the optimum values to use for a desired false positive rate. For example, to achieve a false positive rate of 1% you need 10 bits per key stored and 7 hash functions. 
 
-Most LSM databases are designed to run on dedicated nodes. All the data is available locally, either in memory or on disk. In contrast, we're building a system where chunks of data are downloaded on demand. We don't have any dedicated server side nodes. The trade offs are likely to be different.
+Most LSM databases are designed to run on dedicated instances. All the data is available locally, either in memory or on disk. In contrast, we're building a system where chunks of data are downloaded on demand. We don't have any dedicated server side instances. The trade offs are likely to be different.
 
 Let's look at some concrete numbers. If we serialize an index as is, using 64 bit integers, we can fit 64K entries into a 1MB chunk. With a minimum stripe width of 128 that means we can index at least 12M columns[^1]. With careful encoding and compression we can double or triple that. Whatever, its already way beyond the capacity of any existing spreadsheet.
 
