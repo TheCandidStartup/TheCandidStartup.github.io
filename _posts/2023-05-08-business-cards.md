@@ -11,7 +11,7 @@ So, here's my career viewed through the medium of business cards.
 
 ## Cambridge University (1985-1991)
 
-We start with an anticlimax. I spend three years as an undergraduate at Cambridge University, followed by another three as a graduate student in the Computer Graphics research group. I wasn't one of those sad people in the Enterprise Society that had business cards.
+We start with an anticlimax. I spend three years as an undergraduate at [Cambridge University](https://www.cam.ac.uk/), followed by another three as a graduate student in the Computer Graphics [research group](https://www.cl.cam.ac.uk/research/rainbow/). I wasn't one of those sad people in the Enterprise Society that had business cards.
 
 One day, while writing up my thesis, I saw a job advert on the departmental noticeboard. They were looking for a post-doctoral researcher with computer graphics experience. 
 
@@ -19,7 +19,7 @@ One day, while writing up my thesis, I saw a job advert on the departmental noti
 
 {% include candid-image.html src="/assets/images/business-cards/martin-centre.png" alt="Research Associate at The Martin Centre" %}
 
-The Martin Centre was my first proper job (well as close as you can get to a proper job in academia) and my first business card. I like the generally understated design (apart from the ridiculous number of different fonts). The Martin Centre was the post graduate research wing of the Architecture department (buildings rather than software). The logo is based on early work on geometric form. The outline square on the left represents a courtyard, the square on the right a tower block. Perhaps surprisingly, both have the same floor area.
+[The Martin Centre](https://www.arct.cam.ac.uk/research/the-martin-centre) was my first proper job (well as close as you can get to a proper job in academia) and my first business card. I like the generally understated design (apart from the ridiculous number of different fonts). The Martin Centre is the post graduate research wing of the Architecture department (buildings rather than software). The logo is based on early work on geometric form. The outline square on the left represents a courtyard, the square on the right a tower block. Perhaps surprisingly, both have the same floor area.
 
 {% include candid-image.html src="/assets/images/business-cards/paul-tim-simon.jpg" alt="Paul Richens, Tim Wiegand, Simon Schofield" %}
 
@@ -59,7 +59,7 @@ NavisWorks grew steadily and eventually came to [the notice of Autodesk]({% link
 
 That is one ugly business card. Lots of things were set up for us after acquisition, business cards included. Whatever junk had been entered in the HR system was splurged across the card. Good job I only have one second name. I have no idea what "Global controlership" refers to.
 
-As part of the acquisition process everyone was mapped to the equivalent Autodesk role. At Navisworks I had been a combination of engineering manager, software architect, program manager and systems admin. At Autodesk the closest box was engineering manager. I soon realized that I wasn't cut out to be a people manager and switched lanes to Software Architect.
+As part of the acquisition process everyone was mapped to the equivalent Autodesk role. At Navisworks I had been a combination of engineering manager, software architect, program manager and systems admin. At Autodesk the closest box was engineering manager. I soon realized that I wasn't cut out to be a dedicated people manager and switched lanes to Software Architect.
 
 {% include candid-image.html src="/assets/images/business-cards/autodesk-architect.png" alt="Software Architect at Autodesk" %}
 
