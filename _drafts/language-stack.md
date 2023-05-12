@@ -13,7 +13,7 @@ A stack is a handy metaphor for the way in which we build platforms and applicat
 
 You have front end clients that work with back end services. Each is implemented using a stack of technology starting with physical hardware in the base layers, possibly with abstractions of the hardware as VMs or Containers. 
 
-On top of the hardware we have layers of general software such as databases and operating systems that we almost always run off the shelf. 
+On top of the hardware we have layers of general software, such as databases and operating systems, that we almost always run off the shelf. 
 
 Finally, we get to our software. There will be some kind of hosting app that runs as a process on the operating system. We could write this ourselves but in most cases we'll use something off the shelf, like a web server in the backend or a web browser in the front end. The hosting app includes the runtime for the programming language(s) we write our software in. We could write the whole thing ourselves, but in most cases we'll use common libraries and frameworks to make our life easier. Finally, at the top of the stack is the code we actually write in the programming language determined by the hosting app and frameworks we're using.
 
@@ -63,4 +63,4 @@ I'm old school. I like to fully understand each layer of a stack before using ab
 
 I do want some additional control over the potential chaos, so I'll be using [TypeScript](https://www.typescriptlang.org/) rather than vanilla JavaScript. After 30 years writing in C++ and C#, I've come to like and depend on static typing. TypeScript is the lowest impact way of adding types to JavaScript. TypeScript still looks and feels like JavaScript, with types added as optional annotations.
 
-Of course, choosing NodeJS/TypeScript is just the starting point. There's a huge selection of frameworks available for both front end and back end. That will have to wait for another day.
+Of course, choosing NodeJS/TypeScript is just the starting point. There's a huge selection of frameworks available for both front end and back end. That discussion will have to wait for another day.
