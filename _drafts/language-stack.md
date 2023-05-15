@@ -1,6 +1,6 @@
 ---
 title: Choosing a Language Stack
-tags: cloud-architecture aws cambridge navisworks autodesk
+tags: cloud-architecture cambridge navisworks autodesk
 ---
 
 First off, let's get our terms straight. What do I mean by [Language Stack](https://medium.com/omio-engineering/why-we-develop-and-use-language-stacks-not-languages-e83fd85c7f05)? Is that the same as a [Tech Stack](https://www.mongodb.com/basics/technology-stack), or is it more like a [Software Stack](https://www.sumologic.com/glossary/software-stack/)? Then again, what's the difference between a Tech Stack and a Software Stack?
@@ -29,7 +29,7 @@ I first started programming as a kid, in [Basic](https://en.wikipedia.org/wiki/B
 {% link _posts/2023-05-08-business-cards.md %}
 {% endcapture %}
 
-During my computer science degree at [Cambridge]({{ bc_url | append: "#cambridge-university-1985-1991" }}) I was introduced to a weird and wonderful array of languages. In some cases languages that the lecturer or their predecessor had created. I remember attending a lecture by the [man who invented the subroutine](https://en.wikipedia.org/wiki/David_Wheeler_(computer_scientist)). I was briefly exposed to [ML](https://en.wikipedia.org/wiki/ML_(programming_language)), [Scheme](https://en.wikipedia.org/wiki/Scheme_(programming_language)), [BCPL](https://en.wikipedia.org/wiki/BCPL), [Fortran](https://en.wikipedia.org/wiki/Fortran), [Prolog](https://en.wikipedia.org/wiki/Prolog) and [C](https://en.wikipedia.org/wiki/C_(programming_language)).
+During my computer science degree at [Cambridge]({{ bc_url | append: "#cambridge-university-1985-1991" }}), I was introduced to a weird and wonderful array of languages. In some cases, languages that the lecturer or their predecessor had created. I remember attending a lecture by the [man who invented the subroutine](https://en.wikipedia.org/wiki/David_Wheeler_(computer_scientist)). I was briefly exposed to [ML](https://en.wikipedia.org/wiki/ML_(programming_language)), [Scheme](https://en.wikipedia.org/wiki/Scheme_(programming_language)), [BCPL](https://en.wikipedia.org/wiki/BCPL), [Fortran](https://en.wikipedia.org/wiki/Fortran), [Prolog](https://en.wikipedia.org/wiki/Prolog) and [C](https://en.wikipedia.org/wiki/C_(programming_language)).
 
 My first encounter with the real world was a summer vacation job writing compression routines for [IBM System 360](https://en.wikipedia.org/wiki/IBM_System/360) mainframes in [IBM Basic Assembly Language](https://en.wikipedia.org/wiki/IBM_Basic_Assembly_Language_and_successors). Throughout my postgraduate work in computer graphics I used [C](https://en.wikipedia.org/wiki/C_(programming_language)). 
 
@@ -39,9 +39,9 @@ After careful consideration, I decided that TCL was the clear winner. Python's w
 
 [Navisworks]({% link _topics/navisworks.md %}) was originally built entirely in C++ using the [MFC](https://en.wikipedia.org/wiki/Microsoft_Foundation_Class_Library) UI framework. Later on, we exposed the Navisworks core to [Microsoft .Net](https://en.wikipedia.org/wiki/.NET_Framework) using [C++/CLI](https://en.wikipedia.org/wiki/C%2B%2B/CLI) and implemented newer application features using [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)), first with the [WinForms](https://en.wikipedia.org/wiki/Windows_Forms) framework and then later with [WPF](https://en.wikipedia.org/wiki/Windows_Presentation_Foundation). 
 
-## Language Stacks for the Cloud
+## Into the Cloud
 
-I first got involved with language stacks for the cloud when Autodesk acquired Horizontal Glue (rebranded as BIM 360 Glue) and Vela (rebranded as BIM 360 Field). Glue was built on a .Net stack while Field used a Ruby on Rails stack. Rails was very much the exciting new technology that all the cool kids were using. The VP that ended up running the BIM 360 group was part of the Vela acquisition, so naturally there was a drive to standardize on Rails. Meanwhile the rest of Autodesk was gravitating around a [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine) stack (mostly [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) but with some teams using cooler JVM languages like [Scala](https://en.wikipedia.org/wiki/Scala_(programming_language))). Other acquisitions, reorgs and skunkworks projects added [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) and [NodeJS](https://nodejs.org/en/about) to the mix.
+I first got involved with language stacks for the cloud when Autodesk acquired Horizontal Glue (rebranded as BIM 360 Glue) and Vela (rebranded as BIM 360 Field). Glue was built on a .Net stack while Field used a Ruby on Rails stack. Rails was very much the exciting new technology that all the cool kids were using. The VP that ended up running the BIM 360 group was part of the Vela acquisition, so naturally there was a drive to standardize on Rails. Meanwhile, the rest of Autodesk was gravitating around a [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine) stack (mostly [Java](https://en.wikipedia.org/wiki/Java_(programming_language)) but with some teams using cooler JVM compatible languages like [Scala](https://en.wikipedia.org/wiki/Scala_(programming_language))). Other acquisitions, reorgs and skunkworks projects added [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) and [NodeJS](https://nodejs.org/en/about) to the mix.
 
 As BIM 360 Chief Architect, I was asked to come up with one or two recommended stacks to consolidate future development around. I decided that two stacks was the minimum number we could get away with. 
 
@@ -63,4 +63,4 @@ I'm old school. I like to fully understand each layer of a stack before using ab
 
 I do want some additional control over the potential chaos, so I'll be using [TypeScript](https://www.typescriptlang.org/) rather than vanilla JavaScript. After 30 years writing in C++ and C#, I've come to like and depend on static typing. TypeScript is the lowest impact way of adding types to JavaScript. TypeScript still looks and feels like JavaScript, with types added as optional annotations.
 
-Of course, choosing NodeJS/TypeScript is just the starting point. There's a huge selection of frameworks available for both front end and back end. That discussion will have to wait for another day.
+Of course, choosing NodeJS/TypeScript is just the starting point. There's a huge selection of frameworks available for both front end and back end. That's a discussion that will have to wait for another day.
