@@ -49,7 +49,7 @@ I've been pleasantly surprised by how well this works for day to day use. I'm ru
 
 ### (9) Cup of Tea
 
-The most important component in the [mise en place](https://en.wikipedia.org/wiki/Mise_en_place). Invariably in the souvenir mug my parents gave me after a holiday in the US. 
+The most important component in the [mise en place](https://en.wikipedia.org/wiki/Mise_en_place). Invariably in the souvenir mug my parents gave me after a holiday in the US many years ago.
 
 ### (10) Dygma Raise Split Ergonomic Keyboard
 
@@ -80,7 +80,7 @@ I have a bad back. Which was enough of an excuse to treat myself to a super fanc
 
 ### (14) Mid-Tower Micro-ATX PC
 
-I have a custom built PC from [Quiet PC](https://www.quietpc.com/), a local systems integrator. I had four main requirements. It should be quiet, it should be power efficient, it should support the latest standards for graphics and data transfer, it should fit the Mid-Tower sized PC tower storage unit I already had. 
+I have a custom built PC from [Quiet PC](https://www.quietpc.com/), a local systems integrator. I had four main requirements. It should be quiet (natch), it should be power efficient, it should support the latest standards for graphics and data transfer, it should fit the Mid-Tower sized PC tower storage unit I already had. 
 
 [One of my projects]({% link _posts/2023-04-03-nanite-graphics-pipeline.md %}) is looking at how to build a graphics engine like [Navisworks]({% link _topics/navisworks.md %}) using modern hardware. I don't need the highest level of performance (in some ways its better to develop against minimum spec hardware), but I do need it to support the functionality. I ordered the system at the height of the pandemic inspired PC components shortage, so some juggling was required. 
 
@@ -96,7 +96,7 @@ Discarded notes and jottings on their way to the recycling bin.
 
 ### (16) Large Under Desk Shelves
 
-Great dumping ground for all the big bits of crap you accumulate. Currently providing a home for a box of redundant cables, component packaging, reams of office paper, old CD-R backups.
+Great dumping ground for all the big bits of crap you accumulate. Currently providing a home for a box of old cables, packaging that might be needed to return something one day, reams of office paper, old CD-R backups.
 
 ### (17) Small Shelf
 
