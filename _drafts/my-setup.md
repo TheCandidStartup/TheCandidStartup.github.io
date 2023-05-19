@@ -9,7 +9,7 @@ I know what you're thinking. How do I manage to put out high quality content, we
 
 [Full size original image]({% link assets/images/my-setup-original.jpg %})
 
-The desk top was made and fitted by a local joiner using a two drawer filing cabinet and a PC tower storage unit from IKEA as a base.
+The desk top was made and fitted by a local joiner. It uses a two drawer filing cabinet and a PC tower storage unit from IKEA as a base.
 
 ### (1) TI-36X Solar Scientific Calculator
 
@@ -21,7 +21,7 @@ Liberated from one of my children. Great dumping ground for all the little bits 
 
 ### (3) Interquartz 98393 Enterprise Speakerphone
 
-Simple, cheap and cheerful desk phone. It rings, it has hands free and mute buttons. What more do you need on the increasingly rare occasions you use a phone? Even better its powered entirely by the phone line. No additional power brick, no need for another power socket.
+Simple, cheap and cheerful desk phone. It rings, it has hands free and mute buttons. What more do you need on the increasingly rare occasions you use a landline phone? Even better its powered entirely by the phone line. No additional power brick, no need for another power socket.
 
 ### (4) In Tray
 
@@ -55,7 +55,7 @@ The most important component in the [mise en place](https://en.wikipedia.org/wik
 
 I bought [this](https://dygma.com/pages/raise) after becoming [fed up]({% link _posts/2022-10-07-mac-british-keyboards.md %}) with the new Microsoft Ergonomic keyboard. It's been great. It's a fully programmable mechanical keyboard with a 60% layout.
 
-I went for the black on silver color option with the English US keycaps and Kalih Speed Copper switches. I decided on US keycaps to avoid [british keyboard layout weirdness]({% link _posts/2022-10-07-mac-british-keyboards.md %}) and to give me more options if I wanted to replace them later.
+I went for the black on silver color option with the English US keycaps and Kalih Speed Copper switches. I decided on US keycaps to avoid [British keyboard layout weirdness]({% link _posts/2022-10-07-mac-british-keyboards.md %}) and to give me more options if I wanted to replace them later.
 
 The keyboard has 4 dedicated thumb keys for each thumb, instead of a space bar. I've programmed them as dual purpose keys. Press and hold gives each thumb access to Shift, Control, Option/Alt and Command/Windows. Tap gives you Space, Tab, Enter, Backspace, Delete and Escape. That gives you access to everything you need when typing without any awkward stretching and reaching. I've reused the redundant keys around the edge of the keyboard for navigation controls.
 
