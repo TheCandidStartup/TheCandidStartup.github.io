@@ -15,58 +15,65 @@ Now, those steps in more detail.
 
 ### Forking the Repo
 
-I was a bit worried about this as [UnrealEngine](https://github.com/EpicGames/UnrealEngine) is a private repo in the [EpicGames](https://github.com/EpicGames) organization. When I agreed to the source code license, I also agreed that I would not expose the source to anyone that hadn't also agreed to the license. 
+I was a bit worried about this as [UnrealEngine](https://github.com/EpicGames/UnrealEngine) is a private repo in the [EpicGames](https://github.com/EpicGames) organization. When I agreed to the source code license, I also agreed that I would not expose the source to anyone that hadn't also agreed to the license. I'm using GitHub Free. Doesn't that mean all my repos have to be public?
+
+Turns out I'm behind the times. GitHub Free has supported private repos since 2020, with no limits on number of repos or collaborators. Even before then, GitHub had a cool feature where you could fork a private repo into a free account and it would be covered by the license of the account it was forked from. 
+
+Forking took a few seconds in the GitHub web client. Only I have access, so you'll have to take my word that it's [there](https://github.com/TheCandidStartup/UnrealEngine). Ideally I would give access to the EpicGames [Developers team](https://github.com/orgs/EpicGames/teams/developers) which includes everyone that has agreed to the source license. Unfortunately, GitHub doesn't support cross-organization use of teams. 
 
 ### Cloning the Repo
 
-* Wasn't sure whether I'd only need the release branch or be on the cutting edge, so decided to clone the whole repo
-* Tried it late in my day (peak hours for US) and was only getting 1MB/s. Would have taken 8 hours
-* Tried again first thing in the morning (very much off peak in the US) and was getting up to 4.5 MB/s. Network adaptor was hitting 39 Mbps which is just over the 36 Mbps I should be getting.
-* Took just over 2 hours, resulting in 26 GB of source code and 44 GB in the .git directory locally
+{% capture dsk_url %}
+{% link _drafts/my-setup.md %}
+{% endcapture %}
+
+ I cloned the forked repo onto my [Windows PC]({{ dsk_url | append: "#14-mid-tower-micro-atx-pc" }}) using GitHub Desktop. I was given the choice of syncing one specific branch or the entire repo. I wasn't sure which branches I would end up needing so decided to take the whole thing.
+
+ I first tried it late in my day (so peak hours for the US) and was seeing transfer rates under 1 MB/s. I decided to try again in the morning (which is very much off peak in the US). Now I was getting up to 4.5 MB/s. My network adaptor was maxing out at 39 Mbps which is a little bit more than the 36 Mbps I should see with my [broadband package]({% link _posts/2023-04-10-fibre-broadband-install.md %}).
+
+It took just over two hours to get everything transferred. The result was 26 GB of source code on disk with another 44 GB in the .git directory.
 
 ### Install Visual Studio 2022
 
+The Visual Studio installer has come a long way since I first installed Visual Studio 6 at the end of the 90s. Download and run the installer from the website, choose the optional components that Unreal needs and leave it to chug away. Completed without a hitch. I was doing something else at the time and didn't keep track of how long it took.
+
 ### Run Setup Scripts
 
-* Next run Setup.bat in the root directory of the repo
-* Spends most of its time downloading binaries that aren't stored in the repo
-* More bandwidth constrained - jumped around a lot but 1 MB/s was typical
-* Took 75 minutes and added an extra 20 GB on disk
-* Final step needs admin access. Popped up a windows admin elevation prompt hidden behind my terminal window. Sat there waiting like an idiot until I realized.
+The 26 GB of source code we cloned? Doesn't include everything. 
 
-* Next GenerateProjectFiles.bat to create visual studio solution for whichever version of VS you have installed (supports 2022 and 2019)
-* Took about 5 seconds
-* Checked total disk usage and now at 100 GB
+Next step is to run the *Setup.bat* file in the root of the repo. This sets up a few dependencies but the only thing that takes any time is downloading additional binary files. The script includes a handy progress monitor showing download rate and amount of data transferred. The backend for this is clearly more bandwidth constrained than GitHub. The reported bandwidth jumped around a lot, but 1 MB/s was typical.
+
+The script completed after 75 minutes and added an extra 20 GB on disk. There's one final step that needs admin access. Whatever the script is doing pops up a Windows admin elevation prompt. In my case it appeared behind my terminal window. I sat there like an idiot for ten minutes, waiting for the script to finish, before I realized what had happened.
+
+The second script to run is *GenerateProjectFiles.bat* which creates a Visual Studio solution and project files for whichever version of Visual Studio you have installed (Unreal supports 2022 and 2019).
+
+Thankfully, this script only took five seconds. I checked my disk storage and noticed that the local UnrealEngine folder was now using 100 GB.
 
 ### Build
 
-* Open up the solution, set build configuration to "Development Editor" and target to x64.
-* 130  projects
-* Right click on UE5 *what's this thing called?" and choose build
-* UE has a custom build tool. Uses VC build system to build the build tool and then run it.
-* Output nicely integrated into VC output window
-* Build tool analyses header files, works out dependencies, and determines a set of actions to run. 6229 in this case.
-* Determines number of parallel processes to use based on physical cores and memory available.
-* I have 6 physical cores and 16 GB of memory. Tool decided I only had 3GB free (how?) so only 2 parallel actions
-* In reality was using 30% CPU, 60% memory, 2% disk
-* Each action took 1-10 seconds
-* Total build time of 2 hours (docs say 10 to 40 minutes!)
-* Think I'm going to need more RAM (Docs say 8GB is the minimum)
+I opened up the solution and had a look around. 132 projects. A single UE5 project for the main engine and 131 supporting components and utilities. Following the instructions I picked the "*Development Editor*" configuration and x64 platform. Right click on UE5 and then build.
+
+Unreal Engine has a custom build tool. Building the project runs the *Build.bat* script, passing in configuration and platform as parameters. The script builds and runs *UnrealBuildTool*. The build tool analyzes header files, works out dependencies and determines a set of actions to run. In this case, 6229 of them. 
+
+Actions can be executed in parallel. The tool determines the number of parallel processes to use based on the number of physical CPU cores and available memory. I have 6 physical cores and 16 GB of memory. However, the tool decided I only had 3GB of "free" memory and decided that it could only use two processes. Looks like I need to buy more memory.
+
+Each action seems to take from 1 to 10 seconds to complete. My total build time was two hours (the README says it should take 10 to 40 minutes). Task manager showed the PC was using 30% CPU, 60% memory and 2% disk during the build. Unbelievably, to me, the build worked first time with no errors or warnings reported.
+
+At the end of this I was up to 200 GB of disk space used. Looks like I need a bigger disk drive.
 
 ### Run
 
-* Start editor under the debugger
-* Get to splash screen in a few seconds
-* Progress in splash screen
-* Quickly to 45% and then Compiling Shaders (5300)
-* Using 99% of CPU, 85% memory.
-* Counting down. Took 5 minutes. *Much faster than first time I tried with 5.1? Change in 5.2?*
-* VS using 4.5GB, editor 5GB (with nothing loaded). Yes, will need more RAM.
+The moment of truth. Will it actually run? I started the debugger. The Unreal Editor splash screen appeared after a few seconds. The splash screen includes a progress line. It quickly got to 45% with the summary "Compiling Shaders (5500)", then "Compiling Shaders (5440)". And so on. For another five minutes. 
 
-* Use editor to create my first unreal project. Generates VS project and solution, source code from a template.
-* 74 projects! Luckily 73 are from core Unreal Engine and they're already built. My project takes a few seconds to build.
-* Also uses custom build tool. This time decides  i have 8GB free and can have 5 processes for my 10 actions
+Finally, its running. Quick check on memory shows Visual Studio using 4.5 GB and Unreal Editor 5 GB. With no project loaded. Yes, I definitely need more memory. 
 
-* Standard build target for all projects is with the UnrealEditor integrated.
-* Build was quick but when I run it ... 5500 shaders to compile ...
+The editor is asking me to create a new project from an existing template. I pick Third Person game. Without any further prompting, the editor creates a Visual Studio project and solution for my new project and launches another instance of Visual Studio.
+
+This solution has 74 projects. Luckily, 73 are from core Unreal Engine and they're already built. My project takes a few seconds to build, also using the custom build tool. This time it decides I have 8 GB free and can have 5 processes for my 10 actions.
+
+The standard build configuration for this project is also "*Development Editor*". I've just built a version of my project with an integrated development editor. I run it and the editor launches. What's this?
+
+"Compiling Shaders (5500)", "Compiling Shaders (5440)", ...
+
+That's enough for now. I've got Unreal Engine built. Next, I need to understand the workflow and find out what is going on with all those shaders.
 
