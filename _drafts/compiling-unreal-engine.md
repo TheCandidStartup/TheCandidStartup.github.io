@@ -24,7 +24,7 @@ Forking took a few seconds in the GitHub web client. Only I have access, so you'
 ### Cloning the Repo
 
 {% capture dsk_url %}
-{% link _drafts/my-setup.md %}
+{% link _posts/2023-05-22-desk-setup.md %}
 {% endcapture %}
 
  I cloned the forked repo onto my [Windows PC]({{ dsk_url | append: "#14-mid-tower-micro-atx-pc" }}) using GitHub Desktop. I was given the choice of syncing one specific branch or the entire repo. I wasn't sure which branches I would end up needing so decided to take the whole thing.
