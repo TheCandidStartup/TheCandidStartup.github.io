@@ -43,7 +43,9 @@ The 26 GB of source code we cloned? Doesn't include everything.
 
 Next step is to run the *Setup.bat* file in the root of the repo. This sets up a few dependencies but the only thing that takes any time is downloading additional binary files. The script includes a handy progress monitor showing download rate and amount of data transferred. The backend for this is clearly more bandwidth constrained than GitHub. The reported bandwidth jumped around a lot, but 1 MB/s was typical.
 
-The script completed after 75 minutes and added an extra 20 GB on disk. There's one final step that needs admin access. Whatever the script is doing pops up a Windows admin elevation prompt. In my case it appeared behind my terminal window. I sat there like an idiot for ten minutes, waiting for the script to finish, before I realized what had happened.
+The script completed after 75 minutes and added an extra 20 GB on disk. 
+
+There's one final step that needs admin access. Whatever the script is doing pops up a Windows admin elevation prompt. In my case it appeared behind my terminal window. I sat there like an idiot for ten minutes, waiting for the script to finish, before I realized what had happened.
 
 The second script to run is *GenerateProjectFiles.bat* which creates a Visual Studio solution and project files for whichever version of Visual Studio you have installed (Unreal supports 2022 and 2019).
 
@@ -51,13 +53,21 @@ Thankfully, this script only took five seconds. I checked my disk storage and no
 
 ### Build
 
-I opened up the solution and had a look around. 132 projects. A single UE5 project for the main engine and 131 supporting components and utilities. Following the instructions I picked the "*Development Editor*" configuration and x64 platform. Right click on UE5 and then build.
+I opened up the solution and had a look around. 132 projects. A single UE5 project for the main engine and 131 supporting components and utilities. Following the instructions I picked the "*Development Editor*" configuration and x64 platform. 
+
+I'm used to working on projects with two configurations: *Debug* and *Release*. If you're all fancy you might have another rarely used configuration for profiling. 
+
+Unreal Engine has [18 configurations](https://docs.unrealengine.com/5.2/en-US/build-configurations-reference-for-unreal-engine/). The configuration names are so long the Visual Studio setup instructions tell you how to customize the toolbar to make the configuration drop down wider. Each configuration is a combination of a build state (*Debug*, *DebugGame*, *Development*, *Shipping*, *Test*) and build target (*Game*, *Editor*, *Client*, *Server*). 
+
+*Development* is the default build state. It includes basic optimizations for reasonable performance but is still somewhat debuggable and has development tools enabled. *Editor* is the default target. 
+
+I right clicked on UE5 and then chose build.
 
 Unreal Engine has a custom build tool. Building the project runs the *Build.bat* script, passing in configuration and platform as parameters. The script builds and runs *UnrealBuildTool*. The build tool analyzes header files, works out dependencies and determines a set of actions to run. In this case, 6229 of them. 
 
 Actions can be executed in parallel. The tool determines the number of parallel processes to use based on the number of physical CPU cores and available memory. I have 6 physical cores and 16 GB of memory. However, the tool decided I only had 3GB of "free" memory and decided that it could only use two processes. Looks like I need to buy more memory.
 
-Each action seems to take from 1 to 10 seconds to complete. My total build time was two hours (the README says it should take 10 to 40 minutes). Task manager showed the PC was using 30% CPU, 60% memory and 2% disk during the build. Unbelievably, to me, the build worked first time with no errors or warnings reported.
+Each action seems to take from 1 to 10 seconds to complete. My total build time was two hours (the README says it should take 10 to 40 minutes). Task manager showed the PC was using 30% CPU, 60% memory and 2% disk during the build. Unbelievably to me, the build worked first time with no errors or warnings reported.
 
 At the end of this I was up to 200 GB of disk space used. Looks like I need a bigger disk drive.
 
@@ -67,7 +77,7 @@ The moment of truth. Will it actually run? I started the debugger. The Unreal Ed
 
 Finally, its running. Quick check on memory shows Visual Studio using 4.5 GB and Unreal Editor 5 GB. With no project loaded. Yes, I definitely need more memory. 
 
-The editor is asking me to create a new project from an existing template. I pick Third Person game. Without any further prompting, the editor creates a Visual Studio project and solution for my new project and launches another instance of Visual Studio.
+The editor is asking me to create a new project from an existing template. I pick "Third Person Game". Without any further prompting, the editor creates a Visual Studio project and solution for my new project and launches another instance of Visual Studio.
 
 This solution has 74 projects. Luckily, 73 are from core Unreal Engine and they're already built. My project takes a few seconds to build, also using the custom build tool. This time it decides I have 8 GB free and can have 5 processes for my 10 actions.
 
