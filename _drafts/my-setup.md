@@ -100,4 +100,4 @@ Great dumping ground for all the big bits of crap you accumulate. Currently prov
 
 ### (17) Small Shelf
 
-Great dumping ground for all the medium sized bits of crap you accumulate. Currently home to a pencil case, a couple of CDs, external backup hard drives and the router. 
+Great dumping ground for all the small bits of crap you accumulate. Currently home to a pencil case, a couple of CDs, external backup hard drives and the router. 
