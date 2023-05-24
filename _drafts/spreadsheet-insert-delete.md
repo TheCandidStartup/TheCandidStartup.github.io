@@ -10,7 +10,7 @@ The thing that breaks the easy analogy is when you start thinking about row keys
 
 {% include candid-image.html src="/assets/images/boring-spreadsheet.png" alt="The World's Most Boring Spreadsheet" %}
 
-Row keys are consecutive integers. Column identifiers are alphabetical codes, effectively consecutive base 26 integers. What happens if you insert a new row at the beginning of the spreadsheet? All the other rows move down one place to make room. All the other rows now have a different row key. What happens if you insert a new column at the beginning of the row? All the other columns move right one place to make room. All the other columns now have a different column key. Delete is similar with the remaining rows and columns moving the other way.
+Row keys are consecutive integers. Column identifiers are alphabetical codes, effectively consecutive base 26 integers. What happens if you insert a new row at the beginning of the spreadsheet? All the other rows move down one place to make room. All the other rows now have a different row key. What happens if you insert a new column at the beginning of the row? All the other columns move right one place to make room. All the other columns now have a different column identifier. Delete is similar with the remaining rows and columns moving the other way.
 
 Think about what would happen if you implemented your spreadsheet as a database. Insert and Delete could result in rewriting every row in the database. 
 
@@ -25,7 +25,7 @@ How does that work with Insert and Delete?
 
 ## Event Sourcing
 
-Everything works very naturally with [basic event sourcing](({{ bb_url | append: "#event-sourcing" }})). The source of truth is an event log that says an insert or delete has happened. You apply the operation to the client's in-memory representation of the spreadsheet which can be done simply and efficiently. 
+Everything works very naturally with [basic event sourcing]({{ bb_url | append: "#event-sourcing" }}). The source of truth is an event log that says an insert or delete has happened. You apply the operation to the client's in-memory representation of the spreadsheet, which can be done simply and efficiently. 
 
 ## Single Segment Snapshot
 
@@ -49,7 +49,7 @@ Now things start to get interesting. What happens if there were inserts and/or d
 Let's look at a concrete example. We have an initial event log starting to populate an empty spreadsheet.
 
 | Event Id | Event |
-|-|-|
+|-|:-|
 | 1 | Set A1=Mon,C1=Wed |
 | 2 | Set B2=Feb,D2=Apr |
 | 3 | Set A3=2020,C3=2022 |
@@ -65,7 +65,7 @@ We then create an initial snapshot resulting in this segment.
 We continue with these events.
 
 | Event Id | Event |
-|-|-|
+|-|:-|
 | 4 | Set B1=Tue,D1=Thu |
 | 5 | Set A2=Jan,C2=Mar |
 | 6 | Insert row 2 (A=Red,B=Orange,C=Yellow,D=Green) |
@@ -112,19 +112,106 @@ We want to scale to spreadsheets with millions of rows and columns which means w
 
 The view is a rectangle within the coordinate space of the most recent segment. When loading tiles from an earlier segment, we need to reverse transform the view rectangle into that segment's coordinate space. We then use the transformed rectangle to decide which tiles to load. 
 
-To reverse a transform, swap inserts and deletes. To apply the transform to a rectangle, think of what happens to the array of cells that the rectangle represents. Inserts in a row before the start of the rectangle move the rectangle down, deletes move it up. Inserts in rows in the middle of the rectangle make it bigger, deletes make it smaller.
+To invert a transform, swap inserts and deletes. To apply the transform to a rectangle, think of what happens to the array of cells that the rectangle represents. Inserts in a row before the start of the rectangle move the rectangle down, deletes move it up. Inserts in rows in the middle of the rectangle make it bigger, deletes make it smaller.
 
 Once we've identified and loaded the tiles, we forward transform each one in the same way we did for an entire segment. The contents of each tile is copied into our in-memory representation of the spreadsheet, starting from the earliest segment. Tiles from more recent segments overlay earlier tiles.
 
-We can simplify the loading process and reduce the size of each tile by using relative addressing. Rather than storing an explicit row and column index for each cell in the tile, we store row and column relative to the top left corner of the tile. A tile can be loaded anywhere in the spreadsheet grid by adding the origin of it's top left corner to the stored row and column for each cell in the tile. 
+We can simplify the loading process and reduce the size of each tile by using relative addressing. Rather than storing an explicit row and column index for each cell in the tile, we store row and column relative to the top left corner of the tile. A tile can be loaded anywhere in the spreadsheet grid by adding the location of it's top left corner to the stored row and column for each cell in the tile. 
 
 ## Segment Index
 
-* Index already knows where the top left corner of each tile is, so lose nothing by using relative addressing within a tile
-* For a two level row index we can use relative addressing within the lower level index chunks. If we limit each chunk to covering at most 4 million rows, we can halve the chunk size by using 32 bit indices. 
-* Because we transform the view query rectangle into each segment's coordinate space, nothing needs to change in how we use the index to determine tiles to load.
-* When writing a new segment we need to store the transform from any dependent segment somewhere. Segment index is an obvious place to put it. Straight forward extension to existing packaging ideas. Can include in same chunk as other parts of the index, or if index gets big enough, break out into a separate chunk.
-* In principle, transform could get large. Imagine a 100 million row spreadsheet and we insert new rows between each existing row. Transform is made up of four sorted lists of ranges. Can use same principle as row and column indices to break into multiple chunks if needed.
-* May want to use funky encoding. Start of range, cumulative width. Subtract previous range cumulative width to get actual width. Storing cumulative width means you can use binary chop to find last range before point of interest and immediately know total number to shift by without having to iterate over all the ranges.
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/segment-index.svg" alt="Segment Index" %}
 
-## Merging
+Conveniently, [our index]({{ ds_url | append: "#index" }}) already stores the location of the top left corner of each tile. There's nothing extra needed to support relative addressing. We could consider using relative addressing within the index itself. When using a two level row index, we can use relative addressing in the lower level index chunks. If we limit each chunk to covering at most 4 million rows, we can halve the chunk size by using 32 bit indices. 
+
+On the query and load side, nothing needs to change. We transform the view query rectangle into the segment's coordinate space before using it to work out which tiles to load. 
+
+When writing a new segment we need to store the transform for any dependent segment somewhere. The segment index is the obvious place to put it. This is a straight forward extension to our existing [packaging ideas]({{ ds_url | append: "#packaging" }}). We can include the transform in the same chunk as other parts of the index, or if the transform gets big enough, break it out into a separate chunk.
+
+Just how big could a transform get? Imagine a 100 million row spreadsheet and we insert new rows between each existing row. That's a 100 million insert ranges to store. 
+
+The transform can be represented as four sorted lists of ranges: row inserts, row deletes, column inserts, column deletes. We can use the same principle as our row and column indices to store each list. Encode each range using a pair of integers. Break the list into multiple chunks if needed.
+
+Whether reverse transforming a query rectangle, or applying a transform to a loaded tile, we only need to use a small part of the transform. We're interested in how many rows/columns have been inserted/deleted above and to the left of a rectangle. We only care about detailed inserts and deletes within the rectangle. Can we encode the ranges in such a way that we don't have to iterate over them all?
+
+Let's look at a concrete example. We start with this simple spreadsheet.
+
+|   | A | B | C |
+|---|---|---|---|
+| 1 | Jan | Feb | Mar |
+| 2 | Apr | May | June | 
+| 3 | Jul | Aug | Sep | 
+| 4 | Oct | Nov | Dec | 
+
+Let's insert two rows before row 2, three rows before row 3 and one row before row 4.
+
+|   | A | B | C |
+|---|---|---|---|
+| 1 | Jan | Feb | Mar |
+| 2 | |  |  |
+| 3 | |  |  |
+| 4 | Apr | May | June | 
+| 5 | |  |  |
+| 6 | |  |  |
+| 7 | |  |  |
+| 8 | Jul | Aug | Sep | 
+| 9 | |  |  |
+| 10 | Oct | Nov | Dec | 
+
+The simplest way of encoding the transform is like an event log. A recipe to follow. 
+
+| Index | Num |
+| ----- | --- |
+| 2 | 2 |
+| 5 | 3 |
+| 9 | 1 |
+
+Notice how the coordinate system is changing under our feet. Once two rows have been inserted at 2, row 3 is now row 5. Similarly, once three rows have been inserted at 5, what was originally row 4 is now row 9. This encoding makes it very difficult to do anything apart from iterate through all the steps. If I have a rectangle covering rows 3 and 4 in the original spreadsheet, the first step shifts the rectangle to (5,6), the next shifts it to (8,9) and the last expands it to (8,10).
+
+Let's try encoding everything in the original coordinate system. We can still iterate through this and treat it as a list of instructions by keeping track of how many rows we've inserted so far and adding that to the stored index. 
+
+| Index | Num |
+| ----- | --- |
+| 2 | 2 |
+| 3 | 3 |
+| 4 | 1 |
+
+Now I can take my (3,4) rectangle and use binary chop to find the first entry inside the rectangle. I don't have to iterate through all the previous entries to find out that the transform makes my rectangle 1 row bigger. Unfortunately, I do need to iterate through them to find out that the transform shifts my rectangle 5 rows down. 
+
+Let's make one more change to our encoding. Instead of storing the number of rows to insert at each index, we store the total number of rows inserted to this point. I can determine the number of rows to insert at each step by subtracting the number stored in the previous entry.
+
+| Index | Total Num |
+| ----- | --- |
+| 2 | 2 |
+| 3 | 5 |
+| 4 | 6 |
+
+I can still use binary chop to find the first entry (4,6) inside my rectangle. However, now the previous entry (3,5) tells me that I need to shift my rectangle by a total of 5 rows. If I'm loading a tile, I can iterate through the entries inside the tile, applying the steps needed to transform it. 
+
+If I'm transforming a query rectangle, I don't need all the details. I only need to know how much bigger my query rectangle needs to be. I can use binary chop again to find the last entry inside the rectangle. Subtracting the first entry's total tells me how many rows were inserted inside the rectangle.
+
+So far we've considered row inserts in detail. However, a complete transform will include row deletes, column inserts and column deletes as well. Does that change anything? Rows and columns are independent so it doesn't matter what order we process them in. It does matter for deletes and inserts. Whichever one we process first will change the row/column identifiers that the second depends on. 
+
+The computer graphics analogy is helpful here again. A transform goes from coordinate space A to coordinate space B and is defined in terms of coordinate space A. A subsequent transform from coordinate space B to coordinate space C has to be defined in terms of coordinate space B. As long as you apply the transforms in the correct order, everything works out as expected.
+
+We can do the same with our insert and delete transforms. Define the order in which the transforms are applied. Let's say Delete first, so we minimize the amount of memory used when processing. That means the Delete transform is defined using the identifiers in the source segment, but the Insert transform is defined using the identifiers as they are *after* Delete has been applied.
+
+## Inverting a Transform
+
+Earlier on, I said that inverting a transform is just a matter of swapping inserts and deletes. That was an over simplification. A transform goes from coordinate space A to coordinate space B and is defined in terms of coordinate space A. That means the inverse transform goes from coordinate space B to coordinate space A and needs to be defined in terms of coordinate space B.
+
+Inverting composed transforms works just like computer graphics too. Our overall transform is Delete * Insert. The inverse is Insert<sup>-1</sup> * Delete<sup>-1</sup>. The inverse of an Insert is a Delete and vice versa, which means the result is still in the form of Delete followed by Insert.
+
+Let's go back to our simple example. We have an insert row transform which inserts rows before row 2, 3 and 4. Those rows move to 4, 8 and 10. The inverse of that transform is a delete row transform which deletes rows before row 4, 8 and 10. 
+
+Converting a transform from one coordinate space to another is simple enough. Iterate through keeping track of the total number of rows inserted or deleted. For an Insert, add that number to each index as you iterate. For a Delete, subtract it. 
+
+There's one problem with this. I came up with this funky encoding scheme so that we could use binary chop to find just the part of the transform we're interested in. We store the transform from one segment to another but we need to be able to transform things both ways. Inverting the transform we have to get the one we want means iterating through the whole thing. In which case, there's no point doing our fancy binary chop lookup. 
+
+Maybe we need to store both forward and reverse transforms? Which seems kind of wasteful. 
+
+No, we only need to store one. If we want the other one, we can convert it as we load it. Eventually, we will have some kind of caching system that decides which parts of the spreadsheet the client has loaded in-memory. We can load or calculate the transform we need when it is needed. Then let the caching system decide how long to keep and reuse it.
+
+## Next Time
+
+ All this and I still haven't got round to looking at segment merging. That will have to wait until next time. 
