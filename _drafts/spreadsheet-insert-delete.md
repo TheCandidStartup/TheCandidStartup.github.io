@@ -19,9 +19,14 @@ That's ridiculous, you might think. No one would use a database this way. Give t
 You absolutely could do that. That's what the many [Spreadsheet-Database hybrid]({{ fd_url | append: "#spreadsheet-database-hybrids" }}) products do. But then what you've built isn't a spreadsheet anymore.
 
 {% capture bb_url %}{% link _posts/2023-02-27-brainstorming-and-benchmarking.md %}{% endcapture %}
-I'm building a cloud native, serverless, highly scalable spreadsheet using [Event Sourcing]({{ bb_url | append: "#event-sourcing" }}) to store the sequence of operations applied to a spreadsheet. Every so often I'll create [snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) of the current spreadsheet state. I can then load the spreadsheet at any point in time by loading a snapshot and applying changes from that point on in the event log. 
+I'm building a cloud native, serverless, highly scalable spreadsheet using [Event Sourcing]({{ bb_url | append: "#event-sourcing" }}) to store the sequence of operations applied to a spreadsheet. Every so often I'll create [snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) of the current spreadsheet state. I can then load the spreadsheet at any point in time by loading a snapshot and applying changes from that point on in the event log.
 
 How does that work with Insert and Delete?
+
+{% capture note-content %}
+The rest of this post is going to build on ideas discussed in [Data Structures for Spreadsheet Snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}). You might want to refresh your memory before diving in.
+{% endcapture %}
+{% include candid-note.html content=note-content %}
 
 ## Event Sourcing
 
@@ -130,7 +135,9 @@ When writing a new segment we need to store the transform for any dependent segm
 
 Just how big could a transform get? Imagine a 100 million row spreadsheet and we insert new rows between each existing row. That's a 100 million insert ranges to store. 
 
-The transform can be represented as four sorted lists of ranges: row inserts, row deletes, column inserts, column deletes. We can use the same principle as our row and column indices to store each list. Encode each range using a pair of integers. Break the list into multiple chunks if needed.
+## Encoding the Transform
+
+The transform can be represented as four sorted lists of ranges: row inserts, row deletes, column inserts, column deletes. We can use the same principle as our row and column index to store each list. Encode each range using a pair of integers. Break the list into multiple chunks if needed.
 
 Whether reverse transforming a query rectangle, or applying a transform to a loaded tile, we only need to use a small part of the transform. We're interested in how many rows/columns have been inserted/deleted above and to the left of a rectangle. We only care about detailed inserts and deletes within the rectangle. Can we encode the ranges in such a way that we don't have to iterate over them all?
 
@@ -200,18 +207,18 @@ We can do the same with our insert and delete transforms. Define the order in wh
 
 Earlier on, I said that inverting a transform is just a matter of swapping inserts and deletes. That was an over simplification. A transform goes from coordinate space A to coordinate space B and is defined in terms of coordinate space A. That means the inverse transform goes from coordinate space B to coordinate space A and needs to be defined in terms of coordinate space B.
 
-Inverting composed transforms works just like computer graphics too. Our overall transform is Delete * Insert. The inverse is Insert<sup>-1</sup> * Delete<sup>-1</sup>. The inverse of an Insert is a Delete and vice versa, which means the result is still in the form of Delete followed by Insert.
-
-Let's go back to our simple example. We have an insert row transform which inserts rows before row 2, 3 and 4. Those rows move to 4, 8 and 10. The inverse of that transform is a delete row transform which deletes rows before row 4, 8 and 10. 
+Let's go back to our simple example. We have an insert row transform which inserts rows before row 2, 3 and 4. The inverse of that transform is a delete row transform which deletes rows starting from row 2, 5 and 9. 
 
 Converting a transform from one coordinate space to another is simple enough. Iterate through keeping track of the total number of rows inserted or deleted. For an Insert, add that number to each index as you iterate. For a Delete, subtract it. 
 
-There's one problem with this. I came up with this funky encoding scheme so that we could use binary chop to find just the part of the transform we're interested in. We store the transform from one segment to another but we need to be able to transform things both ways. Inverting the transform we have to get the one we want means iterating through the whole thing. In which case, there's no point doing our fancy binary chop lookup. 
+Inverting composed transforms works just like computer graphics too. Our overall transform is Delete * Insert. The inverse is Insert<sup>-1</sup> * Delete<sup>-1</sup>. The inverse of an Insert is a Delete and vice versa, which means the result is still in the form of Delete followed by Insert.
+
+There's one problem with this. I came up with this funky encoding scheme so that we could use binary chop to find just the part of the transform we're interested in. We store the transform from one segment to another but we need to be able to transform things both ways. Inverting the transform we have, to get the one we want, means iterating through the whole thing. In which case, what's the point of doing a fancy binary chop lookup? 
 
 Maybe we need to store both forward and reverse transforms? Which seems kind of wasteful. 
 
 No, we only need to store one. If we want the other one, we can convert it as we load it. Eventually, we will have some kind of caching system that decides which parts of the spreadsheet the client has loaded in-memory. We can load or calculate the transform we need when it is needed. Then let the caching system decide how long to keep and reuse it.
 
-## Next Time
+## Coming Up
 
  All this and I still haven't got round to looking at segment merging. That will have to wait until next time. 
