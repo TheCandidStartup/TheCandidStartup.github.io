@@ -73,7 +73,7 @@ At the end of this I was up to 200 GB of disk space used. Looks like I need a bi
 
 ### Run
 
-The moment of truth. Will it actually run? I started the debugger. The Unreal Editor splash screen appeared after a few seconds. The splash screen includes a progress line. It quickly got to 45% with the summary "Compiling Shaders (5500)", then "Compiling Shaders (5440)". And so on. For another five minutes. 
+The moment of truth. Will it actually run? I started the debugger. The Unreal Editor splash screen appeared after a few seconds. The splash screen includes a progress line. It quickly got to 45% with the summary "Compiling Shaders (6061)...", then "Compiling Shaders (6051)...". And so on. For another five minutes. 
 
 Finally, its running. Quick check on memory shows Visual Studio using 4.5 GB and Unreal Editor 5 GB. With no project loaded. Yes, I definitely need more memory. 
 
@@ -83,7 +83,7 @@ This solution has 74 projects. Luckily, 73 are from core Unreal Engine and they'
 
 The standard build configuration for this project is also "*Development Editor*". I've just built a version of my project with an integrated development editor. I run it and the editor launches. What's this?
 
-"Compiling Shaders (5500)", "Compiling Shaders (5440)", ...
+"Compiling Shaders (6061)...", "Compiling Shaders (6051)...", "Compiling Shaders (6041)...", ...
 
 That's enough for now. I've got Unreal Engine built. Next, I need to understand the workflow and find out what is going on with all those shaders.
 

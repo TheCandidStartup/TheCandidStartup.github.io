@@ -185,7 +185,7 @@ Let's try encoding everything in the original coordinate system. We can still it
 
 Now I can take my (3,4) rectangle and use binary chop to find the first entry inside the rectangle. I don't have to iterate through all the previous entries to find out that the transform makes my rectangle 1 row bigger. Unfortunately, I do need to iterate through them to find out that the transform shifts my rectangle 5 rows down. 
 
-Let's make one more change to our encoding. Instead of storing the number of rows to insert at each index, we store the total number of rows inserted to this point. I can determine the number of rows to insert at each step by subtracting the number stored in the previous entry.
+Let's make one more change to our encoding. Instead of storing the number of rows to insert at each index, we store the total number of rows inserted to this point. I can still determine the number of rows to insert at each step by subtracting the number stored in the previous entry.
 
 | Index | Total Num |
 | ----- | --- |
@@ -193,11 +193,13 @@ Let's make one more change to our encoding. Instead of storing the number of row
 | 3 | 5 |
 | 4 | 6 |
 
-I can still use binary chop to find the first entry (4,6) inside my rectangle. However, now the previous entry (3,5) tells me that I need to shift my rectangle by a total of 5 rows. If I'm loading a tile, I can iterate through the entries inside the tile, applying the steps needed to transform it. 
+As before, I can use binary chop to find the first entry (4,6) inside my rectangle. However, now the previous entry (3,5) tells me that I need to shift my rectangle by a total of 5 rows. If I'm loading a tile, I can iterate through the entries inside the tile, applying the steps needed to transform it. 
 
 If I'm transforming a query rectangle, I don't need all the details. I only need to know how much bigger my query rectangle needs to be. I can use binary chop again to find the last entry inside the rectangle. Subtracting the first entry's total tells me how many rows were inserted inside the rectangle.
 
-So far we've considered row inserts in detail. However, a complete transform will include row deletes, column inserts and column deletes as well. Does that change anything? Rows and columns are independent so it doesn't matter what order we process them in. It does matter for deletes and inserts. Whichever one we process first will change the row/column identifiers that the second depends on. 
+So far we've considered row inserts in detail. However, a complete transform will include row deletes, column inserts and column deletes as well. Does that change anything? 
+
+Rows and columns are independent so it doesn't matter what order we process them in. It does matter for deletes and inserts. Whichever one we process first, will change the row/column identifiers that the second depends on. 
 
 The computer graphics analogy is helpful here again. A transform goes from coordinate space A to coordinate space B and is defined in terms of coordinate space A. A subsequent transform from coordinate space B to coordinate space C has to be defined in terms of coordinate space B. As long as you apply the transforms in the correct order, everything works out as expected.
 
@@ -205,7 +207,7 @@ We can do the same with our insert and delete transforms. Define the order in wh
 
 ## Inverting a Transform
 
-Earlier on, I said that inverting a transform is just a matter of swapping inserts and deletes. That was an over simplification. A transform goes from coordinate space A to coordinate space B and is defined in terms of coordinate space A. That means the inverse transform goes from coordinate space B to coordinate space A and needs to be defined in terms of coordinate space B.
+Earlier on, I said that inverting a transform is just a matter of swapping inserts and deletes. That was a slight over simplification. A transform goes from coordinate space A to coordinate space B and is defined in terms of coordinate space A. That means the inverse transform goes from coordinate space B to coordinate space A and needs to be defined in terms of coordinate space B.
 
 Let's go back to our simple example. We have an insert row transform which inserts rows before row 2, 3 and 4. The inverse of that transform is a delete row transform which deletes rows starting from row 2, 5 and 9. 
 
@@ -213,7 +215,7 @@ Converting a transform from one coordinate space to another is simple enough. It
 
 Inverting composed transforms works just like computer graphics too. Our overall transform is Delete * Insert. The inverse is Insert<sup>-1</sup> * Delete<sup>-1</sup>. The inverse of an Insert is a Delete and vice versa, which means the result is still in the form of Delete followed by Insert.
 
-There's one problem with this. I came up with this funky encoding scheme so that we could use binary chop to find just the part of the transform we're interested in. We store the transform from one segment to another but we need to be able to transform things both ways. Inverting the transform we have, to get the one we want, means iterating through the whole thing. In which case, what's the point of doing a fancy binary chop lookup? 
+There's one problem with this. I came up with this funky encoding so that we could use binary chop to find just the part of the transform we're interested in. We store the transform from one segment to another but we need to be able to transform things both ways. Inverting the transform we have, to get the one we want, means iterating through the whole thing. In which case, what's the point of doing a fancy binary chop lookup? 
 
 Maybe we need to store both forward and reverse transforms? Which seems kind of wasteful. 
 
