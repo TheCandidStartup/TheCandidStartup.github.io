@@ -117,6 +117,6 @@ Nothing is blocked while a snapshot is being created. You can carry on making ch
 
 With the original approach we have to write the entire spreadsheet on each save to ensure consistency of each version. With this approach the event log is the source of truth. Once records are written they are immutable. That opens up all kinds of options for creating snapshots that reuse the unmodified parts of earlier snapshots. As each snapshot is consistent we can use incremental recalculation of formulas. We can store intermediate results from partial evaluation of formulas in the snapshot to support incremental recalculation of formulas like `average`.
 
-I think we have a winner. Or at least something that clears the initial bar. We need to go to the next level of detail to see if it continues to stand up. Next time, we'll dive deeper into the different options for how we structure snapshots. 
+I think we have a winner. Or at least something that clears the initial bar. We need to go to the next level of detail to see if it continues to stand up. Next time, we'll dive deeper into the different options for how we [structure snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}). 
 
 ## Footnotes

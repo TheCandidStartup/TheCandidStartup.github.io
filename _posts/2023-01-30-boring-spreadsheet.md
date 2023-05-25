@@ -92,4 +92,4 @@ What's the most amount of work I can trigger with a simple change? Try editing q
 
 What about the distinct idiom? At a minimum I need to fail gracefully if I encounter *O(n<sup>2</sup>)* (or worse) formulas that can't be calculated in a reasonable time. My spreadsheet certainly can't hang while it racks up a ridiculous AWS bill. Long term, I need to come up with some way for users to achieve common tasks like this at scale. 
 
-Coming up next time: let's brainstorm some ideas and benchmark them against our test cases.
+Coming up next time: let's [brainstorm some ideas and benchmark them]({% link _posts/2023-02-27-brainstorming-and-benchmarking.md %}) against our test cases.

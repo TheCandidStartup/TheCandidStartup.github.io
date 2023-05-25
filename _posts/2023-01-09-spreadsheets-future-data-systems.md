@@ -82,7 +82,7 @@ To scale the number of users we need granular, attribute based permissions. We n
 
 An ordering constraint could be presented as the ability to lock sorted columns so that the order is maintained. A uniqueness constraint is a simple property of a column or set of columns. Combine the two and you have the basic functionality of a database. Use an array formula to copy data to another sheet with a different sort and you have a secondary index. Squint hard enough and this looks like the unbundling of databases that Martin Kleppmann was talking about as the future of data systems.
 
-So, that's the vision. Where do we start? That will have to wait for next time. 
+So, that's the vision. Where do we start? That will have to wait for [next time]({% link _posts/2023-01-30-boring-spreadsheet.md %}). 
 
 # Footnotes
 

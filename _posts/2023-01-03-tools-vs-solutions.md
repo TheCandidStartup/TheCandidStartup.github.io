@@ -50,4 +50,4 @@ A feature team on a solution targets a specific persona working in a specific in
 
 I'm going to build a spreadsheet.
 
-At this point you might very reasonably point out that Google and Microsoft have a bit of a head start when it comes to cloud based spreadsheets. Which is why next time I'll tell you what will make mine different.
+At this point you might very reasonably point out that Google and Microsoft have a bit of a head start when it comes to cloud based spreadsheets. Which is why [next time]({% link _posts/2023-01-09-spreadsheets-future-data-systems.md %}) I'll tell you what will make mine different.
