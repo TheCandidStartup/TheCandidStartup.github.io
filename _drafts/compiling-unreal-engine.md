@@ -57,7 +57,7 @@ I opened up the solution and had a look around. 132 projects. A single UE5 proje
 
 I'm used to working on projects with two configurations: *Debug* and *Release*. If you're all fancy you might have another rarely used configuration for profiling. 
 
-Unreal Engine has [18 configurations](https://docs.unrealengine.com/5.2/en-US/build-configurations-reference-for-unreal-engine/). The configuration names are so long the Visual Studio setup instructions tell you how to customize the toolbar to make the configuration drop down wider. Each configuration is a combination of a build state (*Debug*, *DebugGame*, *Development*, *Shipping*, *Test*) and build target (*Game*, *Editor*, *Client*, *Server*). 
+Unreal Engine has [18 configurations](https://docs.unrealengine.com/5.2/en-US/build-configurations-reference-for-unreal-engine/). The configuration names are so long, the Visual Studio setup instructions tell you how to customize the toolbar to make the configuration drop down wider. Each configuration is a combination of a build state (*Debug*, *DebugGame*, *Development*, *Shipping*, *Test*) and build target (*Game*, *Editor*, *Client*, *Server*). 
 
 *Development* is the default build state. It includes basic optimizations for reasonable performance but is still somewhat debuggable and has development tools enabled. *Editor* is the default target. 
 
