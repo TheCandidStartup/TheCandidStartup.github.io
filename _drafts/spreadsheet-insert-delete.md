@@ -10,11 +10,13 @@ The thing that breaks the easy analogy is when you start thinking about row keys
 
 {% include candid-image.html src="/assets/images/boring-spreadsheet.png" alt="The World's Most Boring Spreadsheet" %}
 
-Row keys are consecutive integers. Column identifiers are alphabetical codes, effectively consecutive base 26 integers. What happens if you insert a new row at the beginning of the spreadsheet? All the other rows move down one place to make room. All the other rows now have a different row key. What happens if you insert a new column at the beginning of the row? All the other columns move right one place to make room. All the other columns now have a different column identifier. Delete is similar with the remaining rows and columns moving the other way.
+Row keys are consecutive integers. Column identifiers are alphabetical codes, effectively consecutive base 26 integers. What happens if you insert a new row at the beginning of the spreadsheet? All the other rows move down one place to make room. All the other rows now have a different row key. 
+
+What happens if you insert a new column at the beginning of the row? All the other columns move right one place to make room. All the other columns now have a different column identifier. Delete is similar with the remaining rows and columns moving the other way.
 
 Think about what would happen if you implemented your spreadsheet as a database. Insert and Delete could result in rewriting every row in the database. 
 
-That's ridiculous, you might think. No one would use a database this way. Give the columns meaningful identifiers rather than letters. They're right there in the first row of the spreadsheet. Use a value from one of the other columns as a row key, or if they're not unique, add a GUID. Use a string if you need to support an explicit order, that way you can always come up with a new key between any pair of existing keys. 
+That's ridiculous, you might think. No one would use a database this way. Give the columns meaningful identifiers rather than letters. They're right there in the first row of your example spreadsheet. Use a value from one of the other columns as a row key, or if they're not unique, add a GUID. Use a string if you need to support an explicit order, that way you can always come up with a new key between any pair of existing keys. 
 
 You absolutely could do that. That's what the many [Spreadsheet-Database hybrid]({{ fd_url | append: "#spreadsheet-database-hybrids" }}) products do. But then what you've built isn't a spreadsheet anymore.
 
@@ -127,11 +129,13 @@ We can simplify the loading process and reduce the size of each tile by using re
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/segment-index.svg" alt="Segment Index" %}
 
-Conveniently, [our index]({{ ds_url | append: "#index" }}) already stores the location of the top left corner of each tile. There's nothing extra needed to support relative addressing. We could consider using relative addressing within the index itself. When using a two level row index, we can use relative addressing in the lower level index chunks. If we limit each chunk to covering at most 4 million rows, we can halve the chunk size by using 32 bit indices. 
+Conveniently, [our index]({{ ds_url | append: "#index" }}) already stores the location of the top left corner of each tile. There's nothing extra needed to support relative addressing. 
+
+We could also consider using relative addressing within the index itself. When using a two level row index, we can use relative addressing in the lower level index chunks. If we limit each chunk to covering at most 4 million rows, we can halve the chunk size by using 32 bit indices. 
 
 On the query and load side, nothing needs to change. We transform the view query rectangle into the segment's coordinate space before using it to work out which tiles to load. 
 
-When writing a new segment we need to store the transform for any dependent segment somewhere. The segment index is the obvious place to put it. This is a straight forward extension to our existing [packaging ideas]({{ ds_url | append: "#packaging" }}). We can include the transform in the same chunk as other parts of the index, or if the transform gets big enough, break it out into a separate chunk.
+When writing a new segment, we need to store the transform for any dependent segment somewhere. The segment index is the obvious place to put it. This is a straight forward extension to our existing [packaging ideas]({{ ds_url | append: "#packaging" }}). We can include the transform in the same chunk as other parts of the index, or if the transform gets big enough, break it out into a separate chunk.
 
 Just how big could a transform get? Imagine a 100 million row spreadsheet and we insert new rows between each existing row. That's a 100 million insert ranges to store. 
 
