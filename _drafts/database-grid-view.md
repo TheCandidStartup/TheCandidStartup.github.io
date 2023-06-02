@@ -48,16 +48,22 @@ GitHub projects has some pretty sane limits. In the worst case an issue requires
 
 Text is displayed and edited using a single line entry box, so in practice you're unlikely to get anywhere close to the worst case size.
 
-With limits like these, you have the option of implementing everything client side. When the user opens a project, download everything that can appear in the grid. If necessary, all 1200 rows and 50 columns. If we assume a minimum of ADSL broadband at 10Mbps, then the absolute worst case is 60 seconds to open the project. If you look at a more realistic configuration with 10 fields and 100 bytes per field it will take about a second. 
+With limits like these, you have the option of implementing everything client side. When the user opens a project, download everything that can appear in the grid. If necessary, all 1200 rows and 50 columns. If we assume a minimum of ADSL broadband at 10Mbps, then the absolute worst case is 60 seconds to open the project. If you look at a more realistic configuration with 10 fields and 100 bytes per field it will take about a second for 1200 issues.
 
 The data fits very comfortably in memory on even the most constrained client. You can load it all into your grid control and let the user scroll through it. Your users can sort and filter to their heart's content with instant response times. 
 
 On the database side, you can represent the data pretty much however you want. You need to be able to create, update and query individual issues. The one requirement is that you have an index on project id so that you can efficiently query for all the issues on a project. You could even use a composite primary key of project id and issue id. Then you don't need a secondary index at all. 
 
-How is this actually implemented in GitHub? GitHub uses server side rendering. When you open the URL for the project, the html document returned includes the complete set of issues inline. Everything else happens client side.
+How is this actually implemented in GitHub? 
+
+GitHub uses server side rendering. When you open the URL for the project, the html document returned includes the complete set of issues inline. Everything else happens client side.
 
 ## The Hard Way
 
-Unfortunately for me, the systems I've worked on had limits that were considerably less sane. The PM grudgingly agreed to a limit of 100,000 items in a project. Although they reserved the right to increase that limit if customers demanded it. We had text, number, data and enum fields too. With a limit of 100 fields of *each* type. 
+Unfortunately for me, the systems I've worked on had limits that were considerably less sane. The PMs grudgingly agreed to a limit of 100,000 items in a project. Although they reserved the right to increase that limit if customers demanded it. We had text, number, data and enum fields too. With a limit of 100 fields of *each* type. 
 
-How do you implement something like this? I've seen lots of different approaches over the years. Next time, we'll look at the first of them. 
+Over the years I've worked with multiple teams that have implemented variations of this feature. The forms and collections of forms have different names. The bits of workflow that connect everything together are specific to each feature. However, the core of each feature is always the same. A grid view over a collection of forms.
+
+The teams differed in their preferred language stacks, their level of maturity, and their experience with databases. I've seen a variety of patterns and anti-patterns come and go. Now I'm going to share what I've learnt with you.
+
+Next time, we'll kick things off with the classic Normalized Relational Database pattern.
