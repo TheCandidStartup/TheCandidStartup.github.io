@@ -51,7 +51,7 @@ As we saw [last time]({{ ds_url | append: "#segments" }}), maintaining single se
 
 Let's say we're loading snapshot 3. It consists of two segments. One created by and shared with snapshot 2 and one covering a later part of the event log created by snapshot 3. 
 
-Now things start to get interesting. What happens if there were inserts and/or deletes in the part of the event log captured by segment 3? 
+Now things start to get interesting. What happens if there were inserts and/or deletes in the part of the event log captured by segment 3? What impact does that have on loading segment 2 and overlaying segment 3?
 
 Let's look at a concrete example. We have an initial event log starting to populate an empty spreadsheet.
 
@@ -197,7 +197,7 @@ Let's make one more change to our encoding. Instead of storing the number of row
 | 3 | 5 |
 | 4 | 6 |
 
-As before, I can use binary chop to find the first entry (4,6) inside my rectangle. However, now the previous entry (3,5) tells me that I need to shift my rectangle by a total of 5 rows. If I'm loading a tile, I can iterate through the entries inside the tile, applying the steps needed to transform it. 
+As before, I can use [binary chop](https://en.wikipedia.org/wiki/Binary_search_algorithm) to find the first entry (4,6) inside my rectangle. However, now the previous entry (3,5) tells me that I need to shift my rectangle by a total of 5 rows. If I'm loading a tile, I can iterate through the entries inside the tile, applying the steps needed to transform it. 
 
 If I'm transforming a query rectangle, I don't need all the details. I only need to know how much bigger my query rectangle needs to be. I can use binary chop again to find the last entry inside the rectangle. Subtracting the first entry's total tells me how many rows were inserted inside the rectangle.
 
