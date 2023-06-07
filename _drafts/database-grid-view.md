@@ -52,11 +52,11 @@ With limits like these, you have the option of implementing everything client si
 
 The data fits very comfortably in memory on even the most constrained client. You can load it all into your grid control and let the user scroll through it. Your users can sort and filter to their heart's content with instant response times. 
 
-On the database side, you can represent the data pretty much however you want. You need to be able to create, update and query individual issues. The one requirement is that you have an index on project id so that you can efficiently query for all the issues on a project. You could even use a composite primary key of project id and issue id. Then you don't need a secondary index at all. 
+On the database side, you can represent the data pretty much however you want. You need to be able to create, update and query individual issues. The one requirement is that you have an index on project id so that you can efficiently query for all the issues on a project. 
 
 How is this actually implemented in GitHub? 
 
-GitHub uses server side rendering. When you open the URL for the project, the html document returned includes the complete set of issues inline. Everything else happens client side.
+GitHub uses [server side rendering](https://www.debugbear.com/blog/server-side-rendering). When you open the URL for the project, the html document returned includes the complete set of issues inline. Everything else happens client side.
 
 ## The Hard Way
 
