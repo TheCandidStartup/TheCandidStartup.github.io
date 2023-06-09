@@ -7,7 +7,7 @@ You're building a full stack application that enables teams of people to do ... 
 
 There are probably lots of different types of forms relevant to the different phases of doing something. Each form has a distinct set of fields. If you're doing anything even vaguely enterprisey, the set of fields will be customizable.
 
-There are so many forms that they need to be organized into collections of related forms. You might have a set of forms related to a particular project, or a particular person or thing. Maybe you have so many collections that you need collections of collections too. If you're building a multi-tenant application you have another level of hierarchy on top.
+There are so many forms that they need to be organized into collections of related forms. You might have a set of forms related to a particular project, or a particular person or thing. Maybe you have so many collections that you need collections of collections too. If you're building a [multi-tenant](https://en.wikipedia.org/wiki/Multitenancy) application you have another level of hierarchy on top.
 
 The heart of your application is a GUI that lets you navigate to a particular collection of forms displayed in a grid view. From here you can sort and filter, display a selected form in an editor, or fill out a new form. 
 
@@ -60,7 +60,7 @@ GitHub uses [server side rendering](https://www.debugbear.com/blog/server-side-r
 
 ## The Hard Way
 
-Unfortunately for me, the systems I've worked on had limits that were considerably less sane. The PMs grudgingly agreed to a limit of 100,000 items in a project. Although they reserved the right to increase that limit if customers demanded it. We had text, number, data and enum fields too. With a limit of 100 fields of *each* type. 
+Unfortunately for me, the systems I've worked on had limits that were considerably less sane. The PMs grudgingly agreed to a limit of 100,000 items in a project. Although they reserved the right to increase that limit if customers demanded it. We had text, number, data and enum custom fields too. With a limit of 100 fields of *each* type. 
 
 Over the years I've worked with multiple teams that have implemented variations of this feature. The forms and collections of forms have different names. The bits of workflow that connect everything together are specific to each feature. However, the core of each feature is always the same. A grid view over a collection of forms.
 
