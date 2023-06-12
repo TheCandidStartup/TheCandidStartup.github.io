@@ -60,7 +60,7 @@ GitHub uses [server side rendering](https://www.debugbear.com/blog/server-side-r
 
 ## The Hard Way
 
-Unfortunately for me, the systems I've worked on had limits that were considerably less sane. The PMs grudgingly agreed to a limit of 100,000 items in a project. Although they reserved the right to increase that limit if customers demanded it. We had text, number, data and enum custom fields too. With a limit of 100 fields of *each* type. 
+Unfortunately for me, the systems I've worked on had limits that were considerably less sane. The PMs grudgingly agreed to a limit of 100,000 items in a project. Although they reserved the right to increase that limit if customers demanded it. We had text, number, date and enum custom fields too. With a limit of 100 fields of *each* type. 
 
 Over the years I've worked with multiple teams that have implemented variations of this feature. The forms and collections of forms have different names. The bits of workflow that connect everything together are specific to each feature. However, the core of each feature is always the same. A grid view over a collection of forms.
 
