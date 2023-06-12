@@ -11,7 +11,7 @@ To the sceptic, a normalized database is a design that divides the data into as 
 
 Here's a basic data model for the GitHub Project Issues example of a Grid View that we looked at [last time]({% link _posts/2023-06-12-database-grid-view.md %}). The image is from the [Postgres](https://www.postgresql.org/) database [ERD design tool](https://www.pgadmin.org/docs/pgadmin4/development/erd_tool.html). We're starting off simple. No custom fields and only a handful of hard coded fields. I'll be using Postgres for my examples, but the same basic principles apply to any relational database.
 
-## Basic Schema
+## Schema
 
 There are three tables: tenant, project and issue. There is a 1:many relationship between tenants and projects, and another between projects and issues, each enforced by a [foreign key constraint](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-FK). Each entity has a name and an id. That's it for tenants and projects. 
 
