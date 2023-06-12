@@ -9,7 +9,7 @@ To the sceptic, a normalized database is a design that divides the data into as 
 
 {% include candid-image.html src="/assets/images/databases/tenant-project-issue.png" alt="Tenant-Project-Issue data model" %}
 
-Here's a basic data model for the GitHub Project Issues example of a Grid View that we looked at [last time]({% link _drafts/database-grid-view.md %}). The image is from the [Postgres](https://www.postgresql.org/) database [ERD design tool](https://www.pgadmin.org/docs/pgadmin4/development/erd_tool.html). I'll be using Postgres for my examples but the same basic principles apply to any relational database.
+Here's a basic data model for the GitHub Project Issues example of a Grid View that we looked at [last time]({% link _drafts/database-grid-view.md %}). The image is from the [Postgres](https://www.postgresql.org/) database [ERD design tool](https://www.pgadmin.org/docs/pgadmin4/development/erd_tool.html). We're starting off simple. No custom fields and only a handful of hard coded fields. I'll be using Postgres for my examples, but the same basic principles apply to any relational database.
 
 ## Basic Schema
 
@@ -33,7 +33,7 @@ The down side of a natural key is that changes in requirements can be hard to co
 
 In contrast, a surrogate key is entirely independent of the data being modelled. You need an extra column to store a surrogate key but in exchange you know that changes in business rules won't have any impact.
 
-Once you've decided to use a surrogate key, you need to decide what data type to use for the key. There are three choices: integer (32 bits), bigint (64 bits), or uuid (128 bits). With integer and bigint keys, the database system allocates a key for newly created data, usually [using a sequence counter](https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-identity-column/). 
+Once you've decided to use a surrogate key, you need to decide what data type to use for the key. There are three commmon choices: integer (32 bits), bigint (64 bits), or uuid (128 bits). With integer and bigint keys, the database system allocates a key for newly created data, usually [using a sequence counter](https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-identity-column/). 
 
 You may be tempted to start off with an integer key. Two thousand million rows seems like plenty. You can always change it later if your application is a massive success and you start to run out of ids.
 
@@ -51,6 +51,8 @@ Most systems I've worked with have used UUIDs and never regretted it.
 
 Let's make this more concrete by populating our tables with some sample data. To keep the samples readable I'm only showing the first 4 digits of each UUID, feel free to generate the other 28 digits yourself.
 
+### tenant
+
 | id | name |
 | --   | ---- |
 | 0807 | ACME Engineering |
@@ -58,12 +60,16 @@ Let's make this more concrete by populating our tables with some sample data. To
 
 We have two customers for our issue tracking system, each with their own tenant. 
 
+### project
+
 | id | name | tenant |
 | --   | ---- | -|
 | 35e9 | Forth Rail Bridge | 0807 |
 | 7b7e | The Daily News | 3cc8 |
 
 Each of our tenants has a single project. The engineering company has a contract to maintain the Forth Rail bridge, while the media company is working on the launch of a new newspaper.
+
+### issue
 
 | id | name | project | num | state |
 |-|-|-|-|-|
@@ -265,4 +271,4 @@ If your PM insists on a richer set of functionality, you could consider a hybrid
 
 Hold on, the PM has just turned up. They're OK with single column sorting. What they really want is the ability to add custom fields to issues. Yes, the custom fields need to appear in the Grid View. Of course you need to be able to sort on them too.
 
-We'll look at that next time.
+We'll get started on that next time.

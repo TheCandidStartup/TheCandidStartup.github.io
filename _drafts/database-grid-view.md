@@ -17,7 +17,7 @@ Oh look, here's an example. This is a project in GitHub (the [NodeJS feature req
 
 This is a cloud application, so there's a database in the backend somewhere, with some app servers sitting between the client and the database. The grid is a view on the data in the database.
 
-The question that concerns us is how do you best implement something like this? What are the access patterns in the client? What sort of API do the app servers need to provide? Most importantly of all, how do you store and query the data so that your application is responsive and scalable?
+The question that concerns us is, how do you best implement something like this? What are the access patterns in the client? What sort of API do the app servers need to provide? Most importantly of all, how do you store and query the data so that your application is responsive and scalable?
 
 ## Limits
 
