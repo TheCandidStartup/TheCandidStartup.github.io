@@ -25,7 +25,7 @@ Issue is a little more interesting. As well as name and id we have an issue numb
 
 ## Keys
 
-The keen eyed amongst you will have noticed that I'm using UUID primary keys. The type of key you use is often a hotly contested debate. 
+The keen eyed amongst you will have noticed that I'm using UUID [primary keys](https://en.wikipedia.org/wiki/Primary_key). The type of key you use is often a hotly contested debate. 
 
 First off, do you use a [natural](https://en.wikipedia.org/wiki/Natural_key) or [surrogate](https://en.wikipedia.org/wiki/Surrogate_key) key? A natural key is one that already exists in the data you're modelling. For example, you could use name as a natural key for a tenant. A natural key imposes a uniqueness constraint on the data. If we used (project,num) as a natural composite key for the issue table, we wouldn't have needed to add a separate unique constraint.
 
@@ -87,7 +87,7 @@ What access patterns do we need to support? Obviously we need to support [CRUD](
 
 The interesting bit is querying collections of entities. I'm going to focus on issues within a project. The same concerns and solutions will apply to other collections like projects in a tenant. 
 
-The core query needs to retrieve issues in a specific project, ignoring those from other projects and tenants.
+The core query needs to retrieve issues in a specific project, ignoring those from other projects and tenants. You query a relational database by writing statements in [SQL](https://en.wikipedia.org/wiki/SQL).
 
 ```
 SELECT * FROM issue WHERE project = '7b7e';
@@ -136,7 +136,7 @@ SELECT * FROM issue WHERE project = '35e9' ORDER BY state ASC, num DESC OFFSET 2
 
 The problem is that the database literally implements OFFSET by skipping records. To query the last page of 100,000 records, the database will retrieve 100,000 records, discard the first 99,900 and then return the last 100. Retrieving all the data is at best an O(n<sup>2</sup>) operation, and frequently worse.
 
-The more scalable, but more complex and less flexible approach is Keyset Pagination. Instead of using offsets to define where each page starts, you use the value of the first record in the page. How do you know what the first record in each page will be? You look at the last record in the previous page and setup a query for whatever comes next. It's more complex because you have to adjust the query depending on what was on the previous page, it's less flexible because you have to iterate through the pages one by one. You can't jump directly to a desired page.
+The more scalable, but more complex and less flexible approach is Keyset Pagination. Instead of using offsets to define where each page starts, you use the value of the first record in the page. How do you know what the first record in each page will be? You look at the last record in the previous page and setup a query for whatever comes next. It's more complex because you have to adjust the query depending on what was on the previous page.  it's less flexible because you have to iterate through the pages one by one. You can't jump directly to a desired page.
 
 ```
 SELECT * FROM issue WHERE project = '35e9' ORDER BY num LIMIT 100;
@@ -172,7 +172,7 @@ It's easy to get started, once you've figured out how to ask the database for wh
 
 Never put a database query into production until you understand how the database will execute it. Fortunately, there's an easy way to find out. Stick the [EXPLAIN](https://www.postgresql.org/docs/15/using-explain.html) keyword before any query and the database query planner will tell you how it will be executed. The planner may decide to scan through all the rows in a table, looking for the one you want. It may use an index (if available) to find the rows you want more quickly. If you want sorted output, it may gather together all matching rows and sort them at the end, or use an index which already has the data you want sorted the way you want it. 
 
-If, like me, you're playing around with a schema using some toy examples, you need to be careful. The planner may decide to use a sequential scan instead of an index because there's not enough data to justify the overhead of an index lookup. With Postgres, you have [configuration parameters](https://www.postgresql.org/docs/current/runtime-config-query.html) that can be used to encourage the planner to use an index if possible. You can then understand how the database would scale to large data without having to create a large test data set.
+If, like me, you're playing around with a schema using some toy examples, you need to be careful. The planner may decide to use a sequential scan instead of an index because there's not enough data to justify the overhead of an index lookup. Postgres has [configuration parameters](https://www.postgresql.org/docs/current/runtime-config-query.html) that can be used to encourage the planner to use an index if possible. You can then understand how the database would scale to large data without having to create a large test data set.
 
 ```
 SET SESSION enable_seqscan=0;
