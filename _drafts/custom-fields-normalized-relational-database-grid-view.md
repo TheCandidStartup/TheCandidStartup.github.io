@@ -72,7 +72,7 @@ They've added start and end dates to two of their existing issues but haven't bo
 
 ## Access Patterns
 
-As before, I'm going to focus on querying issues within a project. The core query needs to retrieve issues in a specific project including custom field values for each issue. The simplest way of doing this is to use a [LEFT JOIN](https://www.postgresql.org/docs/current/tutorial-join.html) between the issue and date_attribute tables. Using a LEFT join ensures that we also return issues that don't have any attributes defined.
+As before, I'm going to focus on querying issues within a project. The core query needs to retrieve issues in a specific project including custom field values for each issue. The simplest way of doing this is to use a [LEFT JOIN](https://www.postgresql.org/docs/current/tutorial-join.html) between the issue and date_attribute tables. Using a left join ensures that we also return issues that don't have any attributes defined.
 
 ```
 SELECT * FROM issue LEFT JOIN date_attribute ON (data_attribute.issue = issue.id)
@@ -144,7 +144,7 @@ Nested Loop Left Join  (cost=0.44..29.08 rows=1 width=548)
       Index Cond: ((issue = issue.id) AND (attribute_definition = '882a'::uuid))
 ```
 
-The query plan uses a nested join of issue with date_attribute for the first custom attribute, with the result of that joined to date_attribute for the second custom attribute. As we're starting with the issue table, the planner can use the (project,num) index to find the required project and then iterate through issues in num order. For each join, the planner looks for attributes with the specified attribute definition and the current issue's issue id. There will be at most one such record which can be found using the primary key index on (issue,attribute_definition).
+The query plan uses a nested join of issue with date_attribute for the first custom attribute, with the result of that joined to date_attribute for the second custom attribute. As we're starting with the issue table, the database can use the (project,num) index to find the required project and then iterate through issues in num order. For each join, the database looks for attributes with the specified attribute definition and the current issue's issue id. There will be at most one such row which can be found using the primary key index on (issue,attribute_definition).
 
 If we have *k* custom fields, the cost to query a page is O(klogn) for *each* issue on the page, compared with O(logn) for the entire page with the original fixed fields query. Cost has increased by a large constant factor. There is some mitigation. Attributes are sorted by issue in the index. Queries for different attributes of the same issue should benefit greatly from the database's disk page cache. 
 
@@ -161,7 +161,7 @@ SELECT issue,
   FROM date_attribute GROUP BY issue;
 ```
 
-This query groups together the date attribute rows for each issue and aggregates them. A [CASE](https://www.postgresql.org/docs/15/functions-conditional.html#FUNCTIONS-CASE) statement is used to define the contents of each column by returning only values that match a specific attribute definition. Finally, the aggregate function MAX is used to combine the returned values for each column into one. The input to MAX in each case is a single value for the matching attribute and NULLs for the others.
+This query groups together the date attribute rows for each issue and aggregates them. A [CASE](https://www.postgresql.org/docs/15/functions-conditional.html#FUNCTIONS-CASE) statement is used to define the contents of each result column by returning only values that match a specific attribute definition. Finally, the aggregate function MAX is used to combine the returned values for each column into one. The input to MAX in each case is a single value for the matching attribute and NULLs for the others.
 
 The overall result is
 

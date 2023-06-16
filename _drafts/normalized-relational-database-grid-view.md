@@ -1,6 +1,6 @@
 ---
 title: Normalized Relational Database Grid View
-tags: databases cloud-architecture
+tags: databases
 ---
 
 Let me take you back to a time before [NoSQL](https://en.wikipedia.org/wiki/NoSQL), when [E.F. Codd's](https://en.wikipedia.org/wiki/Edgar_F._Codd) [relational rules](https://en.wikipedia.org/wiki/Codd%27s_12_rules) and [normal forms](https://en.wikipedia.org/wiki/Database_normalization) were the last word in database design. Data was modelled logically, without redundant duplication, with integrity enforced by the database. 
