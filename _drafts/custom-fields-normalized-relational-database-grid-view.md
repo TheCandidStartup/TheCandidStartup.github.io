@@ -3,7 +3,7 @@ title: Custom Fields with a Normalized Relational Database
 tags: databases
 ---
 
-[Last time]({% link _drafts/normalized-relational-database-grid-view.md %}) we discovered that it's relatively easy to build a Grid View application using a Normalized Relational Database. True, it was a toy example with a small number of fixed fields. However, given some reasonable functional limitations, we showed how it could scale to manage large collections with 100,000 items or more. 
+[Last time]({% link _posts/2023-06-19-normalized-relational-database-grid-view.md %}) we discovered that it's relatively easy to build a Grid View application using a Normalized Relational Database. True, it was a toy example with a small number of fixed fields. However, given some reasonable functional limitations, we showed how it could scale to manage large collections with 100,000 items or more. 
 
 {% capture db_url %}{% link _posts/2023-06-12-database-grid-view.md %}{% endcapture %}
 Now we're going to up the ante, and add support for custom fields. The [requirements]({{ db_url | append: "#the-hard-way" }}) say we need to support multiple types of field (text, number, date, enum, ... ) and potentially hundreds of fields. Each project can have a different set of custom fields. 

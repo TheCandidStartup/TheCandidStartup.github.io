@@ -66,4 +66,4 @@ Over the years I've worked with multiple teams that have implemented variations 
 
 The teams differed in their preferred language stacks, their level of maturity, and their experience with databases. I've seen a variety of patterns and anti-patterns come and go. Now I'm going to share what I've learnt with you.
 
-Next time, we'll kick things off with the classic Normalized Relational Database pattern.
+Next time, we'll kick things off with the classic [Normalized Relational Database]({% link _posts/2023-06-19-normalized-relational-database-grid-view.md %}) pattern.
