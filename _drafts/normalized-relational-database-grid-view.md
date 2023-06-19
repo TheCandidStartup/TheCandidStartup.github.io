@@ -120,7 +120,7 @@ You will define an API. Doesn't matter what style you use, whether that's [REST]
 
 ## Pagination
 
-So far, so trivial. Remember the limits we defined last time. The PM would like us to support at least one hundred thousand issues per project. That's too many to load in one go. We need to [paginate](https://itnext.io/the-best-database-pagination-technique-is-530abf2aab51) the results from the database so we can retrieve them a manageable sized page at a time. 
+So far, so trivial. Remember the limits we defined last time. The PM would like us to support at least one hundred thousand issues per project. That's too many to load in one go. We need to [paginate](https://itnext.io/the-best-database-pagination-technique-is-530abf2aab51) the results from the database so we can retrieve them a manageable sized set at a time. 
 
 {% assign posts_page = site.pages | where: "ref", "blog" | first %}
 You need to choose an appropriate page size that balances load on the database, amount of data to transfer across the network and number of calls the client needs to make to get all the data. Somewhere between 50 and 500 items is typical. On the client side, old school apps will include explicit pages in their UI with Prev and Next buttons (just like the [posts]({{ posts_page.url | absolute_url }}) section of this blog). More modern apps will have some kind of [virtualized UI](https://www.kirupa.com/hodgepodge/ui_virtualization.htm), where more issues are loaded as you scroll down the grid view. 
@@ -134,9 +134,9 @@ SELECT * FROM issue WHERE project = '35e9' ORDER BY state ASC, num DESC OFFSET 2
 ...
 ```
 
-The problem is that the database literally implements OFFSET by skipping records. To query the last page of 100,000 records, the database will retrieve 100,000 records, discard the first 99,900 and then return the last 100. Retrieving all the data is at best an O(n<sup>2</sup>) operation, and frequently worse.
+The problem is that the database literally implements OFFSET by skipping records. To query the last page of 100,000 records, the database will retrieve 100,000 records, discard the first 99,900 and then return the last 100. Retrieving all the pages is at best an O(n<sup>2</sup>) operation, and frequently worse.
 
-The more scalable, but more complex and less flexible approach is Keyset Pagination. Instead of using offsets to define where each page starts, you use the value of the first record in the page. How do you know what the first record in each page will be? You look at the last record in the previous page and setup a query for whatever comes next. It's more complex because you have to adjust the query depending on what was on the previous page.  it's less flexible because you have to iterate through the pages one by one. You can't jump directly to a desired page.
+The more scalable, but more complex and less flexible approach is Keyset Pagination. Instead of using offsets to define where each page starts, you use the value of the first record in the page. How do you know what the first record in each page will be? You look at the last record in the previous page and setup a query for whatever comes next. It's more complex because you have to adjust the query depending on what was on the previous page. It's less flexible because you have to iterate through the pages one by one. You can't jump directly to a desired page.
 
 ```
 SELECT * FROM issue WHERE project = '35e9' ORDER BY num LIMIT 100;
@@ -145,7 +145,7 @@ SELECT * FROM issue WHERE project = '35e9' AND num > 205 ORDER BY num LIMIT 100;
 ...
 ```
 
-In this example we're sorting and paginating by num. Issue num is unique within a project so the query for the next page is greater than the last value on the previous page. There may be gaps where issues have been deleted, so even in this case you have to iterate through the pages one by one. 
+In this example we're sorting and paginating by num. Issue num is unique within a project so the query for the next page is for something greater than the last value on the previous page. There may be gaps where issues have been deleted, so even in this case you have to iterate through the pages one by one. 
 
 If you're sorting on a column that isn't unique, like state, keyset pagination is more complex. How do you handle the case where the range of duplicate values crosses a page boundary? The simplest solution is to also sort on another column that is unique, and gives an order that makes sense to the user.
 
