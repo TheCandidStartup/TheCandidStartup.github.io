@@ -48,17 +48,39 @@ We can use pretty much the same algorithm when choosing stripe boundaries for a 
 
 ## Putting it all together
 
-We don't have to work out all the stripe boundaries before we start merging. Once we've decided on a stripe boundary, we can run the merge algorithm for that stripe, then decide what width the next stripe needs to be. 
+We don't have to work out all the stripe boundaries before we start merging. Once we've decided on a stripe boundary, we can run the merge algorithm for that stripe, then decide what width the next stripe needs to be. This approach minimizes the size of the in-memory working set.
 
-This approach minimizes the size of the in-memory working set and reduces the chances of having to load the same tile twice.
-* Input/Output widths not aligned mean input tiles may be accessed by multiple output stripes
-* Need a caching system
-* Where at least one input segment and output are in same coordinate system, could first try using the existing input width as the output width
+The output stripe boundaries may not align with the input stripe boundaries (as shown in the diagrams above), which may not align with each other (due to the impact of inserts and deletes). The same input tile may need to be accessed by multiple stripes. We'll need a caching system that will try and hold on to tiles that will be needed again. However, we may still end up having to eject tiles from memory and then load them again later.
 
-Index needs to be written out incrementally too
-* Accumulate row index down each stripe
-* Once you have 1.5 chunks worth of data, can start outputting as you go
-* Need to hold onto the first tile's data in memory as may need to embed the index and other meta-data into the first chunk
+We prefer fixed width stripes where possible. There are also benefits with fixed height tiles. We're trying to write out chunks that are between 0.5 MB and our ideal chunk size of 1 MB. We can use a similar algorithm to the one used to pick stripe width. If there's a power of two number of rows that has a size in our desired range use that. Use the same number of rows for the next tile if possible, if not try the next power of 2, otherwise binary chop to a size that works.
+
+## Chunk Format
+
+* May pack multiple parts into a chunk (reuse picture)
+* Use ZIP format (or something functionally equivalent), get compression thrown in
+* Single part chunk has same name as the part contained.
+* Composite chunks are numbered 0,1,2,3,.. (with some appropriate fixed prefix)
+* The entry point for a segment is a small JSON manifest which is always stored in composite chunk 0. 
+
+## Writing the index
+
+We also need to make sure we can write the index incrementally rather than buffering it all in memory and writing it out at the end. [Depending on index size]({{ ds_url | append: "#packaging" }}) we may be able to embed it in the same chunk as the first tile, store the whole thing in a dedicated chunk, or break it into multiple chunks. We need to make that choice on the fly, as we write out the segment. 
+
+We need to keep the first tile in memory, rather than writing it out immediately, until we know whether we want to embed the index or any other metadata in the same chunk. We accumulate the column and row index structures in memory as we process and write out tiles for each stripe. If the accumulated row index data becomes larger than 1.5 chunks worth, we can start outputting dedicated row index parts.
+* If the accumulated row index data is all from the same stripe, we will need multiple single part chunks for that stripe. Write out a chunks worth. 
+* If the accumulated data up to the end of the first stripe is bigger than half a chunk, write it out as single part chunks (using one or two chunks as needed).
+* If the accumulated data contains multiple complete stripes bigger than half a chunk, write them out as a composite chunk, one part per stripe.
+* Otherwise we must have one or more complete stripes totalling less than half a chunk followed by more than a chunks worth of partial data all from the same stripe. Write out the complete stripes and enough partial data to make up a chunks worth as a composite chunk.
+* Rinse and repeat.
+
+
+## Part Format
+
+* Index parts use a naming convention that identifies the spreadsheet rectangle the part covers. Content is written out using relative addressing.
+* Then use an index at the next level up that specifies the layout of the parts. Can use same representation as index of tiles, except triples rather than doubles per entry. The extra value specifies the number of the chunk that contains the part (0 means its in a single part chunk).
+* Don't need any kind of map for single part chunks as can use naming convention to work out which chunk to load. 
+* Could use numbered chunk even for single part chunks. However, storing 0 and relying on naming convention should compress better? Worth complexity?
+* ??? Need something to connect row indexes to column index. Once I've worked out which stripe I want, how do I find where root of row index is?
 
 ## Merging Transforms
 
