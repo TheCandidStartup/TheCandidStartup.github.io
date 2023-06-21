@@ -11,6 +11,11 @@ As you create more snapshots you need to periodically merge segments together fo
 
 The problem is that as spreadsheets grow in size, snapshots can become arbitrarily large. Using power of two sized snapshots, the largest snapshot will be half the size of the entire spreadsheet. Too big to fit in memory with the size of spreadsheet that I want to support. We need to come up with an [external memory algorithm](https://en.wikipedia.org/wiki/External_memory_algorithm) for merging. 
 
+{% capture note-content %}
+The rest of this post is going to build on ideas discussed in [Data Structures for Spreadsheet Snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) and [Making Spreadsheet Snapshots work with Insert and Delete]({% link _posts/2023-06-05-spreadsheet-insert-delete.md %}). You might want to refresh your memory before diving in.
+{% endcapture %}
+{% include candid-note.html content=note-content %}
+
 ## Merge Algorithm
 
 In principle, this should still be easy. We've gone to a lot of effort to break segments up into tiles that can be independently loaded. That lets us load just the tiles that are needed to display the current view in a client. Divide the spreadsheet into rectangles that will fit in memory and iterate over them. For each rectangle load the tiles required and combine in memory, then write out as a new set of tiles.
@@ -56,37 +61,53 @@ We prefer fixed width stripes where possible. There are also benefits with fixed
 
 ## Chunk Format
 
-* May pack multiple parts into a chunk (reuse picture)
-* Use ZIP format (or something functionally equivalent), get compression thrown in
-* Single part chunk has same name as the part contained.
-* Composite chunks are numbered 0,1,2,3,.. (with some appropriate fixed prefix)
-* The entry point for a segment is a small JSON manifest which is always stored in composite chunk 0. 
+A small detour before we move on. Let's talk about the format we're going to use for [chunks]({{ ds_url | append: "#chunks" }}). 
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/package-single-chunk.svg" alt="Segment packaged into a single chunk" %}
+
+We've already identified a few cases where we need to pack multiple different parts of a segment into a chunk. We know we want to compress chunks. The simplest implementation is to use an existing archive format like [ZIP](https://en.wikipedia.org/wiki/ZIP_(file_format)), or [7z](https://en.wikipedia.org/wiki/7z). ZIP is the most [standard](https://www.iso.org/standard/60101.html) and widely supported format but doesn't support the latest compression codecs and isn't as optimized as newer formats. I'm going to start off with ZIP and maybe later consider other formats.
+
+A segment always has a "root" chunk. The root chunk includes a small JSON manifest which defines segment format version and structure, including the location of the index, transform and any dependent segment. These parts (and any other parts and tiles that they reference) may be embedded in the root chunk or stored externally in additional chunks.
+
+Chunks within the overall structure that are statically known to always contain a single part have the same name as that part. Tiles are a good example. Tiles use a naming convention that allows the [segment index to implicitly reference them]({{ ds_url | append: "#index" }}). 
+
+Additional chunks that might contain multiple parts are identified by number: 1,2,3,... Any part referencing another part stored in a separate multi-part chunk needs to specify chunk number and part name. Chunk number 0 is reserved and can be used as needed to specify "part is in this chunk", "no chunk" or "empty chunk" as appropriate. 
 
 ## Writing the index
 
-We also need to make sure we can write the index incrementally rather than buffering it all in memory and writing it out at the end. [Depending on index size]({{ ds_url | append: "#packaging" }}) we may be able to embed it in the same chunk as the first tile, store the whole thing in a dedicated chunk, or break it into multiple chunks. We need to make that choice on the fly, as we write out the segment. 
+We also need to make sure we can write the [index]({{ ds_url | append: "#index" }}) incrementally rather than buffering it all in memory and writing it out at the end. [Depending on index size]({{ ds_url | append: "#packaging" }}) we may be able to embed it in the same chunk as the first tile, store the whole thing in a dedicated chunk, or break it into multiple chunks. 
 
-We need to keep the first tile in memory, rather than writing it out immediately, until we know whether we want to embed the index or any other metadata in the same chunk. We accumulate the column and row index structures in memory as we process and write out tiles for each stripe. If the accumulated row index data becomes larger than 1.5 chunks worth, we can start outputting dedicated row index parts.
-* If the accumulated row index data is all from the same stripe, we will need multiple single part chunks for that stripe. Write out a chunks worth. 
-* If the accumulated data up to the end of the first stripe is bigger than half a chunk, write it out as single part chunks (using one or two chunks as needed).
-* If the accumulated data contains multiple complete stripes bigger than half a chunk, write them out as a composite chunk, one part per stripe.
-* Otherwise we must have one or more complete stripes totalling less than half a chunk followed by more than a chunks worth of partial data all from the same stripe. Write out the complete stripes and enough partial data to make up a chunks worth as a composite chunk.
-* Rinse and repeat.
+For now we're restricting ourselves to spreadsheets with at most 12 million columns which means even the largest possible column index will fit as one part in a chunk. Each stripe has its own row index which we'll store as a part in a chunk. We may be able to fit multiple row indexes in one chunk, use a dedicated chunk per index or need a two level index where the index part references index data stored in multiple additional chunks. Each row index part uses a naming convention that includes the start column for the stripe. 
 
+We need to make all these choices on the fly, as we write out the segment. We need to keep the first tile in memory, rather than writing it out immediately, until we know whether we want to embed it in the root chunk with the index and any other metadata.
 
-## Part Format
+ We accumulate the column and row index structures in memory as we process and write out tiles for each stripe. We can start writing out index data when we reach the end of a stripe or when we have accumulated more than 1.5 chunks worth of row data.
 
-* Index parts use a naming convention that identifies the spreadsheet rectangle the part covers. Content is written out using relative addressing.
-* Then use an index at the next level up that specifies the layout of the parts. Can use same representation as index of tiles, except triples rather than doubles per entry. The extra value specifies the number of the chunk that contains the part (0 means its in a single part chunk).
-* Don't need any kind of map for single part chunks as can use naming convention to work out which chunk to load. 
-* Could use numbered chunk even for single part chunks. However, storing 0 and relying on naming convention should compress better? Worth complexity?
-* ??? Need something to connect row indexes to column index. Once I've worked out which stripe I want, how do I find where root of row index is?
+If we've reached the end of a stripe we can use a single part for the entire row index. If we have more than half a chunks worth of data, write it out as a single part chunk using the next available chunk number. If it's smaller than that, buffer it in memory until we have enough parts accumulated to write out a multi-part chunk. As we go, keep track of which chunk each row index part gets stored in, using a list of pairs (start column of stripe, chunk number).
+
+{% capture id_url %}{% link _posts/2023-06-05-spreadsheet-insert-delete.md %}{% endcapture %}
+If the accumulated row index data is all from the same stripe, we need a two level row index. Write out a chunks worth of data as a single part chunk using a naming convention that specifies stripe, start row and end row. The chunk content should use [relative addressing]({{ id_url | append: "#segment-index" }}) for better compression. Keep a list of end row values for each chunk in the stripe (start row is the same as previous end row). When you reach the end of the stripe you'll have between 0.5 and 1.5 chunks worth of remaining row index data. If more than one chunks worth, write out as two equal size chunks, otherwise as a single chunk.
+
+To complete the two level row index we need to output the top part of the index. This is just the list of end row values, which can be delta encoded for better compression. If more than half a chunks worth of data, write it out as a single part chunk, otherwise accumulate with other small parts destined for a multi-part chunk.
+
+When you reach the end of the spreadsheet, you'll have the first tile and a complete column index in memory, a set of row index chunks and tiles that you've already written out, a mapping which specifies which chunk each serialized row index part is stored in, and any row index parts that haven't been written out yet. 
+
+If all the unserialized data fits into one chunk, write it all out as the root chunk. If not, write out the first tile and then the biggest remaining parts as separate chunks until you have a single chunks worth left. Write that out as a root chunk including a manifest that specifies which chunks contain the other top level parts. 
 
 ## Merging Transforms
 
-* Need an external algorithm for this too
-* Transform is made up of sorted lists of ranges
-* Simple merge algorithm
-* Need to transform from input to output coordinate space ...
+A segment may also have a [transform]({{ id_url | append: "#encoding-the-transform" }}) which can become arbitrarily large. We need an external memory algorithm  that will merge transforms too.
+
+A transform is defined using sorted lists of ranges: columns to delete, rows to delete, columns to insert, rows to insert. The transform specifies the inserts and deletes needed to get a dependent segment into the same coordinate space as this segment. In principle, this is a straightforward merge of sorted lists. We can iterate through each transform, reading values in from each segment, comparing them and then writing them out in the correct order. 
+
+If both transforms make changes to the same row or column, they can be combined. For example, insert 2 rows before row 2 and insert 3 rows before row 2 becomes insert 5 rows before row 2. Delete 5 columns starting from column 7 and insert 2 columns before column 7 becomes delete 3 columns starting from column 7. 
+
+In practice, life becomes complicated because each transform and each part of each transform is in a different coordinate space. As we iterate through the lists from the second transform, we need to transform them into the coordinate space of the first.
+* Need to invert some of the transforms (can be done as external algorithm, writing out temp chunks of inverted transform if needed).
+* For each step need value in inverted transform before/after value being transformed
+* Physically turns into this unholy combination external merge where we're reading values from all row lists, transforming, comparing, writing things out. Then the same for all column lists.
+* Each list is best handled as a separate part.
+* List may be a single chunk or two level thing.
+* Similar process of accumulating output lists and if bigger than 1.5 chunks, time to output a chunk and treat as two level thing.
 
 ## Importing Data
