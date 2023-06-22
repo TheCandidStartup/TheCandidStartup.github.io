@@ -55,7 +55,7 @@ We can use pretty much the same algorithm when choosing stripe boundaries for a 
 
 We don't have to work out all the stripe boundaries before we start merging. Once we've decided on a stripe boundary, we can run the merge algorithm for that stripe, then decide what width the next stripe needs to be. This approach minimizes the size of the in-memory working set.
 
-The output stripe boundaries may not align with the input stripe boundaries (as shown in the diagrams above), which may not align with each other (due to the impact of inserts and deletes). The same input tile may need to be accessed by multiple stripes. We'll need a caching system that will try and hold on to tiles that will be needed again. However, we may still end up having to eject tiles from memory and then load them again later.
+The output stripe boundaries may not align with the input stripe boundaries (as shown in the diagrams above), which may not align with each other (due to the impact of inserts and deletes). The same input tile may need to be accessed by multiple output stripes. We'll need a caching system that will try and hold on to tiles that will be needed again. However, we may still end up having to eject tiles from memory and then load them again later.
 
 We prefer fixed width stripes where possible. There are also benefits with fixed height tiles. We're trying to write out chunks that are between 0.5 MB and our ideal chunk size of 1 MB. We can use a similar algorithm to the one used to pick stripe width. If there's a power of two number of rows that has a size in our desired range use that. Use the same number of rows for the next tile if possible, if not try the next power of 2, otherwise binary chop to a size that works.
 
@@ -71,7 +71,7 @@ A segment always has a "root" chunk. The root chunk includes a small JSON manife
 
 Chunks within the overall structure that are statically known to always contain a single part have the same name as that part. Tiles are a good example. Tiles use a naming convention that allows the [segment index to implicitly reference them]({{ ds_url | append: "#index" }}). 
 
-Additional chunks that might contain multiple parts are identified by number: 1,2,3,... Any part referencing another part stored in a separate multi-part chunk needs to specify chunk number and part name. Chunk number 0 is reserved and can be used as needed to specify "part is in this chunk", "no chunk" or "empty chunk" as appropriate. 
+Additional chunks that might contain multiple parts are identified by number: 1,2,3,... Any part referencing another part stored in a separate multi-part chunk needs to specify chunk number and part name. Chunk number 0 is reserved and can be used as needed to specify "part is in same chunk", "no chunk" or "empty chunk" as appropriate. 
 
 ## Writing the index
 
@@ -102,10 +102,32 @@ A transform is defined using sorted lists of ranges: columns to delete, rows to 
 
 If both transforms make changes to the same row or column, they can be combined. For example, insert 2 rows before row 2 and insert 3 rows before row 2 becomes insert 5 rows before row 2. Delete 5 columns starting from column 7 and insert 2 columns before column 7 becomes delete 3 columns starting from column 7. 
 
-In practice, life becomes complicated because each transform and each part of each transform is in a different coordinate space. As we iterate through the lists from the second transform, we need to transform them into the coordinate space of the first.
-* Need to invert some of the transforms (can be done as external algorithm, writing out temp chunks of inverted transform if needed).
-* For each step need value in inverted transform before/after value being transformed
-* Physically turns into this unholy combination external merge where we're reading values from all row lists, transforming, comparing, writing things out. Then the same for all column lists.
+In practice, life becomes complicated because each transform and each part of each transform is in a different coordinate space. As we iterate through the lists from the second transform, we need to transform them into the coordinate space of the first. Row and column transforms are independent and work the same way. We can figure out how to do this for row transforms and then use exactly the same thing for the column transforms. 
+
+Given two segments X and Y, where Y depends on X, the combined row transform is `DeleteX * InsertX * DeleteY * InsertY`. When we write out the merged segment Z we need a new row transform of the form `DeleteZ * InsertZ`. Getting there is a six step process.
+1. Calculate the inverse transforms we're going to need: `DeleteX`<sup>-1</sup>,  `InsertX`<sup>-1</sup>, `DeleteY`<sup>-1</sup>. [Inverting a transform]({{ id_url | append: "#inverting-a-transform" }}) is a straightforward iterative process. Easy to externalize but may involve creating a temporary set of chunks to store the inverse transforms. 
+2. Use `DeleteY`<sup>-1</sup> and `InsertX`<sup>-1</sup> to transform `InsertY` into `InsertY`<sup>dy</sup> and then into `InsertY`<sup>ix</sup>. Applying a transform is an iterative process similar to a merge where we read from both lists in sorted order, using values from one to transform values from the other before writing them out.
+3. Use `InsertX`<sup>-1</sup> and `DeleteX`<sup>-1</sup> to transform `DeleteY` into `DeleteY`<sup>ix</sup> and then into `DeleteY`<sup>dx</sup>.
+4. Merge `DeleteX` with `DeleteY`<sup>dx</sup> to create `DeleteZ`.
+5. Merge `InsertX` with `InsertY`<sup>ix</sup> to create `InsertZ`.
+6. `InsertZ` was created in the coordinate space of `DeleteX`. The final step is to transform it using `DeleteY`<sup>ix</sup> to get it into the same coordinate space as `DeleteZ`. 
+
+That looks like a lot of temporary transforms to write out and read back in. However, with some care, the entire process can be pipelined so that the stream of values output by one operation are fed as input into the next. 
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/merge-transform-pipeline.svg" alt="Merge Transforms Pipeline" %}
+
+Start at the output nodes (shown in red) and read values from their inputs, recursing back through the graph until you reach the source nodes (shown in orange). For most nodes, their output is used as input by one other node. In these cases the value read can be discarded as soon as it is used. 
+
+There are three cases where a source node's output is used as input by two other nodes. We handle these by creating duplicate read streams for each output which can be read independently. Buffering is provided by the caching system for downloaded chunks.
+
+There are two cases where an intermediate node's output is used as input by two other nodes. Here the output values need to be buffered until they have been read by both downstream nodes. 
+
+The two outputs from `DeleteY`<sup>ix</sup> feed into separate sub-graphs that terminate with the two output nodes. Buffering can be minimized by alternating between the two output nodes when reading values from the pipeline. Read repeatedly from one node until a value is buffered at `DeleteY`<sup>ix</sup> and then swap to the other output. 
+
+Finally, the simplest way to handle the twin outputs from `InsertX`<sup>-1</sup> is to duplicate the subgraph back to the source node. That gives us two `InsertX`<sup>-1</sup> nodes with single outputs. In exchange the source node `InsertX` ends up with three outputs which is easy to handle by adding another duplicate read stream. 
+
+## Writing Transforms
+
 * Each list is best handled as a separate part.
 * List may be a single chunk or two level thing.
 * Similar process of accumulating output lists and if bigger than 1.5 chunks, time to output a chunk and treat as two level thing.
