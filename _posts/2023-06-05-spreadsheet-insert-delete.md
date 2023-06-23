@@ -215,15 +215,15 @@ Earlier on, I said that inverting a transform is just a matter of swapping inser
 
 Let's go back to our simple example. We have an insert row transform which inserts rows before row 2, 3 and 4. The inverse of that transform is a delete row transform which deletes rows starting from row 2, 5 and 9. 
 
-Converting a transform from one coordinate space to another is simple enough. Iterate through keeping track of the total number of rows inserted or deleted. For an Insert, add that number to each index as you iterate. For a Delete, subtract it. 
+Converting a transform from one coordinate space to another is simple enough. Iterate through keeping hold of the total num from the previous entry. For an Insert, add that number to the current entries index. For a Delete, subtract it. 
 
 Inverting composed transforms works just like computer graphics too. Our overall transform is Delete * Insert. The inverse is Insert<sup>-1</sup> * Delete<sup>-1</sup>. The inverse of an Insert is a Delete and vice versa, which means the result is still in the form of Delete followed by Insert.
 
 There's one problem with this. I came up with this funky encoding so that we could use binary chop to find just the part of the transform we're interested in. We store the transform from one segment to another but we need to be able to transform things both ways. Inverting the transform we have, to get the one we want, means iterating through the whole thing. In which case, what's the point of doing a fancy binary chop lookup? 
 
-Maybe we need to store both forward and reverse transforms? Which seems kind of wasteful. 
-
-No, we only need to store one. If we want the other one, we can convert it as we load it. Eventually, we will have some kind of caching system that decides which parts of the spreadsheet the client has loaded in-memory. We can load or calculate the transform we need when it is needed. Then let the caching system decide how long to keep and reuse it.
+The trick here is that you can do the binary chop on the original transform and invert just the entries you touch on the fly. There's two conditions that make this possible.
+1. Inverting any entry is an O(1) operation. All you need is the index from the current entry and the total num from the previous entry.
+2. Inverting a transform doesn't change the number of entries or the order of entries. 
 
 ## Coming Up
 
