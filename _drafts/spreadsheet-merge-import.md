@@ -67,7 +67,7 @@ A small detour before we move on. Let's talk about the format we're going to use
 
 We've already identified a few cases where we need to pack multiple different parts of a segment into a chunk. We know we want to compress chunks. The simplest implementation is to use an existing archive format like [ZIP](https://en.wikipedia.org/wiki/ZIP_(file_format)), or [7z](https://en.wikipedia.org/wiki/7z). ZIP is the most [standard](https://www.iso.org/standard/60101.html) and widely supported format but doesn't support the latest compression codecs and isn't as optimized as newer formats. I'm going to start off with ZIP and maybe later consider other formats.
 
-A segment always has a "root" chunk. The root chunk includes a small JSON manifest which defines segment format version and structure, including the location of the index, transform and any dependent segment. These parts (and any other parts and tiles that they reference) may be embedded in the root chunk or stored externally in additional chunks.
+A segment always has a "root" chunk. The root chunk includes a small JSON manifest which defines spreadsheet metadata (width, height, ...), segment format version and structure, including the location of the index, transform and any dependent segment. These parts (and any other parts and tiles that they reference) may be embedded in the root chunk or stored externally in additional chunks.
 
 Chunks within the overall structure that are statically known to always contain a single part have the same name as that part. Tiles are a good example. Tiles use a naming convention that allows the [segment index to implicitly reference them]({{ ds_url | append: "#index" }}). 
 
@@ -86,9 +86,9 @@ We need to make all these choices on the fly, as we write out the segment. We ne
 If we've reached the end of a stripe we can use a single part for the entire row index. If we have more than half a chunks worth of data, write it out as a single part chunk using the next available chunk number. If it's smaller than that, buffer it in memory until we have enough parts accumulated to write out a multi-part chunk. As we go, keep track of which chunk each row index part gets stored in, using a list of pairs (start column of stripe, chunk number).
 
 {% capture id_url %}{% link _posts/2023-06-05-spreadsheet-insert-delete.md %}{% endcapture %}
-If the accumulated row index data is all from the same stripe, we need a two level row index. Write out a chunks worth of data as a single part chunk using a naming convention that specifies stripe, start row and end row. The chunk content should use [relative addressing]({{ id_url | append: "#segment-index" }}) for better compression. Keep a list of end row values for each chunk in the stripe (start row is the same as previous end row). When you reach the end of the stripe you'll have between 0.5 and 1.5 chunks worth of remaining row index data. If more than one chunks worth, write out as two equal size chunks, otherwise as a single chunk.
+If the accumulated row index data is all from the same stripe, we need a two level row index. Write out a chunks worth of data as a single part chunk using a naming convention that specifies stripe and start row. The chunk content should use [relative addressing]({{ id_url | append: "#segment-index" }}) for better compression. Keep a list of start row values for each chunk in the stripe. When you reach the end of the stripe you'll have between 0.5 and 1.5 chunks worth of remaining row index data. If more than one chunks worth, write out as two equal size chunks, otherwise as a single chunk.
 
-To complete the two level row index we need to output the top part of the index. This is just the list of end row values, which can be delta encoded for better compression. If more than half a chunks worth of data, write it out as a single part chunk, otherwise accumulate with other small parts destined for a multi-part chunk.
+To complete the two level row index we need to output the top part of the index. This is just the list of start row values, which can be [delta encoded](https://en.wikipedia.org/wiki/Delta_encoding) for better compression. You can use binary chop over the list to find the correct index data chunk for any row. If more than half a chunks worth of data, write it out as a single part chunk, otherwise accumulate with other small parts destined for a multi-part chunk.
 
 When you reach the end of the spreadsheet, you'll have the first tile and a complete column index in memory, a set of row index chunks and tiles that you've already written out, a mapping which specifies which chunk each serialized row index part is stored in, and any row index parts that haven't been written out yet. 
 
@@ -105,31 +105,49 @@ If both transforms make changes to the same row or column, they can be combined.
 In practice, life becomes complicated because each transform and each part of each transform is in a different coordinate space. As we iterate through the lists from the second transform, we need to transform them into the coordinate space of the first. Row and column transforms are independent and work the same way. We can figure out how to do this for row transforms and then use exactly the same thing for the column transforms. 
 
 Given two segments X and Y, where Y depends on X, the combined row transform is `DeleteX * InsertX * DeleteY * InsertY`. When we write out the merged segment Z we need a new row transform of the form `DeleteZ * InsertZ`. Getting there is a six step process.
-1. Calculate the inverse transforms we're going to need: `DeleteX`<sup>-1</sup>,  `InsertX`<sup>-1</sup>, `DeleteY`<sup>-1</sup>. [Inverting a transform]({{ id_url | append: "#inverting-a-transform" }}) is a straightforward iterative process. Easy to externalize but may involve creating a temporary set of chunks to store the inverse transforms. 
-2. Use `DeleteY`<sup>-1</sup> and `InsertX`<sup>-1</sup> to transform `InsertY` into `InsertY`<sup>dy</sup> and then into `InsertY`<sup>ix</sup>. Applying a transform is an iterative process similar to a merge where we read from both lists in sorted order, using values from one to transform values from the other before writing them out.
+1. Calculate the [inverse transforms]({{ id_url | append: "#inverting-a-transform" }}) we're going to need: `DeleteX`<sup>-1</sup>,  `InsertX`<sup>-1</sup>, `DeleteY`<sup>-1</sup>. 
+2. Use `DeleteY`<sup>-1</sup> and `InsertX`<sup>-1</sup> to transform `InsertY` into `InsertY`<sup>dy</sup> and then into `InsertY`<sup>ix</sup>. 
 3. Use `InsertX`<sup>-1</sup> and `DeleteX`<sup>-1</sup> to transform `DeleteY` into `DeleteY`<sup>ix</sup> and then into `DeleteY`<sup>dx</sup>.
 4. Merge `DeleteX` with `DeleteY`<sup>dx</sup> to create `DeleteZ`.
-5. Merge `InsertX` with `InsertY`<sup>ix</sup> to create `InsertZ`.
-6. `InsertZ` was created in the coordinate space of `DeleteX`. The final step is to transform it using `DeleteY`<sup>ix</sup> to get it into the same coordinate space as `DeleteZ`. 
+5. Merge `InsertX` with `InsertY`<sup>ix</sup> to create `InsertZ`<sup>ix</sup>.
+6. Use `DeleteY`<sup>ix</sup> to transform `InsertZ`<sup>ix</sup> into `InsertZ`. 
 
-That looks like a lot of temporary transforms to write out and read back in. However, with some care, the entire process can be pipelined so that the stream of values output by one operation are fed as input into the next. 
+`InsertZ`<sup>ix</sup> was created in the coordinate space after `DeleteX` and before `InsertX`. We need `InsertZ` in the coordinate space after `DeleteZ`. We know that `DeleteZ` = `DeleteX` * `DeleteY`<sup>ix</sup>, so all we need to do is transform `InsertZ`<sup>ix</sup> by `DeleteY`<sup>ix</sup>. A more long winded way of getting the same result is to transform by `DeleteX`<sup>-1</sup> and then by `DeleteZ`.
+
+Applying a transform is an iterative process similar to a merge, where we read from both lists in sorted order, using values from one to transform values from the other before writing them out. That looks like a lot of temporary transforms to write out and read back in. However, with some care, the entire process can be pipelined so that the stream of values output by one operation are fed as input into the next. 
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/merge-transform-pipeline.svg" alt="Merge Transforms Pipeline" %}
 
 Start at the output nodes (shown in red) and read values from their inputs, recursing back through the graph until you reach the source nodes (shown in orange). For most nodes, their output is used as input by one other node. In these cases the value read can be discarded as soon as it is used. 
 
-There are three cases where a source node's output is used as input by two other nodes. We handle these by creating duplicate read streams for each output which can be read independently. Buffering is provided by the caching system for downloaded chunks.
+There are three cases where a source node's output is used as input by two other nodes. We handle these by creating duplicate read streams for each source transform which can be read independently. The caching system for downloaded chunks helps avoid having to load the same source chunk repeatedly.
 
 There are two cases where an intermediate node's output is used as input by two other nodes. Here the output values need to be buffered until they have been read by both downstream nodes. 
 
 The two outputs from `DeleteY`<sup>ix</sup> feed into separate sub-graphs that terminate with the two output nodes. Buffering can be minimized by alternating between the two output nodes when reading values from the pipeline. Read repeatedly from one node until a value is buffered at `DeleteY`<sup>ix</sup> and then swap to the other output. 
 
-Finally, the simplest way to handle the twin outputs from `InsertX`<sup>-1</sup> is to duplicate the subgraph back to the source node. That gives us two `InsertX`<sup>-1</sup> nodes with single outputs. In exchange the source node `InsertX` ends up with three outputs which is easy to handle by adding another duplicate read stream. 
+Finally, the simplest way to handle the twin outputs from `InsertX`<sup>-1</sup> is to duplicate the subgraph back to the source node. That gives us two `InsertX`<sup>-1</sup> nodes with single outputs. In exchange, the source node `InsertX` ends up with three outputs which is easy to handle by adding another duplicate read stream. 
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/merge-transform-pipeline-duplicate-insertx.svg" alt="Duplicating a subgraph so that intermediate nodes have a single output" %}
 
 ## Writing Transforms
 
-* Each list is best handled as a separate part.
-* List may be a single chunk or two level thing.
-* Similar process of accumulating output lists and if bigger than 1.5 chunks, time to output a chunk and treat as two level thing.
+We need to be able to read each list of ranges independently, so it makes sense to serialize each transform as four separate parts. Each part is a sorted list of pairs (index, total num). We may be able to fit multiple parts in one chunk, use a dedicated chunk per part, or need a two level structure where the transform part references transform data stored in multiple additional chunks. Just like the row indexes, in fact.
+
+We can use the same process to write them out. Accumulate output until we have 1.5 chunks worth. If we get to the end first, output what we've accumulated as a single part (write as a single chunk if large enough, otherwise accumulate with other small parts destined for a multi-part chunk).
+
+If we've accumulated 1.5 chunks worth of data, we need a two level structure. Write out a chunks worth of data as a single part chunk using a naming convention that specifies transform part and start index. Again, use whatever compression tricks make sense (relative addressing, delta encoding, etc). Keep a list of start index values for each chunk written, together with total num from the last entry in the *previous* chunk, which together form the top part of the two level structure.
+
+You can use binary chop over the start index values to find the correct transform entry for any row. You can use binary chop over start index offset by total num to find the correct entry to *inverse* transform any row. 
 
 ## Importing Data
+
+The most common way of getting started with my cloud spreadsheet will be to import data from another source. You could iterate through every cell in the source, adding an entry to the transaction log. However, it will be much more efficient to directly create a snapshot and add a single entry to the transaction log that references the imported snapshot. This works both when creating a new spreadsheet from an import, or when importing and overlaying data onto an existing spreadsheet.
+
+If the source is a limited size format like Excel or Google Sheets, simply load it, convert to our in-memory format and then write out a snapshot like we do when [creating an initial segment]({{ page.url | absolute_url | append: "#creating-a-segment-in-the-first-place" }}).
+
+If the source is something too large to fit into memory, it will have an API to query it in parts. Use the same approach we used for merging segments. Load the data incrementally to determine output stripe boundaries, then iterate down each stripe converting and outputting. 
+
+## Coming Up
+
+Time to pause, take stock, and formalize what we've come up with so far into something that looks more like a file format spec.
