@@ -47,13 +47,15 @@ If we hit the end of the spreadsheet, then we know the stripe width is too narro
 
 At the other extreme, a stripe is too wide if we go over the target size with less than a rows worth of cells. In this case, halve the stripe width and try again. In the pathological case where width *x* is too narrow and *2x* is too wide, use the average of the two. If necessary, binary chop your way to a size that works. Stick with that size for the next stripe. However, if it stops working, round down or up to the nearest power of two, rather than halving or doubling. 
 
+Finally, you may need to adjust the boundary between the last two stripes if the number of columns left over makes the final stripe too narrow.
+
 ## Choosing stripe boundaries for a merge
 
 We can use pretty much the same algorithm when choosing stripe boundaries for a merge. Use the same approach as the merge algorithm to incrementally load the data we need. Start with a 128 column wide view rectangle, load the tiles covered in both segments into memory and iterate down the candidate stripe until either we have enough data buffered or have hit the end of the spreadsheet. 
 
 ## Putting it all together
 
-We don't have to work out all the stripe boundaries before we start merging. Once we've decided on a stripe boundary, we can run the merge algorithm for that stripe, then decide what width the next stripe needs to be. This approach minimizes the size of the in-memory working set.
+We don't have to work out all the stripe boundaries before we start merging. Looking a couple of stripes ahead is enough. Once we've decided on a stripe boundary, we can run the merge algorithm for that stripe, then decide what width the next stripe needs to be. This approach minimizes the size of the in-memory working set.
 
 The output stripe boundaries may not align with the input stripe boundaries (as shown in the diagrams above), which may not align with each other (due to the impact of inserts and deletes). The same input tile may need to be accessed by multiple output stripes. We'll need a caching system that will try and hold on to tiles that will be needed again. However, we may still end up having to eject tiles from memory and then load them again later.
 
@@ -81,7 +83,7 @@ For now we're restricting ourselves to spreadsheets with at most 12 million colu
 
 We need to make all these choices on the fly, as we write out the segment. We need to keep the first tile in memory, rather than writing it out immediately, until we know whether we want to embed it in the root chunk with the index and any other metadata.
 
- We accumulate the column and row index structures in memory as we process and write out tiles for each stripe. We can start writing out index data when we reach the end of a stripe or when we have accumulated more than 1.5 chunks worth of row data.
+ We accumulate the column and row index structures in memory as we process and write out tiles for each stripe. We can start writing out index data when we reach the end of a stripe or when we have accumulated more than 1.5 chunks worth of row index data.
 
 If we've reached the end of a stripe we can use a single part for the entire row index. If we have more than half a chunks worth of data, write it out as a single part chunk using the next available chunk number. If it's smaller than that, buffer it in memory until we have enough parts accumulated to write out a multi-part chunk. As we go, keep track of which chunk each row index part gets stored in, using a list of pairs (start column of stripe, chunk number).
 
@@ -98,13 +100,13 @@ If all the unserialized data fits into one chunk, write it all out as the root c
 
 A segment may also have a [transform]({{ id_url | append: "#encoding-the-transform" }}) which can become arbitrarily large. We need an external memory algorithm  that will merge transforms too.
 
-A transform is defined using sorted lists of ranges: columns to delete, rows to delete, columns to insert, rows to insert. The transform specifies the inserts and deletes needed to get a dependent segment into the same coordinate space as this segment. In principle, this is a straightforward merge of sorted lists. We can iterate through each transform, reading values in from each segment, comparing them and then writing them out in the correct order. 
+A transform is defined using four sorted lists of ranges: columns to delete, rows to delete, columns to insert, rows to insert. The transform specifies the inserts and deletes needed to get a dependent segment into the same coordinate space as this segment. In principle, this is a straightforward merge of sorted lists. We can iterate through each transform, reading values in from each segment, comparing them and then writing them out in the correct order. 
 
 If both transforms make changes to the same row or column, they can be combined. For example, insert 2 rows before row 2 and insert 3 rows before row 2 becomes insert 5 rows before row 2. Delete 5 columns starting from column 7 and insert 2 columns before column 7 becomes delete 3 columns starting from column 7. 
 
 In practice, life becomes complicated because each transform and each part of each transform is in a different coordinate space. As we iterate through the lists from the second transform, we need to transform them into the coordinate space of the first. Row and column transforms are independent and work the same way. We can figure out how to do this for row transforms and then use exactly the same thing for the column transforms. 
 
-Given two segments X and Y, where Y depends on X, the combined row transform is `DeleteX * InsertX * DeleteY * InsertY`. When we write out the merged segment Z we need a new row transform of the form `DeleteZ * InsertZ`. Getting there is a six step process.
+Given two segments X and Y, where Y depends on X, the combined row transform is `DeleteX * InsertX * DeleteY * InsertY`. When we write out the merged segment Z, we need a new row transform of the form `DeleteZ * InsertZ`. Getting there is a six step process.
 1. Calculate the [inverse transforms]({{ id_url | append: "#inverting-a-transform" }}) we're going to need: `DeleteX`<sup>-1</sup>,  `InsertX`<sup>-1</sup>, `DeleteY`<sup>-1</sup>. 
 2. Use `DeleteY`<sup>-1</sup> and `InsertX`<sup>-1</sup> to transform `InsertY` into `InsertY`<sup>dy</sup> and then into `InsertY`<sup>ix</sup>. 
 3. Use `InsertX`<sup>-1</sup> and `DeleteX`<sup>-1</sup> to transform `DeleteY` into `DeleteY`<sup>ix</sup> and then into `DeleteY`<sup>dx</sup>.
