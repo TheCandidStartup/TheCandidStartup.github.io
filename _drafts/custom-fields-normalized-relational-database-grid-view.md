@@ -24,7 +24,8 @@ The most interesting thing is that date_attribute does not have an explicit id c
 
 ## Sample Data Set
 
-Here's the sample data set [from last time]({{ db_url | append: "#sample-data-set" }}) updated with examples for the two new tables.
+{% capture nrd_url %}{% link _posts/2023-06-19-normalized-relational-database-grid-view.md %}{% endcapture %}
+Here's the sample data set [from last time]({{ nrd_url | append: "#sample-data-set" }}) updated with examples for the two new tables.
 
 ### tenant
 
@@ -120,7 +121,7 @@ You can order and paginate this result set in the same ways we looked at last ti
 
 ## Explain yourself
 
-At this point, you should be thinking that looks like a really complex query. Is it efficient? 
+At this point, you should be thinking "that looks like a really complex query. Is it efficient?" 
 
 Let's have a look.
 
@@ -301,13 +302,13 @@ SELECT id,name,num,state,custom1,custom2 FROM issue LEFT JOIN (
   WHERE issue.project = '35e9' AND custom1 IS NULL ORDER BY num;
 ```
 
-which produces the expected result
+Which produces the expected result.
 
 | id | name | num | state | custom1 | custom2 |
 |-|-|-|-|-|-|
 | af34 | Girder needs replacing | 3 | open |
 
-with the query plan
+The query plan is the same as before except that each resulting row is checked against a filter condition and any rows with a non-null value for the custom field are discarded.
 
 ```
 Nested Loop Left Join  (cost=0.29..97.73 rows=1 width=548)
@@ -322,7 +323,7 @@ Nested Loop Left Join  (cost=0.29..97.73 rows=1 width=548)
 
 Retrieving a complete set of results over the two queries will result in the database fetching issues with the attribute defined twice (filtering the duplicates out in the second query). In the worst case, where all issues do have the attribute defined, that doubles the cost.
 
-You also have to be very careful when implementing pagination. Your API needs to switch seamlessly from one query to the next as the caller paginates through. The second query has the problem that it might have to scan through all the issues in the project before being able to return a page. 
+You also have to be very careful when implementing pagination. Your API needs to switch seamlessly from one query to the next as the caller paginates through. The second query has the problem that it might have to scan through all the issues in the project before finding enough matching rows to fill a page. 
 
 {% capture acc_url %}{% link _posts/2023-04-17-amortized-cost-cloud.md %}{% endcapture %}
 One of the main reasons for using pagination is to avoid long running database queries and the resulting [long tail]({{ acc_url | append: "#tail-latency" }}) API response times. If you're dealing with truly large collections you may need to limit the complexity of each query. For example, you could use something like `num > 100 AND num < 10100 LIMIT 100` as your pagination condition. This ensures that the query will scan at most 10000 rows as well as returning at most 100 results. 
