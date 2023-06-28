@@ -21,7 +21,7 @@ We're going to look at some different ways of denormalizing our [database schema
 
 ## Indexes
 
-You can attempt to improve read performance of a normalized relational database by adding an index. The index contains redundant copies of the data stored in the table it's defined for. Maintaining the index comes at the cost of reduced write performance. Sound familiar?
+You can attempt to improve read performance of a normalized relational database by adding an index. The index contains redundant copies of the data stored in the source table. Maintaining the index comes at the cost of reduced write performance. Sound familiar?
 
 Adding indexes has many of the same trade offs as denormalizing a database. The difference is that the database handles all the details for you. It's responsible for keeping the indexes in sync as you make changes to your tables. 
 
@@ -132,7 +132,7 @@ So far, we managed to address one of our list of issues. We got rid of the extra
 | 83a4 | Hire reporter for showbiz desk | 7b7e | 2 | open |
 | af34 | Girder needs replacing | 35e9 | 3 | open | | | | | 42 | | | | | | | | Approved
 
-with an attribute definition table which defines which column is used to store that definition's value :
+with an attribute definition table which specifies which column is used to store that definition's value :
 
 | id | name | project | num | type | column |
 |-|-|-|-|-|-|
@@ -141,7 +141,7 @@ with an attribute definition table which defines which column is used to store t
 | 3fe6 | Num Items | 35e9 | 1 | int | int1 |
 | 47e5 | Sign Off | 35e9 | 2 | text | txt1 |
 
-Queries are simple without a join in sight.
+Queries are simple without a join in sight :
 
 ```
 SELECT id,name,num,state,
@@ -152,20 +152,77 @@ SELECT id,name,num,state,
 FROM issue WHERE issue.project = '35e9' ORDER BY num DESC;
 ```
 
-* Same query for both fixed and custom fields
-* Still need to dynamically generate query but much simpler
-* Complete flexibility on how we index, for example can do by value then by num for custom fields
-* Back to O(logn) per page of results, easy pagination.
-* That's an awful lot of columns. Didn't we need to support 100 custom fields of each type?
-* How much overhead per issue are we adding? How does that compare to the cost of the separate attribute value table?
-* Need to be able to sort on any column. 100s of indexes. That's an awful lot of NULLs that we're indexing. Will anyone use date100?
-* Can use partial index to only include non-NULL values in the index. Total number of rows in all the custom field indexes is same as in the attribute value table index. 
-* What's the difference in columns?
-* Phew. But now we're back to paginating over two queries for custom fields.
-* DB operations that are O(n) in the number of columns, or O(n) in the number of indexes
-* Problems with tooling, interactions with other teams
+The same query structure works for both fixed and custom fields. You still need to dynamically generate the query but its a much simpler process than before. You have complete flexibility on how you index the data. For example, you can finally create an index that let's you sort by custom field value and then by num. Pagination is simple and efficient for both fixed and custom fields.
+
+That all sounds great. Where's the catch?
+
+Look at the sample issue table above. Scroll all the way across. That's an awful lot of columns. Don't we need to support 100 custom fields of each type? That means we're adding 400 columns most of which store NULLs. What sort of overhead are we adding?
+
+Postgres has a [limit](https://www.postgresql.org/docs/current/limits.html) of 1600 columns, so we're comfortably inside that. It uses [one extra bit per row]((https://www.postgresql.org/docs/15/storage-page-layout.html#STORAGE-TUPLE-LAYOUT)) to specify whether a column is NULL or has an actual value. So, adding 400 NULL columns needs an extra 50 bytes per row. 
+
+How does this compare with the separate attribute value table? Clearly worse for issues that have no custom field values. However, the balance changes once we add a single custom field value. The attribute value table has an overhead (storage used for everything apart from the custom field value) of 56 bytes. The postgres row header uses 24 bytes and then you need 16 bytes for each of the issue id and the attribute definition id. 
+
+| Custom Fields Used | Combined table overhead | Attribute Value table overhead |
+|-|-|-|
+| 0 | 50 | 0 |
+| 1 | 50 | 56 |
+| 2 | 50 | 112 |
+| 3 | 50 | 168 |
+
+If the PM insists that we need to support 100 custom fields of each type, I think it's reasonable to expect that we'll average at least one custom field per issue. If we get anywhere near a hundred, we're saving a lot of space.
+
+What about the indexes? If we need to support sort on every custom field, then we'll need 400 indexes. An index on (project,value,num) will use 96 bytes per row. Now the overhead looks like
+
+| Custom Fields Used | Combined table overhead | Attribute Value table overhead |
+|-|-|-|
+| 0 | 38450 | 0 |
+| 1 | 38450 | 152 |
+| 2 | 38450 | 304 |
+| 3 | 38450 | 456 |
+
+Ouch. That's an awful lot of NULLs we're indexing. On top of the storage cost, creating a new issue will involve updating 400 indexes. That's really trading off write performance for read performance.
+
+Can we avoid indexing the NULLs? Postgres supports [partial indexes](https://www.postgresql.org/docs/current/indexes-partial.html) which let you specify which rows should be included. If we only index custom fields that are used, we'll end up with the same number of index rows in both cases.
+
+| Custom Fields Used | Combined table overhead | Attribute Value table overhead |
+|-|-|-|
+| 0 | 50 | 0 |
+| 1 | 146 | 152 |
+| 2 | 242 | 304 |
+| 3 | 338 | 456 |
+
+Phew. We're winning again. Unfortunately, we're now back to paginating over two different queries when sorting by custom field. 
+
+Time to take stock. From our original list of problems we've fixed 1, 3 and 5. We've made some progress on 2 but still need to dynamically generate queries per project. Problem 4 remains the same. 
+
+Is it worth it? One team I worked with thought so after extensive prototyping. However, after a couple of years in production, they decided to switch to a separate attribute value table. As with per project tables, it was practical problems that ground them down.
+* There are many database internal operations that are *O(n)* in the number of columns. For example, to read a column value from a row, the database has to first analyze the bitmask of NULL columns to work out where the value is stored. 
+* There are many database internal operations that are *O(n)* in the number of indexes. The query planner, for example, will iterate over every index and laboriously test each one to see if it's applicable to the current query[^2].
+* There was standard tooling that they wanted to use that couldn't cope with that number of columns or that number of indexes. For example, it was standard practice to use [AWS DMS](https://aws.amazon.com/dms/) to replicate data into our data warehouse. The DMS task for this table took forever to complete and frequently failed.
+* Day to day operational management of this database was significantly more challenging than for other databases of a similar size. 
+* There was lots of friction with other teams that needed to interact with the database. 
+
+[^2]: See the last example in the Postgres documentation on [partial indexes](https://www.postgresql.org/docs/current/indexes-partial.html).
 
 ## Dropping Referential Integrity Constraints
+
+A consequence of denormalizing a database is that application code takes on more responsibility for ensuring integrity and consistency of the data. Once you take a step down that road, it can be tempting to look for other "simplifications". 
+
+Write performance has reduced because of the redundant data we need to keep up to date. Maybe we can get some of that back by getting rid of database level constraints? After all, our application code is designed to keep everything consistent. Why waste performance having the database check up on us?
+
+In my experience, any team that can make this argument is not self aware enough to realize that they can't write 100% bug free code. Which in turn means they don't realize that they need to monitor the database for the inevitable inconsistencies that will arise and have a process for fixing them. 
+
+Perhaps you've decided to drop the foreign key constraint that ensures an issue always has a valid project id. Maybe your concern is performance, maybe you're trying to do some complex operation where the constraints are temporarily violated. Doesn't matter. The important thing is to realize that you will, at some point, end up with issues in the database with a junk or missing project id.
+
+This is a serious problem for a multi-tenant application. You are managing data on behalf of multiple customers. At the very minimum you need to keep track of what data belongs to what customer. In [many jurisdictions](https://en.wikipedia.org/wiki/General_Data_Protection_Regulation), customers have a legal right to a copy of all their data or to have it deleted on request. 
+
+If you have issues with a junk or missing project id, you have no way of knowing which customer owns them. Our schema relies on consistent relationships between issue, project and tenant to determine the tenant id that owns each issue. If you remove the constraint, you need to find another way of ensuring we can't lose track of which customer owns each issue.
+
+Ironically, a common way of doing this is to further denormalize the database. If it's important that we keep track of who owns every significant row of data, then ensure that every significant row of data has a tenant id column. If every row of data is tagged with a tenant id, it doesn't matter how screwed up referential integrity gets. We can always[^3] identify the owner. We can always meet our legal obligations. 
+
+[^3]: You also need to ensure that tenant ids can't be reused (another reason for using UUIDs) and that you have a permanent record somewhere that maps tenant ids to customer information. You might use soft deletes on the tenants table or have a persistent log of all changes or store that mapping somewhere else. Or all three.
+
+## Conclusion
 
 ## Footnotes
 
