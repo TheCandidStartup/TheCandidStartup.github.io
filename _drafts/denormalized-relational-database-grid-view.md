@@ -154,9 +154,9 @@ FROM issue WHERE issue.project = '35e9' ORDER BY num DESC;
 
 The same query structure works for both fixed and custom fields. You still need to dynamically generate the query but its a much simpler process than before. You have complete flexibility on how you index the data. For example, you can finally create an index that let's you sort by custom field value and then by num. Pagination is simple and efficient for both fixed and custom fields.
 
-That all sounds great. Where's the catch?
+That all sounds great. What's the catch?
 
-Look at the sample issue table above. Scroll all the way across. That's an awful lot of columns. Don't we need to support 100 custom fields of each type? That means we're adding 400 columns most of which store NULLs. What sort of overhead are we adding?
+Look at the sample issue table above. Scroll all the way across. That's an awful lot of columns. Don't we need to support 100 custom fields of each type? That means we're adding 400 columns, most of which store NULLs. What sort of overhead are we adding?
 
 Postgres has a [limit](https://www.postgresql.org/docs/current/limits.html) of 1600 columns, so we're comfortably inside that. It uses [one extra bit per row]((https://www.postgresql.org/docs/15/storage-page-layout.html#STORAGE-TUPLE-LAYOUT)) to specify whether a column is NULL or has an actual value. So, adding 400 NULL columns needs an extra 50 bytes per row. 
 
@@ -214,7 +214,7 @@ In my experience, any team that can make this argument is not self aware enough 
 
 Perhaps you've decided to drop the foreign key constraint that ensures an issue always has a valid project id. Maybe your concern is performance, maybe you're trying to do some complex operation where the constraints are temporarily violated. Doesn't matter. The important thing is to realize that you will, at some point, end up with issues in the database with a junk or missing project id.
 
-This is a serious problem for a multi-tenant application. You are managing data on behalf of multiple customers. At the very minimum you need to keep track of what data belongs to what customer. In [many jurisdictions](https://en.wikipedia.org/wiki/General_Data_Protection_Regulation), customers have a legal right to a copy of all their data or to have it deleted on request. 
+This is a serious problem for a multi-tenant application. You are managing data on behalf of multiple customers. At the very minimum, you need to keep track of what data belongs to what customer. In [many jurisdictions](https://en.wikipedia.org/wiki/General_Data_Protection_Regulation), customers have a legal right to a copy of all their data or to have it deleted on request. 
 
 If you have issues with a junk or missing project id, you have no way of knowing which customer owns them. Our schema relies on consistent relationships between issue, project and tenant to determine the tenant id that owns each issue. If you remove the constraint, you need to find another way of ensuring we can't lose track of which customer owns each issue.
 
@@ -223,6 +223,16 @@ Ironically, a common way of doing this is to further denormalize the database. I
 [^3]: You also need to ensure that tenant ids can't be reused (another reason for using UUIDs) and that you have a permanent record somewhere that maps tenant ids to customer information. You might use soft deletes on the tenants table or have a persistent log of all changes or store that mapping somewhere else. Or all three.
 
 ## Conclusion
+
+The traditional recommendation is to start with a normalized relational database design and very carefully introduce the minimum amount of denormalization needed to meet your goals (ideally none). I think that's sound advice. 
+
+Relational databases are amazing pieces of technology. There's a temptation to find new and creative ways of using them that stray far from the confines of normalized design. Unfortunately, when you're way out on the cutting edge you're going to run into all kinds of practical difficulties that are hard to forsee when you start the journey.
+
+All very philosophical, but we haven't got much further with addressing our list of problems. Maybe where we went wrong is trying to use a relational database for this? We're trying to model issues with per project custom fields using a database with fixed schemas. Wouldn't it be simpler if each issue could include just the attributes it needs?
+
+I think it's time to take a look at [NoSQL databases](https://en.wikipedia.org/wiki/NoSQL). Before we do that, relational databases have one last card to play. Spurred on by the success of the NoSQL movement, they started to add support for JSON columns. Fed up with the straitjacket of a schema? Store whatever you want as a blob of JSON. 
+
+Next time we'll see if storing custom fields as JSON can solve all our problems.
 
 ## Footnotes
 
