@@ -3,7 +3,7 @@ title: Denormalized Relational Database Grid View
 tags: databases
 ---
 
-We've been good. We've followed the rules. Our [database is fully normalized]({% link _posts/2023-06-19-normalized-relational-database-grid-view.md %}) and we have all the referential integrity checks we need in place. And yet. Our queries seem overly complex. There's a constant battle to try and keep queries scalable. Despite all that, query performance is not what we'd like.
+We've been good. We've followed the rules. Our [database is fully normalized]({% link _posts/2023-06-19-normalized-relational-database-grid-view.md %}) and we have all the referential integrity checks we need in place. And yet. Our queries seem overly complex. There's a constant battle to try and keep queries scalable. Despite all that, performance is not what we'd like.
 
 Maybe we could try [denormalizing](https://en.wikipedia.org/wiki/Denormalization) the database? Denormalization attempts to improve read performance by adding redundant copies of data. It comes at the cost of reduced write performance and often with a loss of [referential integrity](https://en.wikipedia.org/wiki/Referential_integrity). 
 
@@ -218,7 +218,7 @@ This is a serious problem for a multi-tenant application. You are managing data 
 
 If you have issues with a junk or missing project id, you have no way of knowing which customer owns them. Our schema relies on consistent relationships between issue, project and tenant to determine the tenant id that owns each issue. If you remove the constraint, you need to find another way of ensuring we can't lose track of which customer owns each issue.
 
-Ironically, a common way of doing this is to further denormalize the database. If it's important that we keep track of who owns every significant row of data, then ensure that every significant row of data has a tenant id column. If every row of data is tagged with a tenant id, it doesn't matter how screwed up referential integrity gets. We can always[^3] identify the owner. We can always meet our legal obligations. 
+Ironically, a common way of doing this is to further denormalize the database. If it's important that we keep track of who owns every significant row of data, then ensure that every significant row of data has a tenant id column. If every row of data is tagged with a tenant id, it doesn't matter how screwed up referential integrity gets. We can always[^3] identify the owner.
 
 [^3]: You also need to ensure that tenant ids can't be reused (another reason for using UUIDs) and that you have a permanent record somewhere that maps tenant ids to customer information. You might use soft deletes on the tenants table or have a persistent log of all changes or store that mapping somewhere else. Or all three.
 
