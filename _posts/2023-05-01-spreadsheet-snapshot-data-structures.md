@@ -140,7 +140,7 @@ Finally the index gets so large that you need multiple levels.
 
 ## Conclusion
 
-This is still looking promising. Next time we'll see what breaks when we look at merging segments and how we cope with the unique to spreadsheets row/column insert and delete operations.
+This is still looking promising. [Next time]({% link _posts/2023-06-05-spreadsheet-insert-delete.md %}) we'll see what breaks when we look at merging segments and how we cope with the unique to spreadsheets row/column insert and delete operations.
 
 ## Footnotes
 

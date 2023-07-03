@@ -227,4 +227,4 @@ The trick here is that you can do the binary chop on the original transform and 
 
 ## Coming Up
 
- All this and I still haven't got round to looking at segment merging. That will have to wait until next time. 
+ All this and I still haven't got round to looking at segment merging. That will have to wait until [next time]({% link _posts/2023-07-03-spreadsheet-merge-import.md %}). 
