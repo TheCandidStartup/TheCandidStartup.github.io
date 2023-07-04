@@ -27,34 +27,146 @@ The most straight forward schema is to use a JSON document with attribute defini
 | 83a4 | Hire reporter for showbiz desk | 7b7e | 2 | open |
 | af34 | Girder needs replacing | 35e9 | 3 | open | {"3fe6":42,"47e5":"Approved"}
 
-How does the storage overhead compare with our previous implementation attempts? Postgres has two JSON storage types. The JSON type stores the JSON document as a string with whitespace, ordering and precision preserved. The JSONB type converts the JSON document into a binary representation optimized for fast query and indexing. 
+## JSON Storage Format
 
-The JSON type has 4-6 bytes of document structure overhead per custom field (colons, double quotes, commas, etc), plus another 2 per document (curly brackets) Then we need to add 32 bytes for the attribute id UUID encoded as a string. Finally, there's up to 6 bytes of value type dependent overhead. For example, there's no dedicated date format in JSON so dates have to be encoded as strings. You need to be careful and use an encoding where a string sort corresponds to date order.
+ Postgres has two JSON storage types. The JSON type stores the JSON document as a string with whitespace, ordering and precision preserved. The JSONB type converts the JSON document into a binary representation optimized for fast query and indexing. 
 
-The JSONB type[^2] has 8 bytes of document structure overhead per custom field, plus another 8 per document. Keys are encoded as strings, so we still need 32 bytes for the attribute id UUID. There's no dedicated date format in JSONB either. However, numbers are stored using Postgres's Numeric type rather than as strings. Overall, there's still up to 6 bytes of value type dependent overhead.
+The JSON type has 4 bytes of document structure overhead per custom field (double quotes, colon, comma), plus another 3-6 per document (curly brackets, string length[^s0]). Then we need to add 32 bytes for the attribute id UUID encoded as a string. Finally, each value has potential overhead from the way its encoded in JSON. 
+
+| Custom Field Type | JSON Encoding | Storage Overhead (worst case) |
+| - | - | - |
+| Date[^s1] | ISO formatted string "YYYY-MM-DD" | 8 |
+| Integer[^s2] | JSON integer | 7 |
+| Double[^s3] | JSON number | 10 |
+| Text[^s4] | JSON string | 1 |
+
+[^s0]: Variable length data, like strings, is encoded using either a 1 byte varlena header (up to 126 bytes long) or a 4 byte varlena header (up to 1G long).
+[^s1]: ISO formatted string is 10 characters long enclosed in double quotes, compared with 4 byte binary representation in normal Postgres column
+[^s2]: Integer formatted as string is between 1 and 11 characters long, compared with 4 byte binary representation in normal Postgres column
+[^s3]: Double formatted as string is between 1 and 18 characters long, compared with 8 byte binary representation in normal Postgres column
+[^s4]: String is enclosed in double quotes in JSON format, compared with a 1-4 byte header followed by characters in normal Postgres column
+
+The JSONB type[^2] has 8 bytes of document structure overhead per custom field, plus another 8 per document. Keys are encoded as strings, so we still need 32 bytes for the attribute id UUID. However, value type overhead is less.
 
 [^2]: I couldn't find any formal spec for JSONB so had to rely on the [source code](https://github.com/postgres/postgres/blob/b0feda79fdf02710a6039a324299525845a4a9d4/src/include/utils/jsonb.h) and an overview [blog article](https://scalegrid.io/blog/using-jsonb-in-postgresql-how-to-effectively-store-index-json-data-in-postgresql/) to understand the format. 
 
-| Custom Fields Used | Combined table | Attribute Value table | JSON | JSONB |
+| Custom Field Type | JSONB Encoding | Storage Overhead (worst case) |
+| - | - | - |
+| Date[^b1] | ISO formatted string YYYY-MM-DD | 6 |
+| Integer[^b2] | Numeric | 5 |
+| Double[^b2] | Numeric | 7 |
+| Text[^b4] | String | 0 |
+
+[^b1]: No special date encoding, still ISO formatted string. No double quotes needed in JSONB document structure.
+[^b2]: JSON numbers (both integer and double) are stored using the Postgres arbitrary precision [Numeric](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL) type. This [uses a base 10000 encoding](https://github.com/postgres/postgres/blob/b0feda79fdf02710a6039a324299525845a4a9d4/src/backend/utils/adt/numeric.c) (each group of 4 decimal digits is stored as an int16) with 2 byte Numeric header and a 1 byte varlena header. Integers need at most 3 int16 digits, doubles at most 6.
+[^b4]: No double quotes needed in JSONB document structure.
+
+How does the storage overhead compare with our previous implementation attempts? In the table below I use the average of the worst case storage overhead for each value type: 7 bytes for JSON, 5 for JSONB. 
+
+| Custom Fields Used | Combined table | Attribute Value table | JSON[^j1] | JSONB[^j2] |
 |-|-|-|-|-|
-| 0 | 50 | 0 | 1 | 1 |
-| 1 | 50 | 56 | 38-46 | 48-54
-| 2 | 50 | 112 | 74-90 | 88-100
-| 3 | 50 | 168 | 110-134 | 128-146
+| 0 | 50 | 0 | 1 | 8 
+| 1 | 50 | 56 | 49 | 53
+| 2 | 50 | 112 | 91 | 97
+| 3 | 50 | 168 | 134 | 142
+
+[^j1]: Using 6.5 byte average of worst case storage overhead for each value type.
+[^j2]: Using 4.5 byte average of worst case storage overhead for each value type.
 
 Storage overhead doesn't look great compared with our combined table with lots of columns. It's also only marginally better than our current best in class implementation with a separate attribute value child table. 
 
+## Access Patterns
+
+As always, the key query is retrieving issues on a project. We can retrieve the data as stored, with the custom fields encoded using JSON, and parse the JSON in our app server.
+
+```
+SELECT id,name,num,state,custom_fields
+FROM issue WHERE issue.project = '35e9' ORDER BY num DESC;
+```
+
+Or we can get the database to extract the values for us. JSONB format is recommended if you're doing anything more than just storing and retrieving JSON documents.
+
+```
+SELECT id,name,num,state,
+  to_date(custom_fields->>'3812','YYYY-MM-DD') AS custom1,
+  to_date(custom_fields->>'882a','YYYY-MM-DD') AS custom2,
+  (custom_fields->'3fe6')::int4 AS custom3,
+  custom_fields->>'47e5' AS custom4
+FROM issue WHERE issue.project = '35e9' ORDER BY num DESC;
+```
+
+The `->` [operator](https://www.postgresql.org/docs/15/functions-json.html) extracts the value for the specified top level key. The value returned is in JSONB format, so needs to be cast to the appropriate type. The `->>` operator is a convenience which extracts the value and casts to text type.
+
+We can sort by custom field easily enough, complete with a secondary sort on num to support pagination.
+
+```
+SELECT id,name,num,state,
+  to_date(custom_fields->>'3812','YYYY-MM-DD') AS custom1,
+  to_date(custom_fields->>'882a','YYYY-MM-DD') AS custom2,
+  (custom_fields->'3fe6')::int4 AS custom3,
+  custom_fields->>'47e5' AS custom4
+FROM issue WHERE issue.project = '35e9' ORDER BY custom1, num;
+```
+
+Of course, we don't have any index to support this query. The best the query planner can do is use the (project,num) index to retrieve all the issues for the project and then sort them. 
+
+```
+TODO query plan
+```
+
+Does Postgres have some kind of special JSON index?
+
+## Postgres GIN Index
+
+As a matter of fact it does. A [GIN index](https://www.postgresql.org/docs/current/datatype-json.html#JSON-INDEXING) can be used to "efficiently search for keys or key/value pairs occurring within a large number of JSONB documents". It sounds like magic. Define one index on our custom_fields JSON column and all the keys and values contained will be indexed.
+
+Let's try it out. 
+
+```
+TODO query plan
+```
+
+Oh dear. The GIN index wasn't used. The problem is that project is a regular column, not a JSON key. Luckily, attribute definitions are per project. We can retrieve only the issues with the attribute we're sorting on defined. That will mean we have to go back to two separate queries to paginate over all the data: one for issues with the attribute defined (using the GIN index) and one for issues without (using the original project index). 
+
+```
+SELECT id,name,num,state,
+  to_date(custom_fields->>'3812','YYYY-MM-DD') AS custom1,
+  to_date(custom_fields->>'882a','YYYY-MM-DD') AS custom2,
+  (custom_fields->'3fe6')::int4 AS custom3,
+  custom_fields->>'47e5' AS custom4
+FROM issue WHERE custom_fields ? '3812' ORDER BY custom1;
+
+TODO query plan
+```
+
+```
+SELECT id,name,num,state,
+  to_date(custom_fields->>'3812','YYYY-MM-DD') AS custom1,
+  to_date(custom_fields->>'882a','YYYY-MM-DD') AS custom2,
+  (custom_fields->'3fe6')::int4 AS custom3,
+  custom_fields->>'47e5' AS custom4
+FROM issue WHERE issue.project = '35e9' AND NOT custom_fields ? '3812' ORDER BY num;
+
+TODO query plan
+```
+
+Now we find the fatal flaw. GIN indexes are not sorted. They can only be used to test for existance and equality. The database still has to sort the matching issues.
+
+Is that it for JSON? Not quite. There is a way to build normal sorted indexes that combine both regular columns and JSON keys. However, before we can do that, we need to change our JSON schema.
+
 ## Compact Schema
 
-Could we use a more compact JSON representation? Rather than adding 32 bytes of overhead by storing the attribute id UUIDs directly, we can add a json_key column to the attribute definition table. We can encode custom field type and number in a two character string[^3]. We can also make the date format slightly more compact by removing the dashes.
+The current schema has two problems. First, the UUID attribute keys make for particularly verbose JSON. Second, having different JSON keys for every project makes it impractical to define indexes that cover them all. 
+
+We can solve both problems with an extra level of indirection. Give each of the 400 possible custom field "slots" a short id to use as a JSON key. We can encode custom field type and number in a two character string[^3]. Add a json_key column to the attribute definition table which specifies which JSON key that attribute is using. 
 
 [^3]: To keep the examples readable, I'm using letter (for type) + number, which would need up to 3 characters. As we have at most 400 custom fields per project, you could easily come up with a two character encoding. For example, using base 64.
 
 | id | name | project | num | state | custom_fields |
 |-|-|-|-|-|-|
-| 020e | Needs Painting | 35e9 | 1 | open | {"d1":"20230501","d2":"20230601"} 
+| 020e | Needs Painting | 35e9 | 1 | open | {"d1":"2023-05-01","d2":"2023-06-01"} 
 | 3544 | Launch new newspaper! | 7b7e | 1 | closed |
-| 67d1 | Check for rust | 35e9 | 2 | closed | {"d1":"20230502","d2":"20230602"}
+| 67d1 | Check for rust | 35e9 | 2 | closed | {"d1":"2023-05-02","d2":"2023-06-02"}
 | 83a4 | Hire reporter for showbiz desk | 7b7e | 2 | open |
 | af34 | Girder needs replacing | 35e9 | 3 | open | {"i1":42,"t1":"Approved"}
 
@@ -71,51 +183,56 @@ What does that do to the overhead?
 
 | Custom Fields Used | Combined table | Attribute Value table | JSON | JSONB |
 |-|-|-|-|-|
-| 0 | 50 | 0 | 1 | 1 |
-| 1 | 50 | 56 | 8-16 | 18-24
-| 2 | 50 | 112 | 14-30 | 28-40
-| 3 | 50 | 168 | 20-44 | 38-56
+| 0 | 50 | 0 | 1 | 8 
+| 1 | 50 | 56 | 19 | 23
+| 2 | 50 | 112 | 31 | 37
+| 3 | 50 | 168 | 44 | 52
 
-Looking much healthier. Of course, none of this does us any good if we can't query the data efficiently. 
-
-## Access Patterns
-
-As always, the key query is retrieving issues on a project. We can retrieve the data as stored, with the custom fields encoded using JSON, and parse the JSON in our app server.
-
-```
-SELECT id,name,num,state,custom_fields
-FROM issue WHERE issue.project = '35e9' ORDER BY num DESC;
-```
-
-Or we can get the database to extract the values for us. JSONB format is recommended if you're doing anything more than just storing and retrieving JSON documents.
+Looking much healthier.  Here's the query we want to support again.
 
 ```
 SELECT id,name,num,state,
-  to_date(custom_fields->>'d1','YYYYMMDD') AS custom1,
-  to_date(custom_fields->>'d2','YYYYMMDD') AS custom2,
+  to_date(custom_fields->>'d1','YYYY-MM-DD') AS custom1,
+  to_date(custom_fields->>'d2','YYYY-MM-DD') AS custom2,
   (custom_fields->'i1')::int4 AS custom3,
   custom_fields->>'t1' AS custom4
-FROM issue WHERE issue.project = '35e9' ORDER BY num DESC;
+FROM issue WHERE issue.project = '35e9' ORDER BY custom1, num;
 ```
 
-The `->` [operator](https://www.postgresql.org/docs/15/functions-json.html) extracts the value for the specified top level key. The value returned is in JSONB format, so needs to be cast to the appropriate type. The `->>` operator is a convenience which extracts the value and casts to text type.
-
-* Sort by custom field
-* Are the queries efficient? Using standard project,num index to get issues for project then sorting.
-
-## Postgres GIN Index
-
-* What is GIN? Sort index.
-* Does it help?
-* Only fields in JSON are indexed. Need something with project id and custom fields.
-* Should we move all the other fields into JSON too?
-* No - GIN doesn't give a sorted order. Only supports existence and equality queries. 
+Now, how do we index it?
 
 ## Postgres Expression Index
 
-* Can define index on any expression, including a mix of standard columns and values extracted from JSON.
-* Can build the indexes that we want, but we're back to defining an index for each json_key. Back to 400 indexes. 
+Postgres has a wonderful feature which allows you to define [indexes on expressions](https://www.postgresql.org/docs/current/indexes-expressional.html). That is, any function or scalar expression computed from one or more columns in the table. 
+
+In our case, we need an index on project, the 'd1' JSON key and num.
+
+```
+CREATE INDEX idx_project_d1_num ON issue (project, to_date(custom_fields->>'d1','YYYY-MM-DD'), num)
+```
+
+An expression index is more expensive to maintain than a regular index as the expressions need to be re-evaluated and the index updated on any change to the columns used in the expression. In this case I've further optimized for index size and read performance by converting the date value from a string to a Postgres date type. 
+
+Now let's look at the query plan.
+
+```
+TODO
+```
+
+Success! We can build any indexes we want over any combination of columns and JSON keys. 
+
+Those of you that have been following along with this series, will realize that we've ended up with exactly the same indexing strategy as the [aggresively denormalized]({{ de_url | append: "#combined-issue-and-attribute-value-table" }}) combined table we started with. If we want to be able to sort on any of our 400 possible custom fields, we will need 400 indexes. To keep index management under control we will have to use partial indexes and only index issues which have that custom field defined. Which in turn means we're back to paginating over two separate queries when sorting by custom field. 
 
 ## Conclusion
+
+What have we gained? We got to play with the cool JSON feature in Postgres. We replaced the 400 mostly NULL columns we previously used to store custom fields with a single JSONB column. We're using less storage space than the combined table for issues with 2 or less custom fields. 
+
+On the downside
+* We will end up using a lot more storage space for issues with 3 or more custom fields
+* Our 400 indexes are more expensive to maintain
+* We have to deal with the added complexity of type conversion in our queries
+* JSON is still a relatively new feature in the relational database world. We will have operational difficulties with tooling that doesn't support JSONB columns. The data warehouse team will still hate us. 
+
+There are clearly compromised involved when shoehorning JSON support into a mature technology like a relational database. Maybe things will work more smoothly with a purpose built NoSQL JSON database? Next time, we'll take a look at MongoDB.
 
 ## Footnotes
