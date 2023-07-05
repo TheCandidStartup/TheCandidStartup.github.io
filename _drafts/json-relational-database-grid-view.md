@@ -10,10 +10,9 @@ Recently[^1], relational databases have added support for JSON columns. There's 
 
 [^1]: Within the last 10 years. Which is recent when you consider the development history of relational databases.
 
-TODO: Update data model
-{% include candid-image.html src="/assets/images/databases/tenant-project-issue-attribute.png" alt="Tenant-Project-Issue-Attribute data model" %}
+{% include candid-image.html src="/assets/images/databases/tenant-project-issue-json.png" alt="Tenant-Project-Issue-Attribute JSON data model" %}
 
-We can replace the 400 typed, mostly NULL, custom field columns with a single JSON column.
+We've replace the 400 typed, mostly NULL, custom field columns with a single JSON column.
 
 ## Schema
 
@@ -29,14 +28,14 @@ The most straight forward schema is to use a JSON document with attribute defini
 
 ## JSON Storage Format
 
- Postgres has two JSON storage types. The JSON type stores the JSON document as a string with whitespace, ordering and precision preserved. The JSONB type converts the JSON document into a binary representation optimized for fast query and indexing. 
+ Postgres has two JSON storage types. The JSON type stores the JSON document as a string with whitespace, ordering and formatting preserved. The JSONB type converts the JSON document into a binary representation optimized for fast query and indexing. 
 
 The JSON type has 4 bytes of document structure overhead per custom field (double quotes, colon, comma), plus another 3-6 per document (curly brackets, string length[^s0]). Then we need to add 32 bytes for the attribute id UUID encoded as a string. Finally, each value has potential overhead from the way its encoded in JSON. 
 
 | Custom Field Type | JSON Encoding | Storage Overhead (worst case) |
 | - | - | - |
 | Date[^s1] | ISO formatted string "YYYY-MM-DD" | 8 |
-| Integer[^s2] | JSON integer | 7 |
+| Integer[^s2] | JSON number | 7 |
 | Double[^s3] | JSON number | 10 |
 | Text[^s4] | JSON string | 1 |
 
@@ -61,7 +60,7 @@ The JSONB type[^2] has 8 bytes of document structure overhead per custom field, 
 [^b2]: JSON numbers (both integer and double) are stored using the Postgres arbitrary precision [Numeric](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL) type. This [uses a base 10000 encoding](https://github.com/postgres/postgres/blob/b0feda79fdf02710a6039a324299525845a4a9d4/src/backend/utils/adt/numeric.c) (each group of 4 decimal digits is stored as an int16) with 2 byte Numeric header and a 1 byte varlena header. Integers need at most 3 int16 digits, doubles at most 6.
 [^b4]: No double quotes needed in JSONB document structure.
 
-How does the storage overhead compare with our previous implementation attempts? In the table below I use the average of the worst case storage overhead for each value type: 7 bytes for JSON, 5 for JSONB. 
+How does the storage overhead compare with our previous implementation attempts? In the table below I use the average of the worst case storage overhead for each value type: 6.5 bytes for JSON, 4.5 for JSONB. 
 
 | Custom Fields Used | Combined table | Attribute Value table | JSON[^j1] | JSONB[^j2] |
 |-|-|-|-|-|
@@ -108,7 +107,7 @@ SELECT id,name,num,state,
 FROM issue WHERE issue.project = '35e9' ORDER BY custom1, num;
 ```
 
-Of course, we don't have any index to support this query. The best the query planner can do is use the (project,num) index to retrieve all the issues for the project and then sort them. 
+Of course, we don't have any index to support this query. The best the query planner can do is use the (project,state,num) index to retrieve all the issues for the project and then sort them. 
 
 ```
 Sort  (cost=8.18..8.18 rows=1 width=584)
@@ -117,7 +116,7 @@ Sort  (cost=8.18..8.18 rows=1 width=584)
          Index Cond: (project = '35e9'::uuid)
 ```
 
-Notice that because my query ordered on the output column `custom1`, the sort has to convert the text extracted from JSON to a Postgres date. The string encoding used for date sorts in date order, so it would be more efficient to order by `custom_fields->>'3812'` and save the cost of the conversion on every comparison. When using JSON with Postgres, you will spend a lot of time thinking about type conversions.
+Note that because my query is ordered by the output column `custom1`, the sort has to convert the text extracted from JSON to a Postgres date. The string encoding used for date sorts in date order, so it would be more efficient to order by `custom_fields->>'3812'` and save the cost of the conversion on every comparison. When using JSON with Postgres, you will spend a lot of time thinking about type conversions.
 
 Does Postgres have some kind of special JSON index?
 
@@ -125,13 +124,22 @@ Does Postgres have some kind of special JSON index?
 
 As a matter of fact it does. A [GIN index](https://www.postgresql.org/docs/current/datatype-json.html#JSON-INDEXING) can be used to "efficiently search for keys or key/value pairs occurring within a large number of JSONB documents". It sounds like magic. Define one index on our custom_fields JSON column and all the keys and values contained will be indexed.
 
-Let's try it out and make sure we're ordering directly on the JSON key without the type conversion
-
 ```
 CREATE INDEX idx_custom_fields ON issue USING GIN (custom_fields);
 ```
 
-and check the query plan again
+Let's try it out. I've adjusted the query to order by the JSON value directly, without the type conversion.
+
+```
+SELECT id,name,num,state,
+  to_date(custom_fields->>'3812','YYYY-MM-DD') AS custom1,
+  to_date(custom_fields->>'882a','YYYY-MM-DD') AS custom2,
+  (custom_fields->'3fe6')::int4 AS custom3,
+  custom_fields->>'47e5' AS custom4
+FROM issue WHERE issue.project = '35e9' ORDER BY custom_fields->>'3812', num;
+```
+
+And check the query plan again ...
 
 ```
 Sort  (cost=8.18..8.18 rows=1 width=584)
@@ -141,6 +149,23 @@ Sort  (cost=8.18..8.18 rows=1 width=584)
 ```
 
 Oh dear. The GIN index wasn't used. The problem is that project is a regular column, not a JSON key. Luckily, attribute definitions are per project. We can query for issues with the required attribute defined. That will mean we have to go back to two separate queries to paginate over all the data: one for issues with the attribute defined (using the GIN index) and one for issues without (using the original project index). 
+
+The second query works as we'd expect, using the existing (project,num) index to iterate over issues on the project in num order, with a filter condition that ignores issues that don't have the custom field defined.
+
+```
+EXPLAIN SELECT id,name,num,state,
+  to_date(custom_fields->>'3812','YYYY-MM-DD') AS custom1,
+  to_date(custom_fields->>'882a','YYYY-MM-DD') AS custom2,
+  (custom_fields->'3fe6')::int4 AS custom3,
+  custom_fields->>'47e5' AS custom4
+FROM issue WHERE issue.project = '35e9' AND NOT custom_fields ? '3812' ORDER BY num;
+
+Index Scan using issue_project_num_key on issue  (cost=0.13..8.17 rows=1 width=584)
+   Index Cond: (project = '35e9b60a-d4d0-47ce-b9bd-af0a961ea65c'::uuid)
+   Filter: (NOT (custom_fields ? 'd1'::text))
+```
+
+How does the GIN index get on with the first query?
 
 ```
 EXPLAIN SELECT id,name,num,state,
@@ -158,20 +183,11 @@ Sort  (cost=12.04..12.05 rows=1 width=584)
                Index Cond: (custom_fields ? '3812'::text)
 ```
 
-```
-EXPLAIN SELECT id,name,num,state,
-  to_date(custom_fields->>'3812','YYYY-MM-DD') AS custom1,
-  to_date(custom_fields->>'882a','YYYY-MM-DD') AS custom2,
-  (custom_fields->'3fe6')::int4 AS custom3,
-  custom_fields->>'47e5' AS custom4
-FROM issue WHERE issue.project = '35e9' AND NOT custom_fields ? '3812' ORDER BY num;
+Well, it is being used to find issues with the required custom field defined (the `?` [operator](https://www.postgresql.org/docs/15/functions-json.html) checks whether a top level key exists). However, we're still fetching all the issues and then sorting them. What's going on?
 
-Index Scan using issue_project_num_key on issue  (cost=0.13..8.17 rows=1 width=584)
-   Index Cond: (project = '35e9b60a-d4d0-47ce-b9bd-af0a961ea65c'::uuid)
-   Filter: (NOT (custom_fields ? 'd1'::text))
-```
+GIN indexes are not sorted. They operate in the same way as a search index, mapping search terms (for JSON, that's keys and values) to [posting lists](https://scalegrid.io/blog/using-jsonb-in-postgresql-how-to-effectively-store-index-json-data-in-postgresql/#6) of rows that contain them. A GIN index can only be used to test for existence and equality. The database still has to sort the matching issues.
 
-Now we find the fatal flaw. GIN indexes are not sorted. They can only be used to test for existance and equality. The database still has to sort the matching issues.
+If you look at the query plan, you'll see that the index lookup uses two phases. In the initial "Bitmap Index Scan" phase, the index is used to identify all database pages with rows that contain the search terms. The index doesn't contain enough information to definitively evaluate the query condition. The second "Bitmap Heap Scan" phase loads each identified page in turn and evaluates the query condition on each row in the page.
 
 Is that it for JSON? Not quite. There is a way to build normal sorted indexes that combine both regular columns and JSON keys. However, before we can do that, we need to change our JSON schema.
 
@@ -241,9 +257,11 @@ Index Scan using idx_project_d1_num on issue  (cost=0.13..8.17 rows=1 width=616)
 
 Success! We can build any indexes we want over any combination of columns and JSON keys. 
 
-An expression index is more expensive to maintain than a regular index, as the expressions need to be re-evaluated and the index updated on any change to the columns used in the expression. This index on a JSON date is also larger than one created on a real date column. In theory we could convert the JSON string to a date before indexing, improving index size and read performance at the cost of additional write time cost. In practice, Postgres refused to create the index because the date conversion function is not marked IMMUTABLE. This is a [known issue](https://www.postgresql.org/message-id/01fe23b2-7779-d3ee-056a-074a7385e248%40mail.de) as date conversion may depend on the current locale.
+An expression index is more expensive to maintain than a regular index, as the expressions need to be re-evaluated and the index updated on any change to the columns used in the expression. 
 
-I was able to create indexes for integer and double custom fields without additional storage overhead. 
+This index on a JSON date is also larger than one created on a real date column. In theory, we could convert the JSON string to a date before indexing, improving index size and read performance at the cost of additional write time cost. In practice, Postgres refused to create the index because the date conversion function is not marked IMMUTABLE. This is a [known issue](https://www.postgresql.org/message-id/01fe23b2-7779-d3ee-056a-074a7385e248%40mail.de) as date conversion may depend on the current locale.
+
+I was able to create indexes for integer and double custom fields using native types.
 
 ```
 CREATE INDEX idx_project_i1_num ON issue (project, ((custom_fields->'i1')::int4),num);
@@ -259,12 +277,15 @@ Those of you that have been following along with this series, will realize that 
 What have we gained? We got to play with the cool JSON feature in Postgres. We replaced the 400 mostly NULL columns we previously used to store custom fields with a single JSONB column. We're using less storage space than the combined table for issues with 2 or less custom fields. 
 
 On the downside
+* Any change to a custom field requires a read/modify/write of the containing JSON document
 * We will end up using a lot more storage space for issues with 3 or more custom fields
 * Our 400 indexes are more expensive to maintain
-* The indexes are larger unless you're prepared for more complexity and write time cost by converting data types before indexing 
+* The indexes are larger, unless you're prepared for more complexity and write time cost by converting data types before indexing 
 * We have to deal with the added complexity of type conversion in our queries
 * JSON is still a relatively new feature in the relational database world. We will have operational difficulties with tooling that doesn't support JSONB columns. The data warehouse team will still hate us. 
 
-There are clearly compromises involved when shoehorning JSON support into a mature technology like a relational database. Maybe things will work more smoothly with a purpose built NoSQL JSON database? Next time, we'll take a look at MongoDB.
+There are clearly compromises involved when shoehorning JSON support into a mature technology like a relational database. Maybe things will work more smoothly with a purpose built NoSQL JSON database? 
+
+Next time, we'll take a look at [MongoDB](https://www.mongodb.com/docs/manual/).
 
 ## Footnotes
