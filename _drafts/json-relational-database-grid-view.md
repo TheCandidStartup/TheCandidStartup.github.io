@@ -111,8 +111,13 @@ FROM issue WHERE issue.project = '35e9' ORDER BY custom1, num;
 Of course, we don't have any index to support this query. The best the query planner can do is use the (project,num) index to retrieve all the issues for the project and then sort them. 
 
 ```
-TODO query plan
+Sort  (cost=8.18..8.18 rows=1 width=584)
+   Sort Key: (to_date((custom_fields ->> '3812'::text), 'YYYY-MM-DD'::text)), num
+   ->  Index Scan using issue_project_state_num_idx on issue  (cost=0.13..8.17 rows=1 width=584)
+         Index Cond: (project = '35e9'::uuid)
 ```
+
+Notice that because my query ordered on the output column `custom1`, the sort has to convert the text extracted from JSON to a Postgres date. The string encoding used for date sorts in date order, so it would be more efficient to order by `custom_fields->>'3812'` and save the cost of the conversion on every comparison. When using JSON with Postgres, you will spend a lot of time thinking about type conversions.
 
 Does Postgres have some kind of special JSON index?
 
@@ -120,34 +125,50 @@ Does Postgres have some kind of special JSON index?
 
 As a matter of fact it does. A [GIN index](https://www.postgresql.org/docs/current/datatype-json.html#JSON-INDEXING) can be used to "efficiently search for keys or key/value pairs occurring within a large number of JSONB documents". It sounds like magic. Define one index on our custom_fields JSON column and all the keys and values contained will be indexed.
 
-Let's try it out. 
+Let's try it out and make sure we're ordering directly on the JSON key without the type conversion
 
 ```
-TODO query plan
+CREATE INDEX idx_custom_fields ON issue USING GIN (custom_fields);
 ```
 
-Oh dear. The GIN index wasn't used. The problem is that project is a regular column, not a JSON key. Luckily, attribute definitions are per project. We can retrieve only the issues with the attribute we're sorting on defined. That will mean we have to go back to two separate queries to paginate over all the data: one for issues with the attribute defined (using the GIN index) and one for issues without (using the original project index). 
+and check the query plan again
 
 ```
-SELECT id,name,num,state,
+Sort  (cost=8.18..8.18 rows=1 width=584)
+   Sort Key: ((custom_fields ->> '3812'::text), num)
+   ->  Index Scan using issue_project_state_num_idx on issue  (cost=0.13..8.17 rows=1 width=584)
+         Index Cond: (project = '35e9'::uuid)
+```
+
+Oh dear. The GIN index wasn't used. The problem is that project is a regular column, not a JSON key. Luckily, attribute definitions are per project. We can query for issues with the required attribute defined. That will mean we have to go back to two separate queries to paginate over all the data: one for issues with the attribute defined (using the GIN index) and one for issues without (using the original project index). 
+
+```
+EXPLAIN SELECT id,name,num,state,
   to_date(custom_fields->>'3812','YYYY-MM-DD') AS custom1,
   to_date(custom_fields->>'882a','YYYY-MM-DD') AS custom2,
   (custom_fields->'3fe6')::int4 AS custom3,
   custom_fields->>'47e5' AS custom4
 FROM issue WHERE custom_fields ? '3812' ORDER BY custom1;
 
-TODO query plan
+Sort  (cost=12.04..12.05 rows=1 width=584)
+   Sort Key: ((custom_fields ->> '3812'::text))
+   ->  Bitmap Heap Scan on issue  (cost=8.00..12.03 rows=1 width=584)
+         Recheck Cond: (custom_fields ? '3812'::text)
+         ->  Bitmap Index Scan on idx_custom_fields  (cost=0.00..8.00 rows=1 width=0)
+               Index Cond: (custom_fields ? '3812'::text)
 ```
 
 ```
-SELECT id,name,num,state,
+EXPLAIN SELECT id,name,num,state,
   to_date(custom_fields->>'3812','YYYY-MM-DD') AS custom1,
   to_date(custom_fields->>'882a','YYYY-MM-DD') AS custom2,
   (custom_fields->'3fe6')::int4 AS custom3,
   custom_fields->>'47e5' AS custom4
 FROM issue WHERE issue.project = '35e9' AND NOT custom_fields ? '3812' ORDER BY num;
 
-TODO query plan
+Index Scan using issue_project_num_key on issue  (cost=0.13..8.17 rows=1 width=584)
+   Index Cond: (project = '35e9b60a-d4d0-47ce-b9bd-af0a961ea65c'::uuid)
+   Filter: (NOT (custom_fields ? 'd1'::text))
 ```
 
 Now we find the fatal flaw. GIN indexes are not sorted. They can only be used to test for existance and equality. The database still has to sort the matching issues.
@@ -196,7 +217,7 @@ SELECT id,name,num,state,
   to_date(custom_fields->>'d2','YYYY-MM-DD') AS custom2,
   (custom_fields->'i1')::int4 AS custom3,
   custom_fields->>'t1' AS custom4
-FROM issue WHERE issue.project = '35e9' ORDER BY custom1, num;
+FROM issue WHERE issue.project = '35e9' ORDER BY custom_fields->>'d1', num;
 ```
 
 Now, how do we index it?
@@ -208,31 +229,42 @@ Postgres has a wonderful feature which allows you to define [indexes on expressi
 In our case, we need an index on project, the 'd1' JSON key and num.
 
 ```
-CREATE INDEX idx_project_d1_num ON issue (project, to_date(custom_fields->>'d1','YYYY-MM-DD'), num)
+CREATE INDEX idx_project_d1_num ON issue (project, custom_fields->>'d1', num);
 ```
-
-An expression index is more expensive to maintain than a regular index as the expressions need to be re-evaluated and the index updated on any change to the columns used in the expression. In this case I've further optimized for index size and read performance by converting the date value from a string to a Postgres date type. 
 
 Now let's look at the query plan.
 
 ```
-TODO
+Index Scan using idx_project_d1_num on issue  (cost=0.13..8.17 rows=1 width=616)
+   Index Cond: (project = '35e9b60a-d4d0-47ce-b9bd-af0a961ea65c'::uuid)
 ```
 
 Success! We can build any indexes we want over any combination of columns and JSON keys. 
 
-Those of you that have been following along with this series, will realize that we've ended up with exactly the same indexing strategy as the [aggresively denormalized]({{ de_url | append: "#combined-issue-and-attribute-value-table" }}) combined table we started with. If we want to be able to sort on any of our 400 possible custom fields, we will need 400 indexes. To keep index management under control we will have to use partial indexes and only index issues which have that custom field defined. Which in turn means we're back to paginating over two separate queries when sorting by custom field. 
+An expression index is more expensive to maintain than a regular index, as the expressions need to be re-evaluated and the index updated on any change to the columns used in the expression. This index on a JSON date is also larger than one created on a real date column. In theory we could convert the JSON string to a date before indexing, improving index size and read performance at the cost of additional write time cost. In practice, Postgres refused to create the index because the date conversion function is not marked IMMUTABLE. This is a [known issue](https://www.postgresql.org/message-id/01fe23b2-7779-d3ee-056a-074a7385e248%40mail.de) as date conversion may depend on the current locale.
+
+I was able to create indexes for integer and double custom fields without additional storage overhead. 
+
+```
+CREATE INDEX idx_project_i1_num ON issue (project, ((custom_fields->'i1')::int4),num);
+CREATE INDEX idx_project_f1_num ON issue (project, ((custom_fields->'f1')::float8),num);
+```
+
+You need to take great care when querying using an expression index. Your query expression needs to exactly match the expression used to create the index, otherwise the index won't be used. 
 
 ## Conclusion
+
+Those of you that have been following along with this series, will realize that we've ended up with exactly the same indexing strategy as the [aggresively denormalized]({{ de_url | append: "#combined-issue-and-attribute-value-table" }}) combined table we started with. If we want to be able to sort on any of our 400 possible custom fields, we will need 400 indexes. To keep index management under control we will have to use partial indexes and only index issues which have that custom field defined. Which in turn means we're back to paginating over two separate queries when sorting by custom field.
 
 What have we gained? We got to play with the cool JSON feature in Postgres. We replaced the 400 mostly NULL columns we previously used to store custom fields with a single JSONB column. We're using less storage space than the combined table for issues with 2 or less custom fields. 
 
 On the downside
 * We will end up using a lot more storage space for issues with 3 or more custom fields
 * Our 400 indexes are more expensive to maintain
+* The indexes are larger unless you're prepared for more complexity and write time cost by converting data types before indexing 
 * We have to deal with the added complexity of type conversion in our queries
 * JSON is still a relatively new feature in the relational database world. We will have operational difficulties with tooling that doesn't support JSONB columns. The data warehouse team will still hate us. 
 
-There are clearly compromised involved when shoehorning JSON support into a mature technology like a relational database. Maybe things will work more smoothly with a purpose built NoSQL JSON database? Next time, we'll take a look at MongoDB.
+There are clearly compromises involved when shoehorning JSON support into a mature technology like a relational database. Maybe things will work more smoothly with a purpose built NoSQL JSON database? Next time, we'll take a look at MongoDB.
 
 ## Footnotes
