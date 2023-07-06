@@ -12,7 +12,7 @@ Recently[^1], relational databases have added support for JSON columns. There's 
 
 {% include candid-image.html src="/assets/images/databases/tenant-project-issue-json.png" alt="Tenant-Project-Issue-Attribute JSON data model" %}
 
-We've replace the 400 typed, mostly NULL, custom field columns with a single JSON column.
+We've replaced the four hundred typed, mostly NULL, custom field columns with a single JSON column.
 
 ## Schema
 
@@ -28,9 +28,9 @@ The most straight forward schema is to use a JSON document with attribute defini
 
 ## JSON Storage Format
 
- Postgres has two JSON storage types. The JSON type stores the JSON document as a string with whitespace, ordering and formatting preserved. The JSONB type converts the JSON document into a binary representation optimized for fast query and indexing. 
+ Postgres has two JSON storage types. The JSON type stores the JSON document as a string with whitespace, ordering and numeric formatting preserved. The JSONB type converts the JSON document into a binary representation optimized for fast query and indexing. 
 
-The JSON type has 4 bytes of document structure overhead per custom field (double quotes, colon, comma), plus another 3-6 per document (curly brackets, string length[^s0]). Then we need to add 32 bytes for the attribute id UUID encoded as a string. Finally, each value has potential overhead from the way its encoded in JSON. 
+The JSON type has 4 bytes of document structure overhead per custom field (double quotes, colon, comma), plus another 3-6 per document (curly brackets, string length[^s0]). Then we need to add 32 bytes for the attribute id UUID encoded as a string. Finally, each value has potential overhead from the way it's encoded in JSON. 
 
 | Custom Field Type | JSON Encoding | Storage Overhead (worst case) |
 | - | - | - |
@@ -261,7 +261,7 @@ An expression index is more expensive to maintain than a regular index, as the e
 
 This index on a JSON date is also larger than one created on a real date column. In theory, we could convert the JSON string to a date before indexing, improving index size and read performance at the cost of additional write time cost. In practice, Postgres refused to create the index because the date conversion function is not marked IMMUTABLE. This is a [known issue](https://www.postgresql.org/message-id/01fe23b2-7779-d3ee-056a-074a7385e248%40mail.de) as date conversion may depend on the current locale.
 
-I was able to create indexes for integer and double custom fields using native types.
+I *was* able to create indexes for integer and double custom fields using native types.
 
 ```
 CREATE INDEX idx_project_i1_num ON issue (project, ((custom_fields->'i1')::int4),num);
@@ -274,12 +274,12 @@ You need to take great care when querying using an expression index. Your query 
 
 Those of you that have been following along with this series, will realize that we've ended up with exactly the same indexing strategy as the [aggresively denormalized]({{ de_url | append: "#combined-issue-and-attribute-value-table" }}) combined table we started with. If we want to be able to sort on any of our 400 possible custom fields, we will need 400 indexes. To keep index management under control we will have to use partial indexes and only index issues which have that custom field defined. Which in turn means we're back to paginating over two separate queries when sorting by custom field.
 
-What have we gained? We got to play with the cool JSON feature in Postgres. We replaced the 400 mostly NULL columns we previously used to store custom fields with a single JSONB column. We're using less storage space than the combined table for issues with 2 or less custom fields. 
+What have we gained? We got to play with the cool JSON feature in Postgres. We replaced the 400 mostly NULL columns we previously used to store custom fields with a single JSONB column. We're using less storage space than the combined table for issues with two or fewer custom fields. 
 
 On the downside
 * Any change to a custom field requires a read/modify/write of the containing JSON document
-* We will end up using a lot more storage space for issues with 3 or more custom fields
-* Our 400 indexes are more expensive to maintain
+* We will end up using a lot more storage space for issues with threee or more custom fields
+* Our four hundred indexes are more expensive to maintain
 * The indexes are larger, unless you're prepared for more complexity and write time cost by converting data types before indexing 
 * We have to deal with the added complexity of type conversion in our queries
 * JSON is still a relatively new feature in the relational database world. We will have operational difficulties with tooling that doesn't support JSONB columns. The data warehouse team will still hate us. 
