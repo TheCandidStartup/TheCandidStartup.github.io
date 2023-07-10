@@ -3,7 +3,7 @@ title: JSON Relational Database Grid View
 tags: databases
 ---
 
-{% capture de_url %}{% link _drafts/denormalized-relational-database-grid-view.md %}{% endcapture %}
+{% capture de_url %}{% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}{% endcapture %}
 When we [aggresively denormalized]({{ de_url | append: "#combined-issue-and-attribute-value-table" }}) our [Grid View relational database]({% link _posts/2023-06-26-custom-fields-normalized-relational-database-grid-view.md %}), we were able to achieve our aim of a single table solution. However, it came with a lot of unintended consequences. In order to support up to 100 custom fields of each type, we added 400 custom field columns to our issue table, most of which were NULL. In theory the overhead should have been minimal. In practice, we ran into all kinds of implementation and operational problems.
 
 Recently[^1], relational databases have added support for JSON columns. There's even an [ISO standard](https://www.iso.org/standard/67367.html) for it. Unfortunately, implementations [vary wildly](https://blog.jooq.org/standard-sql-json-the-sobering-parts/) in their standards conformance and reliance on non-standard extensions. Fortunately, Postgres has the [most mature and conformant implementation](https://obartunov.livejournal.com/200076.html). 

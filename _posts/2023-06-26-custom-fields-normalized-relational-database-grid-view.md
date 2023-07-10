@@ -337,5 +337,5 @@ Well, we did it. Per project custom fields, with sorting on any field, still sca
 * It's really annoying how much extra work and care is needed to sort on a custom field.
 * The secondary sort for duplicate custom field values is on issue id, which is a UUID. To the end user, they might as well be in random order.
 
-Can't we do better than this? Well, maybe we can. But first I'll need to lure you over to the dark side. Join me next time when we look at how we could [Denormalize](https://en.wikipedia.org/wiki/Denormalization) the database.
+Can't we do better than this? Well, maybe we can. But first I'll need to lure you over to the dark side. Join me [next time]({% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}) when we look at how we could [Denormalize](https://en.wikipedia.org/wiki/Denormalization) the database.
 
