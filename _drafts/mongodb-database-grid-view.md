@@ -27,11 +27,11 @@ Not all NoSQL databases exhibit all of these traits but most have a significant 
 
 MongoDB is a popular JSON document database with a rich set of features and a reputation for ease of use. It's only a small step from Postgres with JSONB to MongoDB, which makes it a perfect starting point in the world of NoSQL. In addition, I have some experience with teams that have used MongoDB in production.
 
-According to the [manual](https://www.mongodb.com/docs/manual/), "MongoDB is a document database designed for ease of application development and scaling". As well as the cloud hosted [Atlas](https://www.mongodb.com/atlas/database) deployment, there is a [free community edition](https://www.mongodb.com/try/download/community) that you can host yourself. 
+According to the [manual](https://www.mongodb.com/docs/manual/), "MongoDB is a document database designed for ease of application development and scaling". As well as the cloud hosted [Atlas](https://www.mongodb.com/atlas/database) deployment, there is a [free community edition](https://www.mongodb.com/try/download/community) that you can host yourself. AWS have their own [DocumentDB database](https://aws.amazon.com/documentdb/) which is MongoDB compatible at the API and driver level.
 
 MongoDB stores records as [documents](https://www.mongodb.com/docs/manual/core/document/) (equivalent to a relational row) which are gathered together in [collections](https://www.mongodb.com/docs/manual/core/databases-and-collections/) (equivalent to a relational table). Documents are defined using the [BSON](https://bsonspec.org/spec.html) binary JSON representation (equivalent to JSONB in Postgres). Unlike JSONB, BSON has binary representations for commonly used types like dates, integers and double precision floating point numbers. 
 
-Unusually for a NoSQL database, you have access to many of the features provided by relational databases. There's a query API with a [rich set](https://www.mongodb.com/docs/manual/reference/operator/query/) of comparison, logical and projection operators. You can specify a [sort](https://www.mongodb.com/docs/v6.0/reference/method/cursor.sort/) order for the results, over any number of fields. There's a [limit](https://www.mongodb.com/docs/v6.0/reference/method/cursor.limit/) method for pagination. An [interactive shell](https://www.mongodb.com/docs/mongodb-shell/) let's you interact directly with the database.
+Unusually for a NoSQL database, you have access to many of the features provided by relational databases. There's a query API with a [rich set](https://www.mongodb.com/docs/manual/reference/operator/query/) of comparison, logical and projection operators. You can specify a [sort](https://www.mongodb.com/docs/v6.0/reference/method/cursor.sort/) order for the results, over any number of fields. There's a [limit](https://www.mongodb.com/docs/v6.0/reference/method/cursor.limit/) method for pagination. An [interactive shell](https://www.mongodb.com/docs/mongodb-shell/) let's you interact directly with the database. There is optional support for [ACID transactions](https://www.mongodb.com/docs/v6.0/core/transactions/).
 
 You can create [indexes](https://www.mongodb.com/docs/manual/indexes/) to improve query performance. There's even a [query planner](https://www.mongodb.com/docs/v6.0/core/query-plans/) that decides which index to use together with an [explain](https://www.mongodb.com/docs/v6.0/reference/command/explain/) method to figure out what it's doing. 
 
@@ -60,7 +60,7 @@ In MongoDB every document must have a field called "[_id](https://www.mongodb.co
 
 ## BSON Storage
 
-Documents are stored using the [BSON](https://bsonspec.org/spec.html) binary format. BSON has native support for many types including binary, integers, doubles, and datetime. There's no direct support for enums, like our state field. You either bias for readability and use a string, or for efficiency and use an integer.
+Documents are stored using the [BSON](https://bsonspec.org/spec.html) binary format. BSON is a super set of JSON and has native support for many types including binary, integers, doubles, and datetime. There's no direct support for enums, like our state field. You either bias for readability and use a string, or for efficiency and use an integer.
 
 MongoDB provides [libraries](https://www.mongodb.com/docs/drivers/) for multiple programming languages that make it easy to work with BSON data and call the MongoDB API. Here's how you would use JavaScript to create our sample issue ready to be serialized as BSON.
 
@@ -91,10 +91,12 @@ db.issue.find( { project: UUID("3fe9") } ).sort( { num: 1 } )
 
 The API uses a [fluent](https://en.wikipedia.org/wiki/Fluent_interface) style with methods chained together. The find method is passed a [query filter document](https://www.mongodb.com/docs/manual/core/document/#std-label-document-query-filter) that specifies a set of fields and conditions. The [sort](https://www.mongodb.com/docs/manual/reference/method/cursor.sort/) method is passed a sort document which specifies a set of fields and sort directions (1 for ascending, -1 for descending).
 
-Here's query that sorts by custom field and num, then returns the first page of results found. 
+Here's a query that sorts by custom field and num, then returns the first page of results found. 
 
 ```
-db.issue.find( { project: UUID("3fe9") } ).sort( { "custom_fields.d1": 1, num: 1 } ).limit(50)
+db.issue.find( { project: UUID("3fe9") } )
+        .sort( { "custom_fields.d1": 1, num: 1 } )
+        .limit(50)
 ```
 
 Similar to a relational database, MongoDB's query planner will use an index to retrieve data in sorted order if possible, otherwise it will retrieve all the issues and sort them (known as a [blocking sort](https://www.mongodb.com/docs/v6.0/tutorial/sort-results-with-indexes/)). Naturally, you don't want to use a blocking sort when working with large paginated data sets. 
@@ -104,7 +106,7 @@ Similar to a relational database, MongoDB's query planner will use an index to r
 As with our [JSON relational database]({% link _drafts/json-relational-database-grid-view.md %}), we can create a compound index over multiple fields to support this query. The index specification document uses a similar syntax to the sort document. 
 
 ```
-db.issue.createIndex( { project: 1, "custom.fields.d1": 1, num: 1} )
+db.issue.createIndex( { project: 1, "custom_fields.d1": 1, num: 1} )
 ```
 
 And just like last time, if we want to support sorting of any of the 400 possible custom fields, we will need 400 indexes. And yes, once again, we'll need to use [partial indexes](https://www.mongodb.com/docs/v6.0/core/index-partial/) to keep index management to a reasonable level, which in turn means paginating over two separate queries. 
@@ -113,11 +115,11 @@ Can a dedicated JSON document database really offer no improvements over Postgre
 
 ## Idiomatic Mongo Schema
 
-Data modelling is all about defining entities and the relationships between them. With a [normalized relational database]({% link _posts/2023-06-19-normalized-relational-database-grid-view.md %}), you have one way to represent this, regardless of the type of relationship. You use a separate table to store each entity. You use a field storing the id of another entity for a relationship.
+Data modelling is all about defining entities and the relationships between them. With a [normalized relational database]({% link _posts/2023-06-19-normalized-relational-database-grid-view.md %}), you have one way to represent this, regardless of the type of relationship. You use a separate table to store each entity. You represent a relationship with a field that stores the id of the related entity.
 
 MongoDB gives you [two ways](https://www.mongodb.com/docs/manual/core/data-model-design/) to model relationships. You can do it the same way as a normalized relational database using [references](https://www.mongodb.com/docs/manual/tutorial/model-referenced-one-to-many-relationships-between-documents/). Or if the relationship you're modelling represents containment, you can use [embedded documents](https://www.mongodb.com/docs/manual/tutorial/model-embedded-one-to-one-relationships-between-documents/). 
 
-The advantage of embedded documents are that they are stored with the containing document. Any query that retrieves the containing document gets all the embedded documents too. This is exactly what we've been trying to achieve with our [denormalized]({% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}) and [JSONB]({% link _drafts/json-relational-database-grid-view.md %}) relational database implementations. 
+The advantage of embedded documents is that they are stored with the containing document. Any query that retrieves the containing document gets all the embedded documents too. This is exactly what we've been trying to achieve with our [denormalized]({% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}) and [JSONB]({% link _drafts/json-relational-database-grid-view.md %}) relational database implementations. 
 
 If we model custom fields as embedded documents our sample issue document will look something like this:
 
@@ -136,8 +138,65 @@ var issue = {
 }
 ```
 
-This is our normalized relational database data model mapped directly to the equivalent idiomatic MongoDB schema.  
+This is our [normalized relational database data model]({% link _posts/2023-06-26-custom-fields-normalized-relational-database-grid-view.md %}) mapped directly to the equivalent idiomatic MongoDB schema.  
 
 ## Multikey Index
+
+Embedded document data models work well with the MongoDB [Multikey Index](https://www.mongodb.com/docs/manual/core/index-multikey/). When creating an index for a field in an array of embedded documents, MongoDB will add an index entry for *each* embedded document. 
+
+We can create a single index that contains all our custom field attributes and values with the values for each attribute type listed in order. By default, every document in the collection is included in the index, with null values for any fields that don't exist. I've added a partial filter expression to only include documents that have custom fields. 
+
+```
+db.issue.createIndex(
+  { "custom_fields.attribute": 1, "custom_fields.value": 1, num: 1},
+  { partialFilterExpression: { "custom_fields.attribute" { $exists: true }}}
+)
+```
+
+The resulting index for our sample data looks like :
+
+| custom_fields.attribute | custom_fields.value | num | Document Id |
+|-|-|-|-|-|
+| 3812 | 2023-05-01 | 1 | 020e |
+| 3812 | 2023-05-02 | 2 | 67d1 |
+| 3fe6 | 42 | 3 | af34 |
+| 47e5 | "Approved" | 3 | af34 |
+| 882a | 2023-06-01 | 1 | 020e |
+| 882a | 2023-06-02 | 2 | 67d1 |
+
+Note that there are multiple entries for each document. One row for every custom field defined.
+
+Finally, we've got a clear improvement on our normalized relational data model. We have a single issues collection where a complete issue can be retrieved with a single read and updated with a single write. We have added a single index equivalent to the relational attribute value index. However, this one includes a secondary sort on the num field. For each custom attribute, we have index entries in value order with a secondary sort on num. 
+
+We still need the separate query for issues that don't have the specified custom attribute defined, but that's inevitable unless we want to index up to 400 fields worth of NULL value. 
+
+## The Impossible Query
+
+I was so excited when I saw what you could do with a Multikey Index. I quickly jotted down the query we'd need based on an [example in the MongoDB documentation](https://www.mongodb.com/docs/manual/core/index-multikey/#index-arrays-with-embedded-documents).
+
+```
+db.issue.find( { "custom_fields.attribute": "3812" } )
+        .sort( { "custom_fields.value": 1, num: 1 } )
+```
+
+The example links to a separate page in the manual that provides more detail on how [indexes are used to sort query results](https://www.mongodb.com/docs/manual/tutorial/sort-results-with-indexes/). Right at the top of that page there's a scary looking note.
+
+{% include candid-image.html src="/assets/images/databases/mongodb-multikey-index-note.png" alt="MongoDB Multikey Index Note" %}
+
+What the heck does that mean? The whole point of doing this is to avoid a blocking sort. 
+
+[Index boundary](https://www.mongodb.com/docs/manual/core/multikey-index-bounds/) is a term that MongoDB uses to describe a condition that limits how much of the index will be scanned. Our query has a boundary on custom_fields.attribute of `["3812","3812"]`, because we're only interested in the part of the index that relates to a specific custom attribute. We're sorting on custom_fields.value which has the same path prefix.
+
+Oh dear. MongoDB won't use our perfect index to return the results we want in sorted order. But why? In the end I tracked down the [issue](https://jira.mongodb.org/browse/SERVER-31898) that led to this note being added to the manual. 
+
+What does it mean to sort on custom_fields.value when custom_fields is an array of embedded documents? Should the sort order change if there's a query predicate?
+
+I would like the meaning to be that if there's a query predicate that selects a single embedded document from the array, the sort order is based on that selected embedded document. This is what MongoDB [used to do in version 3.5 and earlier](https://jira.mongodb.org/browse/SERVER-19402). 
+
+The semantics changed in later versions of MongoDB. Now the sort order is independent of any query predicate. The [sort order](https://www.mongodb.com/docs/v6.0/reference/bson-type-comparison-order/) is always based on whichever embedded document in the array has the smallest value for the specified field. If the issue contains a different custom field with a lower value, MongoDB will sort on that, rather than the custom field I'm actually interested in. Which is why it won't use the index that would give results in the order I actually want. 
+
+OK. You want the sort and query predicate to be independent. That kind of makes sense. So how do I specify a sort condition that looks at a specific embedded document rather than the one with the smallest value?
+
+Well, as far as I can tell, you can't.
 
 ## Conclusion
