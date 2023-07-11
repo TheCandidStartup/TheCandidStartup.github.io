@@ -203,7 +203,7 @@ Well, as far as I can tell, you can't.
 
 MongoDB snatches defeat from the jaws of victory. 
 
-Sadly, the teams I knew of that used MongoDB in production had similar experiences. MongoDB is easy to use, with all the convenience features you might expect from a relational database. However, at some point you hit a brick wall. The query you need isn't possible to express, or isn't possible to express efficiently. The query API looks very flexible on the surface, but once you go deeper you run into all kinds of special case restrictions. 
+Sadly, the teams I knew that used MongoDB in production had similar experiences. MongoDB is easy to use, with all the convenience features you might expect from a relational database. However, at some point you hit a brick wall. The query you need isn't possible to express, or isn't possible to express efficiently. The query API looks very flexible on the surface, but once you go deeper you run into all kinds of special case restrictions. 
 
 I think this is down to MongoDB's lack of maturity compared with relational databases. As you look back through the last few major versions, you see fundamental changes in semantics. The MongoDB team are still figuring out how things should work. In contrast, the semantics of relational databases were rigorously worked out 30 years ago. The query functionality is deeper and better understood.
 
@@ -211,4 +211,4 @@ Will other NoSQL databases have similar problems? Ironically, I believe that the
 
 In 2007, engineers from Amazon published the [Dynamo Paper](https://www.dynamodbguide.com/the-dynamo-paper/). It described the learnings from building an in-house, highly available, lean and mean, key-value store. The paper went on to inspire many of the original NoSQL databases. In 2012, AWS released DynamoDB, a managed database service based on the Dynamo principles. 
 
-Next time we'll find out whether DynamoDB is a better choice for implementing a database backed grid view.
+Next time we'll find out whether DynamoDB is a better choice for implementing a [database backed grid view]({% link _posts/2023-06-12-database-grid-view.md %}).
