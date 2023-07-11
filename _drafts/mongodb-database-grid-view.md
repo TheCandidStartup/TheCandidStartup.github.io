@@ -185,7 +185,7 @@ The example links to a separate page in the manual that provides more detail on 
 
 What the heck does that mean? The whole point of doing this is to avoid a blocking sort. 
 
-[Index boundary](https://www.mongodb.com/docs/manual/core/multikey-index-bounds/) is a term that MongoDB uses to describe a condition that limits how much of the index will be scanned. Our query has a boundary on custom_fields.attribute of `["3812","3812"]`, because we're only interested in the part of the index that relates to a specific custom attribute. We're sorting on custom_fields.value which has the same path prefix.
+[Index boundary](https://www.mongodb.com/docs/manual/core/multikey-index-bounds/) is a term that MongoDB uses to describe a condition that limits how much of the index will be scanned. Our query has a boundary on custom_fields.attribute of `["3812","3812"]`, because we're only interested in the part of the index that relates to that attribute. That's OK. The problem is that we're sorting on custom_fields.value which has the same path prefix as custom_fields.attribute.
 
 Oh dear. MongoDB won't use our perfect index to return the results we want in sorted order. But why? In the end I tracked down the [issue](https://jira.mongodb.org/browse/SERVER-31898) that led to this note being added to the manual. 
 
@@ -200,3 +200,15 @@ OK. You want the sort and query predicate to be independent. That kind of makes 
 Well, as far as I can tell, you can't.
 
 ## Conclusion
+
+MongoDB snatches defeat from the jaws of victory. 
+
+Sadly, the teams I knew of that used MongoDB in production had similar experiences. MongoDB is easy to use, with all the convenience features you might expect from a relational database. However, at some point you hit a brick wall. The query you need isn't possible to express, or isn't possible to express efficiently. The query API looks very flexible on the surface, but once you go deeper you run into all kinds of special case restrictions. 
+
+I think this is down to MongoDB's lack of maturity compared with relational databases. As you look back through the last few major versions, you see fundamental changes in semantics. The MongoDB team are still figuring out how things should work. In contrast, the semantics of relational databases were rigorously worked out 30 years ago. The query functionality is deeper and better understood.
+
+Will other NoSQL databases have similar problems? Ironically, I believe that their comparative lack of features will save them. I can get MongoDB to build the index I need, but I can't use it because MongoDB's query planner stops me from accessing it directly. A leaner, meaner NoSQL database would make me plan my own queries and access the index directly.
+
+In 2007, engineers from Amazon published the [Dynamo Paper](https://www.dynamodbguide.com/the-dynamo-paper/). It described the learnings from building an in-house, highly available, lean and mean, key-value store. The paper went on to inspire many of the original NoSQL databases. In 2012, AWS released DynamoDB, a managed database service based on the Dynamo principles. 
+
+Next time we'll find out whether DynamoDB is a better choice for implementing a database backed grid view.
