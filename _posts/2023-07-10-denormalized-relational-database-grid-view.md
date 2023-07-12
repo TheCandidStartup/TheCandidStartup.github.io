@@ -138,8 +138,8 @@ with an attribute definition table which specifies which column is used to store
 |-|-|-|-|-|-|
 | 3812 | Start | 35e9 | 1 | date | date1 |
 | 882a | End | 35e9 | 2 | date | date2 |
-| 3fe6 | Num Items | 35e9 | 1 | int | int1 |
-| 47e5 | Sign Off | 35e9 | 2 | text | txt1 |
+| 3fe6 | Num Items | 35e9 | 3 | int | int1 |
+| 47e5 | Sign Off | 35e9 | 4 | text | txt1 |
 
 Queries are simple without a join in sight :
 
