@@ -11,7 +11,7 @@ This time we're exploring [MongoDB](https://www.mongodb.com) - a NoSQL JSON docu
 
 ## NoSQL
 
-NoSQL is really just shorthand for a modern database system that isn't a [relational database](https://en.wikipedia.org/wiki/Relational_database). There's a wide variety of different NoSQL databases but there is a set of commonly recurring traits.
+NoSQL is really just shorthand for a modern database system that isn't a [relational database](https://en.wikipedia.org/wiki/Relational_database). NoSQL databases vary wildly but do have a set of commonly recurring traits.
 * Queries are performed using calls to an API rather than by executing statements written in [SQL](https://en.wikipedia.org/wiki/SQL)
 * Data models are either [schemaless](https://www.mongodb.com/unstructured-data/schemaless) or significantly more flexible than the relational model
 * Queries are simpler and aligned with the underlying data model
@@ -144,7 +144,7 @@ This is our [normalized relational database data model]({% link _posts/2023-06-2
 
 Embedded document data models work well with the MongoDB [Multikey Index](https://www.mongodb.com/docs/manual/core/index-multikey/). When creating an index for a field in an array of embedded documents, MongoDB will add an index entry for *each* embedded document. 
 
-We can create a single index that contains all our custom field attributes and values with the values for each attribute type listed in order. By default, every document in the collection is included in the index, with null values for any fields that don't exist. I've added a partial filter expression to only include documents that have custom fields. 
+We can create a single index that contains all our custom field attributes and values, with the values for each attribute type listed in order. By default, every document in the collection is included in the index, with null values for any fields that don't exist. I've added a partial filter expression to only include documents that have custom fields. 
 
 ```
 db.issue.createIndex(
@@ -191,13 +191,15 @@ Oh dear. MongoDB won't use our perfect index to return the results we want in so
 
 What does it mean to sort on custom_fields.value when custom_fields is an array of embedded documents? Should the sort order change if there's a query predicate?
 
-I would like the meaning to be that if there's a query predicate that selects a single embedded document from the array, the sort order is based on that selected embedded document. This is what MongoDB [used to do in version 3.5 and earlier](https://jira.mongodb.org/browse/SERVER-19402). 
+I'm assuming that if there's a query predicate that selects a single embedded document from the array, the sort order is based on that selected embedded document. This is what MongoDB [used to do in version 3.5 and earlier](https://jira.mongodb.org/browse/SERVER-19402). 
 
 The semantics changed in later versions of MongoDB. Now the sort order is independent of any query predicate. The [sort order](https://www.mongodb.com/docs/v6.0/reference/bson-type-comparison-order/) is always based on whichever embedded document in the array has the smallest value for the specified field. If the issue contains a different custom field with a lower value, MongoDB will sort on that, rather than the custom field I'm actually interested in. Which is why it won't use the index that would give results in the order I actually want. 
 
 OK. You want the sort and query predicate to be independent. That kind of makes sense. So how do I specify a sort condition that looks at a specific embedded document rather than the one with the smallest value?
 
-Well, as far as I can tell, you can't.
+Well, as far as I can tell, you can't. 
+
+Do let me know if there is a way to make this work. I'd love to be proved wrong.
 
 ## Conclusion
 
