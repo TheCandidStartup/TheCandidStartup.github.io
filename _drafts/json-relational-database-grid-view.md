@@ -6,7 +6,7 @@ tags: databases
 {% capture de_url %}{% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}{% endcapture %}
 When we [aggresively denormalized]({{ de_url | append: "#combined-issue-and-attribute-value-table" }}) our [Grid View relational database]({% link _posts/2023-06-26-custom-fields-normalized-relational-database-grid-view.md %}), we were able to achieve our aim of a single table solution. However, it came with a lot of unintended consequences. In order to support up to 100 custom fields of each type, we added 400 custom field columns to our issue table, most of which were NULL. In theory the overhead should have been minimal. In practice, we ran into all kinds of implementation and operational problems.
 
-Recently[^1], relational databases have added support for JSON columns. There's even an [ISO standard](https://www.iso.org/standard/67367.html) for it. Unfortunately, implementations [vary wildly](https://blog.jooq.org/standard-sql-json-the-sobering-parts/) in their standards conformance and reliance on non-standard extensions. Fortunately, Postgres has the [most mature and conformant implementation](https://obartunov.livejournal.com/200076.html). 
+Recently[^1], relational databases have added support for JSON columns. There's even an [ISO standard](https://www.iso.org/standard/67367.html) for it. Unfortunately, implementations [vary wildly](https://blog.jooq.org/standard-sql-json-the-sobering-parts/) in their standards conformance and reliance on non-standard extensions. Fortunately, Postgres has a [mature and conformant implementation](https://obartunov.livejournal.com/200076.html). 
 
 [^1]: Within the last 10 years. Which is recent when you consider the development history of relational databases.
 
@@ -62,15 +62,12 @@ The JSONB type[^2] has 8 bytes of document structure overhead per custom field, 
 
 How does the storage overhead compare with our previous implementation attempts? In the table below I use the average of the worst case storage overhead for each value type: 6.5 bytes for JSON, 4.5 for JSONB. 
 
-| Custom Fields Used | Combined table | Attribute Value table | JSON[^j1] | JSONB[^j2] |
+| Custom Fields Used | Combined table | Attribute Value table | JSON | JSONB |
 |-|-|-|-|-|
 | 0 | 50 | 0 | 1 | 8 
 | 1 | 50 | 56 | 49 | 53
 | 2 | 50 | 112 | 91 | 97
 | 3 | 50 | 168 | 134 | 142
-
-[^j1]: Using 6.5 byte average of worst case storage overhead for each value type.
-[^j2]: Using 4.5 byte average of worst case storage overhead for each value type.
 
 Storage overhead doesn't look great compared with our combined table with lots of columns. It's also only marginally better than our current best in class implementation with a separate attribute value child table. 
 
@@ -278,7 +275,7 @@ What have we gained? We got to play with the cool JSON feature in Postgres. We r
 
 On the downside
 * Any change to a custom field requires a read/modify/write of the containing JSON document
-* We will end up using a lot more storage space for issues with threee or more custom fields
+* We will end up using a lot more storage space than the aggressively denormalized solution for issues with three or more custom fields
 * Our four hundred indexes are more expensive to maintain
 * The indexes are larger, unless you're prepared for more complexity and write time cost by converting data types before indexing 
 * We have to deal with the added complexity of type conversion in our queries
