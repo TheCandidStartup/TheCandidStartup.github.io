@@ -3,7 +3,7 @@ title: MongoDB Database Grid View
 tags: databases
 ---
 
-[Last time]({% link _drafts/json-relational-database-grid-view.md %}) we dipped our toes into the waters of schemaless databases by using a JSONB column in Postgres to store a set of custom fields. After a few attempts we got it working. However, it didn't offer many benefits compared with the [denormalized relational database optimizations]({% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}) we previously tried, while bringing in plenty of additional friction of its own. 
+[Last time]({% link _posts/2023-07-17-json-relational-database-grid-view.md %}) we dipped our toes into the waters of schemaless databases by using a JSONB column in Postgres to store a set of custom fields. After a few attempts we got it working. However, it didn't offer many benefits compared with the [denormalized relational database optimizations]({% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}) we previously tried, while bringing in plenty of additional friction of its own. 
 
 {% include candid-image.html src="/assets/images/databases/mongodb_logo_slate_blue.svg" alt="MongoDB logo" %}
 
@@ -103,7 +103,7 @@ Similar to a relational database, MongoDB's query planner will use an index to r
 
 ## Compound Index
 
-As with our [JSON relational database]({% link _drafts/json-relational-database-grid-view.md %}), we can create a compound index over multiple fields to support this query. The index specification document uses a similar syntax to the sort document. 
+As with our [JSON relational database]({% link _posts/2023-07-17-json-relational-database-grid-view.md %}), we can create a compound index over multiple fields to support this query. The index specification document uses a similar syntax to the sort document. 
 
 ```
 db.issue.createIndex( { project: 1, "custom_fields.d1": 1, num: 1} )
@@ -119,7 +119,7 @@ Data modelling is all about defining entities and the relationships between them
 
 MongoDB gives you [two ways](https://www.mongodb.com/docs/manual/core/data-model-design/) to model relationships. You can do it the same way as a normalized relational database using [references](https://www.mongodb.com/docs/manual/tutorial/model-referenced-one-to-many-relationships-between-documents/). Or if the relationship you're modelling represents containment, you can use [embedded documents](https://www.mongodb.com/docs/manual/tutorial/model-embedded-one-to-one-relationships-between-documents/). 
 
-The advantage of embedded documents is that they are stored with the containing document. Any query that retrieves the containing document gets all the embedded documents too. This is exactly what we've been trying to achieve with our [denormalized]({% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}) and [JSONB]({% link _drafts/json-relational-database-grid-view.md %}) relational database implementations. 
+The advantage of embedded documents is that they are stored with the containing document. Any query that retrieves the containing document gets all the embedded documents too. This is exactly what we've been trying to achieve with our [denormalized]({% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}) and [JSONB]({% link _posts/2023-07-17-json-relational-database-grid-view.md %}) relational database implementations. 
 
 If we model custom fields as embedded documents our sample issue document will look something like this:
 
