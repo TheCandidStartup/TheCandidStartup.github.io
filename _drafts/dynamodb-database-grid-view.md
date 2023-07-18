@@ -3,7 +3,7 @@ title: DynamoDB Database Grid View
 tags: databases AWS
 ---
 
-DynamoDB is AWS's flagship cloud native, horizontally scalable, NoSQL database. The work that ultimately led to the release of DynamoDB in 2012 [started in 2004](https://www.dynamodbguide.com/the-dynamo-paper/). Amazon was growing rapidly and finding it hard to scale their relational databases. The development of DynamoDB was driven by the [observation](https://www.allthingsdistributed.com/2017/10/a-decade-of-dynamo.html) that 70% of Amazon's queries were key-value lookups using a primary key to return a single row. Another 20% returned a set of rows from a single table. 
+[DynamoDB](https://aws.amazon.com/dynamodb/) is AWS's flagship, cloud native, horizontally scalable, NoSQL database. The work that ultimately led to the release of DynamoDB in 2012 [started in 2004](https://www.dynamodbguide.com/the-dynamo-paper/). Amazon was growing rapidly and finding it hard to scale their relational databases. The development of DynamoDB was driven by the [observation](https://www.allthingsdistributed.com/2017/10/a-decade-of-dynamo.html) that 70% of Amazon's queries were key-value lookups using a primary key to return a single row. Another 20% returned a set of rows from a single table. 
 
 DynamoDB was built to satisfy these two use cases while achieving virtually unlimited scalability and consistent single digit milliseconds latency. 
 
@@ -17,11 +17,11 @@ Every query must include a specific value for the partition attribute. This mean
 
 {% include candid-image.html src="/assets/images/databases/dynamodb-partition-key.png" alt="DynamoDB Simple Key" attrib="[Amazon DynamoDB Developer Guide](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.Partitions.html#HowItWorks.Partitions.SimpleKey)" %}
 
-The primary key can optionally include a sort attribute to create a composite primary key. Data is maintained in sorted order on each storage instance. Querying a table with a composite primary key will return multiple items in sorted order. You can retrieve all items with the same partition attribute, or a subset of items by specifying conditions on the sort attribute. This covers the second use case.
+The primary key can optionally include a sort attribute to create a composite primary key. Data is maintained in sorted order on each storage instance. Querying a table that uses a composite primary key can return multiple items in sorted order. You can retrieve all items with the same partition attribute, or a subset of items by specifying conditions on the sort attribute. This covers the second use case.
 
 {% include candid-image.html src="/assets/images/databases/dynamodb-partition-sort-key.png" alt="DynamoDB Composite Key" attrib="[Amazon DynamoDB Developer Guide](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.Partitions.html#HowItWorks.Partitions.CompositeKey)" %}
 
-Since it's initial release, DynamoDB has steadily added additional features. These include automatically maintained [secondary indexes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SecondaryIndexes.html), [batch writes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.BatchOperations), query filters, [conditional writes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.ConditionalUpdate), optional [strongly consistent reads](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html), [change data capture](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/streamsmain.html), optional [transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transactions.html), and support for a [subset of the PartiQL SQL compatible query language](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.html).
+Since it's initial release, DynamoDB has steadily added additional features. These include automatically maintained [secondary indexes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SecondaryIndexes.html), [batch writes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.BatchOperations), [query filters](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html#Query.FilterExpression), [conditional writes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.ConditionalUpdate), optional [strongly consistent reads](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html), [change data capture](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/streamsmain.html), optional [transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transactions.html), and support for a [subset of the PartiQL SQL compatible query language](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.html).
 
 * Compound sort key
 * Read charged by KB retrieved rather than per row
@@ -44,16 +44,107 @@ DynamoDB is a schemaless, NoSQL database with support for JSON like document typ
 }
 ```
 
-Once again we'd need 400 indexes to be able to sort by every custom field. We know that's a bad idea. So bad, that DynamoDB doesn't allow it. You can have at most 20 indexes. There's no MongoDB like Multikey Index. Looks like a dead end.
+Once again we'd need 400 indexes to be able to sort by every custom field. We know that's a bad idea. So bad, that DynamoDB doesn't allow it. The default quota allows [20 indexes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-indexes-general.html) per table. There is stern advice to limit the number of indexes you create.
 
-# Classic Design
+There's also no MongoDB like Multikey Index. Looks like a dead end.
 
-OK, what if we take our (slightly de-) normalized relational database design and and transpose it into a DynamoDB design? That would require five separate tables: Tenant, Project, Issue, Attribute Definition and Attribute Value. However, there's no support for joins. How do you retrieve an issue together with all it's custom field values? 
+## Classic Design
 
-Here's what our sample Attribute Value table looks like :
-* Separate string_value and number_value attributes. DynamoDB is not entirely schemaless. Partition and Sort keys need to have consistent types. We need to index on value. Need two separate typed valued attributes, and two indexes.
+{% capture de_url %}{% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}{% endcapture %}
+OK, what if we take our [(slightly de-) normalized relational database design]({{ de_url | append: "#combined-attribute-value-table" }}) and and transpose it into a DynamoDB design? That would require five separate tables: Tenant, Project, Issue, Attribute Definition and Attribute Value. However, there's no support for joins. How do you retrieve an issue together with all it's custom field values? 
 
-In this case the empty fields in the table represent missing attributes in the DynamoDB item. 
+You implement the join yourself, in your app server. Here's what our sample Issue table looks like
+
+| Issue Id (PK) | name | project | num | state |
+|-|-|-|-|-|
+| 020e | Needs Painting | 35e9 | 1 | open |
+| 3544 | Launch new newspaper! | 7b7e | 1 | closed |
+| 67d1 | Check for rust | 35e9 | 2 | closed |
+| 83a4 | Hire reporter for showbiz desk | 7b7e | 2 | open |
+| af34 | Girder needs replacing | 35e9 | 3 | open |
+
+and here's the corresponding Attribute Value table.
+
+| Issue Id (PK) | Attribute Definition Id (SK) | String Value | Number Value |
+|-|-|-|-|
+| 020e | 3812 | 2023-05-01 | 
+| 020e | 882a | 2023-06-01 |
+| 67d1 | 3812 | 2023-05-02 |
+| 67d1 | 882a | 2023-06-02 |
+| af34 | 3fe6 | | 42 |
+| af34 | 47e5 | Approved |
+
+In our relational design we used a composite key of (issue id, attribute definition id) for attribute values. In DynamoDB I've used issue id for the partition key and attribute definition id for the sort key. That means a single query on issue id will return all the attribute values for the issue. So, we can get the issue and all custom field values using two queries which our app server can issue in parallel. 
+
+You may be wondering why I have two separate value columns, one for values represented as strings, and one for values represented as numbers. Isn't DynamoDB a schemaless database? Can't I have a common value DynamoDB attribute which is a string in some items and a number in others?
+
+DynamoDB is schemaless apart from the Partition Key and Sort Key of a table or index. Those must have a consistent type defined when the table or index is created. Value isn't a key in this table but it will be in the indexes I'm about to create.
+
+As in the relational design, we're going to need an index so we can retrieve issues in custom field order. We need separate indexes for string and number values. DynamoDB indexes are inherently partial. Items are only indexed if they have the attributes used as index keys defined.
+
+| Attribute Definition Id (PK) | String Value (SK) | Issue Id |
+|-|-|-|
+| 3812 | 2023-05-01 | 020e |
+| 3812 | 2023-05-02 | 67d1 |
+| 47e5 | Approved | af34 |
+| 882a | 2023-06-01 | 020e |
+| 882a | 2023-06-02 | 67d1 |
+
+| Attribute Definition Id (PK) | Number Value (SK) | Issue Id |
+|-|-|-|
+| 3fe6 | 42 | af34 |
+
+There's no query planner in DynamoDB. The application directly queries an index in the same way you would a table. We can query the appropriate index with an attribute definition id to get all issues that have that custom field in value order. 
+
+We could have thousands of issues, so obviously we'll need to paginate. DynamoDB has direct support for pagination. To ensure scalability and low latency, DynamoDB's design philosophy is to prevent you from running long running queries. There is a limit on the amount of data that a query can return with [built in support](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html) for Keyset Pagination. You can also set an explicit limit on the number of items to return, if you prefer. 
+
+If the query didn't complete, the query response includes a `LastEvaluatedKey` token which you can pass in to a subsequent query using the `ExclusiveStartKey` parameter. That query will return the next page of items in sort key order.
+
+{% capture norm_url %}{% link _posts/2023-06-19-normalized-relational-database-grid-view.md %}{% endcapture %}
+Unlike a table, items in an index can have duplicate keys. We had to take special care to handle this case when implementing [pagination with a relational database]({{ norm_url | append: "#pagination" }}). Fortunately, DynamoDB's pagination implementation handles it for you. 
+
+That gets us a page of issue ids in sorted order. Now we have to implement the rest of the join in our app server. For each issue in the page, we'll need two further queries to get the issue itself and all the custom fields for the issue. All of these subsequent queries can be issued in parallel, but it's still a lot of queries to manage. DynamoDB supports [batch operations](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.BatchOperations) for individual item key-value lookups. That would let us retrieve a page of 100 issues with a single API call. However, we still need a separate query per issue to retrieve custom field values.
+
+As with previous implementations, we need a separate query to retrieve the remaining issues that don't have the custom field we're sorting on defined. It's easy enough to create an index on the issues table with project id as the partition key and issue num as the sort key. That lets us page through all the issues on the project in num order. Then, for each page of issues, we can use a batch get to check which issues have the custom field defined and filter them out. Finally, following up with a query per issue to get the custom fields. 
+
+I guess now you can appreciate how much work a relational database does for you. 
+
+## Pre-Joined Table
+
+Is there some way we can reduce the number of queries needed? Look at our Issue and Attribute Value tables again. They both use issue id as a partition key. Why don't we put them in the same table and avoid having to do the join at query time? 
+
+We'll need to be consistent about the attributes used for keys in the table and it's indexes. There are two overloaded attributes. The sort key is the project id for an issue and the attribute definition id for an attribute value. Then we have a common Num Value attribute used as issue num for an issue and Number Value of an attribute value.
+
+| Issue Id (PK) | Project-Attribute Id (SK) | String Value | Num Value | name | state |
+|-|-|-|-|-|-|
+| 020e | 35e9 | | 1 | Needs Painting | open |
+| 020e | 3812 | 2023-05-01 | 
+| 020e | 882a | 2023-06-01 |
+| 3544 | 7b7e | | 1 | Launch new newspaper! | closed |
+| 67d1 | 35e9 | | 2 | Check for rust | closed |
+| 67d1 | 3812 | 2023-05-02 |
+| 67d1 | 882a | 2023-06-02 |
+| 83a4 | 7b7e | | 2 | Hire reporter for showbiz desk | open |
+| af34 | 35e9 | | 3 | Girder needs replacing | open |
+| af34 | 3fe6 | | 42 |
+| af34 | 47e5 | Approved |
+
+Now we can retrieve both the issue definition and the values of all custom fields using a single query. 
+
+We create two indexes as before, using the table sort key as the index partition key and String Value / Num Value as the sort keys. The String Value index is exactly the same as before containing only attribute value items. However, the Num Value index is overloaded. 
+
+| Project-Attribute Id (PK) | Num Value (SK) | Issue Id |
+|-|-|-|
+| 35e9 | 1 | 020e |
+| 35e9 | 2 | 67d1 |
+| 35e9 | 3 | af34 |
+| 3fe6 | 42 | af34 | 
+| 7b7e | 1 | 3544 |
+| 7b7e | 2 | 83a4 |
+
+The same index lets me lookup issues within a project sorted by issue num, and issues with a specified number attribute definition sorted by number value. As well as reducing the number of queries needed, I have one less table and one less index to manage. 
+
+## Multi-column Sort
 
 ## Single Table Design
 
@@ -134,4 +225,4 @@ table:nth-of-type(2) tr:nth-child(13) {background-color:#f3f6fa;}
 | xattrib-882a | 2023-06-01 |issue-020e | 
 | xattrib-882a | 2023-06-02 | issue-67d1 | 
 
-# DIY Compound Sort Key
+# DIY Multikey Index with DynamoDB Streams
