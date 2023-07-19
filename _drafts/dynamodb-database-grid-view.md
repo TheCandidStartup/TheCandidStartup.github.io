@@ -3,7 +3,7 @@ title: DynamoDB Database Grid View
 tags: databases AWS
 ---
 
-[DynamoDB](https://aws.amazon.com/dynamodb/) is AWS's flagship, cloud native, horizontally scalable, NoSQL database. The work that ultimately led to the release of DynamoDB in 2012 [started in 2004](https://www.dynamodbguide.com/the-dynamo-paper/). Amazon was growing rapidly and finding it hard to scale their relational databases. The development of DynamoDB was driven by the [observation](https://www.allthingsdistributed.com/2017/10/a-decade-of-dynamo.html) that 70% of Amazon's queries were key-value lookups using a primary key to return a single row. Another 20% returned a set of rows from a single table. 
+[DynamoDB](https://aws.amazon.com/dynamodb/) is AWS's flagship, [serverless]({% link _posts/2022-12-05-serverless-or-not.md %}), horizontally scalable, NoSQL database. The work that ultimately led to the release of DynamoDB in 2012, [started in 2004](https://www.dynamodbguide.com/the-dynamo-paper/). Amazon was growing rapidly and finding it hard to scale their relational databases. The development of DynamoDB was driven by the [observation](https://www.allthingsdistributed.com/2017/10/a-decade-of-dynamo.html) that 70% of Amazon's queries were key-value lookups using a primary key to return a single row. Another 20% returned a set of rows from a single table. 
 
 DynamoDB was built to satisfy these two use cases while achieving virtually unlimited scalability and consistent single digit milliseconds latency. 
 
@@ -22,9 +22,6 @@ The primary key can optionally include a sort attribute to create a composite pr
 {% include candid-image.html src="/assets/images/databases/dynamodb-partition-sort-key.png" alt="DynamoDB Composite Key" attrib="[Amazon DynamoDB Developer Guide](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.Partitions.html#HowItWorks.Partitions.CompositeKey)" %}
 
 Since it's initial release, DynamoDB has steadily added additional features. These include automatically maintained [secondary indexes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SecondaryIndexes.html), [batch writes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.BatchOperations), [query filters](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html#Query.FilterExpression), [conditional writes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.ConditionalUpdate), optional [strongly consistent reads](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html), [change data capture](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/streamsmain.html), optional [transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transactions.html), and support for a [subset of the PartiQL SQL compatible query language](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.html).
-
-* Compound sort key
-* Read charged by KB retrieved rather than per row
 
 ## How Not To Do It
 
@@ -46,12 +43,12 @@ DynamoDB is a schemaless, NoSQL database with support for JSON like document typ
 
 Once again we'd need 400 indexes to be able to sort by every custom field. We know that's a bad idea. So bad, that DynamoDB doesn't allow it. The default quota allows [20 indexes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-indexes-general.html) per table. There is stern advice to limit the number of indexes you create.
 
-There's also no MongoDB like Multikey Index. Looks like a dead end.
+There's no MongoDB like Multikey Index, so this looks like a dead end.
 
 ## Classic Design
 
 {% capture de_url %}{% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}{% endcapture %}
-OK, what if we take our [(slightly de-) normalized relational database design]({{ de_url | append: "#combined-attribute-value-table" }}) and and transpose it into a DynamoDB design? That would require five separate tables: Tenant, Project, Issue, Attribute Definition and Attribute Value. However, there's no support for joins. How do you retrieve an issue together with all it's custom field values? 
+OK, what if we take our [(slightly de-) normalized relational database design]({{ de_url | append: "#combined-attribute-value-table" }}) and and transpose it into a DynamoDB design? That gives us five separate tables: Tenant, Project, Issue, Attribute Definition and Attribute Value. However, there's no support for joins. How do you retrieve an issue together with all it's custom field values? 
 
 You implement the join yourself, in your app server. Here's what our sample Issue table looks like
 
@@ -78,9 +75,9 @@ In our relational design we used a composite key of (issue id, attribute definit
 
 You may be wondering why I have two separate value columns, one for values represented as strings, and one for values represented as numbers. Isn't DynamoDB a schemaless database? Can't I have a common value DynamoDB attribute which is a string in some items and a number in others?
 
-DynamoDB is schemaless apart from the Partition Key and Sort Key of a table or index. Those must have a consistent type defined when the table or index is created. Value isn't a key in this table but it will be in the indexes I'm about to create.
+DynamoDB is schemaless apart from the partition key and sort key of a table or index. Those must have a consistent type defined when the table or index is created. Value isn't a key in this table but it will be in the indexes I'm about to create.
 
-As in the relational design, we're going to need an index so we can retrieve issues in custom field order. We need separate indexes for string and number values. DynamoDB indexes are inherently partial. Items are only indexed if they have the attributes used as index keys defined.
+As in the relational design, we're going to need an index so we can retrieve issues in custom field order. We need separate indexes for string and number values. DynamoDB indexes are inherently partial. Items are only indexed if they have the index key attributes defined.
 
 | Attribute Definition Id (PK) | String Value (SK) | Issue Id |
 |-|-|-|
@@ -96,7 +93,7 @@ As in the relational design, we're going to need an index so we can retrieve iss
 
 There's no query planner in DynamoDB. The application directly queries an index in the same way you would a table. We can query the appropriate index with an attribute definition id to get all issues that have that custom field in value order. 
 
-We could have thousands of issues, so obviously we'll need to paginate. DynamoDB has direct support for pagination. To ensure scalability and low latency, DynamoDB's design philosophy is to prevent you from running long running queries. There is a limit on the amount of data that a query can return with [built in support](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html) for Keyset Pagination. You can also set an explicit limit on the number of items to return, if you prefer. 
+We could have thousands of issues, so obviously we'll need to paginate. DynamoDB has direct support for pagination. To ensure scalability and low latency, DynamoDB's design philosophy is to prevent you from creating long running queries. There is a limit on the amount of data that a query can return with [built in support](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html) for Keyset Pagination. You can also set an explicit limit on the number of items to return, if you prefer. 
 
 If the query didn't complete, the query response includes a `LastEvaluatedKey` token which you can pass in to a subsequent query using the `ExclusiveStartKey` parameter. That query will return the next page of items in sort key order.
 
@@ -113,7 +110,7 @@ I guess now you can appreciate how much work a relational database does for you.
 
 Is there some way we can reduce the number of queries needed? Look at our Issue and Attribute Value tables again. They both use issue id as a partition key. Why don't we put them in the same table and avoid having to do the join at query time? 
 
-We'll need to be consistent about the attributes used for keys in the table and it's indexes. There are two overloaded attributes. The sort key is the project id for an issue and the attribute definition id for an attribute value. Then we have a common Num Value attribute used as issue num for an issue and Number Value of an attribute value.
+We'll need to be consistent about the attributes used for keys in the table and it's indexes. There are two overloaded attributes. The sort key is the project id for an issue and the attribute definition id for an attribute value. Then we have a common Num Value attribute used as issue num for an issue and Number Value for an attribute value.
 
 | Issue Id (PK) | Project-Attribute Id (SK) | String Value | Num Value | name | state |
 |-|-|-|-|-|-|
@@ -131,7 +128,7 @@ We'll need to be consistent about the attributes used for keys in the table and 
 
 Now we can retrieve both the issue definition and the values of all custom fields using a single query. 
 
-We create two indexes as before, using the table sort key as the index partition key and String Value / Num Value as the sort keys. The String Value index is exactly the same as before containing only attribute value items. However, the Num Value index is overloaded. 
+We create two indexes as before, using the table sort key as the index partition key and String Value / Num Value as the sort keys. The String Value index is exactly the same as before, containing only attribute value items. However, the Num Value index is overloaded. 
 
 | Project-Attribute Id (PK) | Num Value (SK) | Issue Id |
 |-|-|-|
@@ -144,31 +141,96 @@ We create two indexes as before, using the table sort key as the index partition
 
 The same index lets me lookup issues within a project sorted by issue num, and issues with a specified number attribute definition sorted by number value. As well as reducing the number of queries needed, I have one less table and one less index to manage. 
 
-## Multi-column Sort
+## Composite Sort Key
+
+In our previous implementations we tried to sort issues by custom field value and then by num. This was to give the user a sensible ordering in cases with duplicate custom field values. How do we do that with DynamoDB?
+
+With difficulty. DynamoDB has no support for multi-attribute composite sort keys. You have to implement it yourself by adding another attribute that will act as the sort key and populating it with combined values from the attributes you want to sort on. You can replace the other attributes with this combo attribute and deal with unpacking the combined attributes when you need to access them for other purposes. Or you can make your life easier by leaving the other attributes as is. Your application just needs to update the sort key whenever any of the other attributes change.
+
+The usual approach is to make the composite sort key a string. You need to combine the values that make up the sort key in such a way that the resulting string sorts correctly. First, you need to format each value as a string that is [lexicographically ordered](https://en.wikipedia.org/wiki/Lexicographic_order). ISO format dates are already lexicographically ordered, binary values can be hex encoded and small positive integers can be padded with leading zeros to a fixed length. General solutions for [large signed integers](https://medium.com/@neunhoef/sorting-number-strings-numerically-335863473b76) and [floating point numbers](https://patents.google.com/patent/US20080222148) are known but surprisingly fiddly. 
+
+Finally, you need to concatenate the formatted strings in order with a separator character that has a UTF-8 encoding smaller than any character used in the formatted strings. [AWS examples](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-sort-keys.html) always use `#` as a separator with alphanumeric value strings. A more general solution is to use one of the unused control characters like U+0001 "Start of Heading".
+
+One small benefit of all this mucking around is that all items have a string typed sort attribute so we no longer need separate indexes. Our combined index would look something like this :
+
+| Project-Attribute Id (PK) | Sort String (SK) | Issue Id |
+|-|-|-|
+| 35e9 | 000001 | 020e |
+| 35e9 | 000002 | 67d1 |
+| 35e9 | 000003 | af34 |
+| 3812 | 2023-05-01#000001 | 020e |
+| 3812 | 2023-05-02#000002 | 67d1 |
+| 3fe6 | 000042#000003 | af34 | 
+| 47e5 | Approved#000003 | af34 |
+| 7b7e | 000001 | 3544 |
+| 7b7e | 000002 | 83a4 |
+| 882a | 2023-06-01#000001 | 020e |
+| 882a | 2023-06-02#000002 | 67d1 |
+
+If you end up needing to implement a fully general solution, your sort strings will be pretty much unreadable. In that case it might be simpler and more space efficient to look at [binary encodings](https://aws.amazon.com/blogs/database/z-order-indexing-for-multifaceted-queries-in-amazon-dynamodb-part-2/) and use a binary type sort key. 
 
 ## Single Table Design
 
-* aka Adjacency List Pattern
-* Store all entities in the same table
-* All rows have three common fields (PK, SK, Data) + whatever other attributes that entity needs
-* Include a type identifying prefix in all ids
-* Identify top level entities which you want to read/write individually
-  * Add a row per entity with PK set to the entity id. If the entity has another field that you want to query by (acts as an alternative id) store that in SK. Otherwise also set SK to entity id.
-  * Use Data to store any attribute that you want to be projected into the index
-  * Tenant, Project, Issue
-* For each top level entity identify reference relationships to other top level entities
-  * Add a row per relationship
-  * For one to many relationship set PK to entity id on the "one" side and SK to entity id on the many side.
-    * Use Data to store any attribute or combination of attributes that you want to sort on in the index
-  * For one to one relationship decide which entity is PK and which is SK depending on required access patterns
-    * Use Data to store any attribute that you want to be projected into the index
-  * Add any other attributes associated with the *relationship*. Could be unique or denormalized (copy of data in main entity row).
-* For each top level entity identify containment relationships to sub-entities
-  * Add a row for each contained sub-entity with PK set to containing entity id and SK to sub-entity id
-  * Use Data to store any attribute or combination of attributes that you want to sort on in the index
-  * Add other sub-entity specific attributes
+Our journey through DynamoDB design patterns mirrors their historical development. Originally, Classic Design was recommended practice with Pre-Joined Tables and Composite Sort Keys being "use at your own risk" outliers. Roll forward to the present day and recommended practice is the even more out there [Single Table Design](https://www.alexdebrie.com/posts/dynamodb-single-table/), which AWS calls the [Adjacency List design pattern](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-adjacency-graphs.html#bp-adjacency-lists). 
 
-## Sample Data
+With Pre-Joined tables we stored entities with the same partition key in the same table. That results in an overloaded secondary index which can serve multiple access patterns in one. Single Table Design takes that idea and runs with it by storing all entities in the same table. 
+
+The more entities you have, the more you need to generalize the treatment of shared attributes. Each item has an Entity Id, a Related Id and a Sort String. Ids are strings and start with an entity type specific prefix. This is vital for keeping track of which entity is which and ensuring that entities of the same type sort together. The main table uses Entity Id as a partition key and Related Id as the Sort Key. The overloaded secondary index uses Related Id as the partition key and Sort String as the sort key.
+
+Related Id can be whatever you like depending on the access patterns you want to support. It can identify a contained sub-item as in a Pre-Joined table or it could be a foreign key to another top level entity used to model a many to one relationship. Need multiple relationships? Add another item for each related entity.
+
+Here's a single table representation of our sample data. 
+
+| Entity Id (PK) | Related Id (SK) | Sort String | Name | Num | State | Type
+|-|-|-|-|-|-|-|
+| tenant-0807 | * | | ACME Engineering |
+| tenant-3cc8 | * | | Big Media |
+| project-35e9 | tenant-0807 | Forth Rail Bridge |
+| project-35e9 | xattrib-35e6 | | Num Items | 3 | | int |
+| project-35e9 | xattrib-3812 | | Start | 1 | | date |
+| project-35e9 | xattrib-47e5 | | Sign Off | 4 | | text |
+| project-35e9 | xattrib-882a | | End | 2 | | date |
+| project-7b7e | tenant-3cc8 | The Daily News |
+| issue-020e | project-35e9 | 000001 | Needs Painting | | open |
+| issue-020e | xvalue-3812 | 2023-05-01#000001 | 
+| issue-020e | xvalue-882a | 2023-06-01#000001 |
+| issue-3544 | project-7b7e | 000001 | Launch new newspaper! | | closed |
+| issue-67d1 | project-35e9 | 000002 | Check for rust | | closed |
+| issue-67d1 | xvalue-3812 | 2023-05-02#000002 |
+| issue-67d1 | xvalue-882a | 2023-06-02#000002 |
+| issue-83a4 | project-7b7e | 000002 | Hire reporter for showbiz desk | | open |
+| issue-af34 | project-35e9 | 000003 | Girder needs replacing | | open |
+| issue-af34 | xvalue-3fe6 | 000042#000003 |
+| issue-af34 | xvalue-47e5 | Approved#000003 |
+
+One table stores all five types of entity. 
+* The only access pattern that tenants need is a key value lookup so sort string is unused and Related Id is a place holder (you have to define something for a key attribute).
+* Projects have tenants as their related id, modelling the *one tenant has many projects* relationship.
+* Projects contain attribute definitions. Attribute Definition ids use xattrib as the prefix so that they always sort after the main project item.
+* Issues have projects as their related id, modelling the *one project has many issues* relationship.
+* Issues contain attribute values. Attribute Values have a different prefix (xvalue) to distinguish them from attribute definitions, but have matching ids.
+
+This table supports key-value lookup of tenants, querying a project together with its custom field definitions, and querying an issue together with its custom field values. I've decided not to duplicate the values in the sort strings into their own attributes, saving space both in the database and this blog post.
+
+Let's have a look at the index. 
+
+| Related Id (PK) | Sort String (SK) | Entity Id |
+|-|-|-|
+| tenant-0807 | Forth Rail Bridge | project-35e9 |
+| tenant-3cc8 | The Daily News | project-7b7e |
+| project-35e9 | 000001 | issue-020e |
+| project-35e9 | 000002 | issue-67d1 | 
+| project-35e9 | 000003 | issue-af34 | 
+| project-7b7e | 000001 | issue-3544 | 
+| project-7b7e | 000002 | issue-83a4 | 
+| xattrib-3812 | 2023-05-01#000001 | issue-020e | 
+| xattrib-3812 | 2023-05-02#000002 | issue-67d1 |
+| xattrib-3fe6 | 000042#000003 | issue-af34 |  
+| xattrib-47e5 | Approved#000003 | issue-af34 | 
+| xattrib-882a | 2023-06-01#000001 |issue-020e | 
+| xattrib-882a | 2023-06-02#000002 | issue-67d1 | 
+
+This index supports querying projects in a tenant sorted by project name, querying issues in a project sorted by issue num and querying issues in a project sorted on any custom field with a secondary sort on issue num. 
 
 <!-- This is horrible. I want to style the table by highlighting alternating entities in the table (each entity can span multiple rows). I want to use the compact markdown table for the content. This is the only way I've found to add styling. There's no ids in the html generated by markdown so all I can target is the HTML tags themselves. Embedded style sheet applies to the entire page so I have to target a specific table and then row in the table. -->
 <style type="text/css">
@@ -185,44 +247,8 @@ table:nth-of-type(2) tr:nth-child(12) {background-color:#f3f6fa;}
 table:nth-of-type(2) tr:nth-child(13) {background-color:#f3f6fa;}
 </style>
 
-| Entity Id (PK) | Related Id (SK) | Data | Name | Num | State | Type
-|-|-|-|-|-|-|-|
-| tenant-0807 | * | | ACME Engineering |
-| tenant-3cc8 | * | | Big Media |
-| project-35e9 | tenant-0807 | Forth Rail Bridge |
-| project-35e9 | xattrib-35e6 | | Num Items | 3 | | int |
-| project-35e9 | xattrib-3812 | | Start | 1 | | date |
-| project-35e9 | xattrib-47e5 | | Sign Off | 4 | | text |
-| project-35e9 | xattrib-882a | | End | 2 | | date |
-| project-7b7e | tenant-3cc8 | The Daily News |
-| issue-020e | project-35e9 | 1 | Needs Painting | | open |
-| issue-020e | xattrib-3812 | 2023-05-01 | 
-| issue-020e | xattrib-882a | 2023-06-01 |
-| issue-3544 | project-7b7e | 1 | Launch new newspaper! | | closed |
-| issue-67d1 | project-35e9 | 2 | Check for rust | | closed |
-| issue-67d1 | xattrib-3812 | 2023-05-02 |
-| issue-67d1 | xattrib-882a | 2023-06-02 |
-| issue-83a4 | project-7b7e | 2 | Hire reporter for showbiz desk | | open |
-| issue-af34 | project-35e9 | 3 | Girder needs replacing | | open |
-| issue-af34 | xattrib-3fe6 | 42 |
-| issue-af34 | xattrib-47e5 | Approved |
+## Eventual Consistency
 
-## Global Secondary Index
+## DIY Multikey Index with DynamoDB Streams
 
-| Related Id (PK) | Data (SK) | Entity Id |
-|-|-|-|
-| tenant-0807 | Forth Rail Bridge | project-35e9 |
-| tenant-3cc8 | The Daily News | project-7b7e |
-| project-35e9 | 1 | issue-020e |
-| project-35e9 | 2 | issue-67d1 | 
-| project-35e9 | 3 | issue-af34 | 
-| project-7b7e | 1 | issue-3544 | 
-| project-7b7e | 2 | issue-83a4 | 
-| xattrib-3812 | 2023-05-01 | issue-020e | 
-| xattrib-3812 | 2023-05-02 | issue-67d1 |
-| xattrib-3fe6 | 42 | issue-af34 |  
-| xattrib-47e5 | Approved | issue-af34 | 
-| xattrib-882a | 2023-06-01 |issue-020e | 
-| xattrib-882a | 2023-06-02 | issue-67d1 | 
-
-# DIY Multikey Index with DynamoDB Streams
+## Conclusion
