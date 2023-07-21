@@ -271,4 +271,4 @@ If your PM insists on a richer set of functionality, you could consider a hybrid
 
 Hold on, the PM has just turned up. They're OK with single column sorting. What they really want is the ability to add custom fields to issues. Yes, the custom fields need to appear in the Grid View. Of course you need to be able to sort on them too.
 
-We'll get started on that next time.
+We'll get started on that [next time]({% link _posts/2023-06-26-custom-fields-normalized-relational-database-grid-view.md %}).

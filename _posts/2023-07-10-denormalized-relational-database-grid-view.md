@@ -232,7 +232,7 @@ All very philosophical, but we haven't got much further with addressing our list
 
 I think it's time to take a look at [NoSQL databases](https://en.wikipedia.org/wiki/NoSQL). Before we do that, relational databases have one last card to play. Spurred on by the success of the NoSQL movement, they started to add support for JSON columns. Fed up with the straitjacket of a schema? Store whatever you want as a blob of JSON. 
 
-Next time we'll see if storing custom fields as JSON can solve all our problems.
+[Next time]({% link _posts/2023-07-17-json-relational-database-grid-view.md %}) we'll see if storing custom fields as JSON can solve all our problems.
 
 ## Footnotes
 
