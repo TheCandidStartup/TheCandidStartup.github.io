@@ -11,13 +11,13 @@ DynamoDB was built to satisfy these two use cases while achieving virtually unli
 
 DynamoDB stores items which consist of multiple attributes. DynamoDB supports ten different [data types](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html#HowItWorks.DataTypes) for attributes. These include simple scalar types (string, number, binary, boolean and null), document types equivalent to JSON (list is equivalent to a JSON array, map is equivalent to a JSON object), and three set types (string set, number set, binary set). Sets can contain any number of unique values. Only top level string, number and binary attributes can be used as keys. Items have an overall size limit of 400KB.
 
-The [DynamoDB data model](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.Partitions.html) is a direct reflection of the original requirements. Every DynamoDB primary key includes a partition attribute. DynamoDB maps each row to a dedicated storage node by [hashing the partition attribute](https://en.wikipedia.org/wiki/Consistent_hashing). As the table grows in size, DynamoDB automatically adds more storage nodes, redistributing the data as needed. This allows DynamoDB to scale horizontally pretty much indefinitely. 
+The [DynamoDB data model](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.Partitions.html) is a direct reflection of the original requirements. Every DynamoDB primary key includes a partition attribute. DynamoDB maps each item to a dedicated storage partition by [hashing the partition attribute](https://en.wikipedia.org/wiki/Consistent_hashing). As the table grows in size, DynamoDB automatically adds more storage partitions, redistributing the data as needed. This allows DynamoDB to scale horizontally pretty much indefinitely. 
 
-Every query must include a specific value for the partition attribute. This means that each query can be handled by routing it to the storage instance that hosts the corresponding storage node. This, together with an eventual consistency model, is what ensures DynamoDB's predictable, low latency response. This is all that is required to handle the first use case of key-value lookups returning a single row. 
+Every query must include a specific value for the partition attribute. This means that each query can be handled by routing it to the storage instance that hosts the corresponding storage partition. This, together with an eventual consistency model, is what ensures DynamoDB's predictable, low latency response. This is all that is required to handle the first use case of key-value lookups returning a single row. 
 
 {% include candid-image.html src="/assets/images/databases/dynamodb-partition-key.png" alt="DynamoDB Simple Key" attrib="[Amazon DynamoDB Developer Guide](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.Partitions.html#HowItWorks.Partitions.SimpleKey)" %}
 
-The primary key can optionally include a sort attribute to create a composite primary key. Data is maintained in sorted order in each storage node. Querying a table that uses a composite primary key can return multiple items in sorted order. You can retrieve all items with the same partition attribute, or a subset of items by specifying conditions on the sort attribute. This covers the second use case.
+The primary key can optionally include a sort attribute to create a composite primary key. Data is maintained in sorted order in each storage partition. Querying a table that uses a composite primary key can return multiple items in sorted order. You can retrieve all items with the same partition attribute, or a subset of items by specifying conditions on the sort attribute. This covers the second use case.
 
 {% include candid-image.html src="/assets/images/databases/dynamodb-partition-sort-key.png" alt="DynamoDB Composite Key" attrib="[Amazon DynamoDB Developer Guide](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.Partitions.html#HowItWorks.Partitions.CompositeKey)" %}
 
@@ -25,13 +25,13 @@ Since it's initial release, DynamoDB has steadily added additional features. The
 
 ## How Not To Do It
 
-We have a superficial understanding of the DynamoDB data model. How can we use it to implement our database backed grid view?
+We now have a superficial understanding of the DynamoDB data model. How can we use it to implement our database backed grid view?
 
-A natural starting point would be to try and find a logical partitioning in our data model and map that to a DynamoDB partition. In our case all our data is organized into tenants, with all queries working within the scope of a tenant. If we use tenant id as a partition attribute, we isolate each customer's workload into separate storage nodes.
+A natural starting point would be to try and find a logical partitioning in our data model and map that to a DynamoDB partition. In our case, all our data is organized into tenants, with all queries working within the scope of a tenant. If we use tenant id as a partition attribute, we isolate each customer's workload into separate partitions.
 
-DynamoDB doesn't work that way. Each DynamoDB storage node manages about 10GB of data and has limited IO capacity (6000 reads totalling 24MB per second, 1000 writes totalling 1MB per second). Each DynamoDB server instance manages many storage nodes from multiple AWS customers. This relatively fine grained partitioning is what allows DynamoDB to scale seamlessly. Storage nodes are constantly moved around, split and merged, without your application having to be aware of what's going on. This contrasts painfully with something like MongoDB where databases are sharded over physical server instances and scaling up to add more instances can take months of careful planning. 
+DynamoDB doesn't work that way. Each DynamoDB storage partition manages up to 10GB of data and has limited IO capacity (6000 reads totalling 24MB per second, 1000 writes totalling 1MB per second). Each DynamoDB server instance manages many storage partitions from multiple AWS customers. This relatively fine grained partitioning is what allows DynamoDB to scale seamlessly. Storage partitions are constantly moved around, split and merged, without your application having to be aware of what's going on. This contrasts painfully with something like MongoDB where databases are sharded over physical server instances and scaling up to add more instances can take months of careful planning. 
 
-You're not achieving any meaningful isolation by partitioning by tenant and you've reduced the access patterns you can support. In previous versions of DynamoDB you had to worry about sustaining even loads across storage nodes. Sharding by tenant does the opposite. However, that's less of a problem with [DynamoDB adaptive capacity](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html#bp-partition-key-partitions-adaptive). DynamoDB will split storage nodes (on sort key if all items have the same partition key) to separate high traffic items. It can even go so far as to isolate a single super high traffic item in its own dedicated storage node. 
+You're not achieving any meaningful isolation by partitioning by tenant and you've severely restricted the expressiveness of your queries. In previous versions of DynamoDB you had to worry about sustaining even loads across storage nodes. Partitioning by tenant does the opposite. However, that's less of a problem with [DynamoDB adaptive capacity](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html#bp-partition-key-partitions-adaptive). DynamoDB will split storage partitions (on sort key if all items have the same partition key) to separate high traffic items. It can even go so far as to isolate a single super high traffic item in its own dedicated storage partition. 
 
 ## Document Design
 
@@ -185,7 +185,7 @@ With Pre-Joined tables we stored entities with the same partition key in the sam
 
 The more entities you have, the more you need to generalize the treatment of shared attributes. Each item has an Entity Id, a Related Id and a Sort String. Ids are strings and start with an entity type specific prefix. This is vital for keeping track of which entity is which and ensuring that entities of the same type sort together. The main table uses Entity Id as a partition key and Related Id as the Sort Key. The overloaded secondary index uses Related Id as the partition key and Sort String as the sort key.
 
-Related Id can be whatever you like depending on the access patterns you want to support. It can identify a contained sub-item as in a Pre-Joined table or it could be a foreign key to another top level entity used to model a many to one relationship. Need multiple relationships? Add another item for each related entity.
+Related Id can be whatever you like depending on the access patterns you want to support. It can identify a contained sub-item, as in a Pre-Joined table, or it could be a foreign key to another top level entity used to model a many to one relationship. Need multiple relationships? Add another item for each related entity.
 
 Here's a single table representation of our sample data. 
 
@@ -238,7 +238,7 @@ Let's have a look at the index.
 | xattrib-882a | 2023-06-01#000001 |issue-020e | 
 | xattrib-882a | 2023-06-02#000002 | issue-67d1 | 
 
-This index supports querying projects in a tenant sorted by project name, querying issues in a project sorted by issue num and querying issues in a project sorted on any custom field with a secondary sort on issue num. 
+This index supports querying projects in a tenant sorted by project name, querying issues in a project sorted by issue num and querying issues in a project sorted on any custom field, with a secondary sort on issue num. 
 
 <!-- This is horrible. I want to style the table by highlighting alternating entities in the table (each entity can span multiple rows). I want to use the compact markdown table for the content. This is the only way I've found to add styling. There's no ids in the html generated by markdown so all I can target is the HTML tags themselves. Embedded style sheet applies to the entire page so I have to target a specific table and then row in the table. -->
 <style type="text/css">
@@ -259,19 +259,19 @@ table:nth-of-type(2) tr:nth-child(13) {background-color:#f3f6fa;}
 
 So far we've been ignoring the elephant in the room. DynamoDB has an eventual consistency model. What does that mean for our application? 
 
-The databases we've looked at so far have strong consistency models. When you update a row in a relational databas, the change to the row and any related updates to indexes appear to happen at the same time. An application either sees the database state before any change has happened, or the state after all the changes have happened. Once the application has seen the changed data, no query will return data from the earlier state. In particular, if an application performs an update and then queries the updated state, it will never see data from before the update (known as read after write consistency).
+The databases we've looked at so far have strong consistency models. When you update a row in a relational database, the change to the row and any related updates to indexes appear to happen at the same time. An application either sees the database state before any change has happened, or the state after all the changes have been applied. Once the application has seen the changed data, no query will return data from the earlier state. In particular, if an application performs an update and then queries the updated state, it will never see data from before the update (known as read after write consistency).
 
-You can't rely on any of this with DynamoDB. By default, [reads are eventually consistent](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html). Data is replicated asynchronously across multiple replica storage nodes for redundancy. An eventually consistent read may retrieve data from a replica that hasn't been updated yet. You can optionally perform a strongly consistent read (at twice the cost and using twice the IO) which does guarantee read after write consistency when querying a table. 
+You can't rely on any of this with DynamoDB. By default, [reads are eventually consistent](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html). Data is replicated asynchronously across multiple replica storage partitions for redundancy. An eventually consistent read may retrieve data from a replica that hasn't been updated yet. You can optionally perform a strongly consistent read (at twice the cost and using twice the IO) which does guarantee read after write consistency when querying a table. 
 
 The global secondary indexes that we've been using are always eventually consistent. If you query an index after an update, your change may not be reflected yet. 
 
-Your application needs to be designed to cope with eventual consistency. What does that mean in practice? In most cases, it doesn't matter that changes made by other clients are eventually consistent. The end user doesn't know when those changes were made so won't notice if they show up a few seconds late. In our case the grid view is populated by querying an index. If a new issue has been added but the index hasn't been updated yet, it won't be visible. If a custom field value has been changed, but the index hasn't been updated yet, the issue may appear out of order. These are rare occurrences with minimal impact. Everything will be sorted out when the UI is next refreshed. 
+Your application needs to be designed to cope with eventual consistency. What does that mean in practice? In most cases, it doesn't matter that changes made by other clients are eventually consistent. The end user doesn't know when those changes were made, so won't notice if they show up a few seconds late. In our case the grid view is populated by querying an index. If a new issue has been added but the index hasn't been updated yet, it won't be visible. If a custom field value has been changed, but the index hasn't been updated yet, the issue may appear out of order. These are rare occurrences with minimal impact. Everything will be sorted out when the UI is next refreshed. 
 
 A more significant problem is that each issue is represented by multiple items: one containing the fixed fields and then one per custom field value. By default, updates to a single item are atomic, updates to multiple items (even if batched into a single API call) are not. If multiple clients are updating the same issue at roughly the same time, the result may be a mixture of their changes, rather than being entirely one or the other. 
 
 Whether that matters depends on your application. If all fields are entirely independent then maybe it's not a problem. If there are inter-field consistency constraints it definitely is a problem. DynamoDB does support optional [ACID transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transactions.html) that guarantee atomic updates for up to 100 items at a time. The transaction uses a two phase protocol which doubles the cost and uses twice the IO compared to the base operations. 
 
-In our case, issues can have up to 400 custom fields which means an issue is represented by up to 401 items. If more than 100 of those are changed its not possible to perform an atomic update. 
+In our case, issues can have up to 400 custom fields which means an issue is represented by up to 401 items. If more than 100 of those are changed it's not possible to perform an atomic update. 
 
 ## Document Design with DynamoDB Streams
 
@@ -281,6 +281,53 @@ Well, there is. As long as you're prepared to do some extra work. [DynamoDB Stre
 
 Which is cool, but how does it help us? 
 
-We can use DynamoDB streams to build our own MultiKey index. 
+We can use DynamoDB streams to build our own MultiKey index. Let's start with a classic design that has Tenant, Project and Issue tables. We can use the same issue schema that we used with our [JSON relational database]({% link _posts/2023-07-17-json-relational-database-grid-view.md %}) implementation.
+
+| id (PK) | name | project | num | state | custom_fields |
+|-|-|-|-|-|-|
+| 020e | Needs Painting | 35e9 | 1 | open | {"3812":"2023-05-01","882a":"2023-06-01"} 
+| 3544 | Launch new newspaper! | 7b7e | 1 | closed |
+| 67d1 | Check for rust | 35e9 | 2 | closed | {"3812":"2023-05-02","882a":"2023-06-02"}
+| 83a4 | Hire reporter for showbiz desk | 7b7e | 2 | open |
+| af34 | Girder needs replacing | 35e9 | 3 | open | {"3fe6":42,"47e5":"Approved"}
+
+As well as giving us per issue atomic updates, having each issue represented by a single item means we can use batch get to retrieve a page of issues with a single API call. Now we only need two API calls to retrieve a page of issues sorted by custom field. Although first we'll need to build an index.
+
+We create a separate Issue Attrib Index table that we can query as if it was an index. As this is a real table, rather than a DynamoDB index, we need to ensure that every item has a unique primary key. We do that by using a composite sort key that includes attribute value and issue num. The Issue Attrib Index table is only written to by a Lambda function that reacts to changes in the Issue table via DynamoDB streams. We can use whatever format we like in the issue table. We don't need attributes in the index table to match those in the issue table. We don't need to have a 1:1 mapping between an item in the issue table and an item in the index table.
+
+| Attrib Id (PK) | Sort String (SK) | Issue Id |
+|-|-|-|
+| 3812 | 2023-05-01#000001 | 020e | 
+| 3812 | 2023-05-02#000002 | 67d1 |
+| 3fe6 | 000042#000003 | af34 |  
+| 47e5 | Approved#000003 | af34 | 
+| 882a | 2023-06-01#000001 | 020e | 
+| 882a | 2023-06-02#000002 | 67d1 | 
+
+The Lambda function processes [DynamoDB Stream Records](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_streams_StreamRecord.html). Each record includes the primary key of the item that has changed, the previous state of the item and the new state of the item. A [separate part](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_streams_Record.html) of the record has other metadata, including whether the item is being inserted, modified or removed. The Lambda logic is straight forward:
+* If the item is being inserted, insert an item into the index table for each custom field in the new version of the item
+* If the item is being removed, remove index items for each custom field in the old version of the item
+* If the item is being modified
+  * Remove index items where custom fields exist in the old version of the item but not the new version
+  * Insert index items where custom fields exist in the new version of the item but not the old version
+  * Update index items where custom fields exist in both old and new versions of the item and either the custom field value has changed or the issue num has changed
+
+The lambda logic is also responsible for combining custom field value and issue num into a composite sort key. All the unpleasantness involved can be tucked away in the Lambda function and hidden from the rest of the application. 
+
+ The DynamoDB-Lambda integration also supports [event filtering](https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventfiltering.html). We can configure the stream to ignore events for items that don't have any custom fields. 
+
+ We can mix and match regular DynamoDB indexes with our custom indexes. We don't need any custom behavior for an index of issues per project in num order, so we can use a regular DynamoDB index for that.
+
+ I've worked with a couple of teams that used DynamoDB streams and Lambda to synchronize changes from one DynamoDB table to another. They found it to be absolutely rock solid. No duplicated records, no missing records, no records out of sequence. The only thing to be aware of is that stream records are buffered for up to 24 hours. If the operations team misconfigure something, or the destination table is throttled and data starts to back up, you don't have much time to sort the problem out. Make sure you have appropriate monitoring and alerting configured. 
 
 ## Conclusion
+
+DynamoDB is a kit of parts that you can use in all sorts of interesting ways. It really does scale seamlessly from nothing to whatever load you can imagine. We've looked at four different ways of implementing a database backed grid view, which each have different trade offs. 
+
+The downside is that you need a deep understanding of all the access patterns your application needs up front. You will carefully design your schema and indexing strategies to cover all the access patterns with as few tables and indexes as you can. The only query planner you have is in your head. Whatever plan you come up with needs to be explicitly coded in your app server.
+
+Of course requirements change over time. A relational database with a normalized design will adapt gracefully to support new entities and relationships. You can always come up with a SQL query that will satisfy whatever new access pattern you need. In contrast, with DynamoDB, seemingly minor changes can necessitate a complete redesign of your schema, migration of existing data and rewrite of the data access layer in your app server. DynamoDB encourages "clever" solutions that can be hard to understand and maintain. 
+
+So, what should a team do? If you have a well understood problem with requirements that you can honestly say are not going to change every six months, then go for it. [Document your access patterns](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-modeling-nosql.html), figure out a schema, put a prototype together. You'll be pleased by how well the system scales and how little operational overhead is involved. 
+
+On the other hand, if you're like most teams in the startup and SaaS spaces, desperately pivoting and evolving to find market fit, DynamoDB might not be right for you. It's not a bad idea to start with a boring old relational database which can keep your development velocity high while you evolve your data model and change direction frequently. At low scale, a relational database will handle everything you throw at it, even with shockingly badly written queries. Then, if you find success, understand your problem well, and need to *really* scale, it might be a good time to look at DynamoDB. 
