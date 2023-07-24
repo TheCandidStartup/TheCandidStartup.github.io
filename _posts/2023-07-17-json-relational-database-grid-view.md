@@ -283,6 +283,6 @@ On the downside
 
 There are clearly compromises involved when shoehorning JSON support into a mature technology like a relational database. Maybe things will work more smoothly with a purpose built NoSQL JSON database? 
 
-Next time, we'll take a look at [MongoDB](https://www.mongodb.com/docs/manual/).
+[Next time]({% link _posts/2023-07-24-mongodb-database-grid-view.md %}), we'll take a look at [MongoDB](https://www.mongodb.com/docs/manual/).
 
 ## Footnotes

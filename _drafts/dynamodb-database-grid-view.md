@@ -35,7 +35,7 @@ You're not achieving any meaningful isolation by partitioning by tenant and you'
 
 ## Document Design
 
-DynamoDB is a schemaless, NoSQL database with support for JSON like document types. We can use the same sort of JSON based structures that we used with [Postgres JSON]({% link _posts/2023-07-17-json-relational-database-grid-view.md %}) and [MongoDB]({% link _drafts/mongodb-database-grid-view.md %}). We can only index top level attributes, so we need to flatten the structure to something like this:
+DynamoDB is a schemaless, NoSQL database with support for JSON like document types. We can use the same sort of JSON based structures that we used with [Postgres JSON]({% link _posts/2023-07-17-json-relational-database-grid-view.md %}) and [MongoDB]({% link _posts/2023-07-24-mongodb-database-grid-view.md %}). We can only index top level attributes, so we need to flatten the structure to something like this:
 
 ```
 {
