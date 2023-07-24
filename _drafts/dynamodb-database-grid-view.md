@@ -31,7 +31,9 @@ A natural starting point would be to try and find a logical partitioning in our 
 
 DynamoDB doesn't work that way. Each DynamoDB storage partition manages up to 10GB of data and has limited IO capacity (6000 reads totalling 24MB per second, 1000 writes totalling 1MB per second). Each DynamoDB server instance manages many storage partitions from multiple AWS customers. This relatively fine grained partitioning is what allows DynamoDB to scale seamlessly. Storage partitions are constantly moved around, split and merged, without your application having to be aware of what's going on. This contrasts painfully with something like MongoDB where databases are sharded over physical server instances and scaling up to add more instances can take months of careful planning. 
 
-You're not achieving any meaningful isolation by partitioning by tenant and you've severely restricted the expressiveness of your queries. In previous versions of DynamoDB you had to worry about sustaining even loads across storage nodes. Partitioning by tenant does the opposite. However, that's less of a problem with [DynamoDB adaptive capacity](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html#bp-partition-key-partitions-adaptive). DynamoDB will split storage partitions (on sort key if all items have the same partition key) to separate high traffic items. It can even go so far as to isolate a single super high traffic item in its own dedicated storage partition. 
+You're not achieving any meaningful isolation by partitioning by tenant and you've severely restricted the expressiveness of your queries. Ideally you want to sustain even loads across storage partitions[^1]. Partitioning by tenant does the opposite. 
+
+[^1]: This is less of a problem now that DynamoDB supports [adaptive capacity](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html#bp-partition-key-partitions-adaptive). DynamoDB will split storage partitions (on sort key if all items have the same partition key) to separate high traffic items. It can even go so far as to isolate a single super high traffic item in its own dedicated storage partition. 
 
 ## Document Design
 
@@ -51,7 +53,9 @@ DynamoDB is a schemaless, NoSQL database with support for JSON like document typ
 
 Our issue table can use id as the partition key, so we're spreading the load as evenly as possible. Once again we'd need 400 indexes to be able to sort by every custom field. We know that's a bad idea. So bad, that DynamoDB doesn't allow it. The default quota allows [20 indexes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-indexes-general.html) per table. There is stern advice to limit the number of indexes you create.
 
-There's no MongoDB like Multikey Index. Each item can appear at most once in each index. It looks like this is a dead end.
+There's no MongoDB like Multikey Index. Each item can appear at most once in each index. 
+
+It looks like this is a dead end.
 
 ## Classic Design
 
@@ -68,7 +72,9 @@ You implement the join yourself, in your app server. Here's what our sample Issu
 | 83a4 | Hire reporter for showbiz desk | 7b7e | 2 | open |
 | af34 | Girder needs replacing | 35e9 | 3 | open |
 
-and here's the corresponding Attribute Value table.
+and here's the corresponding Attribute Value table[^2].
+
+[^2]: In this and subsequent tables I have highlighted rows corresponding to alternate entities. Hopefully it makes it easier to see how multiple items end up representing a single entity.
 
 | Issue Id (PK) | Attribute Definition Id (SK) | String Value | Number Value |
 |-|-|-|-|
@@ -79,9 +85,9 @@ and here's the corresponding Attribute Value table.
 | af34 | 3fe6 | | 42 |
 | af34 | 47e5 | Approved |
 
-In our relational design we used a composite key of (issue id, attribute definition id) for attribute values. In DynamoDB I've used issue id for the partition key and attribute definition id for the sort key. That means a single query on issue id will return all the attribute values for the issue. We can get the issue and all custom field values using two queries which our app server can issue in parallel. 
+In our relational design we used a composite key of (issue id, attribute definition id) for attribute values. In DynamoDB I've used issue id for the partition key and attribute definition id for the sort key. That means a single query on issue id will return all the attribute values for the issue. We can get the issue and all custom field values using two queries, which our app server can issue in parallel. 
 
-You may be wondering why I have two separate value columns, one for values represented as strings, and one for values represented as numbers. Isn't DynamoDB a schemaless database? Can't I have a common value DynamoDB attribute which is a string in some items and a number in others?
+You may be wondering why I have two separate value columns, one for values represented as strings, and one for values represented as numbers. Isn't DynamoDB a schemaless database? Can't I have a common DynamoDB attribute which is a string in some items and a number in others?
 
 DynamoDB is schemaless apart from the partition key and sort key of a table or index. Those must have a consistent type defined when the table or index is created. Value isn't a key in this table but it will be in the indexes I'm about to create.
 
@@ -101,7 +107,7 @@ As in the relational design, we're going to need an index so we can retrieve iss
 
 There's no query planner in DynamoDB. The application directly queries an index in the same way you would a table. We can query the appropriate index with an attribute definition id to get all issues that have that custom field, in value order. 
 
-We could have thousands of issues, so obviously we'll need to paginate. DynamoDB has direct support for pagination. To ensure scalability and low latency, DynamoDB's design philosophy is to prevent you from creating long running queries. There is a limit on the amount of data that a query can return with [built in support](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html) for Keyset Pagination. You can also set an explicit limit on the number of items to return, if you prefer. 
+We could have thousands of issues, so obviously we'll need to paginate. DynamoDB has direct support for pagination. To ensure scalability and low latency, DynamoDB's design philosophy is to prevent you from creating long running queries. There is a limit on the amount of data that a query can return, with [built in support](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html) for Keyset Pagination. You can also set an explicit limit on the number of items to return, if you prefer. 
 
 If the query didn't complete, the query response includes a `LastEvaluatedKey` token which you can pass in to a subsequent query using the `ExclusiveStartKey` parameter. That query will return the next page of items in sort key order.
 
@@ -187,7 +193,7 @@ The more entities you have, the more you need to generalize the treatment of sha
 
 Related Id can be whatever you like depending on the access patterns you want to support. It can identify a contained sub-item, as in a Pre-Joined table, or it could be a foreign key to another top level entity used to model a many to one relationship. Need multiple relationships? Add another item for each related entity.
 
-Here's a single table representation of our sample data. 
+Here's a single table representation of our sample data. I've decided not to duplicate the values in the sort strings into their own attributes, saving space both in the database and this blog post.
 
 | Entity Id (PK) | Related Id (SK) | Sort String | Name | Num | State | Type
 |-|-|-|-|-|-|-|
@@ -218,7 +224,7 @@ One table stores all five types of entity.
 * Issues have projects as their related id, modelling the *one project has many issues* relationship.
 * Issues contain attribute values. Attribute Values have a different prefix (xvalue) to distinguish them from attribute definitions, but have matching ids.
 
-This table supports key-value lookup of tenants, querying a project together with its custom field definitions, and querying an issue together with its custom field values. I've decided not to duplicate the values in the sort strings into their own attributes, saving space both in the database and this blog post.
+This table supports key-value lookup of tenants, querying a project together with its custom field definitions, and querying an issue together with its custom field values. 
 
 Let's have a look at the index. 
 
@@ -239,21 +245,6 @@ Let's have a look at the index.
 | xattrib-882a | 2023-06-02#000002 | issue-67d1 | 
 
 This index supports querying projects in a tenant sorted by project name, querying issues in a project sorted by issue num and querying issues in a project sorted on any custom field, with a secondary sort on issue num. 
-
-<!-- This is horrible. I want to style the table by highlighting alternating entities in the table (each entity can span multiple rows). I want to use the compact markdown table for the content. This is the only way I've found to add styling. There's no ids in the html generated by markdown so all I can target is the HTML tags themselves. Embedded style sheet applies to the entire page so I have to target a specific table and then row in the table. -->
-<style type="text/css">
-table:first-of-type tr:nth-child(2) {background-color:#f3f6fa;}
-table:first-of-type tr:nth-child(8) {background-color:#f3f6fa;}
-table:first-of-type tr:nth-child(12) {background-color:#f3f6fa;}
-table:first-of-type tr:nth-child(16) {background-color:#f3f6fa;}
-
-table:nth-of-type(2) tr:nth-child(2) {background-color:#f3f6fa;}
-table:nth-of-type(2) tr:nth-child(6) {background-color:#f3f6fa;}
-table:nth-of-type(2) tr:nth-child(7) {background-color:#f3f6fa;}
-table:nth-of-type(2) tr:nth-child(10) {background-color:#f3f6fa;}
-table:nth-of-type(2) tr:nth-child(12) {background-color:#f3f6fa;}
-table:nth-of-type(2) tr:nth-child(13) {background-color:#f3f6fa;}
-</style>
 
 ## Eventual Consistency
 
@@ -291,7 +282,7 @@ We can use DynamoDB streams to build our own MultiKey index. Let's start with a 
 | 83a4 | Hire reporter for showbiz desk | 7b7e | 2 | open |
 | af34 | Girder needs replacing | 35e9 | 3 | open | {"3fe6":42,"47e5":"Approved"}
 
-As well as giving us per issue atomic updates, having each issue represented by a single item means we can use batch get to retrieve a page of issues with a single API call. Now we only need two API calls to retrieve a page of issues sorted by custom field. Although first we'll need to build an index.
+As well as giving us per issue atomic updates, having each issue represented by a single item means we can use batch get to retrieve a page of issues with a single API call. Now we only need two API calls to retrieve a page of issues sorted by custom field. Although first, we'll need to build an index.
 
 We create a separate Issue Attrib Index table that we can query as if it was an index. As this is a real table, rather than a DynamoDB index, we need to ensure that every item has a unique primary key. We do that by using a composite sort key that includes attribute value and issue num. The Issue Attrib Index table is only written to by a Lambda function that reacts to changes in the Issue table via DynamoDB streams. We can use whatever format we like in the issue table. We don't need attributes in the index table to match those in the issue table. We don't need to have a 1:1 mapping between an item in the issue table and an item in the index table.
 
@@ -331,3 +322,40 @@ Of course requirements change over time. A relational database with a normalized
 So, what should a team do? If you have a well understood problem with requirements that you can honestly say are not going to change every six months, then go for it. [Document your access patterns](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-modeling-nosql.html), figure out a schema, put a prototype together. You'll be pleased by how well the system scales and how little operational overhead is involved. 
 
 On the other hand, if you're like most teams in the startup and SaaS spaces, desperately pivoting and evolving to find market fit, DynamoDB might not be right for you. It's not a bad idea to start with a boring old relational database which can keep your development velocity high while you evolve your data model and change direction frequently. At low scale, a relational database will handle everything you throw at it, even with shockingly badly written queries. Then, if you find success, understand your problem well, and need to *really* scale, it might be a good time to look at DynamoDB. 
+
+## Footnotes
+
+<!-- This is horrible. I want to style the table by highlighting alternating entities in the table (each entity can span multiple rows). I want to use the compact markdown table for the content. This is the only way I've found to add styling. There's no ids in the html generated by markdown so all I can target is the HTML tags themselves. Embedded style sheet applies to the entire page so I have to target a specific table and then row in the table. -->
+<style type="text/css">
+table:nth-of-type(2) tr:nth-child(3) {background-color:#f3f6fa;}
+table:nth-of-type(2) tr:nth-child(4) {background-color:#f3f6fa;}
+
+table:nth-of-type(3) tr:nth-child(3) {background-color:#f3f6fa;}
+
+table:nth-of-type(5) tr:nth-child(4) {background-color:#f3f6fa;}
+table:nth-of-type(5) tr:nth-child(8) {background-color:#f3f6fa;}
+
+table:nth-of-type(6) tr:nth-child(4) {background-color:#f3f6fa;}
+
+table:nth-of-type(7) tr:nth-child(4) {background-color:#f3f6fa;}
+table:nth-of-type(7) tr:nth-child(5) {background-color:#f3f6fa;}
+table:nth-of-type(7) tr:nth-child(7) {background-color:#f3f6fa;}
+table:nth-of-type(7) tr:nth-child(10) {background-color:#f3f6fa;}
+table:nth-of-type(7) tr:nth-child(11) {background-color:#f3f6fa;}
+
+table:nth-of-type(8) tr:nth-child(2) {background-color:#f3f6fa;}
+table:nth-of-type(8) tr:nth-child(8) {background-color:#f3f6fa;}
+table:nth-of-type(8) tr:nth-child(12) {background-color:#f3f6fa;}
+table:nth-of-type(8) tr:nth-child(16) {background-color:#f3f6fa;}
+
+table:nth-of-type(9) tr:nth-child(2) {background-color:#f3f6fa;}
+table:nth-of-type(9) tr:nth-child(6) {background-color:#f3f6fa;}
+table:nth-of-type(9) tr:nth-child(7) {background-color:#f3f6fa;}
+table:nth-of-type(9) tr:nth-child(10) {background-color:#f3f6fa;}
+table:nth-of-type(9) tr:nth-child(12) {background-color:#f3f6fa;}
+table:nth-of-type(9) tr:nth-child(13) {background-color:#f3f6fa;}
+
+table:nth-of-type(11) tr:nth-child(3) {background-color:#f3f6fa;}
+table:nth-of-type(11) tr:nth-child(5) {background-color:#f3f6fa;}
+table:nth-of-type(11) tr:nth-child(6) {background-color:#f3f6fa;}
+</style>
