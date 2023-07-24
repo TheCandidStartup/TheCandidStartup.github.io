@@ -60,7 +60,7 @@ In MongoDB every document must have a field called "[_id](https://www.mongodb.co
 
 ## BSON Storage
 
-Documents are stored using the [BSON](https://bsonspec.org/spec.html) binary format. BSON is a super set of JSON and has native support for many types including binary, integers, doubles, and datetime. There's no direct support for enums, like our state field. You either bias for readability and use a string, or for efficiency and use an integer.
+Documents are stored using the [BSON](https://bsonspec.org/spec.html) binary format. BSON is a superset of JSON and has native support for many types including binary, integers, doubles, and datetime. There's no direct support for enums, like our state field. You either bias for readability and use a string, or for efficiency and use an integer.
 
 MongoDB provides [libraries](https://www.mongodb.com/docs/drivers/) for multiple programming languages that make it easy to work with BSON data and call the MongoDB API. Here's how you would use JavaScript to create our sample issue ready to be serialized as BSON.
 
@@ -121,7 +121,7 @@ MongoDB gives you [two ways](https://www.mongodb.com/docs/manual/core/data-model
 
 The advantage of embedded documents is that they are stored with the containing document. Any query that retrieves the containing document gets all the embedded documents too. This is exactly what we've been trying to achieve with our [denormalized]({% link _posts/2023-07-10-denormalized-relational-database-grid-view.md %}) and [JSONB]({% link _posts/2023-07-17-json-relational-database-grid-view.md %}) relational database implementations. 
 
-If we model custom fields as embedded documents our sample issue document will look something like this:
+If we model custom fields as embedded documents, our sample issue document will look something like this:
 
 ```
 var issue = {
