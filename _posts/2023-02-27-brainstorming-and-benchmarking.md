@@ -93,15 +93,11 @@ Well, this is all very depressing. If we use a fat client with the spreadsheet f
 
 What if instead of storing the current state of the spreadsheet as our source of truth, we store the sequence of operations that were applied to the spreadsheet? This is the idea behind [Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html). To load the spreadsheet we replay the sequence of operations. Here's what would be stored in the database after running our benchmarks.
 
-|-|-|
 | Event Id | Event |
 |-|-|
 | 1 | Import from Excel Spreadsheet stored in S3 |
-|-|-|
 | 2 | Insert new row (A=Nails,B=0.01,C=80,E=15%,H=0.08) after 1000001 |
-|-|-|
 | 3 | Set C2=100 |
-|-|-|
 
 Which seems absurdly simple. We're back to our fat client with reasonable costs and interactive in-memory performance. We still need a reasonable network connection to download the imported spreadsheet but now that spreadsheet is immutable. We can cache it locally and never need to download it again. 
 
