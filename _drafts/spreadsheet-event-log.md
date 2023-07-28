@@ -90,7 +90,7 @@ In our case, the resulting workload is guaranteed to be split unevenly. The part
 
 Maybe we can help DynamoDB out. We don't need the entire transaction log to have the same partition key. We could break the log into multiple segments, where each segment has a different partition key. We can easily ensure that each segment is less than the size of a partition. At a minimum, we need enough entries per segment that we can retrieve a full page of entries with a single query. If we align segment boundaries with the entries that we create snapshots for, then all requests (apart from historical ones) can be handled by the most recent segment.
 
-* IMAGE HERE
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/log-segments-snapshots.svg" alt="Log Segments and Snapshots" %}
 
 Dividing the log into segments would also help with storage management. If the historical transaction log is of no interest, we can delete old segments as soon as we've finished creating the most recent. We could choose to keep the last 3 segments around, or perhaps the segments that cover the last 90 days of activity. If we want to maintain a full historical record while keeping control of costs, we could archive old segments into S3.
 
@@ -120,11 +120,17 @@ We will clearly have different types of entry. Import is different from insert r
 | External | String | S3 Object Id | If defined, body of entry is stored in S3 object with this id |
 | Type | String | Enum | Type of log entry |
 | Version | Number | Incrementing integer | Version number of body format for this type |
-| Body | List, Map or Binary | Type/Version specific encoding | Body of entry
+| Body | Any | Type/Version specific encoding | Body of entry
 
 There will be lots and lots of entries. We want each entry to be as small as possible. It will be well worth the pain required to use the most [compact possible encoding](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CapacityUnitCalculations.html) for each attribute. I've given each attribute a descriptive name in the table but will use only the first letter of each name in DynamoDB. 
 
 ### Segment
+
+The Segment table uses the same incrementing integer sort key as the Entry table to maintain a strict order for segments within a log.
+
+We keep track of which entry in the segment has the most recent snapshot. That makes it easy for clients loading a spreadsheet to know where in the log they need to start reading from. This attribute is undefined for a newly created segment. 
+
+Snapshots will take some time to create and we don't want to prevent spreadsheet updates during that time. Adding a Snapshot entry to the log, including the first entry of a newly created segment, will trigger a background process that creates the Snapshot. When the snapshot is complete, the S3 object id of the root chunk is written to the Snapshot entry and the Last Snapshot attribute of the corresponding segment is updated. 
 
 | Attribute | DynamoDB Type | Format | Description |
 |-|-|-|-|
@@ -136,44 +142,75 @@ There will be lots and lots of entries. We want each entry to be as small as pos
 
 ## Operations
 
+Keeping with the theme of trying to document things more formally, let's have a look at some of the critical operations performed on the transaction log.
+
 ### Create Log
 
-* Generate a UUID
-* Create segment (id,0) with Created set to current date time
-* Create entry (id+0, 0) with Created set to same timestamp as segment, Type="Snapshot", Body=null
-* Use a transaction
+Creating a spreadsheet will be an infrequent operation compared to everything else. I'm happy to use a transaction so I don't have to think about potential edge cases where logs are in a partially created state.
+
+1. Generate a UUID
+2. Use a transaction to perform
+  * `PutItem` on Segment table to create segment with primary key (uuid,0) and Created set to current date time
+  * `PutItem` on Entry table to create entry with primary key  (uuid+0, 0) with Created set to same timestamp as segment, Type="Snapshot", Body=null
 
 ### Add Entry
 
-1. Use a `Query` with limit 1 to read the segment with the highest num.
-2. Use a `Query` with limit 1 to read the entry for that segment with the highest num. Call that id *current*. If the entry type is "End Segment", go back to step 1.
-3. Use `PutItem` to add a new entry with num *current+1* with a `attribute_not_exists(sk)` condition.
-4. If the write fails, go back to step 1 and try again. Limited number of attempts, exponential backoff, jitter.
+The core write operation. Needs highest possible performance. Dividing the log into segments means that we need an additional eventually consistent read to determine the current segment. We can then proceed as before to get the most recent entry and then try to write a new entry.
+
+When a new segment is started, we write a final "End Segment" entry to the old one. That let's us handle the case where the eventually consistent read of the Segment table doesn't return the latest segment. 
+
+A new segment is rare compared with the rate at which we add entries. As an optional optimization, clients that know the most recent segment they interacted with can start from step 2. If they're wrong, we'll read an "End Segment" entry and go back to step 1.
+
+1. `Query` Segment table with limit 1 to read the segment with the highest Num.
+2. `Query` Entry table with limit 1 to read the entry for that segment with the highest Num. Call that id *current*. If the entry type is "End Segment", go back to step 1.
+3. `PutItem` on Entry table to add a new entry with Num *current+1* with an `attribute_not_exists(sk)` condition.
+4. If the write fails, go back to step 1 and try again. 
+
+In the face of contention from other clients, multiple attempts may be needed. Like all such cases, we should set a limit on the maximum number of attempts and use techniques like [exponential backoff and jitter](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/).
 
 ### Create New Segment
 
-1. Use a `Query` with limit 1 to read the segment with the highest num. Call that id *CurrentSegment*. Confirm that this Segment has a LastSnapshot attribute. If not, return failure, we can't create a new segment yet. 
-2. Use a `Query` with limit 1 to read the entry for that segment with the highest num. Call that id *CurrentEntry*.
+This is another case where I'm happy to pay the additional cost for a transaction. We use the same optimistic concurrency approach as Add Entry to assign the next sequence id to the new segment. 
+
+Each segment starts with a snapshot. Segments should be large enough that the snapshot completes before we start another segment. To enforce that constraint, we bail out of segment creation if the current segment doesn't have a snapshot yet.
+
+1. `Query` Segment table with limit 1 to read the segment with the highest Num. Call that id *CurrentSegment*. Confirm that this Segment has a LastSnapshot attribute. If not, return failure, we can't create a new segment yet. 
+2. `Query` Entry table with limit 1 to read the entry for *CurrentSegment* with the highest num. Call that id *CurrentEntry*.
 3. Use a transaction to perform
-  * `PutItem` to add a new entry to *CurrentSegment* with Num=*CurrentEntry*+1,Type="End Segment",condition=`attribute_not_exists(sk)`
-  * `PutItem` to add a new segment with Num=*CurrentSegment*+1,condition=`attribute_not_exists(sk)`
-  * `PutItem` to add a new entry to *CurrentSegment*+1 with Num=0,Type="Snapshot",condition=`attribute_not_exists(sk)`
-4. If transaction failed go back to step 1 and try again. Limited number of attempts, exponential backoff, jitter. Otherwise, start a background process to create a Snapshot (use Streams+Lambda to spot newly inserted snapshot entry for resilience).
+  * `PutItem` on Entry table to add a new entry to *CurrentSegment* with Num=*CurrentEntry*+1,Type="End Segment",condition=`attribute_not_exists(sk)`
+  * `PutItem` on Segment table to add a new segment with Num=*CurrentSegment*+1,condition=`attribute_not_exists(sk)`
+  * `PutItem` on Entry table to add a new entry to *CurrentSegment*+1 with Num=0,Type="Snapshot",condition=`attribute_not_exists(sk)`
+4. If transaction failed go back to step 1 and try again.
+5. Start a background process to create a Snapshot. 
+
+As before we'll need to limit the number of attempts we make. We'll also need a resilient process that ensures that if the transaction was completed, a Snapshot is eventually created. That will need a blog post of its own.
 
 ### Load Spreadsheet
 
-1. Use a `Query` with limit 1 to read the segment with the highest num.
-2. If segment has a LastSnapshot used paged queries to read from that entry to the end of the segment, applying entries in order.
-3. Otherwise use `GetItem` to read the previous segment. If this segment doesn't have a LastSnapshot fail with a corrupt spreadsheet error.
-4. Used paged queries to read from LastSnapshot entry of previous segment to end of segment. Then continue to read from entry 1 to end of current segment. 
+This is the read operation that starts off each client session. The client needs to load the most recent snapshot and any entries in the log since then. It needs to handle the case where the initial snapshot for the current segment hasn't completed yet.
+
+1. `Query` Segment table with limit 2 to read the two most recent segments.
+2. If current segment has a "Last Snapshot", use repeated paged `Query` on Entry table to read from "Last Snapshot" entry to the end of the segment and return.
+3. Otherwise if previous segment doesn't have a "Last Snapshot", fail with a corrupt spreadsheet error.
+4. Use repeated paged `Query` on Entry table to read from "Last Snapshot" entry to the end of the previous segment. 
+5. Use repeated paged `Query` on Entry table to read from entry 1 to end of current segment. 
+
+The initial `Query` reads two segments even though in most cases only the most recent is needed. Segment items are so small that cost of reading two is the same as reading one. 
 
 ### Update Loaded Spreadsheet
 
-1. Use a `Query` with limit 2 to read the two most recent segments.
-2. If the last segment we read is earlier than both Load Spreadsheet from scratch.
-3. Check LastSnapshot on both segments to find most recent snapshot (latest segment may not have a completed snapshot yet).
-4. If snapshot is more recent than last entry read, either Load Spreadsheet from scratch, or do some kind of fancy incremental snapshot load (wind current state back to snapshot we loaded from and then apply segments from most recent snapshot to fast forward if possible), or decide that it will be quicker to ignore snapshots and replay all entries from last entry read. 
-5. Read entries from one after last entry we read to end of log.
+This is the core read operation that we expect to happen multiple times a session to update the loaded spreadsheet with any changes from other clients. For simplicity, if the client falls too far behind, we reload the spreadsheet from scratch, otherwise we read and process all the log entries since last update.
+
+ There's scope for all kinds of interesting strategies to optimize that in future. Can we make use of intermediate snapshots to speed things up without having to do a full reload?
+
+1. `Query` Segment table with limit 2 to read the two most recent segments.
+2. If the last segment client read is earlier than either, Load Spreadsheet from scratch.
+3. If last entry client read is in current segment, use repeated paged `Query` on Entry table to read from entry after that to the end of the segment and return.
+3. Check "Last Snapshot" on both segments to find most recent snapshot (latest segment may not have a completed snapshot yet).
+4. Use repeated paged `Query` on Entry table to read from entry after last read to the end of the previous segment. 
+5. Use repeated paged `Query` on Entry table to read from entry 1 to end of current segment. 
 
 ## Coming Up
+
+Lot's of loose threads at the end of this one. Expect to see a more formal description of all the different types of event log entry, a discussion on different approaches for handling conflict resolution using an event log, a look at the options for triggering side effects like snapshot creation with some sort of guarantee that they will actually happen, strategies for minimizing load/update times by reusing the data the client already has in memory, and eventually, maybe, some experimental results to determine the optimal segment size. 
 
