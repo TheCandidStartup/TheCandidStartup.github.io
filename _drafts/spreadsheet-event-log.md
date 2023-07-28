@@ -22,13 +22,13 @@ Conflict resolution when multiple clients edit the spreadsheet at the same time 
 
 ## Cloud Economics
 
-As we're building in the cloud, we need to maintain at least a basic awareness of the cost implications of our choices. The intention is that customers will self host the spreadsheet, so we're expecting lots of AWS accounts most of which have low activity. We'll be using DynamoDB's [on demand mode](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html#HowItWorks.OnDemand) so that customers pay only for what they use. The basic [cost model](https://aws.amazon.com/dynamodb/pricing/on-demand/) for on demand DynamoDB is $1.25 per million write request units, $0.25 per million read request units, and $0.25 per GB-month for storage. 
+As we're building in the cloud, we need to maintain at least a basic awareness of the cost implications of our choices. The intention is that customers will self host the spreadsheet, so we're expecting lots of AWS accounts, most of which have relatively low activity. We'll be using DynamoDB's [on demand mode](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html#HowItWorks.OnDemand) so that customers pay only for what they use. The basic [cost model](https://aws.amazon.com/dynamodb/pricing/on-demand/) for on demand DynamoDB is $1.25 per million write request units, $0.25 per million read request units, and $0.25 per GB-month for storage. 
 
 The [DynamoDB documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CapacityUnitCalculations.html) has detailed explanations of how many units different operations take. It can be confusing because sometimes the documentation talks about capacity units, and sometimes about request units. These are equivalent when figuring out how many units an operation consumes. The difference is in how you're charged. In on demand mode, you're charged for the units used by each *request* you make. In provisioned mode, you provision the *capacity* you need up front in terms of units per second. 
 
 A [write unit](https://docs.amazonaws.cn/en_us/amazondynamodb/latest/developerguide/ProvisionedThroughput.html#ProvisionedThroughput.CapacityUnits.Write) represents one write to an item up to 1KB in size. You use an additional write unit for every KB written, with sizes rounded up to the nearest KB. Batch writes cost the same as performing all the writes individually. There are no extra units used for conditional writes (although write units are consumed even if the write fails). Writes in transactions use double the number of units.
 
-A [read unit](https://docs.amazonaws.cn/en_us/amazondynamodb/latest/developerguide/ProvisionedThroughput.html#ProvisionedThroughput.CapacityUnits.Read) represents a strongly consistent read of up to 4KB of data. Unlike writes, when performing a `BatchGetItem` or `Query` the size of all the items accessed is added together and *then* rounded up to the nearest 4KB. Reads in transactions use double the number of units, eventually consistent reads use half.
+A [read unit](https://docs.amazonaws.cn/en_us/amazondynamodb/latest/developerguide/ProvisionedThroughput.html#ProvisionedThroughput.CapacityUnits.Read) represents a strongly consistent read of up to 4KB of data. Unlike writes, when performing a `BatchGetItem` or `Query`, the size of all the items accessed is added together and *then* rounded up to the nearest 4KB. Reads in transactions use double the number of units, eventually consistent reads use half.
 
 Let's say we use one DynamoDB item per entry in the transaction log. Creating a million cell spreadsheet by setting one cell at a time will cost $1.25, assuming that each entry uses less than 1 KB. Ongoing storage is up to $0.25 per month. In contrast, reading the entire transaction log using eventually consistent reads will cost *at most* $0.03, assuming that we read multiple items at a time. If we can make the entries significantly smaller than 1KB, the cost will be even less. 
 
@@ -86,7 +86,7 @@ Each storage partition has a hard limit on the amount of IO it can sustain. The 
 
 What about very large spreadsheets, where the transaction log is too big to fit into a single partition? DynamoDB will handle this case. If a partition needs to be split and all items have the same partition key, DynamoDB will split on the sort key. 
 
-In our case, the resulting workload is guaranteed to be split unevenly. The partition with the most recently created entries will have virtually all of the traffic. In theory DynamoDB [adaptive capacity](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html#bp-partition-key-partitions-adaptive) should handle this case, allocating more of the table level IO quota to the hot partition. However, the more storage nodes we create with the same partition key, the more overhead is involved in determining the correct partition to use. 
+In our case, the resulting workload is guaranteed to be split unevenly. The partition with the most recently created entries will have virtually all of the traffic. In theory, DynamoDB [adaptive capacity](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html#bp-partition-key-partitions-adaptive) should handle this case, allocating more of the table level IO quota to the hot partition. However, the more storage nodes we create with the same partition key, the more overhead is involved in determining the correct partition to use. 
 
 Maybe we can help DynamoDB out. We don't need the entire transaction log to have the same partition key. We could break the log into multiple segments, where each segment has a different partition key. We can easily ensure that each segment is less than the size of a partition. At a minimum, we need enough entries per segment that we can retrieve a full page of entries with a single query. If we align segment boundaries with the entries that we create snapshots for, then all requests (apart from historical ones) can be handled by the most recent segment.
 
@@ -175,39 +175,5 @@ There will be lots and lots of entries. We want each entry to be as small as pos
 4. If snapshot is more recent than last entry read, either Load Spreadsheet from scratch, or do some kind of fancy incremental snapshot load (wind current state back to snapshot we loaded from and then apply segments from most recent snapshot to fast forward if possible), or decide that it will be quicker to ignore snapshots and replay all entries from last entry read. 
 5. Read entries from one after last entry we read to end of log.
 
-## Future Work
-
-### Write Sharding
-
-* Alternative is ULIDs. 128 bit value like UUID consisting of 48 bit timestamp in milliseconds and 80 bits of randomness. ULIDs generated by different servers in same millisecond are arbitrarily ordered by randomness. ULIDs generated by same client in same millisecond are monotonically ordered by library recognizing this case and returning last ULID+1.
-  * If clocks are skewed can get entries inserted earlier in order. Have to do something nasty like waiting for 30 seconds before relying on order.
-  * Non-start for me
-* More controlled eventually consistent order? Use a singleton Epoch counter. e.g. singleton DynamoDB item with an atomic counter. Streams+Lambda process increments counter on any change, with delay to update once every few milliseconds. Lambda can propagate current Epoch value to other items (e.g. one per shard) to scale read bandwidth if needed. Sort key is current Epoch + large random value. Use with server side conflict resolution. Ignore pending transactions until epoch has moved on. When creating new entry need to check that current entry has same or earlier epoch before attempting to write. ARRGH. Doesn't work. Need absolutely predictable id for next entry to use conditional write to enforce constraint. Have to use transaction with CheckCondition? Doesn't help, need to know that epoch has ended across all shards. 
-  
-### Conflict Resolution
-
-* Simplest approach is last writer wins. Clients submit their changes, source of truth is order changes hit transaction log, client sync most recent changes and fix up their local state if it has diverged
-* Strictest approach extends add entry logic back to client. Client syncs to most recent changes, resolving any conflict locally. Submits their changes conditional on no changes to transaction log since their sync. If transaction fails, sync and repeat.
-* Server side conflict resolution.
-  * Submit changes including entry number (segment num + entry num?) of last change client has seen. Transaction written to log but marked pending. Clients ignore pending changes (or treat them as non-definitive). Snapshot creation can't start until pending transaction resolved. 
-  * Server side process works through pending transactions in order. For each, looks at any entries added to the log between the last change the client saw and the submitted transaction and checks for conflicts. 
-    * Lots of ways to define conflict - could specify how strict you want to be in transaction. Simplest is to check whether any cell the transaction depends on was modified by earlier change. 
-    * Wider scope would check for any cell changing in a row that transaction depends on. 
-    * Or could support arbitrary conditions ...
-  * Transaction is marked as rejected or accepted. Rejected transactions are ignored by everyone (filter them out when querying)
-  * 
-
 ## Coming Up
 
-Next time ...
-
-* Import
-* Insert Rows
-* Insert Columns
-* Delete Rows
-* Delete Columns
-* Set Cell
-* Set Cells
-* Batch
-* Snapshot
-* End Segment
