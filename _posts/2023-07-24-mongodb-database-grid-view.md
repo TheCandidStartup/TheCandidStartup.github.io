@@ -213,4 +213,4 @@ Will other NoSQL databases have similar problems? Ironically, I believe that the
 
 In 2007, engineers from Amazon published the [Dynamo Paper](https://www.dynamodbguide.com/the-dynamo-paper/). It described the learnings from building an in-house, highly available, lean and mean, key-value store. The paper went on to inspire many of the original NoSQL databases. In 2012, AWS released DynamoDB, a managed database service based on the Dynamo principles. 
 
-Next time we'll find out whether DynamoDB is a better choice for implementing a [database backed grid view]({% link _posts/2023-06-12-database-grid-view.md %}).
+[Next time]({% link _posts/2023-07-31-dynamodb-database-grid-view.md %}) we'll find out whether DynamoDB is a better choice for implementing a [database backed grid view]({% link _posts/2023-06-12-database-grid-view.md %}).
