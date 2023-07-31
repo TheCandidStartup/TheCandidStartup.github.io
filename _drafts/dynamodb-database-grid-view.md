@@ -5,7 +5,7 @@ tags: databases AWS
 
 [DynamoDB](https://aws.amazon.com/dynamodb/) is AWS's flagship, [serverless]({% link _posts/2022-12-05-serverless-or-not.md %}), horizontally scalable, NoSQL database. The work that ultimately led to the release of DynamoDB in 2012, [started in 2004](https://www.dynamodbguide.com/the-dynamo-paper/). Amazon was growing rapidly and finding it hard to scale their relational databases. The development of DynamoDB was driven by the [observation](https://www.allthingsdistributed.com/2017/10/a-decade-of-dynamo.html) that 70% of Amazon's queries were key-value lookups using a primary key to return a single row. Another 20% returned a set of rows from a single table. 
 
-DynamoDB was built to satisfy these two use cases while achieving virtually unlimited scalability and consistent single digit milliseconds latency. 
+DynamoDB was built to satisfy these two use cases while claiming to achieve virtually unlimited scalability and consistent single digit milliseconds latency. 
 
 ## DynamoDB Data Model
 
@@ -262,7 +262,7 @@ A more significant problem is that each issue is represented by multiple items: 
 
 Whether that matters depends on your application. If all fields are entirely independent then maybe it's not a problem. If there are inter-field consistency constraints it definitely is a problem. DynamoDB does support optional [ACID transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transactions.html) that guarantee atomic updates for up to 100 items at a time. The transaction uses a two phase protocol which doubles the cost and uses twice the IO compared to the base operations. 
 
-In our case, issues can have up to 400 custom fields which means an issue is represented by up to 401 items. If more than 100 of those are changed it's not possible to perform an atomic update. 
+In our case, issues can have up to 400 custom fields which means an issue is represented by up to 401 items. If more than 100 of those are changed, it's not possible to perform an atomic update. 
 
 ## Document Design with DynamoDB Streams
 
