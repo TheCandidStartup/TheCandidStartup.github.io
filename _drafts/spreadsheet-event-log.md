@@ -18,7 +18,7 @@ I did say that the event log will be managed in a database and that DynamoDB is 
 
 The basic concept is simple. An ordered list of entries that define all changes made to the spreadsheet. The event log is the source of truth for what happens in the spreadsheet. Each entry is immutable. Maintaining a strict order of entries is critical to the integrity of the event log. 
 
-Conflict resolution when multiple clients edit the spreadsheet at the same time will be driven by the event log. At the simplest, the order in which two client's changes appear in the event log defines what happens. We can build a variety of schemes on top of that to manage unexpected changes.
+Conflict resolution when multiple clients edit the spreadsheet at the same time will be driven by the event log. At its simplest, the order in which two clients changes appear in the event log defines what happened. We can build a variety of schemes on top of that to manage unexpected changes.
 
 ## Cloud Economics
 
@@ -114,7 +114,7 @@ We will clearly have different types of entry. Import is different from insert r
 
 | Attribute | DynamoDB Type | Format | Description |
 |-|-|-|-|
-| Segment Id (PK) | Binary | UUID + Num | Identifies which segment this entry is part of |
+| Segment Id (PK) | Binary | UUID + Num | Primary key of segment (PK+SK) this entry is part of |
 | Num (SK) | Number | Incrementing integer | Defines the order of entries in the segment |
 | Created | Number | [Unix Epoch Time](https://en.wikipedia.org/wiki/Unix_time) in seconds | Date time when entry was created |
 | External | String | S3 Object Id | If defined, body of entry is stored in S3 object with this id |
@@ -155,7 +155,7 @@ Creating a spreadsheet will be an infrequent operation compared to everything el
 
 ### Add Entry
 
-The core write operation. Needs highest possible performance. Dividing the log into segments means that we need an additional eventually consistent read to determine the current segment. We can then proceed as before to get the most recent entry and then try to write a new entry.
+The core write operation. Needs the highest possible performance. Dividing the log into segments means that we need an additional eventually consistent read to determine the current segment. We can then proceed as before to get the most recent entry and then try to write a new entry.
 
 When a new segment is started, we write a final "End Segment" entry to the old one. That let's us handle the case where the eventually consistent read of the Segment table doesn't return the latest segment. 
 
@@ -206,7 +206,6 @@ This is the core read operation that we expect to happen multiple times a sessio
 1. `Query` Segment table with limit 2 to read the two most recent segments.
 2. If the last segment client read is earlier than either, Load Spreadsheet from scratch.
 3. If last entry client read is in current segment, use repeated paged `Query` on Entry table to read from entry after that to the end of the segment and return.
-3. Check "Last Snapshot" on both segments to find most recent snapshot (latest segment may not have a completed snapshot yet).
 4. Use repeated paged `Query` on Entry table to read from entry after last read to the end of the previous segment. 
 5. Use repeated paged `Query` on Entry table to read from entry 1 to end of current segment. 
 
