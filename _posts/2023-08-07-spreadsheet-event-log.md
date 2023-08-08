@@ -211,5 +211,5 @@ This is the core read operation that we expect to happen multiple times a sessio
 
 ## Coming Up
 
-Lot's of loose threads at the end of this one. Expect to see a more formal description of all the different types of event log entry, a discussion on different approaches for handling conflict resolution using an event log, a look at the options for triggering side effects like snapshot creation with some sort of guarantee that they will actually happen, strategies for minimizing load/update times by reusing the data the client already has in memory, and eventually, maybe, some experimental results to determine the optimal segment size. 
+Lots of loose threads at the end of this one. Expect to see a more formal description of all the different types of event log entry, a discussion on different approaches for handling conflict resolution using an event log, a look at the options for triggering side effects like snapshot creation with some sort of guarantee that they will actually happen, strategies for minimizing load/update times by reusing the data the client already has in memory, and eventually, maybe, some experimental results to determine the optimal segment size. 
 
