@@ -9,7 +9,7 @@ Remember how we used to build web apps? A database, some app servers and a load 
 
 Maintaining consistent state is really easy. All your data is in one place. Design a [good schema with appropriate constraints]({% link _posts/2023-03-27-navisworks-graphics-pipeline.md %}). Wrap updates in a transaction. The data is always consistent, operations either happen completely or not at all. Expose access via a simple REST API. A request comes in, you hit the database, then return a response when the database is done. 
 
-Unfortunately, things rarely stay so simple. What starts out as a simple monolith soon becomes a complex monolith with lots of additional state bolted onto the side. What was a complex monolith gets split up into multiple microservices, with application state distributed between them. What was a simple microservice becomes a complex micro-service with lots of additional state bolted onto the side. 
+Unfortunately, things rarely stay so simple. What starts out as a simple monolith soon becomes a complex monolith with lots of additional state bolted onto the side. What was a complex monolith gets split up into multiple microservices, with application state distributed between them. What was a simple microservice becomes a complex microservice with lots of additional state bolted onto the side. 
 
 {% include candid-image.html src="/assets/images/complex-monolith-architecture.png" alt="Complex Monolith or Microservice Architecture" %}
 
@@ -19,7 +19,9 @@ The database is still the main source of truth but you have all these side effec
 
 ## Keep It Simple Stupid
 
-The approach that everyone starts with, is to add the logic needed to the app server. Don't think about it too much. Add the code where it's convenient. Mix database updates and side effects. Wrap the whole thing in a transaction so the database update is atomic and consistent. Simple, quick to write, easy to understand and maintain. Works most of the time. Uploading a file might look like :
+The approach that everyone starts with is to add the logic needed to the app server. Don't think about it too much. Add the code where it's convenient. Mix database updates and side effects. Wrap the whole thing in a transaction so the database update is atomic and consistent. Simple, quick to write, easy to understand and maintain. Works most of the time. 
+
+Uploading a file might look like :
 
 1. Start database transaction
 2. Update file metadata in database
@@ -30,7 +32,7 @@ The approach that everyone starts with, is to add the logic needed to the app se
 7. Update cache with file metadata and thumbnail location
 8. End database transaction
 
-Error handling tends to be piecemeal and ad hoc. What happens if the downstream service returns an error (even after a few retries)? Abort the transaction? What about that blob of data we wrote into S3? I guess we should try and delete it. What if that fails?
+Error handling tends to be piecemeal and ad hoc. What happens if the permissions service returns an error (even after a few retries)? Abort the transaction? What about that blob of data we wrote into S3? I guess we should try and delete it. Can that fail?
 
 {% capture note %}
 > Everything fails
@@ -62,11 +64,13 @@ Sounds pretty unlikely. If we have good logging and monitoring we can spot the r
 
 When you scale up, rare failures become common. What was exceptional, is now normal. Part of the day to day. Any lurking edge cases that you’ve ignored or deal with manually will become intolerable until you fix them properly.
 
-Another app I worked with reduced the window of vulnerability to the bare minimum. They used a separate, highly resilient workflow system to run all the side effect logic. They used a highly available, resilient queue to connect the app servers and the workflow system. Once the database transaction successfully completed all the app server had to do was add a message to the queue. Worked great during development, internal testing and beta testing.
+Another app I worked with reduced the window of vulnerability to the bare minimum. They used a separate, highly resilient workflow system to run all the side effect logic. They used a highly available, resilient queue to connect the app servers and the workflow system. Once the database transaction successfully completed, all the app server had to do was add a message to the queue. Worked great during development, internal testing and beta testing.
 
 The app was popular. We onboarded hundreds of customers, some with hundreds of users. Customer complaints increased. Varied reports but all with a similar root cause. The database had been updated but the side effect workflow hadn't run. 
 
-What went wrong? Everything. Turns out that app servers will occasionally crash at the most inconvenient moment. The highly available queue was also highly complex. There were bugs in the language library used by the app server to add messages to the queue, other bugs in the different language library used by the workflow system to read messages from the queue. Fundamental misunderstandings of the contract between queue and client that in theory assured high availability and resilience. Outages in the queueing service itself. 
+What went wrong? Everything. 
+
+Turns out that app servers will occasionally crash at the most inconvenient moment. The highly available queue was also highly complex. There were bugs in the language library used by the app server to add messages to the queue, other bugs in the different language library used by the workflow system to read messages from the queue. Fundamental misunderstandings of the contract between queue and client that in theory assured high availability and resilience. Outages in the queueing service itself. 
 
 Even worse, there was no easy way to detect which workflows hadn't run. There was no difference in the database between a transaction whose side effects completed and one that didn't. In many cases you couldn't work out what side effects needed to be run from what changed in the database. You would have to scan through every record in the database performing a cross-service join to check that everything was consistent. Or, just wait for your customers to report problems and fix them reactively. 
 
@@ -127,7 +131,7 @@ In both cases there's a chance that a side effect will be executed more than onc
 
 ### Three Part Recipe
 
-We end up with a three part recipe. Steps 1-6 are the business logic checks and discardable writes, 7-9 is the linchpin write and 10-12 are idempotent side effects.
+We end up with a three part recipe. Steps 1-6 are the business logic checks and discardable writes, 7-9 is the linchpin write and 10-13 are idempotent side effects.
 
 1. Client requests location to upload file content
 2. App server checks user has permission to upload file and returns S3 signed URL for an auto-delete S3 object
@@ -143,7 +147,7 @@ We end up with a three part recipe. Steps 1-6 are the business logic checks and 
 10. Call permissions service to remove auto-delete tag
 11. Call S3 to remove auto-delete tag
 12. Update cache with file metadata
-12. Create a background job to generate a file thumbnail and update file metadata and cache
+13. Create a background job to generate a file thumbnail and update file metadata and cache
 
 ## Coming Up
 
