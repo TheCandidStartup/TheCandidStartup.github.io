@@ -1,6 +1,6 @@
 ---
 title: Implementing a Spreadsheet Event Log on DynamoDB
-tags: spreadsheets databases
+tags: spreadsheets databases aws
 ---
 
 {% capture bb_url %}{% link _posts/2023-02-27-brainstorming-and-benchmarking.md %}{% endcapture %}
