@@ -109,9 +109,9 @@ All the different states involved need to be correctly handled by the banking ap
 
 ## Single Write File Upload
 
-That all sounds good in theory. How do you make it work for the file upload example? There are two significant writes - file metadata into a database and the file content into S3. On top of that there's a separate permissions service that needs to know about the file for it to be accessible.
+That all sounds good in theory. How do you make it work for the file upload example? There are two significant writes - file metadata into a database and the file content into S3. On top of that, there's a separate permissions service that needs to know about the file for it to be accessible.
 
-The first job is to identify our linchpin write. If you have a primary database, it will almost always be the transaction that commits changes to the database. Then you need to figure out what needs to happen before the linchpin write in order to validate business logic and ensure that you have a reasonable initial state when the linchpin write completes. Try to minimize what you have to do here. You should execute as much as you can as side effects.
+The first job is to identify the linchpin write. If you have a primary database, it will almost always be the transaction that commits changes to the database. Then you need to figure out what needs to happen before the linchpin write in order to validate business logic and ensure that you have a reasonable initial state when the linchpin write completes. Try to minimize what you have to do here. You should execute as much as you can as side effects.
 
 A reasonable initial state for a file upload is that the file is visible (file metadata written to the database), accessible in the permissions system and downloadable. It's OK if a file thumbnail is not immediately available or if the cache is not immediately populated. 
 
@@ -151,4 +151,4 @@ We end up with a three part recipe. Steps 1-6 are the business logic checks and 
 
 ## Coming Up
 
-Next time we'll take what we've learnt and apply it to ensuring that [snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) are actually created as events are added to the [event log]({% link _posts/2023-08-07-spreadsheet-event-log.md %}) of our [Event Sourced Cloud Spreadsheet]({% link _topics/spreadsheets.md %}). 
+Next time we'll take what we've learnt and apply it to ensuring that [snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) are actually created, as events are added to the [event log]({% link _posts/2023-08-07-spreadsheet-event-log.md %}) of our [Event Sourced Cloud Spreadsheet]({% link _topics/spreadsheets.md %}). 
