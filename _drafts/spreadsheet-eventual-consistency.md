@@ -3,7 +3,7 @@ title: Ensuring Eventual Consistency for an Event Sourced Spreadsheet
 tags: spreadsheets aws
 ---
 
-[Last time]({% link _drafts/ensuring-eventual-consistency.md %}) we looked at general approaches to ensuring eventual consistency in the cloud. Now it's time to apply what we've learnt to the case of my [Event Sourced Cloud Spreadsheet]({% link _topics/spreadsheets.md %}). Previously, I went into some detail on how to [implement an Event Log using DynamoDB]({% link _posts/2023-08-07-spreadsheet-event-log.md %}). Some operations trigger a background process that creates a snapshot of the spreadsheet state. 
+[Last time]({% link _posts/2023-08-11-ensuring-eventual-consistency.md %}) we looked at general approaches to ensuring eventual consistency in the cloud. Now it's time to apply what we've learnt to the case of my [Event Sourced Cloud Spreadsheet]({% link _topics/spreadsheets.md %}). Previously, I went into some detail on how to [implement an Event Log using DynamoDB]({% link _posts/2023-08-07-spreadsheet-event-log.md %}). Some operations trigger a background process that creates a snapshot of the spreadsheet state. 
 
 Now it's time to work out how to do that reliably.
 
