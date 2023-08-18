@@ -6,7 +6,9 @@ tags: spreadsheets aws
 {% capture el_url %}{% link _posts/2023-08-07-spreadsheet-event-log.md %}{% endcapture %}
 [Last time]({% link _posts/2023-08-11-ensuring-eventual-consistency.md %}) we looked at general approaches to ensuring eventual consistency in the cloud. Now it's time to apply what we've learnt to the case of my [Event Sourced Cloud Spreadsheet]({% link _topics/spreadsheets.md %}). Previously, I went into some detail on how to [implement an Event Log using DynamoDB]({{ el_url }}). Long story short, there are some operations that involve multiple writes and some that need to trigger side effects. 
 
-Now it's time to work out how to do it reliably.
+Now it's time to work out how to do it reliably. Here's the architecture we'll put together over the course of this post.
+
+{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/snapshot-creation-architecture.svg" alt="Snapshot Creation Architecture" %}
 
 ## Event Sourcing
 
@@ -37,15 +39,15 @@ The simplest way of reliably triggering logic in response to a write is to use t
 
 Every modification to the log table will [add a record](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html) to the corresponding DynamoDB stream. Streams are [organized into shards](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html#Streams.Processing) for horizontal scalability. The [DynamoDB Lambda integration](https://docs.aws.amazon.com/lambda/latest/dg/with-ddb.html) will invoke a Lambda function whenever new records are added to a shard. By default, there is at most one lambda invocation running per shard. This ensures that stream records for each shard are processed in order. The Lambda integration [polls for new records](https://docs.aws.amazon.com/lambda/latest/dg/with-ddb.html#dynamodb-polling-and-batching) at least four times a second and passes a batch of records to your Lambda function.
 
-AWS documentation doesn't provide full details on how stream records are sharded beyond stating that Lambda [ensures in-order processing at the partition key level](https://docs.aws.amazon.com/lambda/latest/dg/with-ddb.html#dynamodb-polling-and-batching). However, [responses to support requests](https://stackoverflow.com/questions/44266633/how-do-dynamodb-streams-distribute-records-to-shards) make it clear that shards correspond to DynamoDB storage nodes.
+AWS documentation doesn't provide full details on how stream records are sharded beyond stating that Lambda [ensures in-order processing at the partition key level](https://docs.aws.amazon.com/lambda/latest/dg/with-ddb.html#dynamodb-polling-and-batching). However, [responses to support requests](https://stackoverflow.com/questions/44266633/how-do-dynamodb-streams-distribute-records-to-shards) make it clear that shards correspond to DynamoDB storage partitions.
 
-{% include candid-image.html src="/assets/images/dynamodb-store-nodes-stream-shards.svg" alt="DynamoDB Storage Nodes and Stream Shards" %}
+{% include candid-image.html src="/assets/images/dynamodb-store-nodes-stream-shards.svg" alt="DynamoDB Storage Partitions and Stream Shards" %}
 
-In our case, what this all means is that our Lambda function will see all the entries for a specific log segment in order. However, log entries from different segments may be seen in the wrong order or be processed in parallel by two different lambda invocations. Each snapshot has a dependency on the previous snapshot, so we'll need our own measures to ensure that snapshots are created in the right order.
+In our case, what this means is that our Lambda function will see all the entries for a specific log segment in order. However, log entries from different segments may be seen in the wrong order or be processed in parallel by two different lambda invocations. Each snapshot has a dependency on the previous snapshot, so we'll need our own measures to ensure that snapshots are always created in the right order.
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/log-segments-snapshots.svg" alt="Log Segments and Snapshots" %}
 
-Stream records are retained for 24 hours. It's vital that our Lambda function keeps up with the rate of writes. It should perform a minimum of processing for each record. It certainly can't run anything as heavyweight as snapshot creation inline. We have no control over how partition keys are mapped to physical storage partitions. Log segments from multiple different spreadsheets will share the same storage node. We can't have some long running operation on one spreadsheet block progress on another. 
+Stream records are retained for 24 hours. It's vital that our Lambda function keeps up with the rate of writes. It should perform a minimum of processing for each record. It certainly can't run anything as heavyweight as snapshot creation inline. We have no control over how partition keys are mapped to physical storage partitions. Log segments from multiple different spreadsheets will share the same storage partition. We can't have some long running operation on one spreadsheet block progress on another. 
 
 On the plus side, we don't have to do anything for most writes. The DynamoDB Lambda integration supports filtering so we can set things up so that our Lambda function is only invoked for log entries where a side effect is needed: snapshots and large entries with a payload stored in S3.
 
@@ -60,6 +62,7 @@ I'm going to use a "Pending Snapshots" DynamoDB table to help orchestrate the sn
 | Created | Number | [Unix Epoch Time](https://en.wikipedia.org/wiki/Unix_time) in seconds | Date time when created |
 | Locked | Boolean | Flag | True if snapshot creation is in progress | 
 | Modified | Number | [Unix Epoch Time](https://en.wikipedia.org/wiki/Unix_time) in seconds | Date time when last modified (State updated) |
+| Increment | Number | Incrementing integer | Increments each time we write a new checkpoint state |
 | State | String | JSON | Encoded intermediate checkpoint state |
 
 Each pending snapshot is uniquely identified by the combination of log id, segment num and entry num. We use a sort key that combines segment and entry num so that we can retrieve pending snapshots for a log in the order in which they need to be processed.
@@ -72,7 +75,7 @@ The Lambda function that processes the DynamoDB streams records performs two act
 
 Writing the pending snapshot item to DynamoDB is naturally idempotent. We can also use a conditional write to ensure that we don't overwrite any intermediate state. Sending a message to a [standard SQS queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues.html) is not idempotent. You will end up with duplicate messages in the queue. There's no point in trying to prevent this from happening as SQS has at least once delivery semantics. If SQS may itself occasionally deliver a message twice, you need to handle duplicated messages in the consumer. 
 
-SQS message delivery is fault tolerant and highly scalable. The Lambda integration automatically scales up the number of concurrent lambda function invocations. Messages are retained for up to 14 days. Messages are retained in the queue until the consumer has acknowledged successful processing by explicitly deleting the message. After a configurable [visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html), undeleted messages become eligible for redelivery. 
+SQS message delivery is fault tolerant and highly scalable. The Lambda integration automatically scales up the number of concurrent lambda function invocations. Messages are retained for up to 14 days. Messages remain in the queue until the consumer has acknowledged successful processing by explicitly deleting the message. After a configurable [visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html), undeleted messages become eligible for redelivery. 
 
 ## Snapshot Creation
 
@@ -94,21 +97,27 @@ The Lambda function should check whether it's getting close to the maximum execu
 
 If the Lambda invocation crashes or despite our best efforts runs out of execution time, the message will be redelivered after the visibility timeout expires. All that we've lost is a little time and the work done since the last checkpoint. 
 
-When the snapshot creation is complete all that remains is to write the snapshot root id back to the snapshot log entry, update the last snapshot attribute on the owning segment and remove the entry from the pending snapshots table. Then we can finally delete the message from SQS and declare it a job well done. 
+When the snapshot creation is complete, all that remains is to write the snapshot root id back to the snapshot log entry, update the last snapshot attribute on the owning segment and remove the entry from the pending snapshots table. Then we can finally delete the message from SQS and declare it a job well done. 
 
 ## Idempotence
 
-*  Both side effects are naturally idempotent
- * One is a simple set tag to turn off auto delete
- * Event log is idempotent so doesn't matter how many times you create snapshot, will get the same result
-* For things like snapshot want to avoid possibility of creating twice and orphaning a copy in S3
-* Can be helpful to use hash guid based identifiers so the snapshot for a specific entry on a specific log always has same id
-  * FIFO queue ordering guarantees are no use to us because we can't send messages in order. Deduplication is limited - more robust to make receiver idempotent anyway.
+We've tried to recognize cases where side effects are repeatedly invoked and avoid them. However, there will always be edge cases that allow side effects to be run twice, sometimes even at the same time. That's where we have to rely on the natural idempotence of the operations.
+
+Setting a tag value on an object in S3 to disable auto-delete is trivially idempotent.
+
+Snapshot creation is another matter. It is naturally idempotent. Event log entries are immutable so you should get the same result every time you create a snapshot at the same log entry. However, making sure the implementation is actually idempotent needs attention to detail.
+
+Snapshot creation involves creation of lots of S3 objects. If we generate a new unique id for each object, for example by creating a random UUID, we could easily end up with orphaned objects in S3 after a repeat snapshot. Instead we need to use predictable ids based on the snapshot entry id. [Hash UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier#Versions_3_and_5_(namespace_name-based)) are useful if you want a consistent id format rather than an accumulation of different parts. [Writes to S3 are atomic](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel) so you never seen the results of a partial or failed write. In our case either the object doesn't exist or it exists with the correct content. 
+
+What happens if duplicate snapshot invocations overlap? That won't cause a problem for the objects in S3. However, we will need to be careful with the intermediate checkpoint state we're writing to DynamoDB. Updates to an individual item are atomic so we don't have to worry about corrupt state. However, concurrent invocations could result in checkpoints jumping forwards and backwards. It should all work out in the end but it feels wasteful and chaotic. We can use a conditional write to ensure that checkpoints only move forward. If we find ourselves trying to write a checkpoint which has already moved on, we know there's another invocation active and can take the usual action to bail out.
+
+You may be wondering why I'm using standard SQS queues rather than [FIFO queues](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues.html). FIFO queues guarantee that order is maintained and have built in message deduplication. Can't we avoid all this complexity? The guaranteed order is no use to us because we can't guarantee that we added messages to the queue in the right order to begin with. FIFO queues are more expensive, much less scalable and the deduplication operates within a limited time window. It's more robust to make sure the consumer is idempotent. 
 
 ## Manual Fallback
 
-* What happens if DynamoDB streams records expire before they're processed. Either due to bug in implementation or major AWS outage?
-* Have tool that can reprocess event logs starting from specified date
-* Works like stream processor. Reading entries, invoking Lambda with batch, using temp DynamoDB item to track progress
+What happens if DynamoDB stream records or SQS messages expire before they're processed? What happens if there's a major AWS outage or a minor bug in our implementation? 
 
+While this whole system should run like clockwork, it's always wise to have a plan B. Event sourcing helps us here too. The source of truth is the event log so in the worst case we can throw everything in S3 away and recreate all the snapshots. If stream records or SQS messages go missing, we can manually trigger snapshot creation starting from the last successful snapshot. The state stored in DynamoDB makes it easy to see where side effects haven't happened yet.
+
+It would be useful to have a tool that can reprocess event logs starting from a specified date. Read through log entries from the starting point, adding entries to the pending snapshots table and messages to the SQS queue where needed.
 
