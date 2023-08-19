@@ -59,7 +59,7 @@ The Lambda function that processes the DynamoDB streams records simply has to ad
 
 Sending a message to a [standard SQS queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues.html) is not idempotent. You will end up with duplicate messages in the queue. There's no point in trying to prevent this from happening as SQS has at least once delivery semantics. If SQS may itself occasionally deliver a message twice, you need to handle duplicated messages in the consumer. 
 
-SQS message delivery is fault tolerant and highly scalable. The Lambda integration automatically scales up the number of concurrent lambda function invocations. Messages are retained for up to 14 days. Messages remain in the queue until the consumer has acknowledged successful processing by explicitly deleting the message. After a configurable [visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html), undeleted messages become eligible for redelivery. 
+SQS message delivery is fault tolerant and highly scalable. The Lambda integration automatically scales up the number of concurrent lambda function invocations. Messages are retained for up to 14 days. Messages remain in the queue until the consumer has acknowledged successful processing by explicitly deleting the message. After a configurable [visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html), undeleted messages become eligible for redelivery. We'll use this to our advantage to ensure that snapshot creation eventually completes. The message triggering snapshot creation stays in the queue until it's done while we manipulate the visibility timeout to defer and resume execution as needed.
 
 ## Pending Snapshots Table
 
@@ -71,6 +71,7 @@ I'm going to use a "Pending Snapshots" DynamoDB table to help orchestrate the sn
 | Num (SK) | Number | Lexicographically ordered pair of numbers | Segment num and Entry num that identify snapshot entry |
 | Created | Number | [Unix Epoch Time](https://en.wikipedia.org/wiki/Unix_time) in seconds | Date time when created |
 | Modified | Number | [Unix Epoch Time](https://en.wikipedia.org/wiki/Unix_time) in seconds | Date time when last modified |
+| Active | Boolean | Flag | True if a Lambda invocation is actively working on this snapshot |
 | Increment | Number | Incrementing integer | Increments each time we update the item |
 | State | String | JSON | Encoded intermediate checkpoint state |
 
@@ -80,7 +81,7 @@ Each pending snapshot is uniquely identified by the combination of log id, segme
 
 The SQS job queue is processed by a dedicated snapshot creation Lambda function. The function is invoked with the log id, segment number and entry id of the snapshot entry the snapshot is being created for. It first queries the pending snapshots table to find the first in-progress snapshot for the log (if any). If there's an earlier pending snapshot, we need to wait until it's complete. We update the visibility timeout for this message so that SQS will wait for a while before redelivering it and then exit.
 
-If there's already a pending snapshot entry for this snapshot, then this must be a duplicate message or a retry of a previous attempt at snapshot creation. We'll use a timeout to decide which case it is. If the time since the item's Modified timestamp is greater than the timeout, we claim it by using a conditional write to update the Increment and Modified attributes. We can then continue processing from the last checkpoint. If the conditional write fails, we've lost a race with with another invocation. This must be a duplicate message, so we delete it and exit. 
+If there's already a pending snapshot entry for this snapshot, then this must be a duplicate message or a retry of a previous attempt at snapshot creation. If the Active flag is clear it most be a retry, otherwise we'll need to use a timeout to decide which case it is. If the time since the item's Modified timestamp is greater than the timeout, we assume the previous invocation has died and claim the pending snapshot for ourselves by using a conditional write to update the Increment and Modified attributes. We can then continue processing from the last checkpoint. If the conditional write fails, we've lost a race with with another invocation. This must be a duplicate message, so we delete it and exit. 
 
 If the existing pending snapshot hasn't timed out yet, we change the visibility timeout for the message to the time remaining before timeout and exit. How long should the timeout be? That will need some experimentation.
 
@@ -88,7 +89,7 @@ If there was no existing pending snapshot for this snapshot, we next query the s
 
 We can now formally start the process of snapshot creation by using a conditional write to create a new pending snapshot entry (conditional on entry not existing). Again, if the conditional write fails this must be a duplicate message, so we delete it and exit.
 
-We can finally start the real work by reading all log entries since the last snapshot. There is one more early out condition. It's possible that we have started processing a snapshot before any work on the previous snapshot has started. If we find an earlier unprocessed snapshot in the log the simplest way to handle it is to once again change the visibility timeout for this message and exit. 
+We can finally start the real work by reading all log entries since the last snapshot. There is one more early out condition. It's possible that we have started processing a snapshot before any work on the previous snapshot has started. If we find an earlier unprocessed snapshot in the log the simplest way to handle it is to clear the Active flag, change the visibility timeout for this message and exit. 
 
 ## Checkpoints
 
@@ -96,7 +97,7 @@ Finally, we can go ahead and follow the instructions in my [previous]({% link _p
 
 Each chunk has a maximum size of a few MB and the snapshot creation process is designed to operate with a limited amount of memory. We should be able to make the time required between checkpoints relatively small and predictable. That in turn means we can use a lower timeout value. Instead of needing to allow the time required to create the complete snapshot before deciding that a previous invocation has died, we only need to allow the maximum time between checkpoints. 
 
-The Lambda function should check whether it's getting close to the maximum execution time after each checkpoint. If necessary, it can transfer execution to a new function invocation by [terminating the visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html#terminating-message-visibility-timeout) for the message (so that it will immediately be available for redelivery) and exiting. 
+The Lambda function should check whether it's getting close to the maximum execution time after each checkpoint. If necessary, it can transfer execution to a new function invocation by clearing the Active flag and [terminating the visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html#terminating-message-visibility-timeout) for the message (so that it will immediately be available for redelivery) and exiting. 
 
 If the Lambda invocation crashes or despite our best efforts runs out of execution time, the message will be redelivered after the visibility timeout expires. All that we've lost is a little time and the work done since the last checkpoint. 
 
@@ -122,5 +123,5 @@ What happens if DynamoDB stream records or SQS messages expire before they're pr
 
 While this whole system should run like clockwork, it's always wise to have a plan B. Event sourcing helps us here too. The source of truth is the event log so in the worst case we can throw everything in S3 away and recreate all the snapshots. If stream records or SQS messages go missing, we can manually trigger snapshot creation starting from the last successful snapshot. The state stored in DynamoDB makes it easy to see where side effects haven't happened yet.
 
-It would be useful to have a tool that can reprocess event logs starting from a specified date. Read through log entries from the starting point, adding entries to the pending snapshots table and messages to the SQS queue where needed.
+It would be useful to have a tool that can reprocess event logs starting from a specified date. Read through log entries from the starting point, adding messages to the SQS queue where needed.
 
