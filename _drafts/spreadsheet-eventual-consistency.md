@@ -6,7 +6,7 @@ tags: spreadsheets aws
 {% capture el_url %}{% link _posts/2023-08-07-spreadsheet-event-log.md %}{% endcapture %}
 [Last time]({% link _posts/2023-08-11-ensuring-eventual-consistency.md %}) we looked at general approaches to ensuring eventual consistency in the cloud. Now it's time to apply what we've learnt to the case of my [Event Sourced Cloud Spreadsheet]({% link _topics/spreadsheets.md %}). Previously, I went into some detail on how to [implement an Event Log using DynamoDB]({{ el_url }}). Long story short, there are some operations that involve multiple writes and some that need to trigger side effects. 
 
-Now it's time to work out how to do it reliably. Here's the architecture we'll put together over the course of this post.
+Let's work out how to do it reliably. Here's the architecture we'll put together over the course of this post.
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/snapshot-creation-architecture.svg" alt="Snapshot Creation Architecture" %}
 
@@ -57,9 +57,9 @@ I'll need a background job system to process the snapshots. The simplest solutio
 
 The Lambda function that processes the DynamoDB streams records simply has to add a message to the SQS queue whenever it sees a snapshot log entry has been created. This function might fail before anything happens, or after sending the SQS message but before returning success. In each case the Lambda infrastructure will retry (if necessary, until the 24 hour retention time has elapsed). This means that duplicate SQS messages might be sent. 
 
-Sending a message to a [standard SQS queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues.html) is not idempotent. You will end up with duplicate messages in the queue. There's no point in trying to prevent this from happening as SQS has at least once delivery semantics. If SQS may itself occasionally deliver a message twice, you need to handle duplicated messages in the consumer. 
+Sending a message to a [standard SQS queue](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues.html) is not idempotent. If you do it twice, you will end up with duplicate messages in the queue. There's no point in trying to prevent this from happening as SQS has at least once delivery semantics. If SQS may itself occasionally deliver a message twice, you need to handle duplicated messages in the consumer. 
 
-SQS message delivery is fault tolerant and highly scalable. The Lambda integration automatically scales up the number of concurrent lambda function invocations. Messages are retained for up to 14 days. Messages remain in the queue until the consumer has acknowledged successful processing by explicitly deleting the message. After a configurable [visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html), undeleted messages become eligible for redelivery. We'll use this to our advantage to ensure that snapshot creation eventually completes. The message triggering snapshot creation stays in the queue until it's done while we manipulate the visibility timeout to defer and resume execution as needed.
+SQS message delivery is fault tolerant and highly scalable. The Lambda integration automatically scales up the number of concurrent lambda function invocations. Messages are retained for up to 14 days. Messages remain in the queue until the consumer has acknowledged successful processing by explicitly deleting the message. After a configurable [visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html), undeleted messages become eligible for redelivery. 
 
 ## Pending Snapshots Table
 
@@ -71,29 +71,36 @@ I'm going to use a "Pending Snapshots" DynamoDB table to help orchestrate the sn
 | Num (SK) | Number | Lexicographically ordered pair of numbers | Segment num and Entry num that identify snapshot entry |
 | Created | Number | [Unix Epoch Time](https://en.wikipedia.org/wiki/Unix_time) in seconds | Date time when created |
 | Modified | Number | [Unix Epoch Time](https://en.wikipedia.org/wiki/Unix_time) in seconds | Date time when last modified |
+| Retries | Number | Incrementing integer | Increments each time we have to defer message until later |
 | Active | Boolean | Flag | True if a Lambda invocation is actively working on this snapshot |
-| Increment | Number | Incrementing integer | Increments each time we update the item |
+| Increment | Number | Incrementing integer | Increments each time we make progress on the snapshot |
 | State | String | JSON | Encoded intermediate checkpoint state |
 
 Each pending snapshot is uniquely identified by the combination of log id, segment num and entry num. We use a sort key that combines segment and entry num so that we can retrieve pending snapshots for a log in the order in which they need to be processed.
 
 ## Snapshot Creation
 
-The SQS job queue is processed by a dedicated snapshot creation Lambda function. The function is invoked with the log id, segment number and entry id of the snapshot entry the snapshot is being created for. It first queries the pending snapshots table to find the first in-progress snapshot for the log (if any). If there's an earlier pending snapshot, we need to wait until it's complete. We update the visibility timeout for this message so that SQS will wait for a while before redelivering it and then exit.
+This is where it gets complex. I've tried to write this section a few times but it always gets bogged down in too much detail. So, rather than try to describe all the logic step by step, I'll cover the high level principles.
 
-If there's already a pending snapshot entry for this snapshot, then this must be a duplicate message or a retry of a previous attempt at snapshot creation. If the Active flag is clear it most be a retry, otherwise we'll need to use a timeout to decide which case it is. If the time since the item's Modified timestamp is greater than the timeout, we assume the previous invocation has died and claim the pending snapshot for ourselves by using a conditional write to update the Increment and Modified attributes. We can then continue processing from the last checkpoint. If the conditional write fails, we've lost a race with with another invocation. This must be a duplicate message, so we delete it and exit. 
+The SQS job queue is processed by a dedicated snapshot creation Lambda function. The function is invoked with the log id, segment number and entry id of the snapshot entry the snapshot is being created for. We ensure there is always at least one message in the queue for each pending snapshot. We rely on SQS retries for resilience. The message will keep getting redelivered until the snapshot is complete. 
 
-If the existing pending snapshot hasn't timed out yet, we change the visibility timeout for the message to the time remaining before timeout and exit. How long should the timeout be? That will need some experimentation.
+Snapshot requests for each event log may be received out of order. We need to ensure that we still create snapshots in the right order. If we recognize that a message is out of order we'll defer execution of the corresponding snapshot. We can change the visibility timeout of the message to control when SQS tries to redeliver it.
 
-If there was no existing pending snapshot for this snapshot, we next query the segment table to find the last snapshot for this log. If this (or a later snapshot) is already complete, the message must be a late arriving duplicate so delete it and exit. 
+We create or update an item in the pending snapshots table whenever a corresponding message is received. If snapshot processing is being deferred, we increase the Retries count. This allows us to use [exponential backoff and jitter](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/) when determining the visibility timeout to use. 
 
-We can now formally start the process of snapshot creation by using a conditional write to create a new pending snapshot entry (conditional on entry not existing). Again, if the conditional write fails this must be a duplicate message, so we delete it and exit.
+The pending snapshots table gives us a quick way of checking for out of order messages. If there's a pending snapshot item for an earlier snapshot, the current message must be out of order. However, it doesn't cover all such cases. It's possible that we have started processing a snapshot before any work on the previous snapshot has started. The ultimate source of truth is always the event log itself. To create the snapshot we need to read all log entries from the last snapshot to the current snapshot log entry. If we find another snapshot entry in between, the current message must be out of order. If this happens, we add corresponding items to the pending snapshots table so that we can discover out of order messages more quickly when they're redelivered. 
 
-We can finally start the real work by reading all log entries since the last snapshot. There is one more early out condition. It's possible that we have started processing a snapshot before any work on the previous snapshot has started. If we find an earlier unprocessed snapshot in the log the simplest way to handle it is to clear the Active flag, change the visibility timeout for this message and exit. 
+Messages may be duplicated or redelivered. There may be multiple overlapping Lambda invocations for the same snapshot. We always use conditional writes when updating the pending snapshots table. If the conditional write fails, we've lost a race with another invocation. This must be a duplicate message, so we delete it and exit. The only other time we know for sure that we've received a duplicate message is if the snapshot has already been completed. 
+
+Once we're happy that we should proceed with this snapshot, we set the pending snapshot item's Active flag. If the item's Active flag is already set, there is either another active invocation or the previous active invocation has crashed. We use a timeout to decide which case it is. If the time since the item's Modified timestamp is greater than the timeout, we assume the previous invocation has died and claim the pending snapshot for ourselves by updating the Increment and Modified attributes.
+
+If the active snapshot hasn't timed out yet, we change the visibility timeout for the message to the time remaining before timeout and exit. How long should the timeout be? That will need some experimentation.
+
+Once snapshot creation has completed, we delete the pending snapshot item and the SQS message (in that order!). If for any reason we need to defer execution until later, we clear the Active flag and set the visibility timeout on the message.
 
 ## Checkpoints
 
-Finally, we can go ahead and follow the instructions in my [previous]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) [blog]({% link _posts/2023-06-05-spreadsheet-insert-delete.md %}) [posts]({% link _posts/2023-07-03-spreadsheet-merge-import.md %}) on snapshot creation. However, we need to be careful. Snapshots are arbitrarily large so we can't assume that creation can complete in one lambda execution (limited to 15 minutes at most). The process will need to write regular checkpoints to the State attribute in the pending snapshots table. A good cadence would be after writing out each snapshot chunk. The state should include enough information that another Lambda invocation can pick things up from there. 
+At last, we can go ahead and follow the instructions in my [previous]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) [blog]({% link _posts/2023-06-05-spreadsheet-insert-delete.md %}) [posts]({% link _posts/2023-07-03-spreadsheet-merge-import.md %}) on snapshot creation. However, we need to be careful. Snapshots are arbitrarily large so we can't assume that creation can complete in one lambda execution (limited to 15 minutes at most). The process will need to write regular checkpoints to the State attribute in the pending snapshots table. A good cadence would be after writing out each snapshot chunk. The state should include enough information that another Lambda invocation can pick things up from there. 
 
 Each chunk has a maximum size of a few MB and the snapshot creation process is designed to operate with a limited amount of memory. We should be able to make the time required between checkpoints relatively small and predictable. That in turn means we can use a lower timeout value. Instead of needing to allow the time required to create the complete snapshot before deciding that a previous invocation has died, we only need to allow the maximum time between checkpoints. 
 
@@ -105,15 +112,15 @@ When the snapshot creation is complete, all that remains is to write the snapsho
 
 ## Idempotence
 
-We've tried to recognize cases where side effects are repeatedly invoked and avoid them. However, there will always be edge cases that allow side effects to be run twice, sometimes even at the same time. That's where we have to rely on the natural idempotence of the operations.
+We've tried to recognize cases where side effects are repeatedly invoked and avoid them. However, there will always be edge cases that allow side effects to be run twice, sometimes even at the same time. For example, we might end up retrying an invocation that has timed out but is actually still running. That's where we have to rely on the natural idempotence of the operations.
 
 Setting a tag value on an object in S3 to disable auto-delete is trivially idempotent.
 
 Snapshot creation is another matter. It *is* naturally idempotent. Event log entries are immutable so you should get the same result every time you create a snapshot at the same log entry. However, making sure the implementation is *actually* idempotent needs attention to detail.
 
-Snapshot creation involves creation of lots of S3 objects. If we generate a new unique id for each object, for example by creating a random UUID, we could easily end up with orphaned objects in S3 after a repeat snapshot. Instead we need to use predictable ids based on the snapshot entry id. [Hash UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier#Versions_3_and_5_(namespace_name-based)) are useful if you want a consistent id format rather than an accumulation of different parts. [Writes to S3 are atomic](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel) so you never seen the results of a partial or failed write. In our case either the object doesn't exist or it exists with the correct content. 
+Snapshot creation involves creation of lots of S3 objects. If we generate a new unique id for each object, for example by creating a random UUID, we could easily end up with orphaned objects in S3 after a repeat snapshot. Instead we need to use predictable ids based on the snapshot entry id. [Hash UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier#Versions_3_and_5_(namespace_name-based)) are useful if you want a consistent id format rather than an accumulation of different parts. [Writes to S3 are atomic](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel) so you never see the results of a partial or failed write. In our case the object either doesn't exist or it exists with the correct content. 
 
-What happens if duplicate snapshot invocations overlap? That won't cause a problem for the objects in S3. However, we will need to be careful with the intermediate checkpoint state we're writing to DynamoDB. Updates to an individual item are atomic so we don't have to worry about corrupt state. However, concurrent invocations could result in checkpoints jumping forwards and backwards. It should all work out in the end but it feels wasteful and chaotic. We can use a conditional write to ensure that checkpoints only move forward. If we find ourselves trying to write a checkpoint which has already moved on, we know there's another invocation active and can take the usual action to bail out.
+What happens if duplicate snapshot invocations overlap? That won't cause a problem for the objects in S3. However, we will need to be careful with the intermediate checkpoint state we're writing to DynamoDB. Updates to an individual item are atomic so we don't have to worry about corrupt state. However, concurrent invocations could result in checkpoints jumping forwards and backwards. It should all work out in the end but it feels wasteful and chaotic. We can use a conditional write to ensure that checkpoints only move forward (Increment attribute always increases). If we find ourselves trying to write a checkpoint which has already moved on, we know there's another invocation active and can take the usual action to bail out.
 
 You may be wondering why I'm using standard SQS queues rather than [FIFO queues](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues.html). FIFO queues guarantee that order is maintained and have built in message deduplication. Can't we avoid all this complexity? The guaranteed order is no use to us because we can't guarantee that we added messages to the queue in the right order to begin with. FIFO queues are more expensive, much less scalable and the deduplication operates within a limited time window. It's more robust to make sure the consumer is idempotent. 
 
@@ -123,5 +130,10 @@ What happens if DynamoDB stream records or SQS messages expire before they're pr
 
 While this whole system should run like clockwork, it's always wise to have a plan B. Event sourcing helps us here too. The source of truth is the event log so in the worst case we can throw everything in S3 away and recreate all the snapshots. If stream records or SQS messages go missing, we can manually trigger snapshot creation starting from the last successful snapshot. The state stored in DynamoDB makes it easy to see where side effects haven't happened yet.
 
-It would be useful to have a tool that can reprocess event logs starting from a specified date. Read through log entries from the starting point, adding messages to the SQS queue where needed.
+It would be useful to have a tool that can reprocess event logs starting from a specified date. It should read through log entries from the starting point, adding messages to the SQS queue where needed.
 
+## Future Work
+
+Each time I think about my plan for snapshot creation orchestration, I come up with another brilliant idea. For example, why keep throwing out of order messages back into the queue? We're effectively polling until the previous snapshot is done. I'll know when the previous snapshot is done. Maybe I could set a really long visibility timeout to block redelivery, then set it back when the previous snapshot completes. Which means more state to manage in the pending snapshot item. Is the extra complexity worth it?
+
+I suspect I'll find plenty more things when I actually implement this and try it out.
