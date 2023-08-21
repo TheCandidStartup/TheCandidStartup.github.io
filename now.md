@@ -5,9 +5,9 @@ title: Now
 tagline: What I'm doing now
 permalink: /now.html
 ref: now
-date: 2023-08-14
+date: 2023-08-21
 ---
 
-[This week]({% link _posts/2023-08-11-ensuring-eventual-consistency.md %}) I'm digging into a favorite topic of mine. You've built something complex with application state stored in multiple places, perhaps across multiple microservices. How do you ensure that all that distributed state is at least eventually consistent?
+[Last week]({% link _posts/2023-08-11-ensuring-eventual-consistency.md %}) I talked about eventual consistency in general terms. This week I'm getting specific. How is my [Serverless, Event Sourced, Cloud Spreadsheet]({% link _topics/spreadsheets.md %}) going to [implement eventual consistency]({% link _posts/2023-08-21-spreadsheet-eventual-consistency.md %})?
 
 [Go to the Home Page]({{ '/' | absolute_url }})
