@@ -151,4 +151,4 @@ We end up with a three part recipe. Steps 1-6 are the business logic checks and 
 
 ## Coming Up
 
-Next time we'll take what we've learnt and apply it to ensuring that [snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) are actually created, as events are added to the [event log]({% link _posts/2023-08-07-spreadsheet-event-log.md %}) of our [Event Sourced Cloud Spreadsheet]({% link _topics/spreadsheets.md %}). 
+[Next time]({% link _posts/2023-08-21-spreadsheet-eventual-consistency.md %}) we'll take what we've learnt and apply it to ensuring that [snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) are actually created, as events are added to the [event log]({% link _posts/2023-08-07-spreadsheet-event-log.md %}) of our [Event Sourced Cloud Spreadsheet]({% link _topics/spreadsheets.md %}). 
