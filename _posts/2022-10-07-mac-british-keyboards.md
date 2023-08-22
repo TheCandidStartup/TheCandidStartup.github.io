@@ -57,7 +57,7 @@ It is possible to [apply the mapping based on a keyboard connected event being r
 
 # Round 2 with Karabiner-Elements
 
-I did what I should have done in the first place. Put some effort into understanding how Karabiner-Elements works and then make a more informed decision. After all, it's [open source](https://github.com/pqrs-org/Karabiner-Elements) so I should be able to find out whatever I need. There's high level [development documentation](https://github.com/pqrs-org/Karabiner-Elements/blob/main/docs/DEVELOPMENT.md) that provides a great overview of how everything fits together together with an explanation of the choices they made.
+I did what I should have done in the first place. Put some effort into understanding how Karabiner-Elements works and then make a more informed decision. After all, it's [open source](https://github.com/pqrs-org/Karabiner-Elements) so I should be able to find out whatever I need. There's high level [development documentation](https://github.com/pqrs-org/Karabiner-Elements/blob/main/docs/DEVELOPMENT.md) that provides a great overview of how everything fits together with an explanation of the choices they made.
 
 {% include candid-image.html src="/assets/images/karabiner-elements-processes.svg" alt="Karabiner-Elements architecture" %}
 
