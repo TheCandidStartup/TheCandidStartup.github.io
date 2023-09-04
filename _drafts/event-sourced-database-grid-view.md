@@ -80,7 +80,7 @@ What would happen if we increased the limit to 12000 issues? Our typical project
 
 Is there a technical limit on how large a project can be if users are prepared to wait on first use? After all, people are prepared to wait for hours to install gigabytes of content for a game. 
 
-All browsers have a limit on the amount of client-side storage space that an app can use, shared by all client-side storage APIs. The [limit varies between browsers](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria) but all support at least 1GB of data. Apps can request more space which may require confirmation from the end user.
+All browsers have a limit on the amount of client-side storage space that an app can use, shared by all client-side storage APIs. The [limit varies between browsers](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria) but all support at least 1GB of data. Apps can request more space, which may require confirmation from the end user.
 
 | Browser | Default | On Request |
 |---------|---------|------------|
@@ -90,7 +90,7 @@ All browsers have a limit on the amount of client-side storage space that an app
 
 Most browsers base the limit on the size of the disk drive that contains the user's profile data. In the figures above I've assumed that the drive will be at least 100GB.
 
-The worst case project for 1200 issues is 60MB of data. We can manage 20 times that across all browsers, or 200 times if we can ignore safari.
+The worst case project for 1200 issues is 60MB of data. We can manage 20 times that across all browsers, or 200 times if we can ignore Safari.
 
 ## Compression
 
@@ -122,11 +122,11 @@ The trick, like so often in computer science, is to [add another level of indire
 
 {% include candid-image.html src="/assets/images/event-source-grid-view/snapshot.svg" alt="Snapshot as per field arrays of indexes into a sorted string table" %}
 
-We keep the array of integers in memory and only load the strings they reference when needed. Aren't they all needed when sorting? They're not needed at all. The strings are stored in sorted order, which means the indexes sort in the same order as the strings. We only need to load the strings for display using virtual scrolling. 
+We keep the arrays of integers in memory and only load the strings they reference when needed. Aren't they all needed when sorting? They're not needed at all. The strings are stored in sorted order, which means the indexes sort in the same order as the strings. We only need to load the strings for display using virtual scrolling. 
 
 Storing the strings separately and loading them on demand can also reduce the time needed when first opening a project. The worst case scenario is now downloading 60MB of data, compressed 10X. We're back under 10 seconds. The string table can be [divided into chunks]({{ snap_url | append: "#chunks" }}) which are downloaded on demand and in the background. 
 
-Which is all great, if all we were doing is loading a snapshot. What about the events that occur after the snapshot was created? What about strings created or changed by local edits? 
+Which is all great, if all we were doing is loading a snapshot. What about the events that occur after the snapshot was created? What about strings created or changed by local edits? We can easily modify the arrays in memory but it's not practical to update the string table.
 
 Whenever we have a new string, we see if it already exists in the string table. We can do the lookup efficiently using binary chop. If it already exists, we can represent the string using the string table index we found.
 
@@ -157,4 +157,4 @@ We started with what seemed like an insurmountable problem. Taking GitHub projec
 
 We've ended up with an architecture which should be able to handle close to a million issues. Getting there took a total rethink of how the front end and back end work. A real focus on how the data is accessed and what that means for how it is stored, transferred and loaded into memory. A true full-stack approach. 
 
-Will it actually work? While I haven't implemented this myself, I have been closely involved with systems that use similar principles. The [Autodesk Platform Viewer](https://aps.autodesk.com/en/docs/viewer/v7/developers_guide/overview/) effectively creates snapshots from 3D CAD models containing millions of objects, which can then be loaded into a web app. It always struck me as absurd that I could interact fluidly with a 3D model containing millions of objects but struggle when accessing a grid view containing a few thousand. 
+Will it actually work? While I haven't implemented this myself, I have been closely involved with systems that use similar principles. The [Autodesk Platform Viewer](https://aps.autodesk.com/en/docs/viewer/v7/developers_guide/overview/) effectively creates snapshots from 3D CAD models containing millions of triangles, which can then be loaded into a web app. It always struck me as absurd that I could interact fluidly with a 3D model containing a million objects but struggle when accessing a grid view containing a few thousand. 
