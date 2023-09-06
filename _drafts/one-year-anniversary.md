@@ -9,7 +9,7 @@ My first "proper" post to this blog was on [September 5th 2022]({% link _posts/2
 
 I initially had [three ideas for projects]({% link _posts/2022-10-24-what-projects.md %}) I might like to work on. The first was for a serverless, super-scalable [cloud spreadsheet]({% link _topics/spreadsheets.md %}). That would be interesting and challenging in itself. However, the real reason for doing it was to extend the functionality beyond that of a spreadsheet to a [general dataflow processing system]({% link _posts/2023-01-09-spreadsheets-future-data-systems.md %}). 
 
-The second idea was to take what I'd learnt building the Navisworks graphics engine and [reimagine]({% link _topics/computer-graphics.md %}) it using the latest in computer graphics hardware and APIs. 
+The second idea was to take what I'd learnt building the [Navisworks]({% link _topics/navisworks.md %}) graphics engine and [reimagine]({% link _topics/computer-graphics.md %}) it using the latest in computer graphics hardware and APIs. 
 
 The third idea was to go back to my original research on indexing and querying multi-dimensional data. In large part, this was driven by my frustration developing database driven apps that needed to sort and filter data using multiple fields. This seemed to be a [common problem]({% link _posts/2023-06-12-database-grid-view.md %}) (judging by the number of times during my career that we ended up building another version of it) but seemingly [without a satisfactory solution]({% link _topics/databases.md %}) using existing databases. Maybe I could build a Postgres extension to solve the problem?
 
@@ -19,9 +19,9 @@ There were three reasons for having a blog. First, I could use it to document my
 
 Much to my surprise, the blog has dominated my time. I've always been an advocate for working out as much as you can on paper before writing any code. Scribbled notes and diagrams are quick to generate and much easier to change than code. As I started on my projects, I turned my previous "working out on paper" into blog posts. And just kept going. It seems that little bit of extra rigor involved in writing up a blog post is enough of a foundation to keep building. As I finished one post, it would spark off ideas for three more. 
 
-I absolutely believed I'd spend at most three months planning and working things out before starting to write code. As it's turned out, I never got to the point of needing to write code. 
+I absolutely believed I'd spend at most three months planning and working things out before starting to write code. As it's turned out, I haven't yet felt the need to write code. 
 
-The spreadsheet project has got to the point where I think I've figured out the mechanics of how to store and retrieve large spreadsheets of data. I could start writing code for that. On the other hand, I haven't started writing up my ideas for how evaluation of formulas will work...
+The spreadsheet project has got to the point where I think I've figured out the mechanics of how to store and retrieve large spreadsheets of data. I could start writing code for that. On the other hand, I haven't started writing up my ideas for how evaluation of formulas will work ...
 
 I've decided to use Unreal Engine as the starting point for the graphics project. I compiled it from source code and was on the verge of writing some hello world type code before being sidetracked by the other two projects.
 
@@ -139,7 +139,7 @@ I have previous analytic reviews after [two months]({% link _posts/2022-11-14-bl
 
 ## Users
 
-I found the best way to understand changes in the number of visits to the blog, is to look at the metrics quarter by quarter. 
+I found the best way to understand changes in the number of visits to the blog is to look at the metrics quarter by quarter. 
 
 ### Q1 (September 6th 2022 - December 5th 2022)
 
@@ -167,7 +167,7 @@ A little bit of growth over the previous quarter, driven by a tripling of traffi
 
 Oh dear, that doesn't look good. Google is still growing but LinkedIn and direct traffic has fallen off a cliff. 
 
-Is this the impact of the summer holiday season or a result of writing nothing but insanely detailed posts on cloud spreadsheet implementation and database internals?
+Is this the impact of the summer holiday season?  Or a result of writing nothing but insanely detailed posts on cloud spreadsheet implementation and database internals?
 
 ## Demographics (December 6th 2022 - September 3rd 2023)
 
@@ -191,10 +191,37 @@ As I've made it to 50 posts, I thought I'd round things out by looking at the bo
 
 {% include candid-image.html src="/assets/images/blog-analytics-september-2023/search.png" alt="Search Clicks and Impressions" %}
 
+After six months my total search performance was 4600 impressions resulting in 75 clicks. Another six months and I've increased both by an order of magnitude. There's a worrying dip over the last month, but there does seem to be a lot of natural variation as Google tweak their search algorithms. 
+
+Let's have a look at the most popular pages in terms of Google search impressions.
+
+| Page | Impressions | Position | Clicks | Top Queries |
+|-|-|-|-|
+| [Implementing Pagination and Tagging with Jekyll]({% link _posts/2023-02-20-jekyll-pagination-tagging.md %}) | 12433 | 45 | 118 | "pagination tags", "pagination tag", "jekyll pagination", "jekyll paginate", "paginate liquid", "jekyll tags" + 61 more |
+| [Modern SaaS Architecture]({% link _posts/2022-11-28-modern-saas-architecture.md %}) | 8707 | 58 | 28 | "saas architecture", "saas product architecture", "saas deployment architecture", "modern saas architecture", "saas architecture diagram", "saas applications architecture", "aws saas architecture", "saas platform architecture", "modern saas" + 67 more |
+| [Making sense of British keyboard layouts on the Mac]({% link _posts/2022-10-07-mac-british-keyboards.md %}) | 5320 | 22 | 47 | "uk keyboard layout", "british keyboard", "mac uk keyboard", "backslash on uk keyboard", "karabiner elements windows", "applause autodesk" + 252 more
+| [AWS re:invent 2022]({% link _posts/2022-12-12-aws-reinvent-2022.md %}) | 2965 | 29 | 27 | "reinvent 4k run", "aws event driven architecture", "aws cell based architecture", "aws replay 2022", "eventbridge latency", "aws fault injection simulator az failure", "shuffle sharding" + 79 more |
+| [A Trip Down The Graphics Pipeline]({% link _posts/2023-03-13-trip-graphics-pipeline.md %}) | 2362 | 23 | 29 | "a trip through the graphics pipeline", "graphics pipeline", "gpu pipeline", "gpu driven rendering", "graphics pipeline stages" + 59 more
+| [From Navisworks to Nanite]({% link _posts/2023-04-03-nanite-graphics-pipeline.md %}) | 1844 | 18 | 20 | "nanite siggraph", "nanite lod", "how does nanite work", "nanite virtualized geometry", "nanite occlusion culling", "nanite draw calls", "nanite limitations" + 39 more
+| [The Navisworks Graphics Pipeline]({% link _posts/2023-03-27-navisworks-graphics-pipeline.md %}) | 787 | 17 | 23 | "graphics pipeline", "navisworks culling", "nvidia Ogs", "navisworks rendering", "navisworks piping" + 5 more
+| [The Candid Startup]({{ '/' | absolute_url }}) | 681 | 10 | 125 | "candid startup", "thecandid", "the candid", "startup org", "candid openreach + 3 more
+
+It's always surprising to find where the gaps are in the internet's collective knowledge. Who knew there were so many people out there confused by the keyboard layout on British Macs? Or how many other bloggers use jekyll and can't figure out how to paginate their list of posts?
+
 ## LinkedIn
 
 {% include candid-image.html src="/assets/images/blog-analytics-september-2023/linkedin-impressions.png" alt="LinkedIn Impressions" %}
 
+LinkedIn only supports analytics for a few predefined periods. I can look at impressions for the last year or something less than 90 days. There's nothing much to see from the graph. Two big peaks from my retirement announcement and Seven Reasons post, then bumping along after that.
+
+Let's try looking at the individual posts that the LinkedIn algorithm liked best.
+
 {% include candid-image.html src="/assets/images/blog-analytics-september-2023/linkedin-top-posts.png" alt="LinkedIn Top 7 Posts" %}
 
+The top 7 (which is all that fits on a page) are all from the first three months. It's clear that reactions and comments drive LinkedIn to share the post more widely.
+
 {% include candid-image.html src="/assets/images/blog-analytics-september-2023/linkedin-next-posts.png" alt="LinkedIn Next 7 Posts" %}
+
+There's some more recent posts in the next 7. [From Navisworks to Nanite]({% link _posts/2023-04-03-nanite-graphics-pipeline.md %}) clearly resonated with a lot of people, is in the top 10 most visited posts and is also getting traffic from Google.
+
+It's weird that [MongoDB Database Grid View]({% link _posts/2023-07-24-mongodb-database-grid-view.md %}) did so well. It came deep in a series of posts on database internals that didn't get much traction. It's only my 43rd most popular post. I guess enough people have had bad experiences with MongoDB that they felt moved to react. 
