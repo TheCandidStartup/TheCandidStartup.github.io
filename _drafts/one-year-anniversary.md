@@ -33,7 +33,7 @@ I've thoroughly enjoyed the process of writing. Somehow I've found the time to c
 
 How has the blog worked for keeping in touch? 
 
-I hadn't appreciated how one sided it would feel. I have analytics that show how many people look at each post, which I'll share next. However, it's all anonymous and feels kind of unreal. The only thing that really shows how people are engaging with my content is reactions and comments. More importantly, it's the only thing that tells me who is reading it. There's a wonderful feeling of connection and recognition when I see a comment from someone I know.
+I hadn't appreciated how one sided it would feel. I have analytics that show how many people look at each post, which I'll share next. However, it's all anonymous and feels kind of unreal. The only thing that really shows how people are engaging with my content is reactions and comments. More importantly, it's the only thing that tells me *who* is reading it. There's a wonderful feeling of connection and recognition when I see a comment from someone I know.
 
 So please, hit that like button, leave a comment. It really does make a difference to me.
 
