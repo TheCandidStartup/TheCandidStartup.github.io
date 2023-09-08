@@ -67,3 +67,27 @@ In general, a *serialization failure* occurs when a transaction would behave dif
 3. Extend the MVCC system by keeping track of which versions of data have been read (or potentially read) by one transaction and later written to by another. Then fail any transaction with conflicts at commit time. 
 
 ## End to End Consistency
+
+* Let's say you're willing to pay the price in exchange for guaranteed consistency (and many aren't). Does it actually work? 
+* Serializable isolation relies on doing everything inside a transaction. Whatever reads ultimately have an influence on later writes need to be inside a transaction.
+* Originally database interaction model was session based. Each client has a persistent session. Transactions can be long running, including time for user input.
+  * Start transaction, read data from the database, let user decide what to do, make edits, end transaction. Then repeat.
+* Nobody works that way anymore
+* Long running transactions are a performance killer
+* REST apis and the architectures that support them are designed to be stateless. Each API request from a client can be routed to a different app server.
+* Clients are becoming thicker with state maintained for the life of the user's session, or even over multiple sessions with progressive apps.
+* Standard interactive loop is to run a load of read only queries to populate the client UI, maybe you're using a grid view. User navigates through the data and then decides to make some changes. Client calls a REST API which in turn calls the database, with the scope of the transaction (if any) being just that API call's interaction.
+* Local state gets updated in some ad hoc way. Even if you're incredibly aggressive about doing it, you can still end up making changes based on old state.
+
+* DIAGRAM with client and transaction state included.
+
+* How can you fix this?
+* Could try structuring API so that you don't rely on client's view of state. If incrementing a value is a common operation, then have a dedicated increment API instead of set value. Can then keep the read-modify-write inside the transaction.
+  * Downside is API isn't naturally idempotent anymore. Need an out of band mechanism like an idempotency id (WHAT'S IT CALLED?) which is one more thing for the client to get wrong.
+* Most general approach is to make updates conditional. If you're changing a value, pass in the old value. If the current value is different, the API call will fail. For complex operations, it can be hard to identify all the state that you depend on. Needs careful API design. Or take easy way out, push all the responsibility to the client and let it pass in an arbitrary list of conditions to check. 
+
+* What do people actually do?
+* Don't bother with any of this. If you use transactions at all, its with something short of full serializability that doesn't have scary performance warnings.
+* Assume it will all be fine.
+* Spend the time you saved reacting to intermittent, hard to reproduce bugs. Play whack-a-mole mitigating specific problems as you identify them. 
+* Patch up your app so that it can cope with inconsistent data without failing completely
