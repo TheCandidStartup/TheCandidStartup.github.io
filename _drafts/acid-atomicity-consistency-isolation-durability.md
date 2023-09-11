@@ -5,9 +5,11 @@ tags: cloud-architecture databases
 
 There are lots of things you need to worry about when building a cloud application. Often the hardest problems only appear as you scale up, when multiple clients interact with the same data at the same time. 
 
-What does your application need to do to ensure consistency of it's stored state? How do you resolve the inevitable conflicts when two users try to change the same data? 
+What does your application need to do to ensure consistency of its stored state? How do you resolve the inevitable conflicts when two users try to change the same data? 
 
-From the 1970s to the 2000s, before the rise of NoSQL databases, the answer was clear cut. You built your app using a relational database whose mystical [ACID properties](https://en.wikipedia.org/wiki/ACID) would make everything OK. However, when you use a relational database, you're confronted with a bewildering array of [configuration options](https://www.postgresql.org/docs/current/mvcc.html). Where's the simple ACID tick box?
+From the 1970s to the 2000s, before the rise of NoSQL databases, the answer was clear cut. You built your app using a relational database whose mystical [ACID properties](https://en.wikipedia.org/wiki/ACID) would make everything OK. However, when you use a relational database, you're confronted with a bewildering array of [configuration options](https://www.postgresql.org/docs/current/mvcc.html). 
+
+Where's the simple ACID tick box? And what does ACID mean anyway?
 
 ## ACID
 
@@ -15,7 +17,7 @@ ACID stands for Atomicity, Consistency, Isolation and Durability. It's one of th
 
 It's an odd collection of terms because consistency is an application level property, while the other three are *some* of the properties of a database that help to achieve application level consistency. 
 
-Most definitions of ACID treat consistency as another property of the database. It's true that a database ensures that its own internal state stays consistent, and it's true that databases allow the application to define additional constraints and invariants that the database will enforce. However, it's rare that a database can ensure application consistency all by its self. 
+Most definitions of ACID treat consistency as another property of the database. It's true that a database ensures that its own internal state stays consistent, and it's true that databases allow the application to define additional constraints and invariants that the database will enforce. However, it's rare that a database can ensure application consistency all by itself. 
 
 ## Consistency
 
@@ -33,7 +35,7 @@ Second, what happens if multiple clients are making changes at the same time? Th
 
 {% include candid-image.html src="/assets/images/acid/scattered-writes.svg" alt="Interleaved Writes, Other reads see intermediate state" %}
 
-Atomic writes solve both problems. The database lets the application define the set of changes as a single transaction. The database ensures that all the changes are made together, or don't happen at all. Another client reading the database will either see all the changes or none of them. If two in-progress transactions conflict, one of them will succeed with all changes visible, while the other will fail with no changes made. 
+Atomic writes solve both problems. The database lets the application define the set of changes as a combined transaction. The database ensures that all the changes are made together, or don't happen at all. Another client reading the database will either see all the changes or none of them. If two in-progress transactions conflict, one of them will succeed with all changes visible, while the other will fail with no changes made. 
 
 {% include candid-image.html src="/assets/images/acid/atomic-writes.svg" alt="Atomic Writes, Other reads see final state after commit" %}
 
@@ -53,7 +55,7 @@ All relational databases have some form of support for snapshot isolation. For m
 
 ## Consistent Writes
 
-Sadly, consistent reads aren't enough to ensure overall consistency. Consider two transactions that are incrementing a counter value. Each reads the current value, increments it and then writes it back. It doesn't matter what order the transactions are in, you get the same result of 2. Unless the transactions overlap, in which case the second transaction won't see the change that the first transaction is in the middle of making, and will overwrite it.
+Sadly, consistent reads aren't enough to ensure overall consistency. Consider two transactions that are incrementing a counter value. Each reads the current value, increments it and then writes it back. It doesn't matter what order the transactions are in, the end result is that the counter is increased by two. Unless the transactions overlap, in which case the second transaction won't see the change that the first transaction is in the middle of making, and will overwrite it.
 
 This *lost update* problem isn't too hard for a database to handle, as both transactions are reading from and writing to a common location. However, you can get a similar *write skew* problem if two transactions read from the same location but write to different locations. Even worse are *phantom reads* where one transaction queries the database and finds nothing, while the other transaction is writing data that the query would have found. 
 
@@ -84,7 +86,9 @@ In general, a *serialization failure* occurs when a transaction would behave dif
 * How can you fix this?
 * Could try structuring API so that you don't rely on client's view of state. If incrementing a value is a common operation, then have a dedicated increment API instead of set value. Can then keep the read-modify-write inside the transaction.
   * Downside is API isn't naturally idempotent anymore. Need an out of band mechanism like an idempotency id (WHAT'S IT CALLED?) which is one more thing for the client to get wrong.
-* Most general approach is to make updates conditional. If you're changing a value, pass in the old value. If the current value is different, the API call will fail. For complex operations, it can be hard to identify all the state that you depend on. Needs careful API design. Or take easy way out, push all the responsibility to the client and let it pass in an arbitrary list of conditions to check. 
+* Security 101 says never trust the client. The same is true when it comes to maintaining consistent state. Design the API so that each individual API call goes from one consistent state to another, depending only on server side information, which you make sure to query from the database in the same transaction.
+* You still have the problem that the user may be making choices based on out of date information. The application goes from one consistent state to another, but its the wrong consistent state. 
+* Most general approach is to make updates conditional. If you're changing a value, pass in the old value. If the current value is different, the API call will fail. For complex operations, it can be hard to identify all the state that the user depends on. Needs careful API design. Or take easy way out, push all the responsibility to the client and let it pass in an arbitrary list of conditions to check. 
 
 * What do people actually do?
 * Don't bother with any of this. If you use transactions at all, its with something short of full serializability that doesn't have scary performance warnings.
