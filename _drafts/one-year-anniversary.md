@@ -218,7 +218,7 @@ Let's try looking at the individual posts that the LinkedIn algorithm liked best
 
 {% include candid-image.html src="/assets/images/blog-analytics-september-2023/linkedin-top-posts.png" alt="LinkedIn Top 7 Posts" %}
 
-The top 7 (which is all that fits on a page) are all from the first three months. It's clear that reactions and comments drive LinkedIn to share the post more widely.
+The top 7 (which is all that fits on a page) are all from the first three months. It's clear that reactions and comments drive LinkedIn to share posts more widely.
 
 {% include candid-image.html src="/assets/images/blog-analytics-september-2023/linkedin-next-posts.png" alt="LinkedIn Next 7 Posts" %}
 
