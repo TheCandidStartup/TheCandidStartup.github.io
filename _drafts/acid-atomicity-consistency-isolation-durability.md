@@ -57,7 +57,11 @@ All relational databases have some form of support for snapshot isolation. For m
 
 Sadly, consistent reads aren't enough to ensure overall consistency. Consider two transactions that are incrementing a counter value. Each reads the current value, increments it and then writes it back. It doesn't matter what order the transactions are in, the end result is that the counter is increased by two. Unless the transactions overlap, in which case the second transaction won't see the change that the first transaction is in the middle of making, and will overwrite it.
 
-This *lost update* problem isn't too hard for a database to handle, as both transactions are reading from and writing to a common location. However, you can get a similar *write skew* problem if two transactions read from the same location but write to different locations. Even worse are *phantom reads* where one transaction queries the database and finds nothing, while the other transaction is writing data that the query would have found. 
+This *lost update* problem isn't too hard for a database to handle, as both transactions are reading from and writing to a common location. The database can provide an atomic increment operation or use locks to manage access to the common location. 
+
+You can get a similar *write skew* problem without writes to a common location. Let's say you have two different locations whose values need to satisfy an invariant. For example, they're pots of money in a bank account whose sum needs to be greater than zero. Two overlapping transactions each decrement money from a different pot. Both transactions see the same starting valid state and don't see the change the other transaction made. To identify this conflict, databases need to start locking or tracking reads.
+
+Even worse are *phantom reads* where one transaction queries the database, finds nothing, and writes back on that basis. Meanwhile another transaction is writing data that the query would have found. Now the database has to lock or track use of indexes. 
 
 In general, a *serialization failure* occurs when a transaction would behave differently if the entire thing executed, all at once, at the point where it commits. It's very difficult to ensure that the changes a transaction makes, based on an earlier snapshot of state, are always valid regardless of what other changes have committed since then. 
 
@@ -70,28 +74,32 @@ In general, a *serialization failure* occurs when a transaction would behave dif
 
 ## End to End Consistency
 
-* Let's say you're willing to pay the price in exchange for guaranteed consistency (and many aren't). Does it actually work? 
-* Serializable isolation relies on doing everything inside a transaction. Whatever reads ultimately have an influence on later writes need to be inside a transaction.
-* Originally database interaction model was session based. Each client has a persistent session. Transactions can be long running, including time for user input.
-  * Start transaction, read data from the database, let user decide what to do, make edits, end transaction. Then repeat.
-* Nobody works that way anymore
-* Long running transactions are a performance killer
-* REST apis and the architectures that support them are designed to be stateless. Each API request from a client can be routed to a different app server.
-* Clients are becoming thicker with state maintained for the life of the user's session, or even over multiple sessions with progressive apps.
-* Standard interactive loop is to run a load of read only queries to populate the client UI, maybe you're using a grid view. User navigates through the data and then decides to make some changes. Client calls a REST API which in turn calls the database, with the scope of the transaction (if any) being just that API call's interaction.
-* Local state gets updated in some ad hoc way. Even if you're incredibly aggressive about doing it, you can still end up making changes based on old state.
+Let's say you're willing to pay the price for serializable isolation, in exchange for guaranteed consistency. Does it actually work?
 
-* DIAGRAM with client and transaction state included.
+Serializable isolation depends on everything significant happening inside a transaction. That includes any reads that ultimately have an influence on later writes. 
 
-* How can you fix this?
-* Could try structuring API so that you don't rely on client's view of state. If incrementing a value is a common operation, then have a dedicated increment API instead of set value. Can then keep the read-modify-write inside the transaction.
-  * Downside is API isn't naturally idempotent anymore. Need an out of band mechanism like an idempotency id (WHAT'S IT CALLED?) which is one more thing for the client to get wrong.
-* Security 101 says never trust the client. The same is true when it comes to maintaining consistent state. Design the API so that each individual API call goes from one consistent state to another, depending only on server side information, which you make sure to query from the database in the same transaction.
-* You still have the problem that the user may be making choices based on out of date information. The application goes from one consistent state to another, but its the wrong consistent state. 
-* Most general approach is to make updates conditional. If you're changing a value, pass in the old value. If the current value is different, the API call will fail. For complex operations, it can be hard to identify all the state that the user depends on. Needs careful API design. Or take easy way out, push all the responsibility to the client and let it pass in an arbitrary list of conditions to check. 
+Originally, the database interaction model was session based. Each client has a persistent session. Transactions can be long running, including time for user input. The typical interaction loop was start transaction, read data from the database, user decides what to, user makes changes, end transaction. Then repeat.
 
-* What do people actually do?
-* Don't bother with any of this. If you use transactions at all, its with something short of full serializability that doesn't have scary performance warnings.
-* Assume it will all be fine.
-* Spend the time you saved reacting to intermittent, hard to reproduce bugs. Play whack-a-mole mitigating specific problems as you identify them. 
-* Patch up your app so that it can cope with inconsistent data without failing completely
+Nobody works that way anymore, especially in the cloud. The typical application architecture is a client connecting to a load balancer which distributes the request to a randomly selected app server which in turn connects to the database. The whole thing is designed to be stateless for increased performance and resilience. Clients will connect to multiple app servers, app servers will handle requests from multiple clients. There's no per client persistent connection anywhere. 
+
+Long running transactions are a performance killer. You certainly don't want a transaction left open while a user decides what to do. You don't even want a transaction left open while there's a round trip from client to app server. Transactions these days are handled by the app server with a transaction scope limited to processing a single API call. 
+
+Clients are becoming thicker with local state maintained for the life of the user's session, or even over multiple sessions with [progressive apps]({% link _posts/2023-09-04-event-sourced-database-grid-view.md %}). The standard interaction model is to first run a load of read only queries to populate the client UI. For example, it may use paged queries over a collection to fill out a [Grid view]({% link _posts/2023-06-12-database-grid-view.md %}). Other clients may modify the database between successive queries, so the client may start out with inconsistent or out of date data. 
+
+The user then navigates through the data and then decides to make some changes. The client calls a REST API which in turn updates the database. Client state gets updated in some ad hoc way as the database is further modified by other clients. Even if you're incredibly aggressive about doing it, you can still end up with the client calling the API to make changes based on old local state.
+
+{% include candid-image.html src="/assets/images/acid/client-state.svg" alt="Clients can make changes based on old local state" %}
+
+How do you deal with this? In the end it comes down to thoughtful API design. Let's take a simple example. There's a common user task which involves incrementing a value. Instead of having a simple CRUD API that let's you read and write values, provide a specialized API that performs the complete user increment task. Now the read-modify-write occurs naturally within a single transaction. The downside is that such APIs are not naturally idempotent, so you will need to include an extra mechanism like an [idempotency key](https://stripe.com/docs/api/idempotent_requests) to ensure that the client can safely retry failed requests.
+
+More generally, you need to structure the API so that you don't rely on the client's view of the current state. Security 101 says never trust the client. The same is true when it comes to maintaining consistent state. Design the API so that each individual API call goes from one consistent state to another, depending only on server side information, which you make sure to query from the database in the same transaction.
+
+You still have the problem that the user may be making choices based on out of date information. The application goes from one consistent state to another, but it's the wrong consistent state. The answer is to make updates conditional. The API call includes the user's context. If the current state is different, the API call should fail. For example, a simple Grid View based editing UI can make its updates conditional on the item being edited not having changed since it was retrieved. Again, careful API design is needed. 
+
+## Reality Bites
+
+What do people actually do? In my experience, it's rare for teams to bother with any of this. If they use transactions at all, it's with something short of full serializability that doesn't have scary performance warnings. It's easy to assume that it will all be fine and that those edge cases don't apply in our case. 
+
+Sometimes it is fine. Particularly in the early days before your app takes off and you need to scale up. When that happens, whatever time you saved is traded in for reacting to intermittent, hard to reproduce bugs. Then you can play whack-a-mole mitigating specific problems as you identify them. If you're really unlucky, your database ends up in such a state that you have to give up on any idea of maintaining consistent state. Your app becomes a mess of patches and workarounds that allow some form of functionality to continue with bad data.
+
+Unfortunately there is no silver bullet that lets you avoid having to think. You need to think about what consistent state you actually need, how that should be exposed through your API and what database features to use in maintaining consistency. 
