@@ -31,7 +31,7 @@ At some point your application will reach a level of complexity where you need t
 
 First, what happens if something goes wrong in the middle of a set of changes? Maybe your app server crashes. Now you stored state is, by definition, inconsistent. 
 
-Second, what happens if multiple clients are making changes at the same time? The two clients interfere with each other. If one client reads while another is in the middle of making changes, it will see an inconsistent state. Writes from both clients can end up interleaved. It's very difficult to ensure that every possible ordering of updates will result in a consistent state.
+Second, what happens if multiple clients are making changes at the same time? The two clients interfere with each other. If one client reads while another is in the middle of making changes, it will see an inconsistent state, a *dirty read*. Writes from both clients can end up interleaved. One client may overwrite the change that the other is part may through making, a *dirty write*. It's very difficult to ensure that every possible ordering of updates will result in a consistent state.
 
 {% include candid-image.html src="/assets/images/acid/scattered-writes.svg" alt="Interleaved Writes, Other reads see intermediate state" %}
 
@@ -86,7 +86,7 @@ Long running transactions are a performance killer. You certainly don't want a t
 
 Clients are becoming thicker with local state maintained for the life of the user's session, or even over multiple sessions with [progressive apps]({% link _posts/2023-09-04-event-sourced-database-grid-view.md %}). The standard interaction model is to first run a load of read only queries to populate the client UI. For example, it may use paged queries over a collection to fill out a [Grid view]({% link _posts/2023-06-12-database-grid-view.md %}). Other clients may modify the database between successive queries, so the client may start out with inconsistent or out of date data. 
 
-The user then navigates through the data and then decides to make some changes. The client calls a REST API which in turn updates the database. Client state gets updated in some ad hoc way as the database is further modified by other clients. Even if you're incredibly aggressive about doing it, you can still end up with the client calling the API to make changes based on old local state.
+The user then navigates through the data and then decides to make some changes. The client calls a REST API which in turn updates the database. Client state gets updated in some ad hoc way as the database is further modified by other clients. Even if you're incredibly aggressive about updating the client, you can still end up with the client calling the API to make changes based on old local state.
 
 {% include candid-image.html src="/assets/images/acid/client-state.svg" alt="Clients can make changes based on old local state" %}
 
@@ -100,6 +100,8 @@ You still have the problem that the user may be making choices based on out of d
 
 What do people actually do? In my experience, it's rare for teams to bother with any of this. If they use transactions at all, it's with something short of full serializability that doesn't have scary performance warnings. It's easy to assume that it will all be fine and that those edge cases don't apply in our case. 
 
-Sometimes it is fine. Particularly in the early days before your app takes off and you need to scale up. When that happens, whatever time you saved is traded in for reacting to intermittent, hard to reproduce bugs. Then you can play whack-a-mole mitigating specific problems as you identify them. If you're really unlucky, your database ends up in such a state that you have to give up on any idea of maintaining consistent state. Your app becomes a mess of patches and workarounds that allow some form of functionality to continue with bad data.
+Sometimes it is fine. Particularly in the early days before your app takes off and you need to scale up. When that happens, whatever time you saved is traded in for reacting to intermittent, hard to reproduce bugs. Then you can play whack-a-mole mitigating specific problems as you identify them. 
+
+If you're really unlucky, your database ends up in such a mess that you have to give up on any idea of maintaining consistent state. Your app becomes a tangle of patches and workarounds that allow some form of functionality to continue with bad data.
 
 Unfortunately there is no silver bullet that lets you avoid having to think. You need to think about what consistent state you actually need, how that should be exposed through your API and what database features to use in maintaining consistency. 
