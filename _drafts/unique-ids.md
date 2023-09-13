@@ -1,11 +1,32 @@
 ---
 title: Unique Ids
-tags: cloud-architecture
+tags: cloud-architecture autodesk
 ---
 
-* Unique in what context?
+They say that there are only [two hard problems](https://martinfowler.com/bliki/TwoHardThings.html) in Computer Science: cache invalidation and naming things. Cache invalidation is far too difficult, so let's have a go at naming things. Specifically, how do you ensure that the name you use to identify some resource is unique?
+
+The first question you should ask yourself is, unique in what context? Am I trying to make sure that both of my pet cats have different names, or that the local veterinary practice can find the correct records when I take one in, or that the RFID chips implanted in most pets have unique numbers?
+
+The wider scoped the context, the more effort it takes. It didn't take our family long to come up with names for the cats, or to ensure that they were different. There was no formal process involved.
+
+Coming up with a scheme for [implantable microchip ids](https://en.wikipedia.org/wiki/Microchip_implant_(animal)) is clearly more complex. Most of the world has settled on chips that use the [ISO 11784 and ISO 11785](https://en.wikipedia.org/wiki/ISO_11784_and_ISO_11785) standards. This specifies a 15 digit id where the first 3 digits identify a country or manufacturer that is responsible for generating the other 12 digits. The US uses the ISO system together with three other proprietary standards. 
+
+Which nicely illustrates the three main characteristics of any system of ids
+1. Who decides how the system works? How many parties are involved? What happens if they can't agree?
+2. What's the format for the ids? Crucially, how many different possible ids does the system allow?
+3. Who generates the ids? How do they ensure that new ids are unique? What happens if you need multiple generators?
 
 ## Sequential Id
+
+The simplest form of unique id is sequential, usually in the form of an incrementing integer. A single generator (for example, a relational database) keeps track of the most recent id generated and increments it when the next id is required. The only choice to make is how large the integer should be. In most cases you're choosing between 32 bit and 64 bit. 
+
+In most cases you should go for 64 bit. The number of ids available is effectively unlimited. You could generate a billion ids a second and it would be 500 years before you ran out. 
+
+It can be tempting to use 32 bit ids. Four billion ids seems like it should be enough for most purposes. However, it is surprisingly easy to run out as systems scale up. If the ids are used to name objects that are created and later deleted, you may run out of ids even if the current population of objects is small. Reusing ids adds complexity and opens up the door to all sorts of interesting bugs. For example, the Postgres relational database uses 32 bit ids for transactions which needs [careful management](https://www.postgresql.org/docs/15/routine-vacuuming.html#VACUUM-FOR-MULTIXACT-WRAPAROUND) to avoid problems when the id counter wraps around.
+
+Only use a 32 bit or smaller id when you really can't afford the space of a larger id AND there's a hard limit on the number of active objects AND you have a way of coping when ids wrap around.
+
+## Meaningful Id
 
 ## Universal Unique Id (UUID)
 
