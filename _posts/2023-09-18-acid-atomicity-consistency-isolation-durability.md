@@ -31,7 +31,7 @@ At some point your application will reach a level of complexity where you need t
 
 First, what happens if something goes wrong in the middle of a set of changes? Maybe your app server crashes. Now you stored state is, by definition, inconsistent. 
 
-Second, what happens if multiple clients are making changes at the same time? The two clients interfere with each other. If one client reads while another is in the middle of making changes, it will see an inconsistent state, a *dirty read*. Writes from both clients can end up interleaved. One client may overwrite a change that the other is part may through making, a *dirty write*. It's very difficult to ensure that every possible ordering of updates will result in a consistent state.
+Second, what happens if multiple clients are making changes at the same time? The two clients interfere with each other. If one client reads while another is in the middle of making changes, it will see an inconsistent state, a *dirty read*. Writes from both clients can end up interleaved. One client may overwrite a change that the other is part way through making, a *dirty write*. It's very difficult to ensure that every possible ordering of updates will result in a consistent state.
 
 {% include candid-image.html src="/assets/images/acid/scattered-writes.svg" alt="Interleaved Writes, Other reads see intermediate state" %}
 
