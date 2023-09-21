@@ -1,5 +1,5 @@
 ---
-title: Consistency and Conflict Resolution for Event Sourced Systems
+title: Consistency for Event Sourced Systems
 tags: cloud-architecture spreadsheets
 ---
 
@@ -14,7 +14,7 @@ Is it really feasible to roll your own event sourced system while figuring out h
 
 A quick reminder. An event sourced system is based on an event log. An event log is an ordered list of entries that define all changes made to the data you're storing. To load the data into a client, simply replay all the events locally. To speed things up, create snapshots of the overall state at regular intervals. Then you can load data into a client by loading from a snapshot and replaying events from that point on. 
 
-{% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/lsm-segments.svg" alt="Event Log with Snapshots" %}
+{% include candid-image.html src="/assets/images/event-source-consistency/client-load.svg" alt="Loading data into a client using a snapshot" %}
 
 {% capture acid_url %}{% link _posts/2023-09-18-acid-atomicity-consistency-isolation-durability.md %}{% endcapture %}
 An event log naturally provides [*Serializable Isolation*](https://en.wikipedia.org/wiki/Serializability). The entries in the event log are strictly ordered and that serialized order defines the state of the system. Serializable isolation is the highest level of support for consistency provided by a relational database. As we saw [previously]({{ acid_url }}), this comes at a [high cost]({{ acid_url | append: "#consistent-writes" }}) for a general relational database, with the consequence that teams often try to [settle for a lower level of consistency]({{ acid_url | append: "#reality-bites" }}). 
@@ -45,7 +45,9 @@ This is nowhere near as complex as a relational database transaction, but it's a
 
 ## Last Write Wins
 
-What happens if we throw multiple simultaneous clients at a system like this? The default behavior is *last write wins*. Clients submit their changes to the app servers. The source of truth is the order in which the app servers happen to write to the event log. If one client overwrites another client's changes, then so be it. 
+What happens if we throw multiple simultaneous clients at a system like this? The default behavior is *last write wins*. Clients submit their changes to the app servers. The source of truth is the order in which the app servers happen to write to the event log. If one client overwrites another client's changes, then so be it.
+
+{% include candid-image.html src="/assets/images/event-source-consistency/last-write-wins.svg" alt="Fix up local state after conflicting writes" %}
 
 The next time each client retrieves the most recent events from the server, it needs to fix up local state where it has diverged, and potentially inform the end user what happened. The system is always in a consistent state but the end user, without knowledge of changes from other clients, may have chosen the wrong consistent state.
 
@@ -53,30 +55,44 @@ The next time each client retrieves the most recent events from the server, it n
 
 What if we want to make sure that the user can always make decisions with full knowledge of the latest state of the system? The overall approach is the [same]({{ acid_url | append: "#end-to-end-consistency" }}) as with a traditional relational database backed web app. You make the update conditional on the current state being the same as the client expects. With a traditional app that can be tricky, needing carefully considered API design and special case code for each API. 
 
-With event sourcing a basic implementation is very simple. The client includes the id of the event its local state is synced to with each API call. The app server returns an error if the most recent event in the log is more recent. On error, the client syncs up to the most recent state, lets the end user resolved any conflict between the current state and the change they were trying to make, and tries again. 
+With event sourcing a basic implementation is very simple. The client includes the id of the event its local state is synced to with each API call. The app server returns an error if the latest event in the log is different. On error, the client syncs up to the most recent state, lets the end user resolve any conflict between the current state and the change they were trying to make, and tries again. 
 
-This approach gives you *Serializable Isolation* all the way back to the client, by only allowing one client to make changes at a time. If clients make changes driven by human interaction (typically seconds between each change), there's unlikely to be a problem. If clients are automated, making many changes a second, there will be contention, lots of retries, little forward progress. There's no mechanism that ensures fairness. The client with the highest rate of changes and the lowest latency to the server will dominate. 
+{% include candid-image.html src="/assets/images/event-source-consistency/end-to-end-consistency.svg" alt="Out of date write fails" %}
+
+This approach gives you *Serializable Isolation* all the way back to the client, by only allowing one client to make changes at a time. If clients make changes driven by human interaction (typically seconds between each change), there's unlikely to be a problem. If clients are automated, making many changes a second, there will be contention, lots of retries, little forward progress. There's also no mechanism that ensures fairness. The client with the highest rate of changes and the lowest latency to the server will dominate. 
 
 Which is all very wasteful if, as in our issues example, most clients are editing independent items where changes don't interfere with each other. 
 
-## Pending Events
+## Two Phase Commit
 
-* Two big problems - complexity/latency of adding event to log if we have to check invariants involving current state, unacceptable choice between cleaning up mess of last write wins or poor performance/experience of end to end serializable isolation. 
-* Can use the idea of pending events to address both.
-* Go back to simple case of only checking internal consistency of event and then immediately adding to log.
-* Twist is that event is in a pending state until overall consistency checked - both invariants and possible conflicts with earlier pending events
-* Client can choose how to deal with pending events. Simple client would sync up to last committed event and ignore any pending events. After it submits its own changes it needs to wait until event finally commits or is rejected.
-* Similar client interaction model to end to end serializable isolation. However, no contention if editing separate issues. Fairness between clients if they are contending for access.
-* Still have potential fairness problem between app server instances but that's much easier to solve as all server side, all under our control.
-* Snapshot creation can't start until pending transaction resolved. 
-* Snapshot creation is long term background process. Committing pending events is medium term background process.
-* Thick client can do much better job. Sync pending events too but treat them as non-definitive.
-* Thick client has current state to hand. Can process pending events itself and determine whether server would reject them. Preemptively avoids conflicts with pending events from other clients. 
-* Must be prepared to fix up local state if it turns out client and server business logic are out of sync. 
+We have two big problems. First, the complexity and latency of adding an event to the log increases massively if we have to check invariants that involve stored state. Secondly, we're faced with an unpalatable choice between the "anything goes and clean up the mess afterwards" of last write wins, versus the poor performance and unfairness of end to end serializable isolation. 
 
-* Conflict resolution
-  * Server side process works through pending transactions in order. For each, looks at any entries added to the log between the last change the client saw and the submitted transaction and checks for conflicts. 
-    * Lots of ways to define conflict - could specify how strict you want to be in transaction. Simplest is to check whether any cell the transaction depends on was modified by earlier change. 
-    * Wider scope would check for any cell changing in a row that transaction depends on. 
-    * Or could support arbitrary conditions ...
-  * Transaction is marked as rejected or accepted. Rejected transactions are ignored by everyone (filter them out when querying)
+{% include candid-image.html src="/assets/images/event-source-consistency/pending-events.svg" alt="Pending Events" %}
+
+What if we could solve both problems in one? The idea is to use two phases when committing events. For the first phase, we go back to the simple implementation of checking internal consistency of an event and then immediately adding it to the event log. These events are in a pending state. They've reserved their place in the queue but there's no guarantee they will successfully commit. The second phase happens asynchronously. Invariants involving stored state are checked. Conflicts with earlier events are detected. The event is then marked as either committed or rejected.
+
+{% include candid-image.html src="/assets/images/event-source-consistency/second-phase.svg" alt="Second Phase, First event committed, Second rejected" %}
+
+Clients can choose how to deal with pending events. A simple client would sync up to the last committed event and ignore pending events. After it submits its own changes it needs to wait until the event finally commits or is rejected. This is a similar client interaction model to that used for end to end serializable isolation. However, there's no contention if editing separate issues and clients can be treated fairly if they are contending for access to the same issue.
+
+{% include candid-image.html src="/assets/images/event-source-consistency/second-phase-no-conflict.svg" alt="Second Phase, No conflicts" %}
+
+We still have a potential fairness problem between app server instances but that's much easier to solve as everything happens server side, all under our control. We also need to wait for events to be committed before snapshot creation can start. Snapshot creation is a long term background process that runs infrequently. Committing pending events is a short term background process that needs to run frequently. As well as reducing latency, committing pending events as a background process improves efficiency as the same instance can process multiple events, reusing the state retrieved when processing the previous event. 
+
+A thick client can provide a better user experience. It can sync the full set of events, including those that are still pending. It needs to treat the pending events as non-definitive. A thick client has the current state available locally. There's an interesting contrast between stateful clients that can work incrementally and the stateless server implementations that have to do everything from scratch. 
+
+{% include candid-image.html src="/assets/images/event-source-consistency/preempt-conflict.svg" alt="Second Phase, No conflicts" %}
+
+It's easy for a thick client to process pending events itself and determine whether the server would commit or reject them. It can then preemptively avoid conflicts with pending events from other clients. Any events it submits must be conditional on the pending events committing as expected. The client must still be prepared to reverse course and fix up local state if it turns out that client and server business logic are out of sync.
+
+## Conflict Detection
+
+As the server processes each pending event, it needs to look at any events added to the log between this event and the last event the submitting client saw. Could this change conflict with any of those earlier changes? This is separate from the question of whether application invariants are being maintained. It's a judgement call. If the end user was aware of those changes, would they change their mind about what they're doing? 
+
+For our example issues system, we would always consider it a conflict if the earlier event changed a property that we're trying to update. We would usually consider it a conflict if the earlier event changed a property in the same issue that we're updating. We would rarely consider it a conflict if the earlier event was updating a different issue. 
+
+## Conclusion
+
+So, is it really feasible to roll your own event sourced system while figuring out how to resolve conflicts and ensure consistency? I think so. How much effort will be needed depends greatly on what kind of application you're building. A spreadsheet doesn't have complex invariants and last-write-wins semantics are expected. There's a limit to how fast end users can make changes. You don't need anything more than an [event log implementation that can serialize writes]({% link _posts/2023-08-07-spreadsheet-event-log.md %}). 
+
+At the other extreme, a grid view issues tracker with complex business logic and a high update rate driven by automated integrations will need a more sophisticated implementation. In the long run it's still less work than [making a traditional relational database backed web app bullet proof]({% link _posts/2023-09-18-acid-atomicity-consistency-isolation-durability.md %}). And that's without considering all the other benefits of an event sourced implementation. 
