@@ -32,7 +32,7 @@ The other simple form of id is to use something meaningful. That could be someth
 
 The most common example is user ids. Depending on context, you could use the user's legal name, a telephone number or a social security number. The problem with real world identifiers is that the logic of the real world may not align with the business logic of your application. If it does align today, maybe it won't in future. As your company grows, you may end up with two employees with the same legal name. Telephone number and social security number formats can change over time or between countries. The best real world identifiers are often the most sensitive and private.
 
-Letting users pick their own identifiers can be an exercise in frustration. How many applications have you tried to sign up for where every identifier you try has already been taken? An amazing amount of UX design effort goes into thinking up new ways of suggesting identifiers similar to what you want that haven't been taken yet. Then you have worry about disallowing the more "creative" ids that people will try to sneak past you. 
+Letting users pick their own identifiers can be an exercise in frustration. How many applications have you tried to sign up for where every identifier you try has already been taken? An amazing amount of UX design effort goes into thinking up new ways of suggesting identifiers similar to what you want that haven't been taken yet. Then you have to worry about disallowing the more "creative" ids that people will try to sneak past you. 
 
 I can understand going to these lengths for a social media platform where your id is publicly visible to everyone. There's really no point doing it for a banking app where the user id and password are going straight into a password safe.
 
@@ -92,7 +92,7 @@ The chance of a collision depends on how many ULIDs are being generated per mill
 
 Despite having "Universal" in the name, the typical use cases for ULIDs (and UUIDs) rarely need universal uniqueness. All you need is uniqueness between the generators that contribute ids used in a common data store. 
 
-There are two common cases for ULIDs. The first is a fleet of servers used to implement a horizontally scaled service. You would need to be operating at AWS scale to get anywhere close to 490 thousand servers. The second case is end user clients that need to generate their own ids, either for reasons of scale, or because they need to operate offline. There could be thousands of clients but each client is unlikely to be generating many ULIDs a second. 
+There are two common use cases for ULIDs. The first is a fleet of servers used to implement a horizontally scaled service. You would need to be operating at AWS scale to get anywhere close to 490 thousand servers. The second case is end user clients that need to generate their own ids, either for reasons of scale, or because they need to operate offline. There could be thousands of clients but each client is unlikely to be generating many ULIDs a second. 
 
 The core principle behind ULIDs is that it doesn't matter what order is chosen for ULIDs generated on different computers in the same millisecond, just that an order is defined. Intuitively that makes sense. Given network delays and the laws of physics, you can't really say which of two near simultaneous events came first. 
 
