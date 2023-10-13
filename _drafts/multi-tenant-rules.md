@@ -3,7 +3,9 @@ title: The Seven Rules of Multi-Tenant Systems
 tags: cloud-architecture
 ---
 
-I spent [ten years of my career]({% link _topics/cloud-architecture.md %}) working on the architecture of [multi-tenant systems]({% link _posts/2022-11-07-evolution-multi-tenant-architecture.md %}). That's enough time to make and witness a lot of mistakes. I've learnt a lot. Now it's time to distill the benefits of that learning into what I like to call the Seven Rules of Multi-Tenant Systems. 
+I spent [ten years of my career]({% link _topics/cloud-architecture.md %}) working on the architecture of [multi-tenant systems]({% link _posts/2022-11-07-evolution-multi-tenant-architecture.md %}). That's enough time to make and witness a lot of mistakes. I've learnt a lot. Now it's time to distill the benefits of that learning into what I like to call the Seven Rules[^1] of Multi-Tenant Systems. 
+
+[^1]: It's actually sixteen rules divided into seven categories but that doesn't sound as snappy
 
 ## 1. API
 
@@ -71,12 +73,12 @@ Whether you eventually implement sharding at the application level, or rely on a
 
 A system is theoretically scalable if you could implement sharding without having to change your API. That implies that you've thought about how to shard your data model and designed your API so that each call naturally includes a shard key. If you're following these rules, you already have an API with explicit tenant ids included in each call. If you have natural limits on the size of a tenant, that may be all you need.
 
-I've worked with a few services that weren't theoretically scalable. Retro-fitting scalability was a massive challenge that required a radical rethink, not just in the unscalable service itself, but in every other service that interacted with it. 
-
 {% capture note %}
 * Every API call SHOULD include a value that could be used as a shard key
 {% endcapture %}
 {% include candid-note.html content=note %}
+
+I've worked with a few services that weren't theoretically scalable. Retro-fitting scalability was a massive challenge that required a radical rethink, not just in the unscalable service itself, but in every other service that interacted with it. 
 
 ## 5. Right to Delete
 
@@ -125,13 +127,13 @@ Data needs to be handed over to the building owner? Build a handover feature. Mu
 
 Instead, consider data portability as a fundamental system capability. A comprehensive API is a good starting point. Make sure that you provide an efficient way of synchronizing data. When integrating with other systems, you need to be able to find out what changed since the last time you synchronized. Build a generalized import/export system on top of the API which lets you export to and import from a neutral open format. 
 
-Now you have the tools to solve your original problems and many more besides. Customer wants to transfer ownership of a project from one tenant to another? Export the data from one and import into another. Customer worried about the implications of [data sovereignty](https://en.wikipedia.org/wiki/Data_sovereignty) requirements? Remove the FUD. The customer can start using one of your existing environments and if needed transfer the data later on. Is your sharding by tenant getting unbalanced? Now you have a way of transferring a tenant from one shard to another. Need to comply with [GDPR data portability](https://gdpr-info.eu/art-20-gdpr/) requirements? Don't worry, you're already covered.
-
 {% capture note %}
 * Your API SHOULD support efficient synchronization of data
 * Your system SHOULD support import/export with an open neutral format
 {% endcapture %}
 {% include candid-note.html content=note %}
+
+Now you have the tools to solve your original problems and many more besides. Customer wants to transfer ownership of a project from one tenant to another? Export the data from one and import into another. Customer worried about the implications of [data sovereignty](https://en.wikipedia.org/wiki/Data_sovereignty) requirements? Remove the FUD. The customer can start using one of your existing environments and if needed transfer the data later on. Is your sharding by tenant getting unbalanced? Now you have a way of transferring a tenant from one shard to another. Need to comply with [GDPR data portability](https://gdpr-info.eu/art-20-gdpr/) requirements? Don't worry, you're already covered.
 
 ## 7. Cost
 
@@ -167,7 +169,7 @@ With a big enough mismatch between business model and costs, things can spiral o
 {% endcapture %}
 {% include candid-note.html content=note %}
 
-The biggest mismatch comes with free trials. We used to offer a free month's trial for one product with automated sign up. The product included a file store with the ability to create public, shareable links to content that you had uploaded. After a few months there was a sudden explosion in free trial sign ups, and a big spike in our AWS bills. No, this wasn't a triumph for the marketing department. Our product was being used to host and share pirated material. 
+The biggest mismatch comes with free trials. We used to offer a free month's trial for one product with automated sign up. The product included a file store with the ability to create public, shareable links to content that you had uploaded. After a few months there was a sudden explosion in free trial sign ups, and a big spike in our AWS bills. No, this wasn't a triumph for the marketing department. Our free trial accounts were being used to host and share pirated material.
 
 {% capture note %}
 * You SHOULD enforce additional limits to prevent abuse of free trials
@@ -188,3 +190,6 @@ You need to provide suitable incentives to keep storage costs under control. Tha
 * You SHOULD have a plan to keep storage costs under control
 {% endcapture %}
 {% include candid-note.html content=note %}
+
+## Footnotes
+
