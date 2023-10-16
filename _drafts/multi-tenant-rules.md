@@ -3,7 +3,7 @@ title: The Seven Rules of Multi-Tenant Systems
 tags: cloud-architecture
 ---
 
-I spent [ten years of my career]({% link _topics/cloud-architecture.md %}) working on the architecture of [multi-tenant systems]({% link _posts/2022-11-07-evolution-multi-tenant-architecture.md %}). That's enough time to make and witness a lot of mistakes. I've learnt a lot. Now it's time to distill the benefits of that learning into what I like to call the Seven Rules[^1] of Multi-Tenant Systems. 
+I spent [ten years of my career]({% link _topics/cloud-architecture.md %}) working on the architecture of [multi-tenant systems]({% link _posts/2022-11-07-evolution-multi-tenant-architecture.md %}). That's enough time to make and witness a lot of mistakes. I've learnt a lot. Now it's time to distill the benefits of that learning into what I like to call the Seven[^1] Rules of Multi-Tenant Systems. 
 
 [^1]: It's actually sixteen rules divided into seven categories but that doesn't sound as snappy
 
@@ -41,7 +41,7 @@ Good job you have a formal API. You can ensure that every API call includes an e
 
 You're asking your customers to trust you with their data, often with the core processes needed to run their business. Trust is easy to lose. A major security breach can be catastrophic for your business. 
 
-Security is non-negotiable. That doesn't mean empty sound bites and completing an hour of online training once a year. You need to instill secure development practices into your teams and your culture from the beginning. It's easy for vulnerabilities to creep in when teams are under constant pressure to deliver against arbitrary deadlines. Teams need to be empowered to maintain a minimum level of engineering rigour.
+Security is non-negotiable. That doesn't mean empty sound bites and completing an hour of online training once a year. You need to instill secure development practices into your teams and your culture from the beginning. It's easy for vulnerabilities to creep in when teams are under constant pressure to deliver against arbitrary deadlines. Teams need to be empowered to maintain a minimum level of engineering rigor.
 
 {% capture note %}
 * All development teams MUST follow secure development best practices
@@ -78,7 +78,7 @@ A system is theoretically scalable if you could implement sharding without havin
 {% endcapture %}
 {% include candid-note.html content=note %}
 
-I've worked with a few services that weren't theoretically scalable. Retro-fitting scalability was a massive challenge that required a radical rethink, not just in the unscalable service itself, but in every other service that interacted with it. 
+I've worked with a few services that weren't theoretically scalable. Retro-fitting scalability was a massive challenge that required a radical rethink, not just in the unscalable service itself, but in every other service that depends on it. 
 
 ## 5. Right to Delete
 
@@ -115,7 +115,7 @@ Which is all fine until a customer gets in touch because someone accidentally up
 
 I've talked before about the difference between [Tools and Solutions]({% link _posts/2023-01-03-tools-vs-solutions.md %}). The cloud applications I worked on are very much in the *Solutions* category. The intention was to provide everything that the customer would need to manage a construction project. From project inception to final close out, we would handle it all. 
 
-Clearly, if you're the solution that the whole world revolves around, you're not that interested in providing the ability to transfer data out into other systems. If all data will be directly created in your system, you're not that interested in supporting bulk transfer in either. 
+Clearly, if you're the solution that the whole world revolves around, you're not that interested in providing the ability to transfer data out into other systems. If all data will be directly created in your system, you're not that interested in supporting bulk transfer-in either. 
 
 Of course, in the real world, every customer had their own processes and ways of doing things. They had existing software that worked well for some of those processes, which they had no intention of giving up. To them, our solution was another *Tool* that needed to fit in with what they already had.
 
@@ -147,7 +147,7 @@ Let's start with the simple stuff. Are you bringing in more revenue than you're 
 
 As ever, it's different in a large company. In my early days working on cloud applications, the engineering and product management teams had no clue what our costs were. The AWS bill for the entire company was handled by the mysteries of the finance department. Even if we had visibility of the number, there was no way to work out what the costs of our product were. It took many years before the company worked out how to use multiple AWS accounts and cost allocation tags to give each team insight into their costs.
 
-Without insight into costs, engineering teams will choose the easiest implementation, product management will ask for the most complete feature set and UX will drive for the most delightful user experience. All without knowing whether the value the user is willing to pay for will cover the costs.
+Without insight into costs, engineering teams will choose the easiest implementation, product management will ask for the most complete feature set and UX will drive for the most delightful user experience. All without knowing whether the value the user is willing to pay for, will cover the costs.
 
 {% capture note %}
 * Engineering and Product teams SHOULD have visibility of their costs
@@ -192,4 +192,3 @@ You need to provide suitable incentives to keep storage costs under control. Tha
 {% include candid-note.html content=note %}
 
 ## Footnotes
-
