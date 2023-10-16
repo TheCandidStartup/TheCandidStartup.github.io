@@ -3,6 +3,8 @@ title: Bootstrapping Vite
 tags: frontend
 ---
 
+Intro
+
 * [Vite](https://vitejs.dev/) - what and why
 * Understandably, NodeJS is a dependency so I need to get that setup first
 * [Setting up my Mac]({% link _posts/2022-09-21-mac-local-blog-dev.md %})
