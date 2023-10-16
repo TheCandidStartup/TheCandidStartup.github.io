@@ -1,0 +1,12 @@
+<div class="candid-iframe-div">
+
+{% capture candid_iframe_val %}{% increment candid_iframe_counter %}{% endcapture %}
+{% capture candid_iframe_id %}{{ "candid-iframe-" | append: candid_iframe_val }}{% endcapture %}  
+
+<iframe id="{{ candid_iframe_id }}" src="{{ include.src }}" width="100%"></iframe>
+<script>
+    var iframe = document.getElementById("{{ candid_iframe_id }}");
+    iframe.onload = function() { iframe.height = iframe.contentWindow.document.body.scrollHeight + 4; };
+</script>
+    
+</div>

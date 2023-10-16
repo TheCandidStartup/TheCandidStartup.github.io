@@ -114,3 +114,69 @@ git init
 git add -all
 git commit
 ```
+
+Now time to make some changes and see how well the HMR works. As instructed, I made some simple changes to `src/App.tsx` using Visual Studio Code. The running web app updated *instantly*. I couldn't perceive any lag at all. Same experience when editing `src/App.css`. 
+
+I'm using to the editing experience with my Jekyll blog where updates are sub-second but with a noticeable lag. Vite is impressively fast. Admittedly, for a trivial example. 
+
+```
+% npm run build
+
+> react-virtual-scroll-grid@0.0.0 build
+> tsc && vite build
+
+vite v4.4.11 building for production...
+✓ 34 modules transformed.
+dist/index.html                   0.46 kB │ gzip:  0.30 kB
+dist/assets/react-35ef61ed.svg    4.13 kB │ gzip:  2.14 kB
+dist/assets/index-d526a0c5.css    1.42 kB │ gzip:  0.74 kB
+dist/assets/index-dd535d49.js   143.44 kB │ gzip: 46.12 kB
+✓ built in 409ms
+```
+
+* Built package is much smaller than all the dependencies
+* Note hash of content included in package assets - cache busting
+* `index.html` is fixed entry point, not cached
+
+```
+% npm run preview
+
+> react-virtual-scroll-grid@0.0.0 preview
+> vite preview
+
+  ➜  Local:   http://localhost:4173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+```
+
+To include as a live example on the blog I need to tell Vite the non-default base path where the package will be deployed. All includes in the built package are absolute. Some head scratching before I figured out the magic runes to pass arguments from npm through to vite. 
+
+```
+% npm run build -- --base=/assets/dist/vite-bootstrap/
+
+> react-virtual-scroll-grid@0.0.0 build
+> tsc && vite build --base=/assets/dist/vite-bootstrap/
+
+vite v4.4.11 building for production...
+✓ 34 modules transformed.
+dist/index.html                   0.54 kB │ gzip:  0.31 kB
+dist/assets/react-35ef61ed.svg    4.13 kB │ gzip:  2.14 kB
+dist/assets/index-d526a0c5.css    1.42 kB │ gzip:  0.74 kB
+dist/assets/index-84538aac.js   143.49 kB │ gzip: 46.14 kB
+✓ built in 407ms
+```
+
+And the same argument if I want to preview the build with it's custom based path
+
+```
+% npm run preview -- --base=/assets/dist/vite-bootstrap/
+
+> react-virtual-scroll-grid@0.0.0 preview
+> vite preview --base=/assets/dist/vite-bootstrap/
+
+  ➜  Local:   http://localhost:4173/assets/dist/vite-bootstrap/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+```
+
+{% include candid-iframe.html src="/assets/dist/vite-bootstrap/index.html" %}
