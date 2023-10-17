@@ -3,9 +3,20 @@ title: Bootstrapping Vite
 tags: frontend
 ---
 
-Intro
+I'm ready to dive into [front-end development]({% link _posts/2023-10-09-paged-infinite-virtual-scrolling.md %}). First, I need to make some choices. What tooling and frameworks should I use? 
+
+I've already decided to use [TypeScript with NodeJS]({% link _posts/2023-05-15-language-stack.md %}) on the back end. I want to share code between front end and back end, so will need a front-end development environment that will handle transpilation of TypeScript. I also need tooling that will build code into front-end packages that can be statically served by CloudFront/S3 and back-end packages that can be deployed to Lambda with the NodeJS runtime. 
+
+Most teams I previously worked with used React as their front-end framework, so that's something I want to try. I've seen some bloated front ends built with React, so I want to experiment with alternatives too. One team I worked with had good experiences using [Preact](https://preactjs.com/) as a lighter weight alternative to React, so that's on the list. Diving down the internet rabbit hole also threw up [Vue.js](https://vuejs.org/) and [Svelte](https://svelte.dev/) as contenders. Finally, I like to understand how things work behind the scenes, so I may end up building something using a vanilla JavaScript environment. 
+
+My first choice is to use [Vite](https://vitejs.dev/) for my front-end tooling. 
+
+## Why Vite?
 
 * [Vite](https://vitejs.dev/) - what and why
+
+## Installing Dependencies
+
 * Understandably, NodeJS is a dependency so I need to get that setup first
 * [Setting up my Mac]({% link _posts/2022-09-21-mac-local-blog-dev.md %})
 * Used [asdf](https://asdf-vm.com/) install manager as supposedly can also handle NodeJS/npm
@@ -57,6 +68,8 @@ npm -v
 9.8.1
 ```
 
+## Scaffolding my First Project
+
 * Back to the Vite getting started guide
 * Vite will scaffold a project for me, using a standard template
 * I'm going to start with React, and of course I'm [using Typescript]({% link _posts/2023-05-15-language-stack.md %}), so I'll need the react-ts template.
@@ -107,6 +120,8 @@ found 0 vulnerabilities
 
 {% include candid-image.html src="/assets/images/frontend/vite-scaffold-react-ts.png" alt="Vite React+TypeScript Scaffolded Project" %}
 
+## Development Experience
+
 Finally I added the generated project to git and then used GitHub desktop to publish it to [TheCandidStartup/react-virtual-scroll-grid](https://github.com/TheCandidStartup/react-virtual-scroll-grid).
 
 ```
@@ -118,6 +133,8 @@ git commit
 Now time to make some changes and see how well the HMR works. As instructed, I made some simple changes to `src/App.tsx` using Visual Studio Code. The running web app updated *instantly*. I couldn't perceive any lag at all. Same experience when editing `src/App.css`. 
 
 I'm using to the editing experience with my Jekyll blog where updates are sub-second but with a noticeable lag. Vite is impressively fast. Admittedly, for a trivial example. 
+
+## Building for Production
 
 ```
 % npm run build
@@ -148,6 +165,8 @@ dist/assets/index-dd535d49.js   143.44 kB │ gzip: 46.12 kB
   ➜  Network: use --host to expose
   ➜  press h to show help
 ```
+
+## Deploying to the Blog
 
 To include as a live example on the blog I need to tell Vite the non-default base path where the package will be deployed. All includes in the built package are absolute. Some head scratching before I figured out the magic runes to pass arguments from npm through to vite. 
 
