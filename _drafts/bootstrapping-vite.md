@@ -179,4 +179,4 @@ And the same argument if I want to preview the build with it's custom based path
   ➜  press h to show help
 ```
 
-{% include candid-iframe.html src="/assets/dist/vite-bootstrap/index.html" %}
+{% include candid-iframe.html src="/assets/dist/vite-bootstrap/index.html" width="100%" height="fit-content" %}
