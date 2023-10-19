@@ -146,13 +146,15 @@ git add -all
 git commit
 ```
 
- I then used GitHub desktop to publish the project to [TheCandidStartup/react-virtual-scroll-grid](https://github.com/TheCandidStartup/react-virtual-scroll-grid).
+I then used GitHub desktop to publish the project to [TheCandidStartup/react-virtual-scroll-grid](https://github.com/TheCandidStartup/react-virtual-scroll-grid).
 
-Now time to make some changes and see how well the HMR works. As instructed, I made some simple changes to `src/App.tsx` using Visual Studio Code. The running web app updated *instantly*. I couldn't perceive any lag at all. Chrome developer tools confirmed that only `App.tsx` was reloaded, which took 10ms. Same experience when editing `src/App.css`. 
+Now time to make some changes and see how well the HMR works. As instructed, I made some simple changes to `src/App.tsx` using Visual Studio Code, then saved the file. The running web app updated *instantly*. I couldn't perceive any lag at all. Chrome developer tools confirmed that only `App.tsx` was reloaded, which took 10ms. Same experience when editing `src/App.css`. 
 
 I'm used to the editing experience with my Jekyll blog, where updates are sub-second but with a noticeable lag. Vite is impressively fast. Admittedly, for a trivial example. 
 
 ## Building for Production
+
+What's the experience like when [building for production](https://vitejs.dev/guide/build.html)? The default configuration produces output suitable for static deployment, so we let's just run the build and see what happens.
 
 ```
 % npm run build
@@ -169,9 +171,11 @@ dist/assets/index-dd535d49.js   143.44 kB │ gzip: 46.12 kB
 ✓ built in 409ms
 ```
 
-* Built package is much smaller than all the dependencies
-* Note hash of content included in package assets - cache busting
-* `index.html` is fixed entry point, not cached
+Thankfully, the built package is much smaller than all the dependencies in node_modules. 50KB and four files seems very reasonable. 
+
+As you might expect, "cache busting" is implemented. The payload chunk names include a checksum. Whenever we change the app and rebuild, the name will change if the contents has changed. This in turn ensures that browsers will download the new chunk rather than using an older cached copy. The fixed entry point of `index.html` needs to be deployed with a cache policy that prevents caching or has a very short TTL. 
+
+We can test the build before we deploy it using the preview server.
 
 ```
 % npm run preview
@@ -186,7 +190,7 @@ dist/assets/index-dd535d49.js   143.44 kB │ gzip: 46.12 kB
 
 ## Deploying to the Blog
 
-To include as a live example on the blog I need to tell Vite the non-default base path where the package will be deployed. All includes in the built package are absolute. Some head scratching before I figured out the magic runes to pass arguments from npm through to vite. 
+To include as a live example on the blog, I need to tell Vite the base path where the package will be deployed. All paths in the built package are absolute. I could specify the base path in a configuration file but deploying to the blog is a one off. Some head scratching before I figured out the magic runes to pass arguments from npm through to vite. 
 
 ```
 % npm run build -- --base=/assets/dist/vite-bootstrap/
@@ -203,7 +207,9 @@ dist/assets/index-84538aac.js   143.49 kB │ gzip: 46.14 kB
 ✓ built in 407ms
 ```
 
-And the same argument if I want to preview the build with it's custom based path
+Notice that the `index.js` chunk has a different checksum but the other two (as you would expect) are unchanged. 
+
+I need to use the same argument if I want to preview the build with it's custom base path. 
 
 ```
 % npm run preview -- --base=/assets/dist/vite-bootstrap/
@@ -215,5 +221,7 @@ And the same argument if I want to preview the build with it's custom based path
   ➜  Network: use --host to expose
   ➜  press h to show help
 ```
+
+It's a nice touch that the base path is reflected back in the local URL to use when previewing. Looks good. The final step is to copy the content of the dist folder into the blog repo and commit the changes. I've embedded the app in an iframe below, or you can [open it directly]({% link /assets/dist/vite-bootstrap/index.html %}).
 
 {% include candid-iframe.html src="/assets/dist/vite-bootstrap/index.html" width="100%" height="fit-content" %}
