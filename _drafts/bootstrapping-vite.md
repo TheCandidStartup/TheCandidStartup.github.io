@@ -154,7 +154,7 @@ I'm used to the editing experience with my Jekyll blog, where updates are sub-se
 
 ## Building for Production
 
-What's the experience like when [building for production](https://vitejs.dev/guide/build.html)? The default configuration produces output suitable for static deployment, so we let's just run the build and see what happens.
+What's the experience like when [building for production](https://vitejs.dev/guide/build.html)? The default configuration produces output suitable for static deployment, so let's just run the build and see what happens.
 
 ```
 % npm run build
@@ -222,6 +222,6 @@ I need to use the same argument if I want to preview the build with it's custom 
   ➜  press h to show help
 ```
 
-It's a nice touch that the base path is reflected back in the local URL to use when previewing. Looks good. The final step is to copy the content of the dist folder into the blog repo and commit the changes. I've embedded the app in an iframe below, or you can [open it directly]({% link /assets/dist/vite-bootstrap/index.html %}).
+It's a nice touch that the base path is reflected back in the local URL to use when previewing. Everything looks good. The final step is to copy the content of the dist folder into the blog repo and commit the changes. I've embedded the app in an iframe below, or you can [open it directly]({% link /assets/dist/vite-bootstrap/index.html %}).
 
 {% include candid-iframe.html src="/assets/dist/vite-bootstrap/index.html" width="100%" height="fit-content" %}
