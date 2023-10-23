@@ -130,7 +130,7 @@ That was easy. Let's load that URL into the browser and see what happens. It's a
 
 {% include candid-image.html src="/assets/images/frontend/vite-scaffold-react-ts.png" alt="Vite React+TypeScript Scaffolded Project" %}
 
-It's interesting to see how on demand tranpilation works in practice. Here's what the network tab in Chrome developer tools shows me when loading the app.
+It's interesting to see how on demand transpilation works in practice. Here's what the network tab in Chrome developer tools shows me when loading the app.
 
 {% include candid-image.html src="/assets/images/frontend/vite-react-scaffold-network.png" alt="Vite React+TypeScript Scaffolded Project loading in Chrome Developer Tools" %}
 
