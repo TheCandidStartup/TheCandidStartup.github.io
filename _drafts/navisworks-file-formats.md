@@ -109,23 +109,116 @@ Unfortunately, using separate streams for high level features doesn't make much 
 
 ## Geometry
 
-Navisworks uses simple tesselated geometry, optimized for rendering. There are five types of geometry. 
+Navisworks uses simple tesselated geometry, optimized for rendering. There are six types of geometry. 
 * Indexed Triangle Strip Sets
 * Line Sets
 * Point Sets
 * Parametric Cylinders
 * Recap Point Cubes
+* Text
 
 Indexed triangle strip sets are by far the most common. The detailed representations aren't important. They're basically what you could feed to OpenGL most efficiently back in the day. There's [more]({{ ngp_url | append: "#prepare" }}) [information]({{ ngp_url | append: "#simplify" }}) in my post on the [Navisworks Graphics Pipeline]({{ ngp_url }}), if you're interested. 
 
 All geometry definitions are stored in a special chunked stream. Each definition is written as a separate chunk which can be independently loaded. Just like the overall container, the stream includes a directory of chunks. However, unlike the overall container, chunks are not separately compressed. Individual geometry chunks are too small for effective compression. Instead the output stream of chunks is divided into fixed size 64KB segments for compression. Zlib compression operates on 64KB of data at a time, so this scheme gives us compression nearly as good as compressing the whole stream. A segment directory is used to keep track of the segment boundaries. 
 
+{% include candid-image.html src="/assets/images/file-formats/segment-chunk-stream.svg" alt="Segmented Chunked Geometry Stream" %}
+
+When loading geometry chunks, the compressed segments are decompressed on demand into a temporary file. The geometry chunks are serialized in priority order based on the default view for the model. This ensures that during the initial load, geometry is largely read sequentially. 
+
+To help manage geometry life time as it is paged in and out, we split the in-memory geometry objects into two. Instances refer to a "Geom Ref" stub object that always remains in-memory. Geometry is shared between instances where possible, so multiple instances may reference the same Geom Ref. The Geom Ref stores the file and chunk id for the corresponding geometry definition and triggers the load on demand process when the geometry is needed.
+
 ## Properties
+
+The original idea was to handle property paging in the same way as geometry paging. However, property attributes are typically much smaller than geometry definitions and more numerous. Adding "Attribute Ref" objects each with file and chunk ids would add too much overhead. We were also constrained by the need to minimize changes to the existing code base in order to release in a timely fashion.
+
+Luckily, property access is not as time critical as geometry access. There tend to be two types of access. Either properties are being accessed for a single logical instance (an object has been selected), or properties for all objects are being accessed in traversal order (searching). We explicitly serialize attributes from multiple nodes into each chunk by traversing over the logical scene graph and writing them to the same stream. Once we have more than 64KB in the output, we start a new chunk. A directory in the root node keeps track of which range of nodes corresponds to each chunk. 
+
+Attributes can be shared between multiple nodes. At the time, Material and Transform nodes were involved in maintenance of the spatial graph. To keep things simple, only unshared property attributes are serialized into the chunked property stream. The remaining attributes are serialized with the rest of the logical scene graph. 
+
+Each node has a vector of attached attributes. A NULL pointer is used to mark unloaded attributes. When an attribute is required, the node follows the chain of parent pointers to the root node where it can use the property directory to determine which property chunk to load. When a property chunk is loaded, all of the attributes contained are loaded. For a single object access, the additional overhead doesn't matter. For a traversal across all objects, it's exactly what you want, as the attributes are stored in traversal order.
+
+## Sheets
+
+The next big change to the Navisworks file format was the result of a [VP mandate]({% link _posts/2022-10-31-organizational-anti-pattern-vp-moves.md %}). Autodesk had too many viewers. We needed to merge the functionality of [Autodesk Design Review](https://www.autodesk.co.uk/products/design-review/overview) into Navisworks. ADR is essentially a DWF viewer. [DWF](https://en.wikipedia.org/wiki/Design_Web_Format) was Autodesk's attempt at taking on PDF. The primary focus was 2D drawings, but DWF could also include 3D models.
+
+Navisworks already had support for 3D DWF. However, a DWF file can contain multiple sheets, where each sheet is either a 3D model or a 2D drawing. Navisworks would only load the default 3D sheet. The Navisworks file formats could only store a single 3D model. 
+
+The first job was to add support for multiple sheets. We already had a multi-stream container format. So, all we had to do was add more streams for each additional sheet plus a stream that stored a list of sheets and the ids of the corresponding streams for each sheet. 
+
+Navisworks ignores the additional streams when first loading the file. If the user opens the sheets browser, Navisworks loads the list of sheets from the sheets stream. If the user selects another sheet to display, Navisworks loads the model from the corresponding streams and switches the currently active model to the new one. Previously loaded sheets are kept in memory (unless memory is running low and space needs to be reclaimed) in case the user wants to switch back. 
+
+## 2D
+
+We also had to add an entire 2D subsystem to Navisworks. I had naively assumed that 2D was a simpler subset of 3D. I was very mistaken. 2D rendering is full of arcane rules with demanding customers that expect pixel perfect accuracy. I'm talking viewports, hatch patterns, model vs paper space, end caps, endless options for what should be displayed when one object crosses something else, transparency, strict expectations for render order, and more. 
+
+In the end we took the easy way out. We embedded a copy of Heidi, AutoCAD's original rendering engine. We ask Heidi to render the drawing and capture the "grass clippings" that would normally be sent direct to the graphics API. The grass clippings take the form of triangles, lines, points and fragments of text which we already know how to deal with. We handled the strict render ordering requirement by using the Z coordinate to specify the required order. With the view locked down to an orthographic camera looking down the Z axis, we can let Navisworks do its prioritized rendering thing, with the depth buffer ensuring the rendered order looks correct. 
+
+## UUIDs
+
+DWF files can contain sheets which are entirely unrelated, or more commonly, represent different views of the same model. Navisworks aggregation lets you combine an arbitrary set of sheets into a single file. 
+
+A common workflow in ADR is to select an object in one sheet and then zoom into the same object on another sheet. To do that, you need identifiers which are unique across multiple sheets in a file, and ideally [universally unique]({% link _posts/2023-09-24-unique-ids.md %}). DWF used UUIDs for that purpose. 
+
+Navisworks didn't have a standardized object id system of its own. It used the source CAD system's own identifiers. In most cases these identifiers were only unique in the context of a single model. They were also different lengths and formats which made it hard to work with them in a consistent way. The time was right to add first class support for UUIDs as the standard Navisworks object identifier.
+
+We used type 5 hash UUIDs for file formats, like DWG, which don't have native UUID identifiers. This type of UUID is deterministically created using a hash of some arbitrary input values. In our case we combine a native file specific object id (e.g. the entity handle) with a unique file id. 
+
+The UUIDs are serialized in an unusual way. All the UUIDs used by a sheet are serialized into a dedicated stream, in sorted order. The nodes in the logical scene graph use an integer index to specify a UUID. This has three advantages. First, it uses less memory in the common case of nodes that don't have a UUID. Second, serializing all the UUIDs together in order makes for better compression. Finally, and most importantly, it makes it easy to implement the cross-sheet ADR workflow without having to load all the sheets in advance. To work out which other sheets contain an object, you only have to load the UUID stream for each sheet. As the UUIDs are sorted, you can use binary chop to see if the UUID you're interested in is there. 
 
 ## Metadata
 
-## NWD
+Navisworks is a design review format. Data converted from the source design files, like the model representation, is read only. It can't be edited in Navisworks. However, you can create and edit metadata during your design review session. Metadata includes things like saved viewpoints, selection sets, search sets, overridden materials, clash tests and results. 
+
+In many cases, metadata is related to instances in the model. For example, a clash result includes the two instances that are clashing. In memory, each instance is represented by a pointer to an instance tree node. When serialized, the instance is represented by an integer id. During serialization of the logical scene graph, Navisworks assigns an incrementing integer id for each instance tree node in traversal order. The metadata streams have access to that mapping, so as metadata is serialized the corresponding integer id for each instance can be written out. 
+
+The equivalent process happens during deserialization. When Navisworks reads in the logical scene graph, it rebuilds the instance tree in the same order, creating a mapping from integer id to newly created instance tree nodes. When metadata streams are deserialized, they can map the saved integer id to the corresponding in-memory instance tree node.
+
+## Three Navisworks File Formats Again
+
+Finally, we've come full circle back to the three Navisworks File formats. Hopefully, you know have enough context to understand how each format works. All the formats use the same container format and serialization system. They differ in what streams are included.
 
 ## NWC
 
+Let's start with the simplest format. An NWC simply contains the data from a source design file converted to the Navisworks data model. It contains all the sheet and model representation streams needed to represent the content of the original file. It may also have some metadata streams, like saved viewpoints, if the source design file has equivalent content. 
+
+It has one special case stream. An NWC acts as a cache. If the source design file is unchanged, Navisworks will load from the NWC, rather than reconverting the design file. How does Navisworks know whether the design file has changed? It looks at the cache validity stream in the NWC.
+
+The cache validity stream contains information about the design file when it was converted. This includes size, modification date and other easily calculated metrics. If any of these fail to match the current design file, the cache is invalid.
+
+Some design files support external references. In that case, the cache will also be invalid if any of the externally referenced files have changed. The cache validity stream also contains information about any dependent files. 
+
+## NWD
+
+An NWD is also simple. The format is almost the same as an NWC. It's not a cache, so doesn't include the cache validity stream. It includes all the sheet and model representation streams needed to represent the content of all the files aggregated into the current Navisworks session. 
+
+There are two types of aggregation supported by Navisworks. The simplest is just to add all the sheets from the file being aggregated to the current set of sheets. The other is to combine the model representation from one sheet into the currently active model representation in the session. The in-memory representations of each type of stream are merged together. 
+
+The NWD also includes metadata streams for all the metadata converted from the source design files and created or edited during the Navisworks session. 
+
 ## NWF
+
+NWF is the most complex format. The NWF has a special case stream which stores a list of the design files that have been aggregated into the Navisworks session. When you load an NWF, the design files on the list are loaded (using NWCs if valid) and aggregated together. The NWF doesn't contain any model representation streams. 
+
+The metadata is where it gets complex. The NWF stores only metadata that has been created or edited in Navisworks. Some metadata, liked saved viewpoints, can be created in the source design file or Navisworks. In this case, Navisworks keeps track of which metadata items came from the design file. The NWF stores just the changes that need to be applied to the metadata from the design files, in order to recreate the Navisworks session state. 
+
+It gets really complex when you consider that the design files may have been changed since the NWF was saved. Navisworks does the best it can to apply the saved changes in a way that makes sense. 
+
+Metadata may reference instances in the model. How does that work if the logical scene graph can be completely different when the NWF is reloaded? Navisworks handles this by storing a special subset of the model representation in the NWF. The subset includes just properties that can help identify instances and only includes that information for instances which are referenced by metadata. It includes
+* Node class name
+* Node name
+* Node UUID
+* Node source id
+* Node Parent-Child relationships
+* Geometry Checksum
+* Instance bounding box
+* Instance id
+
+When the NWF is loaded, the referenced design files are aggregated together, then the model data in the model representation subset is used to try and match instances saved in the NWF to the corresponding instance in the updated model. Navisworks uses multiple different approaches to try and find a unique match.
+* Match on UUIDs (if defined)
+* Match on source ids (if defined) 
+* Use parent-child relationships and node name/class name to find an equivalent logical path
+* Use geometry checksum and instance bounding box to find an instance with the same geometry in the same place
+
+If there is no match or multiple possible matches, Navisworks behaves as if the instance was deleted in the updated design file. A common symptom of a failure to match instances can be seen in Clash Detective. You load an NWF and see lots of existing clashes have been marked as resolved (because one or both of the objects apparently no longer exist). Then an identical set of "new" clashes appear when you rerun the clash test. 
+
+If you create a lot of metadata that references a lot of object instances, the model representation subset stored in the NWF can become very large. That can lead to lengthy loading times when opening the NWF, as Navisworks tries to match all the instances. A common mistake is to create lots of viewpoints where each viewpoint includes overridden materials for every instance in the model. 
