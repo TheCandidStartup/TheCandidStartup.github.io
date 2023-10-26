@@ -71,11 +71,11 @@ The Navisworks scene graph is a [DAG (Directed Acyclic Graph)](https://en.wikipe
 
 The user name is whatever the user named the object (could be blank). The class name is the thing in the original design file that the node represents. The groups and geometries in the diagram might be Inserts and Meshes in a DWG file, or Instances and Walls in an RVT file. The source id is whatever identifier the source design file uses. It might be an entity handle for a DWG, or an element id from an RVT.
 
-Each node has a set of attributes. Similar to nodes, each attribute also has a name and class name. There are a few different types of attribute which fall into three categories. First, attributes that represent transforms used to position objects in 3D space. Second, materials that determine the appearance of objects. Finally, there are property attributes. Each property attribute contains a list of (name,class name,value) pairs. Nodes can have multiple property attributes, with each attribute representing a different category of properties. The properties are whatever the Navisworks file converters can extract from the source design file. 
+Each node has a set of attributes. Similar to nodes, each attribute also has a name and class name. There are a few different types of attribute which fall into three categories. First, attributes that represent transforms used to position objects in 3D space. Second, materials that determine the appearance of objects. Finally, there are property attributes. Each property attribute contains a list of (name,value) pairs. Nodes can have multiple property attributes, with each attribute representing a different category of properties. The properties are whatever the Navisworks file converters can extract from the source design file. 
 
 The logical scene graph is used to populate the [Selection Tree Window](https://help.autodesk.com/view/NAV/2023/ENU/?guid=GUID-AF4CFA5C-1455-4444-982A-34FBA2AE4608) in Navisworks. The attributes are used to populate the [Properties Window](https://help.autodesk.com/view/NAV/2023/ENU/?guid=GUID-DE27B147-B234-4AFE-8E2C-ACA82120A253). Each attribute is a separate tab.
 
-The instance tree is the scene graph DAG expanded into a tree structure. It's an extremely lightweight structure used to tie the logical scene graph and rendering graph together. Each node in the instance tree represents a logical instance defined by a path through the DAG. Selections in Navisworks are represented by a list of pointers to instance tree nodes. As the instance tree can be easily regenerated from the logical scene graph, it's not serialized into the Navisworks file format. 
+The instance tree is the scene graph DAG expanded into a tree. It's an extremely lightweight structure used to tie the logical scene graph and spatial graph together. Each node in the instance tree represents a logical instance defined by a path through the DAG. Selections in Navisworks are represented by a list of pointers to instance tree nodes. As the instance tree can be easily regenerated from the logical scene graph, it's not serialized into the Navisworks file format. 
 
 The spatial graph is used for all spatially oriented operations such as rendering, picking, collision detection and clash detection. The leaves are self-contained instances consisting of a bounding box, transform, material and geometry definition. All are stored in a form optimized for rendering. Geometry and materials are shared between instances. Large geometric objects are [split into multiple instances]({{ ngp_url | append: "#prepare" }}) in the spatial graph to ensure efficiency of spatial operations. Each leaf node in the instance tree has a list of corresponding instances in the spatial graph.
 
@@ -83,13 +83,13 @@ Navisworks uses a spatial bounding box hierarchy to support efficient spatial qu
 
 Originally, design file conversion required file converters to build a complete representation of the model using the logical scene graph. Navisworks would then traverse the scene graph, accumulating transform and material attributes along each path and generating spatial graph instances whenever it reached a leaf node. The accumulated transform and material attributes would be combined and converted into rendering optimized transform and material representations. 
 
-File converters would often struggle to create a scene graph structure that makes logical sense to users, while also defining instances with the correct transforms and materials. Over the years we had real difficulty with AutoCAD and its complex rules for assigning materials based on layers, blocks and xrefs. More recently, we made the logical and spatial graphs completely independent. Although most converters still work the old way, it's now possible to create models where the instance transforms and materials can be anything you like, regardless of what logical scene graph structure and attributes you have. 
+File converters would often struggle to create a scene graph structure that makes logical sense to users, while also defining instances with the correct transforms and materials. Over the years we had real difficulty with AutoCAD and its complex rules for assigning materials based on layers, blocks and xrefs. More recently, we made the logical and spatial graphs completely independent. Although most converters still work the old way, it's now possible to create models where the spatial graph transforms and materials can be anything you like, regardless of what logical scene graph structure and attributes you have. 
 
 ## Container
 
 The file formats for the early versions of Navisworks were simply the result of serializing the model representation and session metadata. The file started with a header that defined the file version and whether the content was binary or text, compressed or uncompressed. The rest of the file was a single serialized stream of data.
 
-With the Navisworks 4 "JetStream" release we added the ability to work with models that were too large to fit in memory. That meant being able to load parts of the model from file and page data in and out. 
+With the Navisworks 4 "JetStream" release, we added the ability to work with models that were too large to fit in memory. That meant being able to load parts of the model from file and page data in and out. 
 
 The first step was to change the overall format from a single stream to a container that could store multiple streams. Yes, just like a [ZIP](https://en.wikipedia.org/wiki/ZIP_(file_format)) file. However, rather than simply adopting ZIP, I created my own. There was an element of [Not Invented Here](https://en.wikipedia.org/wiki/Not_invented_here) to that decision, but we felt that our file format was something we should have total control over. I also didn't like one of the design decisions made by ZIP. 
 
@@ -99,7 +99,7 @@ To read a ZIP file you have to start at the end, first reading the final record,
 
 {% include candid-image.html src="/assets/images/file-formats/navis-container-format.svg" alt="Navisworks Container Format" %}
 
-They start with the standard Navisworks header. This helps support backwards compatibility. Earlier versions of Navisworks can recognize that this is a later version of a Navisworks file. The header defines the version and encoding of each of the streams in the container. Unlike ZIP, the directory follows immediately after the header, and then the individual streams concatenated together. When writing a Navisworks file, you have to know how many streams it will include in advance, so you can write out the right amount of padding space for the directory. Once you've written all the streams you can come back and overwrite the padding with the actual directory entries.
+They start with the standard Navisworks header. This helps support backwards compatibility. Earlier versions of Navisworks can recognize that this is a later version of a Navisworks file. The header defines the version and encoding of all of the streams in the container. Unlike ZIP, the directory follows immediately after the header, and then the individual streams concatenated together. When writing a Navisworks file, you have to know how many streams it will include in advance, so you can write out the right amount of padding space for the directory. Once you've written all the streams you can come back and overwrite the padding with the actual directory entries.
 
 The main parts of the Navisworks data model are written out as separate streams, in the order that they are usually read. There are separate streams for the logical scene graph, the spatial hierarchy and the set of instances. Each feature with its own metadata (clash tests, saved viewpoints, selection sets, etc.) also uses a separate stream.
 
@@ -125,7 +125,7 @@ All geometry definitions are stored in a special chunked stream. Each definition
 
 When loading geometry chunks, the compressed segments are decompressed on demand into a temporary file. The geometry chunks are serialized in priority order based on the default view for the model. This ensures that during the initial load, geometry is largely read sequentially. 
 
-To help manage geometry life time as it is paged in and out, we split the in-memory geometry objects into two. Instances refer to a "Geom Ref" stub object that always remains in-memory. Geometry is shared between instances where possible, so multiple instances may reference the same Geom Ref. The Geom Ref stores the file and chunk id for the corresponding geometry definition and triggers the load on demand process when the geometry is needed.
+To help manage geometry life time as it is paged in and out, we split the in-memory geometry objects into two. Instances refer to a "Geom Ref" stub object that always remains in memory. Geometry is shared between instances where possible, so multiple instances may reference the same Geom Ref. The Geom Ref stores the file and chunk id for the corresponding geometry definition and triggers the load on demand process when the geometry is needed.
 
 ## Properties
 
@@ -133,9 +133,9 @@ The original idea was to handle property paging in the same way as geometry pagi
 
 Luckily, property access is not as time critical as geometry access. There tend to be two types of access. Either properties are being accessed for a single logical instance (an object has been selected), or properties for all objects are being accessed in traversal order (searching). We explicitly serialize attributes from multiple nodes into each chunk by traversing over the logical scene graph and writing them to the same stream. Once we have more than 64KB in the output, we start a new chunk. A directory in the root node keeps track of which range of nodes corresponds to each chunk. 
 
-Attributes can be shared between multiple nodes. At the time, Material and Transform nodes were involved in maintenance of the spatial graph. To keep things simple, only unshared property attributes are serialized into the chunked property stream. The remaining attributes are serialized with the rest of the logical scene graph. 
+Attributes can be shared between multiple nodes. At the time, Material and Transform nodes were involved in maintenance of the spatial graph. To keep things simple, only unshared property attributes are serialized into the chunked property stream and loaded on demand. The remaining attributes are serialized with the rest of the logical scene graph. 
 
-Each node has a vector of attached attributes. A NULL pointer is used to mark unloaded attributes. When an attribute is required, the node follows the chain of parent pointers to the root node where it can use the property directory to determine which property chunk to load. When a property chunk is loaded, all of the attributes contained are loaded. For a single object access, the additional overhead doesn't matter. For a traversal across all objects, it's exactly what you want, as the attributes are stored in traversal order.
+Each node has a vector of attached attributes. A NULL pointer is used to mark unloaded attributes. When an attribute is required, the node follows the chain of parent pointers to the root node where it can use the property directory to determine which property chunk to load. When a property chunk is loaded, all of the attributes contained are loaded. For single object access, the additional overhead doesn't matter. For a traversal across all objects, it's exactly what you want, as the attributes are stored in traversal order.
 
 ## Sheets
 
@@ -145,13 +145,15 @@ Navisworks already had support for 3D DWF. However, a DWF file can contain multi
 
 The first job was to add support for multiple sheets. We already had a multi-stream container format. So, all we had to do was add more streams for each additional sheet plus a stream that stored a list of sheets and the ids of the corresponding streams for each sheet. 
 
-Navisworks ignores the additional streams when first loading the file. If the user opens the sheets browser, Navisworks loads the list of sheets from the sheets stream. If the user selects another sheet to display, Navisworks loads the model from the corresponding streams and switches the currently active model to the new one. Previously loaded sheets are kept in memory (unless memory is running low and space needs to be reclaimed) in case the user wants to switch back. 
+Navisworks ignores the additional streams when first loading the file. If the user opens the sheets browser, Navisworks loads the list of sheets from the sheets stream. If the user selects another sheet to display, Navisworks loads the model from the corresponding streams and switches the currently active model to the new one. Previously loaded sheets are kept in memory, unless memory is running low and space needs to be reclaimed. 
 
 ## 2D
 
-We also had to add an entire 2D subsystem to Navisworks. I had naively assumed that 2D was a simpler subset of 3D. I was very mistaken. 2D rendering is full of arcane rules with demanding customers that expect pixel perfect accuracy. I'm talking viewports, hatch patterns, model vs paper space, end caps, endless options for what should be displayed when one object crosses something else, transparency, strict expectations for render order, and more. 
+We also had to add an entire 2D subsystem to Navisworks. I had naively assumed that 2D was a simpler subset of 3D. I was very mistaken. 2D rendering is full of arcane rules with demanding customers that expect pixel perfect accuracy. I'm talking viewports, hatch patterns, model vs paper space, end caps, endless options for what should be displayed when one primitive crosses another, transparency, strict expectations for render order, and more. 
 
-In the end we took the easy way out. We embedded a copy of Heidi, AutoCAD's original rendering engine. We ask Heidi to render the drawing and capture the "grass clippings" that would normally be sent direct to the graphics API. The grass clippings take the form of triangles, lines, points and fragments of text which we already know how to deal with. We handled the strict render ordering requirement by using the Z coordinate to specify the required order. With the view locked down to an orthographic camera looking down the Z axis, we can let Navisworks do its prioritized rendering thing, with the depth buffer ensuring the rendered order looks correct. 
+In the end we took the easy way out. We embedded a copy of Heidi, AutoCAD's original rendering engine. We ask Heidi to render the drawing and capture the "grass clippings" that would normally be sent direct to the system graphics API. The grass clippings take the form of triangles, lines, points and fragments of text which we already know how to deal with. We combine them into Navisworks geometry definitions and instances.
+
+We handled the strict render ordering requirement by using the Z coordinate to specify the required order. With the view locked down to an orthographic camera looking down the Z axis, we can let Navisworks do its prioritized rendering thing, with the depth buffer ensuring the rendered order looks correct. 
 
 ## UUIDs
 
@@ -173,11 +175,11 @@ In many cases, metadata is related to instances in the model. For example, a cla
 
 The equivalent process happens during deserialization. When Navisworks reads in the logical scene graph, it rebuilds the instance tree in the same order, creating a mapping from integer id to newly created instance tree nodes. When metadata streams are deserialized, they can map the saved integer id to the corresponding in-memory instance tree node.
 
-## Three Navisworks File Formats Again
+## File Format Details
 
-Finally, we've come full circle back to the three Navisworks File formats. Hopefully, you know have enough context to understand how each format works. All the formats use the same container format and serialization system. They differ in what streams are included.
+Finally, we've come full circle back to the three Navisworks File formats. Hopefully, you now have enough context to understand how each format works. All the formats use the same container format and serialization system. They differ in what streams are included.
 
-## NWC
+### NWC
 
 Let's start with the simplest format. An NWC simply contains the data from a source design file converted to the Navisworks data model. It contains all the sheet and model representation streams needed to represent the content of the original file. It may also have some metadata streams, like saved viewpoints, if the source design file has equivalent content. 
 
@@ -187,7 +189,7 @@ The cache validity stream contains information about the design file when it was
 
 Some design files support external references. In that case, the cache will also be invalid if any of the externally referenced files have changed. The cache validity stream also contains information about any dependent files. 
 
-## NWD
+### NWD
 
 An NWD is also simple. The format is almost the same as an NWC. It's not a cache, so doesn't include the cache validity stream. It includes all the sheet and model representation streams needed to represent the content of all the files aggregated into the current Navisworks session. 
 
@@ -195,7 +197,7 @@ There are two types of aggregation supported by Navisworks. The simplest is just
 
 The NWD also includes metadata streams for all the metadata converted from the source design files and created or edited during the Navisworks session. 
 
-## NWF
+### NWF
 
 NWF is the most complex format. The NWF has a special case stream which stores a list of the design files that have been aggregated into the Navisworks session. When you load an NWF, the design files on the list are loaded (using NWCs if valid) and aggregated together. The NWF doesn't contain any model representation streams. 
 
@@ -221,4 +223,14 @@ When the NWF is loaded, the referenced design files are aggregated together, the
 
 If there is no match or multiple possible matches, Navisworks behaves as if the instance was deleted in the updated design file. A common symptom of a failure to match instances can be seen in Clash Detective. You load an NWF and see lots of existing clashes have been marked as resolved (because one or both of the objects apparently no longer exist). Then an identical set of "new" clashes appear when you rerun the clash test. 
 
+There are lots of reasons why matching might fail
+* You're using a file format that doesn't have meaningful ids. That can lead to lots of ambiguous matches.
+* You're using a file format that doesn't have stable ids. Many CAD applications create a completely new set of UUIDs each time they publish a model as a DWF.
+* Third party extensions that delete and recreate CAD system objects on each edit, resulting in new ids. Particularly common in the AutoCAD ecosystem.
+* User inadvertently creates duplicate objects all with the same position, properties and geometry. 
+
 If you create a lot of metadata that references a lot of object instances, the model representation subset stored in the NWF can become very large. That can lead to lengthy loading times when opening the NWF, as Navisworks tries to match all the instances. A common mistake is to create lots of viewpoints where each viewpoint includes overridden materials for every instance in the model. 
+
+## Next Time
+
+Next time we'll take a look at the Autodesk viewer's SVF format, see what ideas it takes from the Navisworks format, and how it remixes them to work in the browser.
