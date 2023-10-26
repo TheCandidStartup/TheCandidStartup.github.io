@@ -16,7 +16,8 @@
 <script>
     // Can't use fit-content or similar widhth/height styles on iframe as content size not known until loaded
     var iframe = document.getElementById("{{ candid_iframe_id }}");
-    iframe.onload = function() { 
+
+    var updateSize = function() {
         // Need to allow for iframe border and too lazy to retrieve and parse actual border size property
         {% if include.height == "fit-content" %}
         iframe.height = iframe.contentWindow.document.body.scrollHeight + 4;
@@ -24,15 +25,17 @@
         {% if include.width == "fit-content" %}
         iframe.width = iframe.contentWindow.document.body.scrollWidth + 4;
         {% endif %}
-    
+    }
+    iframe.onload = function() { 
+        updateSize();
+
+        // Horrible hack for browsers, like Safari, that can fire onload before the page is fully loaded
+        // If iframe was already correctly sized, will have no effect.
+        setTimeout(updateSize, 500);
+
         // onsize event only works for top level window
         const resizeObserver = new ResizeObserver((entries) => {
-            {% if include.height == "fit-content" %}
-            iframe.height = iframe.contentWindow.document.body.scrollHeight + 4;
-            {% endif %}
-            {% if include.width == "fit-content" %}
-            iframe.width = iframe.contentWindow.document.body.scrollWidth + 4;
-            {% endif %}
+            updateSize();
         });
         resizeObserver.observe(iframe);
     };
