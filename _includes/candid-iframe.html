@@ -14,7 +14,7 @@
 
 {% if include.width == "fit-content" or include.height == "fit-content" %}
 <script>
-    // Can't use fit-content or similar widhth/height styles on iframe as content size not known until loaded
+    // Can't use fit-content or similar width/height styles on iframe as content size not known until loaded
     var iframe = document.getElementById("{{ candid_iframe_id }}");
 
     var updateSize = function() {
