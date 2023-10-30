@@ -25,7 +25,7 @@ The other design goal was to make something usable for design review workflows. 
 
 In design review, the point of the exercise is getting the design right and eventually building whatever you’ve designed. The interactive experience is a tool to help improve the design. You can’t adjust the design to make the experience work. The design is changing all the time. There’s no time to tweak the model to get acceptable performance. The content is not built with the interactive experience in mind. 
 
-Whatever we do to prepare the data has to be completely automatic, with no user intervention. We have to support all the different types of source CAD format that our users work with. We have to support a workflow where the source models are changing frequently. That means minimizing the turn around time to update to the latest models. We need to make sure that any additional metadata the user creates to support the design review process, still makes sense as the underlying models change.
+Whatever we do to prepare the data has to be completely automatic, with no user intervention. We have to support all the different types of source CAD format that our users work with. We have to support a workflow where the source models are changing frequently. That means minimizing the turn around time to update to the latest models. We need to make sure that any additional metadata the user creates, to support the design review process, still makes sense as the underlying models change.
 
 ## Three Navisworks File Formats
 
@@ -77,7 +77,7 @@ The logical scene graph is used to populate the [Selection Tree Window](https://
 
 The instance tree is the scene graph DAG expanded into a tree. It's an extremely lightweight structure used to tie the logical scene graph and spatial graph together. Each node in the instance tree represents a logical instance defined by a path through the DAG. Selections in Navisworks are represented by a list of pointers to instance tree nodes. As the instance tree can be easily regenerated from the logical scene graph, it's not serialized into the Navisworks file format. 
 
-The spatial graph is used for all spatially oriented operations such as rendering, picking, collision detection and clash detection. The leaves are self-contained instances consisting of a bounding box, transform, material and geometry definition. All are stored in a form optimized for rendering. Geometry and materials are shared between instances. Large geometric objects are [split into multiple instances]({{ ngp_url | append: "#prepare" }}) in the spatial graph to ensure efficiency of spatial operations. Each leaf node in the instance tree has a list of corresponding instances in the spatial graph.
+The spatial graph is used for all spatially oriented operations such as rendering, picking, collision detection and clash detection. The leaves are self-contained instances consisting of a bounding box, transform, material and geometry definition. All are stored in a form optimized for rendering. Geometry and materials are shared between instances. Large logical geometric objects are [split into multiple instances]({{ ngp_url | append: "#prepare" }}) in the spatial graph to ensure efficiency of spatial operations. Each leaf node in the instance tree has a list of corresponding instances in the spatial graph.
 
 Navisworks uses a spatial bounding box hierarchy to support efficient spatial queries. The hierarchy is an [R-tree](https://en.wikipedia.org/wiki/R-tree) variant.
 
@@ -129,11 +129,11 @@ To help manage geometry life time as it is paged in and out, we split the in-mem
 
 ## Properties
 
-The original idea was to handle property paging in the same way as geometry paging. However, property attributes are typically much smaller than geometry definitions and more numerous. Adding "Attribute Ref" objects each with file and chunk ids would add too much overhead. We were also constrained by the need to minimize changes to the existing code base in order to release in a timely fashion.
+The original idea was to handle property paging in the same way as geometry paging. However, property attributes are typically much smaller than geometry definitions and more numerous. Adding "Attribute Ref" objects, each with file and chunk ids, would add too much overhead. We were also constrained by the need to minimize changes to the existing code base in order to release in a timely fashion.
 
 Luckily, property access is not as time critical as geometry access. There tend to be two types of access. Either properties are being accessed for a single logical instance (an object has been selected), or properties for all objects are being accessed in traversal order (searching). We explicitly serialize attributes from multiple nodes into each chunk by traversing over the logical scene graph and writing them to the same stream. Once we have more than 64KB in the output, we start a new chunk. A directory in the root node keeps track of which range of nodes corresponds to each chunk. 
 
-Attributes can be shared between multiple nodes. At the time, Material and Transform nodes were involved in maintenance of the spatial graph. To keep things simple, only unshared property attributes are serialized into the chunked property stream and loaded on demand. The remaining attributes are serialized with the rest of the logical scene graph. 
+Attributes can be shared between multiple nodes. At the time, Material and Transform nodes were involved in maintenance of the spatial graph. To keep things simple, only unshared Property attributes are serialized into the chunked property stream and loaded on demand. The remaining attributes are serialized with the rest of the logical scene graph. 
 
 Each node has a vector of attached attributes. A NULL pointer is used to mark unloaded attributes. When an attribute is required, the node follows the chain of parent pointers to the root node where it can use the property directory to determine which property chunk to load. When a property chunk is loaded, all of the attributes contained are loaded. For single object access, the additional overhead doesn't matter. For a traversal across all objects, it's exactly what you want, as the attributes are stored in traversal order.
 
@@ -171,7 +171,7 @@ The UUIDs are serialized in an unusual way. All the UUIDs used by a sheet are se
 
 Navisworks is a design review format. Data converted from the source design files, like the model representation, is read only. It can't be edited in Navisworks. However, you can create and edit metadata during your design review session. Metadata includes things like saved viewpoints, selection sets, search sets, overridden materials, clash tests and results. 
 
-In many cases, metadata is related to instances in the model. For example, a clash result includes the two instances that are clashing. In memory, each instance is represented by a pointer to an instance tree node. When serialized, the instance is represented by an integer id. During serialization of the logical scene graph, Navisworks assigns an incrementing integer id for each instance tree node in traversal order. The metadata streams have access to that mapping, so as metadata is serialized the corresponding integer id for each instance can be written out. 
+In many cases, metadata is related to instances in the model. For example, a clash result includes the two instances that are clashing. In memory, each instance is represented by a pointer to an instance tree node. When serialized, the instance is represented by an integer id. During serialization of the logical scene graph, Navisworks assigns an incrementing integer id for each instance tree node in traversal order. The metadata streams have access to that mapping, so as metadata is serialized, the corresponding integer id for each instance can be written out. 
 
 The equivalent process happens during deserialization. When Navisworks reads in the logical scene graph, it rebuilds the instance tree in the same order, creating a mapping from integer id to newly created instance tree nodes. When metadata streams are deserialized, they can map the saved integer id to the corresponding in-memory instance tree node.
 
@@ -223,9 +223,9 @@ When the NWF is loaded, the referenced design files are aggregated together, the
 
 If there is no match or multiple possible matches, Navisworks behaves as if the instance was deleted in the updated design file. A common symptom of a failure to match instances can be seen in Clash Detective. You load an NWF and see lots of existing clashes have been marked as resolved (because one or both of the objects apparently no longer exist). Then an identical set of "new" clashes appear when you rerun the clash test. 
 
-There are lots of reasons why matching might fail
-* You're using a file format that doesn't have meaningful ids. That can lead to lots of ambiguous matches.
-* You're using a file format that doesn't have stable ids. Many CAD applications create a completely new set of UUIDs each time they publish a model as a DWF.
+There are lots of reasons why matching might fail.
+* You're using a design file format that doesn't have meaningful ids. That can lead to lots of ambiguous matches.
+* You're using a design file format that doesn't have stable ids. For example, some CAD applications create a completely new set of UUIDs each time they publish a model as a DWF or IFC.
 * Third party extensions that delete and recreate CAD system objects on each edit, resulting in new ids. Particularly common in the AutoCAD ecosystem.
 * User inadvertently creates duplicate objects all with the same position, properties and geometry. 
 
