@@ -36,13 +36,17 @@ I then copied over the the import of `VirtualScroller` and the dependent definit
 
 {% include candid-image.html src="/assets/images/frontend/vite-parse-error.png" alt="Vite Parse Error after dropping VirtualScroller.js into the project" %}
 
+## JS vs JSX
+
 [JSX](https://react.dev/learn/writing-markup-with-jsx) is a syntax extension to JavaScript heavily used by React. It lets you directly embed markup in JavaScript that looks very similar to HTML. When the JSX file is transpiled to JavaScript, the markup is replaced by JavaScript code that makes calls to [`React.createElement`](https://react.dev/reference/react/createElement). React uses elements as a light weight way to describe UI. React then [updates the browser DOM]({{ vs_url | append: "#react-virtual-dom" }}) to match the UI defined by the elements. 
 
 Looking more closely at `VirtualScroller.js` shows that it does indeed include JSX markup. Much of the front end tooling used with React doesn't care what extension you use for JSX. Clearly, Vite does. I renamed the file to `VirtualScroller.jsx` and the browser immediately updated.
 
 {% include candid-image.html src="/assets/images/frontend/react-virtual-scroll-copy-paste.png" alt="React Virtual Scroll Copy and Pasted into Vite project" %}
 
-I was going to show you the live control embedded in an iframe, but the project wouldn't build due to typescript errors. By default, Vite projects are setup with strict linting turned on. 
+It works! Now to do a production build so that you can try it out for yourselves. 
+
+## TypeScript Strict Linting
 
 ```
 src/App.tsx:2:29 - error TS7016: Could not find a declaration file for module './VirtualScroller'. '/Users/tim/GitHub/react-virtual-scroll-grid/src/VirtualScroller.jsx' implicitly has an 'any' type.
@@ -65,3 +69,54 @@ src/App.tsx:26:21 - error TS7006: Parameter 'item' implicitly has an 'any' type.
 26 const rowTemplate = item => (
                        ~~~~
 ```
+
+Oh dear. In development mode, Vite just transpiles TypeScript to JavaScript without any linting. The assumption is that your IDE will warn you of errors as you edit, and Vite should concentrate on reloading as fast as possible. And to be fair, VS Code did have some squiggly warning underlines that I'd ignored in my excitement. 
+
+When you do a production build, you get the full range of checks. By default, Vite projects are setup with strict TypeScript linting turned on. After all, if you're creating a new TypeScript project, you want to do it properly. I thought about turning strict typing off, but that seems like a mistake. I want to use TypeScript and here's some clear encouragement to go ahead and do it. 
+
+## Adding Type Annotations
+
+I started off with the minimal changes needed to get the code to compile. At some point, I will need to convert `VirtualScroller` to TypeScript. I quickly worked out that now is not the time. Renaming the file with a `.tsx` extension resulted in many more errors. I got nowhere trying to fix them. I clearly need a much better understanding of the TypeScript and React data models. For now, I tell the TypeScript compiler to ignore errors from the import. 
+
+```
+// @ts-ignore
+import VirtualScroller from './VirtualScroller'
+```
+
+The other three errors were easy to fix by adding type annotations. The VirtualScroller component abstracts away the details of how a row of data is represented via the getData function, and how a row is described as React elements via the rowTemplate function. The only constraint is that getData returns an array of items which VirtualScroller will call [`map()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) on, passing in the rowTemplate function. 
+
+```
+const getData = (offset: number, limit: number):any[] => {
+  ...
+}
+
+const rowTemplate = (item: any) => (
+  ...
+)
+```
+
+## Try It!
+
+And here it is, a basic React based virtual scrolling implementation. Go ahead and try it out. I'm curious if you'll notice the same problems I did. 
+
+{% include candid-iframe.html src="/assets/dist/react-basic-virtual-scroll/index.html" width="100%" height="fit-content" %}
+
+If you scroll a page at a time by clicking in the scroll bar above or below the handle, it works perfectly. You see a scroll animation that shows you how the content is moving. New items scroll seamlessly into view. Now try grabbing the scroll handle and moving it around. The content flickers or goes blank for a few seconds, then updates when you stop moving. 
+
+## Fundamental Problems
+
+The VirtualScroller [uses a fixed size viewpoint container that scrolls over a child container]({{ vs_url | append: "#virtual-scrolling-implementation-in-react" }}). The child contains the currently loaded rows sandwiched between two padding containers that represent the unloaded virtualized rows. When the [scroll event](https://developer.mozilla.org/en-US/docs/Web/API/Element/scroll_event) on the viewport container is raised, the component updates the React state which triggers a React render that creates the rows that have scrolled into view. 
+
+The problem is that the scroll event is triggered *after* the browser has scrolled the existing DOM content. Scrolling a page at a time works because the VirtualScroller also loads the rows immediately adjacent to the visible page. These are what you see scrolling into view when you click above or below the scroll handle. However, when you scroll further, all the browser can do is scroll one of the padding containers into view. 
+
+It gets worse. Modern browsers use a [multi-threaded architecture]({{ vs_url | append: "#chrome-renderingng-architecture" }}) where large parts of the rendering pipeline run off the main JavaScript thread. In particular, scrolling is called out as something that can operate without touching the main thread at all. The child container can be scrolled and the page re-rendered before the scroll event has triggered. 
+
+You can demonstrate this effect using the browser's development tools. When trying to figure out what was going on, I set breakpoints on the scroll event handler and the render method. I moved the scroll handle and the existing DOM content scrolled, resulting in a blank control, before seemingly breaking on the scroll event breakpoint. However, if I keep moving the scroll handle, the content continues to scroll, all while the main thread is stopped on the breakpoint. 
+
+## Conclusion
+
+This approach is functional but doesn't make for a great experience. Maybe this is why Google Sheets uses virtual scrolling [just to implement the scroll bars]({{ vs_url | append: "#how-does-google-sheets-work" }}), with a separate content element that is only connected to the scroll bars via JavaScript event handlers. 
+
+{% include candid-image.html src="/assets/images/frontend/google-sheets-annotated.svg" alt="Google Sheets Grid Annotated" %}
+
+Next time, I'll try to implement something similar, and see if it works any better.
