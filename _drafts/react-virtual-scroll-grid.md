@@ -70,7 +70,7 @@ src/App.tsx:26:21 - error TS7006: Parameter 'item' implicitly has an 'any' type.
                        ~~~~
 ```
 
-Oh dear. In development mode, Vite just transpiles TypeScript to JavaScript without any linting. The assumption is that your IDE will warn you of errors as you edit, and Vite should concentrate on reloading as fast as possible. And to be fair, VS Code did have some squiggly warning underlines that I'd ignored in my excitement. 
+Oh dear. In development mode, Vite just transpiles TypeScript to JavaScript without any linting. The assumption is that your IDE will warn you of errors as you edit, while Vite should concentrate on reloading as fast as possible. And to be fair, VS Code did have some squiggly warning underlines that I'd ignored in my excitement. 
 
 When you do a production build, you get the full range of checks. By default, Vite projects are setup with strict TypeScript linting turned on. After all, if you're creating a new TypeScript project, you want to do it properly. I thought about turning strict typing off, but that seems like a mistake. I want to use TypeScript and here's some clear encouragement to go ahead and do it. 
 
@@ -103,20 +103,18 @@ And here it is, a basic React based virtual scrolling implementation. Go ahead a
 
 If you scroll a page at a time by clicking in the scroll bar above or below the handle, it works perfectly. You see a scroll animation that shows you how the content is moving. New items scroll seamlessly into view. Now try grabbing the scroll handle and moving it around. The content flickers or goes blank for a few seconds, then updates when you stop moving. 
 
-## Fundamental Problems
+## Theories
 
 The VirtualScroller [uses a fixed size viewpoint container that scrolls over a child container]({{ vs_url | append: "#virtual-scrolling-implementation-in-react" }}). The child contains the currently loaded rows sandwiched between two padding containers that represent the unloaded virtualized rows. When the [scroll event](https://developer.mozilla.org/en-US/docs/Web/API/Element/scroll_event) on the viewport container is raised, the component updates the React state which triggers a React render that creates the rows that have scrolled into view. 
 
-The problem is that the scroll event is triggered *after* the browser has scrolled the existing DOM content. Scrolling a page at a time works because the VirtualScroller also loads the rows immediately adjacent to the visible page. These are what you see scrolling into view when you click above or below the scroll handle. However, when you scroll further, all the browser can do is scroll one of the padding containers into view. 
+The scroll event is triggered *after* the browser has scrolled the existing DOM content. Everything works as long as the component updates the DOM to create the newly visible rows *before* the browser schedules a render. It looks like, when you scroll fast and far, the render happens before the DOM is updated. The blank content is one of the padding containers being scrolled into view before the control eventually catches up. 
 
-It gets worse. Modern browsers use a [multi-threaded architecture]({{ vs_url | append: "#chrome-renderingng-architecture" }}) where large parts of the rendering pipeline run off the main JavaScript thread. In particular, scrolling is called out as something that can operate without touching the main thread at all. The child container can be scrolled and the page re-rendered before the scroll event has triggered. 
+Why does it happen? No idea. I added some console logging on the key functions and confirmed that every time a scroll event is triggered it's immediately followed by a React [render and commit](https://react.dev/learn/render-and-commit). 
 
-You can demonstrate this effect using the browser's development tools. When trying to figure out what was going on, I set breakpoints on the scroll event handler and the render method. I moved the scroll handle and the existing DOM content scrolled, resulting in a blank control, before seemingly breaking on the scroll event breakpoint. However, if I keep moving the scroll handle, the content continues to scroll, all while the main thread is stopped on the breakpoint. 
+Annoyingly, if I set breakpoints using the browser development tools, it happens every time. Doesn't matter how I trigger the scroll, the padding container scrolls into view and the browser stops at the breakdown. Even weirder, I can carry on scrolling, and the existing DOM content scrolls up and down, all while JavaScript execution is stopped on a breakpoint.
 
-## Conclusion
+Modern browsers use a [multi-threaded architecture]({{ vs_url | append: "#chrome-renderingng-architecture" }}) where large parts of the rendering pipeline run off the main JavaScript thread. In particular, scrolling is called out as something that can operate without touching the main thread at all. Does that mean there's some kind of race condition and the child container can be scrolled and the page re-painted before the scroll event has triggered?
 
-This approach is functional but doesn't make for a great experience. Maybe this is why Google Sheets uses virtual scrolling [just to implement the scroll bars]({{ vs_url | append: "#how-does-google-sheets-work" }}), with a separate content element that is only connected to the scroll bars via JavaScript event handlers. 
+## Next Time
 
-{% include candid-image.html src="/assets/images/frontend/google-sheets-annotated.svg" alt="Google Sheets Grid Annotated" %}
-
-Next time, I'll try to implement something similar, and see if it works any better.
+I need to dive down the rabbit hole, get a better understanding of browser and react rendering, and see whether there's some way of fixing it, or whether I need a completely different approach.
