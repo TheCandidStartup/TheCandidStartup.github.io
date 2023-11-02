@@ -1,6 +1,6 @@
 ---
 title: >
-    React Virtual Scroll Grid 2 : Binary Chop
+    React Virtual Scroll Grid 2 : Down the Rabbit Hole
 tags: frontend
 ---
 
@@ -46,4 +46,36 @@ I then noticed that the DOM structure didn't actually have a distinct child cont
 
 I added another div between the viewport and the children. Hopefully React would reuse it rather than replacing it when rebuilding the DOM. It worked, to some extent. The viewport layer no longers disappears from the layers tab, but the scroll list still goes blank. 
 
-{% include candid-image.html src="/assets/images/frontend/chrome-react-grid-layers-tab-paints.png" alt="Compositing Layers for the React Scroll List" %}
+The layers tab can also show what is being painted on each layer by checking the "Paints" checkbox. I frequently get graphical glitches on my Macbook Air when I try this. The entire viewport rectangle goes black. When it does work, it's magical. I can see all the items rendered (including those outside the viewport). The display updates in real time as I scroll. Unfortunately, if I zoom in far enough to see the detail of the text being rendered, the graphical glitches kick in.
+
+{% include candid-image.html src="/assets/images/frontend/chrome-react-grid-layers-tab-paints.png" alt="Compositing Layers for the React Scroll List with Paints checked" %}
+
+Interestingly, the text in the layers tab never goes blank as I scroll. I can also see that the text is always correctly positioned. At first I thought this must mean that the browser is not compositing that layer into the final render. However, as I scroll around, I sometimes see a state where the previously out of view rows in the DOM are scrolled into view and visible with the rest of the control blank. I think this is more likely to be an artifact of the developer tools, like the breakpoints behavior.
+
+### React Developer Tools
+
+I went back to the [Chrome input processing blog](https://developer.chrome.com/blog/inside-browser-part4/). Something weird is going on when there's lots of scroll input. The article mentions that input events are coalesced and delivered at the same rate as [`requestAnimationFrame`](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame). The assumption is that you will receive the latest events, update state, render and commit before the browser repaints the window. Is it possible that the whole process is taking too long and that somehow the browser is repainting before the commit?
+
+The React team have a Chrome extension that adds some React specific tools, including a [profiler](https://legacy.reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html), to the Chrome developer tools. Time to try that out. 
+
+The profiler shows each commit on a timeline, capturing information about which components were re-rendered and how long that took. I recorded a profile while scrolling furiously up and down. The profiler captures data about each React component. In my case, there's only one, the scroller. 
+
+{% include candid-image.html src="/assets/images/frontend/react-dev-tools-profiler-component-details.png" alt="React Profiler performance data captured for the Scroller component" %}
+
+The component is being rendered 3 times in every 0.1 seconds, or 30 times a second. The Chrome developer tools render tab confirms that animation is running at 30 fps. That gives a budget of 33ms per frame. After the initial render, each re-render took just 2-3ms, in a development build. Doesn't seem like there's any performance problem. 
+
+### React-virtualized and React-window
+
+Going back to my original search results, I found [some](https://github.com/bvaughn/react-virtualized/issues/453) [hits](https://github.com/bvaughn/react-virtualized/issues/87) in issues for a GitHub project called [react-virtualized](https://github.com/bvaughn/react-virtualized). React-virtualized is a large library of React components that include virtual scrolling. There haven't been any significant changes for years and the README suggests looking at [react-window](https://github.com/bvaughn/react-window) as a lighter weight alternative. React-window is similarly mature with minor bug fix activity and updates to support React 17 and 18. 
+
+A wider search found a [recommendation for both](https://legacy.reactjs.org/docs/optimizing-performance.html#virtualize-long-lists) in the React documentation on optimizing performance. So, clearly worth a look. React-window has an [online sandbox](https://react-window.now.sh/) that let's you play around with the components. Go and try it now. Scroll up and down furiously. I'll wait.
+
+{% include candid-image.html src="/assets/images/frontend/react-window-fixed-size-list.png" alt="React-window Fixed Size List Sandbox" %}
+
+Absolutely solid. Completely responsive. No flashing or blank content. Clearly time to give up on any wild theories about browser compositing bugs or race conditions deep in the core of React. 
+
+## Next Time
+
+If I was writing commercial software, I'd consider it case closed. Throw away my minimal virtual scrolling sample and switch to react-window. I may end up doing that, but first I want to understand *why*.
+
+Prepare for a deep dive into react-window. What is it doing that my current code isn't? 
