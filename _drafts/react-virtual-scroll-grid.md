@@ -111,7 +111,7 @@ The scroll event is triggered *after* the browser has scrolled the existing DOM 
 
 Why does it happen? No idea. I added some console logging on the key functions and confirmed that every time a scroll event is triggered it's immediately followed by a React [render and commit](https://react.dev/learn/render-and-commit). 
 
-Annoyingly, if I set breakpoints using the browser development tools, it happens every time. Doesn't matter how I trigger the scroll, the padding container scrolls into view and the browser stops at the breakdown. Even weirder, I can carry on scrolling, and the existing DOM content scrolls up and down, all while JavaScript execution is stopped on a breakpoint.
+Annoyingly, if I set breakpoints using the browser development tools, it happens every time. Doesn't matter how I trigger the scroll, the padding container scrolls into view and the browser stops at the breakpoint. Even weirder, I can carry on scrolling, and the existing DOM content scrolls up and down, all while JavaScript execution is stopped on a breakpoint.
 
 Modern browsers use a [multi-threaded architecture]({{ vs_url | append: "#chrome-renderingng-architecture" }}) where large parts of the rendering pipeline run off the main JavaScript thread. In particular, scrolling is called out as something that can operate without touching the main thread at all. Does that mean there's some kind of race condition and the child container can be scrolled and the page re-painted before the scroll event has triggered?
 
