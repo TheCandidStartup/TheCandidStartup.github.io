@@ -38,7 +38,7 @@ I then copied over the the import of `VirtualScroller` and the dependent definit
 
 ## JS vs JSX
 
-[JSX](https://react.dev/learn/writing-markup-with-jsx) is a syntax extension to JavaScript heavily used by React. It lets you directly embed markup in JavaScript that looks very similar to HTML. When the JSX file is transpiled to JavaScript, the markup is replaced by JavaScript code that makes calls to [`React.createElement`](https://react.dev/reference/react/createElement). React uses elements as a light weight way to describe UI. React then [updates the browser DOM]({{ vs_url | append: "#react-virtual-dom" }}) to match the UI defined by the elements. 
+[JSX](https://react.dev/learn/writing-markup-with-jsx) is a syntax extension to JavaScript heavily used by React. It lets you directly embed markup in JavaScript that looks very similar to HTML. When the JSX file is transpiled to JavaScript, the markup is replaced by JavaScript code that makes calls to [`React.createElement`](https://react.dev/reference/react/createElement). React uses elements as a lightweight way to describe UI. React then [updates the browser DOM]({{ vs_url | append: "#react-virtual-dom" }}) to match the UI defined by the elements. 
 
 Looking more closely at `VirtualScroller.js` shows that it does indeed include JSX markup. Much of the front end tooling used with React doesn't care what extension you use for JSX. Clearly, Vite does. I renamed the file to `VirtualScroller.jsx` and the browser immediately updated.
 
@@ -105,7 +105,7 @@ If you scroll a page at a time by clicking in the scroll bar above or below the 
 
 ## Theories
 
-The VirtualScroller [uses a fixed size viewpoint container that scrolls over a child container]({{ vs_url | append: "#virtual-scrolling-implementation-in-react" }}). The child contains the currently loaded rows sandwiched between two padding containers that represent the unloaded virtualized rows. When the [scroll event](https://developer.mozilla.org/en-US/docs/Web/API/Element/scroll_event) on the viewport container is raised, the component updates the React state which triggers a React render that creates the rows that have scrolled into view. 
+The VirtualScroller [uses a fixed size viewport container that scrolls over a child container]({{ vs_url | append: "#virtual-scrolling-implementation-in-react" }}). The child contains the currently loaded rows sandwiched between two padding containers that represent the unloaded virtualized rows. When the [scroll event](https://developer.mozilla.org/en-US/docs/Web/API/Element/scroll_event) on the viewport container is raised, the component updates the React state which triggers a React render that creates the rows that have scrolled into view. 
 
 The scroll event is triggered *after* the browser has scrolled the existing DOM content. Everything works as long as the component updates the DOM to create the newly visible rows *before* the browser schedules a render. It looks like, when you scroll fast and far, the render happens before the DOM is updated. The blank content is one of the padding containers being scrolled into view before the control eventually catches up. 
 
