@@ -4,7 +4,7 @@ title: >
 tags: frontend
 ---
 
-[Last time]({% link _drafts/react-virtual-scroll-grid.md %}) I left you with a cliff hanger. Why is my simple virtualized scrolling list going blank if you scroll it too fast? I had some theories. Time to apply the scientific method and see which ones stand up.
+[Last time]({% link _posts/2023-11-06-react-virtual-scroll-grid.md %}) I left you with a cliff hanger. Why is my simple virtualized scrolling list going blank if you scroll it too fast? I had some theories. Time to apply the scientific method and see which ones stand up.
 
 {% include candid-image.html src="/assets/images/frontend/react-virtual-scroll-copy-paste.png" alt="React Virtual Scroll Copy and Pasted into Vite project" %}
 
