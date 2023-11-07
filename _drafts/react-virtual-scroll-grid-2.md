@@ -80,7 +80,7 @@ Time to slow everything down and see what's really going on. I used the screen r
 
 Well that's not right. Two of the intermediate frames have content that has been scrolled up so that lots of buffer items are visible.
 
-I went back to the React profiler data and my console logging. Correlating everything together, it looks like the bad intermediate frames were painted using the content created for the *previous* frame. If you scroll harder, the content scrolls up so far that none of the items are visible. Which would confirm my initial theory that the browser render sometimes happens *before* the DOM is updated.
+I went back to the React profiler data and my console logging. Correlating everything together, it looks like the bad intermediate frames were painted using the content created for the *previous* frame. If you scroll harder, the content scrolls up so far that none of the items are visible. Which would confirm my initial theory that the browser paint sometimes happens *before* the DOM is updated.
 
 ### Chrome Performance Tool
 
@@ -109,7 +109,7 @@ Why is my boring, minimal virtual scroll list control triggering this behavior? 
 
 Going back to my original search results, I found [some](https://github.com/bvaughn/react-virtualized/issues/453) [hits](https://github.com/bvaughn/react-virtualized/issues/87) in issues for a GitHub project called [react-virtualized](https://github.com/bvaughn/react-virtualized). React-virtualized is a large library of React components that include virtual scrolling. There haven't been any significant changes for years and the README suggests looking at [react-window](https://github.com/bvaughn/react-window) as a lighter weight alternative. React-window is similarly mature with minor bug fix activity and updates to support React 18. 
 
-A wider search found a [recommendation for both](https://legacy.reactjs.org/docs/optimizing-performance.html#virtualize-long-lists) in the React documentation on optimizing performance. So, clearly worth a look. React-window has an [online sandbox](https://react-window.now.sh/) that let's you play around with the components. Go and try it now. Scroll up and down furiously. I'll wait.
+A wider search found a [recommendation for both](https://legacy.reactjs.org/docs/optimizing-performance.html#virtualize-long-lists) in the React documentation on optimizing performance. So, clearly worth a look. React-window has an [online sandbox](https://react-window.now.sh/) that let's you play around with the components. Go and [try it now](https://react-window.now.sh/). Scroll up and down furiously. I'll wait.
 
 {% include candid-image.html src="/assets/images/frontend/react-window-fixed-size-list.png" alt="React-window Fixed Size List Sandbox" %}
 
