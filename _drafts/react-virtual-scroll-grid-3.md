@@ -6,7 +6,7 @@ tags: frontend
 
 {% capture rvs2_url %}{% link _drafts/react-virtual-scroll-grid-2.md %}{% endcapture %}
 We're on a journey, trying to find out why our [simple React virtual scrolling list](https://github.com/TheCandidStartup/react-virtual-scroll-grid) flickers and goes blank while you're dragging the scroll handle. 
-[Last time]({{ rvs2_url }}) we ended when we found [react-window](https://github.com/bvaughn/react-window), a mature library of virtual scrolling components that didn't have any rendering problems when scrolling. 
+[Last time]({{ rvs2_url }}), we ended when we found [react-window](https://github.com/bvaughn/react-window), a mature library of virtual scrolling components that didn't have any rendering problems when scrolling. 
 
 ## React-window
 
@@ -18,12 +18,12 @@ Looking at the code base, there's lots of focus on optimization and the sort of 
 
 ## Differences
 
-So, what could account for the difference in behavior? Here's a few things that leapt out to me.
+So, what could account for the difference in behavior? Here's a few things that leapt out at me.
 * **React Version**: I'm using React 18. It's not clear what version of React the sample web site is using.
 * **Tooling**: I'm using Vite with TypeScript. React-window uses Babel and Flow type annotations.
 * **App Scaffold**: My app is rooted using the new React 18 syntax of `ReactDOM.createRoot()` while react-window is using the legacy `ReactDOM.render()`.
 * **Pure Components**: React-window controls are subclasses of `PureComponent`, my simple example is a subclass of `Component`.
-* **State**: React-window uses simple state entirely related to the scrolling position, my simple example has a kitchen sink state including a load of derived data.
+* **State**: React-window uses simple state entirely related to the scrolling position, my example has a kitchen sink state including a load of derived data.
 * **Buffer Rows**: My simple example creates five buffer rows above and below the visible items. React-window controls create a single buffer item, positioned depending on which direction the control is scrolling. 
 * **Positioning**: My simple example uses relative positioning of the row items, sandwiching them between two padding containers. React-window has just the row items as children, using absolute positioning. 
 * **Optimization**: React-window uses [memoization](https://github.com/alexreardon/memoize-one) and [caches](https://github.com/bvaughn/react-window/blob/6ff5694ac810617515acf74401ba68fe2951133b/src/createListComponent.js#L468) as optimizations. My simple example doesn't. 
@@ -47,7 +47,7 @@ Unfortunately, that had no effect. React uses the JavaScript [strict equality (=
 
 I refactored the code so that, like react-window, it just stored the scroll position in the state, and moved retrieval of the list of row data to the `render()` function. 
 
-Success, in that I removed two unnecessary renders, failure in that the control still when blank when scrolling. 
+Success, in that I removed two unnecessary renders, failure in that the control still went blank when scrolling. 
 
 ## React Version, Tooling and App Scaffold
 
@@ -94,15 +94,40 @@ I was lucky. The 20th issue I looked at, on the first page of results, was [Bug:
 
 ## React Scheduler
 
-React 18 has a [cooperative multitasking model](https://github.com/reactwg/react-18/discussions/27) where rendering work is divided into multiple units. Updates can be interrupted between units and control returned to the event loop or priorities changed.
+React 18 has a [cooperative multitasking model](https://github.com/reactwg/react-18/discussions/27) where rendering work is divided into multiple units. Updates can be interrupted between units, currently if more than 5ms have elapsed,  and control returned to the event loop. The intention is to prevent low priority updates from blocking the event loop. 
 
 The [scheduler has five priority levels](https://jser.dev/react/2022/03/16/how-react-scheduler-works/). At the highest, immediate priority level, work is performed synchronously. At every other priority level, tasks are added to a priority queue with a priority level specific timeout for how long the task can wait. Finally, if this is the first task added to the queue, a callback is scheduled to process the queue. 
 
 The end result is that anything lower than immediate priority level can be interrupted by a browser paint operation. So, the critical question is, what priority does a scroll event have? 
 
-The answer is in the [response](https://github.com/facebook/react/issues/27524#issuecomment-1769792689) to the bug report. Only "discrete" input events, like a button click, are given the immediate priority level. Continuous input, where like scrolling, you receive a stream of events until the user is done, get the lower "user blocking" priority level. 
+The answer is in the [response](https://github.com/facebook/react/issues/27524#issuecomment-1769792689) to the bug report. Only "discrete" input events, like a button click, are given the immediate priority level. Continuous input, like scrolling, where you receive a stream of events until the user is done, get the lower "user blocking" priority level. 
+
+I'm hoping this is an unintended consequence that can be fixed in future. It doesn't make sense that updates in response to scroll events, or `requestAnimationFrame`, will always render a frame late. A better implementation for the "user blocking" priority level would be to start processing updates synchronously and then schedule any remaining work if more than 5ms have elapsed. This way, if updates are fast enough, you see the correct content, while ensuring that the app stays responsive if updates are too slow. 
 
 ## Workarounds
 
+What can I do now? There seem to be three options. First, I could go back to a previous major version of React. Previous versions still get security updates but no other support. 
+
+I would prefer to stay on React 18 if I can. The new "Concurrent Rendering" scheduler is meant to be opt-in. It seems that I inadvertently opted in by using an app scaffold with the new `ReactDOM.createRoot()`. If you switch back to `ReactDOM.render()`, you activate a legacy scheduling mode which works just like React 17. 
+
+If you want to make use of the React 18 features that depend on the new scheduler, you can force synchronous rendering for selected updates by wrapping them with `flushSync`.
+
+```
+flushSync(() => {
+    this.setState({
+      topPaddingHeight,
+      bottomPaddingHeight,
+      index
+    })
+})
+```
+
+The downside is that `flushSync` is more aggressive than needed. It forces an immediate render of that specific change, preventing React from batching together other changes triggered by the same event. It also means you need to update every continuous event handler and `requestAnimationFrame` callback yourself. Including in third party modules like react-window. 
+
 ## Try It!
 
+For now, I'm using the `ReactDOM.render()` workaround. It's the simplest, least intrusive fix. I won't need any of the fancy React 18 features for my spreadsheet app.
+
+[Try it out]({% link assets/dist/react-scroll-list-2/index.html %}) and revel in the smooth, responsive scrolling, with immediate feedback. My simple example, complete with style sheet hacks marking the first and last "visible" rows in green, is on the left. React-window's FixedSizeList, set up to use the same size and number of rows, is on the right.
+
+{% include candid-iframe.html src="/assets/dist/react-scroll-list-2/index.html" width="100%" height="fit-content" %}
