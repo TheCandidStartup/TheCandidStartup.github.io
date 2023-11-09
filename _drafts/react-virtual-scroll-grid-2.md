@@ -101,7 +101,7 @@ Rather than triggering a render synchronously when `SetState` is called, React s
 
 ### React Scheduler
 
-Apparently, this behavior was [introduced in React 16](https://adasq.github.io/scheduling-in-react-16-x/). Prior to that, React rendering always happened synchronously. Now, the scheduler module in React can break work up into smaller chunks to try and keep the UI more responsive. However, everything I've read suggests that this is [opt in behavior](https://3perf.com/talks/react-concurrency/) that was publicly exposed as [Concurrent Rendering in React 18](https://legacy.reactjs.org/blog/2022/03/29/react-v18.html). 
+Apparently, this behavior was [introduced in React 16](https://adasq.github.io/scheduling-in-react-16-x/). Prior to that, React rendering always happened synchronously. Now, the scheduler module in React can break work up into smaller chunks to try and keep the UI more responsive. However, everything I've read suggests that this is [opt in behavior](https://3perf.com/talks/react-concurrency/) that was first publicly exposed as [Concurrent Rendering in React 18](https://legacy.reactjs.org/blog/2022/03/29/react-v18.html). 
 
 Why is my boring, minimal virtual scroll list control triggering this behavior? Do all React virtual scrolling controls have this problem?
 

@@ -14,7 +14,7 @@ React-window is an open source library for "efficiently rendering large lists an
 
 There's an associated [web site](https://react-window.now.sh/) with lots of example code and live samples. All the samples have links out to [CodeSandbox](https://codesandbox.io/s/github/bvaughn/react-window/tree/master/website/sandboxes/fixed-size-list-vertical) where you can play with the code next to a live running sample. 
 
-Looking at the code base, there's lots of focus on optimization and the sort of edge case handling that you would expect to see in a well maintained library. However, once you get past that, and all the features, it works just like my simple virtual scrolling example. There's a React [OnScroll handler](https://github.com/bvaughn/react-window/blob/6ff5694ac810617515acf74401ba68fe2951133b/src/createListComponent.js#L590) which sets state based on the scroll position which triggers a [render](https://github.com/bvaughn/react-window/blob/6ff5694ac810617515acf74401ba68fe2951133b/src/createListComponent.js#L310) that results in React creating the visible DOM elements.
+Looking at the code base, there's lots of focus on optimization and the sort of edge case handling that you would expect to see in a mature library. However, once you get past that, and all the features, it works just like my simple virtual scrolling example. There's a React [OnScroll handler](https://github.com/bvaughn/react-window/blob/6ff5694ac810617515acf74401ba68fe2951133b/src/createListComponent.js#L590) which sets state based on the scroll position which triggers a [render](https://github.com/bvaughn/react-window/blob/6ff5694ac810617515acf74401ba68fe2951133b/src/createListComponent.js#L310) that results in React creating the visible DOM elements.
 
 ## Differences
 
@@ -98,7 +98,7 @@ React 18 has a [cooperative multitasking model](https://github.com/reactwg/react
 
 The [scheduler has five priority levels](https://jser.dev/react/2022/03/16/how-react-scheduler-works/). At the highest, immediate priority level, work is performed synchronously. At every other priority level, tasks are added to a priority queue with a priority level specific timeout for how long the task can wait. Finally, if this is the first task added to the queue, a callback is scheduled to process the queue. 
 
-The end result is that anything lower than immediate priority level can be interrupted by a browser paint operation. So, the critical question is, what priority does a scroll event have? 
+The end result is that anything lower than immediate priority level can be preempted by a browser paint operation. So, the critical question is, what priority does a scroll event have? 
 
 The answer is in the [response](https://github.com/facebook/react/issues/27524#issuecomment-1769792689) to the bug report. Only "discrete" input events, like a button click, are given the immediate priority level. Continuous input, like scrolling, where you receive a stream of events until the user is done, get the lower "user blocking" priority level. 
 
