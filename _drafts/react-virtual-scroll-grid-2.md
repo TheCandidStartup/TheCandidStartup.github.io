@@ -16,7 +16,7 @@ While all the cool kids have moved on to ChatGPT prompt engineering, I start mos
 
 I started with the weird breakpoint behavior in Chrome. Have I really found evidence that there's an inherent race condition between the main and rendering threads when scrolling triggers a DOM update? 
 
-I struck pay dirt with "`why chromes rendering result is different when using breakpoints`". I found an [answer](https://stackoverflow.com/a/73567420) on Stack Overflow. It says that the browser enters a special "[spin the event loop](https://html.spec.whatwg.org/multipage/webappapis.html#spin-the-event-loop)" mode when it hits a breakpoint. In this mode the event loop continues background processes such as CSS animations and repaints of DOM changes, which disabling execution of event handlers. 
+I struck pay dirt with "`why chromes rendering result is different when using breakpoints`". I found an [answer](https://stackoverflow.com/a/73567420) on Stack Overflow. It says that the browser enters a special "[spin the event loop](https://html.spec.whatwg.org/multipage/webappapis.html#spin-the-event-loop)" mode when it hits a breakpoint. In this mode the event loop continues background processes such as CSS animations and repaints of DOM changes, while disabling execution of event handlers. 
 
 Which explains the weird behavior I was seeing when debugging. No smoking gun there. 
 
