@@ -4,7 +4,7 @@ title: >
 tags: frontend
 ---
 
-{% capture rvs2_url %}{% link _drafts/react-virtual-scroll-grid-2.md %}{% endcapture %}
+{% capture rvs2_url %}{% link _posts/2023-11-13-react-virtual-scroll-grid-2.md %}{% endcapture %}
 We're on a journey, trying to find out why our [simple React virtual scrolling list](https://github.com/TheCandidStartup/react-virtual-scroll-grid) flickers and goes blank while you're dragging the scroll handle. 
 [Last time]({{ rvs2_url }}), we ended when we found [react-window](https://github.com/bvaughn/react-window), a mature library of virtual scrolling components that didn't have any rendering problems when scrolling. 
 
