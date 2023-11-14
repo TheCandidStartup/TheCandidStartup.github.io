@@ -56,7 +56,7 @@ SVF is, unfortunately, an Autodesk proprietary format. AFAIK the spec has never 
 
 The final player in the SVF ecosystem is the Model Derivative service. The Model Derivative service converts design files stored in Autodesk cloud apps into SVF, as well as a variety of other formats. The service creates and manages "derivatives" of your design files. Behind the scenes is a big S3 bucket and a fleet of servers with a variety of desktop applications installed. Model derivative service looks at the type of your input design file and the desired output format, then runs the appropriate converter. 
 
-Converters are typically implemented as SVF export plugins that run within a standard desktop application. One of the SVF teams built a C++ library for reading and writing SVF files. The applications teams were then responsible for using the library to write their plugin. In the early days of SVF, most conversions used Navisworks. Navisworks could read most formats, so all it took was implementing a Navisworks SVF export plugin to add Model Derivative support for twenty formats. 
+Converters are typically implemented as SVF export plugins that run within a standard desktop application. One of the SVF teams built a C++ library for reading and writing SVF files. The application teams were then responsible for using the library to write their plugin. In the early days of SVF, most conversions used Navisworks. Navisworks could read most formats, so all it took was implementing a Navisworks SVF export plugin to add Model Derivative support for twenty formats. 
 
 Model Derivative service expects all converters to output a JSON manifest in a standard format, together with a set of files described by the manifest. If you ask Model Derivative service to produce multiple different types of derivative, it merges the JSON manifests from each converter together to describe a combined "bubble" of derivatives. When querying the Model Derivative service, you need to be aware that the manifest returned can contain data from other conversions that you might not be expecting. 
 
@@ -70,7 +70,141 @@ I'm going to start with the original SVF format, then go through what changed fo
 
 ### Model Derivative Manifest
 
+The Model Derivative manifest is structured as a tree. Each node of the tree is represented by a JSON object.
+
+```
+{
+    "guid": "aa85aad6-c480-4a35-9cbf-4cf5994a25ba",
+    "role": "viewable",
+    "type": "folder",
+    "name": "rac_basic_sample_project.rvt",
+    "children": []
+}
+```
+
+Every node has a `guid` identifier and `type`. If it's an internal node in the tree, it will have an array of `children`. Many nodes will have a human readable `name`.  Some types are categorized further with a `role` property. Each type of node will have additional type specific properties (not shown here).
+
+The manifest can be verbose. Complex design files can contain multiple models and views in both 2D and 3D. Each model and view is represented as a sub-tree containing thumbnails, 3D SVF, 2D DWF and F2D, viewpoints, thumbnails, additional design file specific metadata, object property databases, etc. There isn't any fixed structure. Consumers need to iterate over the the tree looking for types and roles they're interested in. 
+
+The `guid` identifiers don't have any specific meaning. They're used when merging manifests. The Model Derivative service recurses down the tree structure of each manifest, merging nodes with the same `guid`.
+
+Downloadable content is represented by nodes with the "resource" `type`. Resource nodes have an *urn* property which can be used to download the corresponding content from Model Derivative service. SVF files have the "graphics" `role` and a `mime` type of "application/autodesk-svf". 
+
+```
+{
+    "urn": "urn:adsk.viewing:fs.file:.../output/Resource/3D View/{3D} 960621/{3D}.svf",
+    "role": "graphics",
+    "size": 5242199,
+    "mime": "application/autodesk-svf",
+    "guid": "6bfb4886-f2ee-9ccb-8db0-c5c170220c40",
+    "type": "resource"
+}
+```
+
+SVF resources usually occur as a child of a "geometry" `type` node that has additional metadata such as a `name` and `viewableId`. The geometry node can contain other children such as saved views. 
+
+```
+{
+    "guid": "250a6ce5-ee70-fdca-bfc9-4111f54e9baa",
+    "type": "geometry",
+    "role": "3d",
+    "name": "{3D}",
+    "viewableID": "44745acb-ebea-4fb9-a091-88d28bd746c7-000ea86d",
+    "children": []
+}
+```
+
+### Multiple Versions of Design Files
+
+Each version of a design file managed in the cloud will have its own derivatives described by a Model Derivative manifest. If you want to understand how a design file has changed over time, you will need to identify the corresponding geometry resources across multiple manifests. Remember that each design file can contain multiple sheets and models. 
+
+You might think that's what the `guid` property is for. However, some converters generate new guids every time they export, so you can't rely on guids being stable across versions. The `viewableId` property is an identifier that should be meaningful to the source design application. You can rely on it being stable if it's present, but not all converters output one. The `name` property is the last resort. It's usually a human editable name so may occasionally change from version to version. 
+
+The heuristic most consumers end up using is to try matching up resources on each property in turn: `guid`, then `viewableId`, then `name`. Stop when you find a match. 
+
 ### SVF container
+
+You've parsed the Model Derivative manifest, identified an SVF resource and downloaded the corresponding content. What have you got?
+
+The top level SVF container is a ZIP file. Change the extension from `.svf` to `.zip` and open it up to see what's inside. Typically, all you'll find is two JSON files: manifest.json and metadata.json. 
+
+When designing the SVF format, we wanted to have the flexibility to use it as a multi-part web format or an all-in-one desktop format. Each part can be stored in the `.svf` ZIP file, or as a separate external file. The manifest.json file lists all the parts and tells you whether they're embedded in the ZIP file or referenced externally.
+
+```
+    "assets": [
+        {
+            "id": "objects_attrs.json",
+            "type": "Autodesk.CloudPlatform.PropertyAttributes",
+            "URI": "../../objects_attrs.json.gz",
+            "size": 0,
+            "usize": 0
+        },
+        {
+            "id": "CameraDefinitions.bin",
+            "type": "Autodesk.CloudPlatform.PackFile",
+            "typeset": "0",
+            "URI": "CameraDefinitions.bin",
+            "size": 140,
+            "usize": 177
+        },
+        {
+            "id": "metadata.json",
+            "type": "Autodesk.CloudPlatform.ViewingMetadata",
+            "URI": "embed:/metadata.json",
+            "size": 491,
+            "usize": 975 
+        },
+        ...
+    ]
+```
+
+The manifest has a top level `assets` property which lists all the parts of the SVF. Each asset has a `URI` property which tells you were the content is stored. If the URI starts with `embed:`, it's stored in the ZIP with the filename given by the rest of the URI. Otherwise, the URI is a relative path to an external resource. Most of the time, the external resource is in the same directory. However, it is possible for the resource to be stored in a sub-directory, or as shown here, higher up in the directory hierarchy. 
+
+There are `size` and `usize` properties which tell you the compressed and uncompressed sizes of the content. In some cases, the implementers were lazy and just wrote out 0. It's safest to ignore the stored sizes and use the actual size of whatever content you've downloaded.
+
+The `id` property is a unique identifier within the list of assets. It's usually just a truncated version of the URI. 
+
+Finally, there's a `type` property which tells you what kind of asset you're looking at. The type specifies the format of the content. Some types, like  "Autodesk.CloudPlatform.PackFile", are containers. An additional `typeset` property provides information about the types of object stored in the container.
+
+```
+    "typesets": [{
+        "id": "0",
+        "types": [{
+            "class": "Autodesk.CloudPlatform.Camera",
+            "type": "Autodesk.CloudPlatform.CameraDefinition",
+            "version": 2
+        }]
+    },{
+        "id": "1",
+        "types": [{
+            "class": "Autodesk.CloudPlatform.Light",
+            "type": "Autodesk.CloudPlatform.LightDefinition",
+            "version": 1
+        }]
+    },{
+        "id": "2",
+        "types": [{
+            "class": "Autodesk.CloudPlatform.Geometry",
+            "type": "Autodesk.CloudPlatform.OpenCTM",
+            "version":  1
+        }]
+    },{
+        "id": "3",
+        "types": [{
+            "class": "Autodesk.CloudPlatform.Geometry",
+            "type": "Autodesk.CloudPlatform.OpenCTM",
+            "version": 1
+        },{
+            "class": "Autodesk.CloudPlatform.Geometry",
+            "type": "Autodesk.CloudPlatform.Lines",
+            "version": 2
+        }]
+    },
+    ...
+    ]
+```
+
+Each typeset has an `id`, referenced by the container asset, and an array of types. Most containers store a single type of object, but some, like geometry containers, can store multiple types. The `version` property tells you which version of the serialization format was used for objects of that type.
 
 ### Serialization
 
