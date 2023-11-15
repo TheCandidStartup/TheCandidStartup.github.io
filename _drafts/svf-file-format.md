@@ -128,6 +128,8 @@ You've parsed the Model Derivative manifest, identified an SVF resource and down
 
 The top level SVF container is a ZIP file. Change the extension from `.svf` to `.zip` and open it up to see what's inside. Typically, all you'll find is two JSON files: manifest.json and metadata.json. 
 
+Metadata.json contains properties that apply to the entire file. Things like units, world bounding box, geo-coordinates, up and north directions. 
+
 When designing the SVF format, we wanted to have the flexibility to use it as a multi-part web format or an all-in-one desktop format. Each part can be stored in the `.svf` ZIP file, or as a separate external file. The manifest.json file lists all the parts and tells you whether they're embedded in the ZIP file or referenced externally.
 
 ```
@@ -158,7 +160,7 @@ When designing the SVF format, we wanted to have the flexibility to use it as a 
     ]
 ```
 
-The manifest has a top level `assets` property which lists all the parts of the SVF. Each asset has a `URI` property which tells you were the content is stored. If the URI starts with `embed:`, it's stored in the ZIP with the filename given by the rest of the URI. Otherwise, the URI is a relative path to an external resource. Most of the time, the external resource is in the same directory. However, it is possible for the resource to be stored in a sub-directory, or as shown here, higher up in the directory hierarchy. 
+The manifest has a top level `assets` property which lists all the parts of the SVF. Each asset has a `URI` property which tells you where the content is stored. If the URI starts with `embed:`, it's stored in the ZIP, with the filename given by the rest of the URI. Otherwise, the URI is a relative path to an external resource. Most of the time, the external resource is in the same directory. However, it's possible for the resource to be stored in a sub-directory, or as shown here, higher up in the directory hierarchy. 
 
 There are `size` and `usize` properties which tell you the compressed and uncompressed sizes of the content. In some cases, the implementers were lazy and just wrote out 0. It's safest to ignore the stored sizes and use the actual size of whatever content you've downloaded.
 
@@ -206,15 +208,138 @@ Finally, there's a `type` property which tells you what kind of asset you're loo
 
 Each typeset has an `id`, referenced by the container asset, and an array of types. Most containers store a single type of object, but some, like geometry containers, can store multiple types. The `version` property tells you which version of the serialization format was used for objects of that type.
 
+### Pack Files
+
+Pack files are a generic lightweight container format used for many SVF assets. They're an evolution of the Navisworks [container format]({{ nw_url | append: "#container" }}). Each pack file stores multiple separately serialized objects identified by index. The pack file starts with a directory of offsets which maps an object index to a location in the file.
+
+Generally, the objects stored in pack files are small. So, rather than compressing each object individually, the whole pack file is compressed. In cases where random access to individual objects is needed, multiple pack files are used with a limit on the size of each individual file. 
+
+The pack file also stores a type index per object. To read an object, decompress the pack file, lookup the location in the directory, then use the type index to look up a type definition in the corresponding typeset in the manifest. The type definition tells you the type and version of the object, which lets you choose the correct deserialization routine. 
+
 ### Serialization
+
+Serialization is far simpler for SVF than it [was for Navisworks]({{ nw_url | append: "#serialization" }}). We realized that we could serialize everything as simple arrays of objects, and reference other objects by index. Each array is a separate asset stored in a pack file. There's no need for graph serialization. 
+
+Shared references are modelled by separating instances and definitions into separate assets. 
 
 ### Viewing Metadata
 
+SVF supports a basic subset of the [Navisworks metadata]({{ nw_url | append: "#metadata" }}). Specifically, saved viewpoints (cameras in SVF), lights and selection sets (sets in SVF). The original intention was to add support for more once we understood how the viewer would be used. 
+
+Saved viewpoints are an odd case as they can be stored in both the SVF and the Model Derivative manifest. In the end, the Model Derivative manifest won out and those are the saved viewpoints you see in the viewer.
+
+The only extension to the metadata that I can remember is adding support for visibility overrides. This was done without changing the SVF format. The viewer didn't use the sets feature in SVF. That was repurposed to store a set of entities for each viewpoint that should be hidden. The set index was then added to the saved viewpoint definition in the Model Derivative manifest. After all, it's JSON, just throw in another property.
+
 ### Model Representation
 
-### Geometry Pack Files
+You've probably recognized the common theme by now. The SVF model representation is based on [Navisworks]({{ nw_url | append: "#model-representation" }}). 
+
+{% include candid-image.html src="/assets/images/file-formats/navis-model-representation.svg" alt="Navisworks Model Representation" %}
+
+The instances and geom refs from the spatial graph work the same way. Instances are stored in the "FragmentList" asset, geom refs in the "GeometryMetadata" asset. Each instance includes an entity id to identify the entity it's part of. 
+
+These two assets are special in that they don't use the pack file format. They have their own specialized container formats. Large models contain huge numbers of small instances and geom refs so we wanted to be as efficient as possible. In each case, there's only one type of object stored, so no need to include a per object type index. Geom refs are fixed size, so no need for a directory either. 
+
+There's no serialized spatial hierarchy. The viewer uses an optimized spatial hierarchy that can be built at load time from the geometry metadata. There's also no logical scene graph. Once all the object properties were moved out to a separate database it wasn't needed any more. The viewer can display the same selection tree using the instance tree representation. So, instead of serializing the logical scene graph and using it to build an instance tree at runtime, we just serialize the instance tree. 
+
+The viewer team later realized that the instance tree wasn't needed either. All that it's doing is defining a parent-child relationship between entities. That could easily be modeled as an object property. The instance tree is still there in the SVF package but the viewer never loads it. 
+
+### Geometry
+
+Geometry is serialized into a set of pack files, with a new file started when the pack file size exceeds 512 KB. Each geometry pack file is identified by an integer id. You'll see files named "0.pf", "1.pf", "2.pf", etc. The geometry metadata stores the pack file id and index within the pack file for the corresponding geometry. 
+
+When an SVF model is loaded into the viewer, all the model representation assets apart from the geometry are loaded up front. Geometry pack files are downloaded on demand as the geometry is needed for rendering. The viewer relies on the pack files being cached by the browser for good performance. 
+
+### Materials
+
+Materials are stored in the "ProteinMaterials" asset as compressed JSON. Autodesk had (multiple) long running initiatives to define a common material model across all applications. Protein was the code name for that year's common material model. Protein already had support for serialization to JSON. Most models use a limited number of materials, so we just used the protein serialization as is. 
 
 ### Object Properties
+
+I've already mentioned that object properties use an Entity-Attribute-Value triple store representation. The standard pipeline for writing SVF adds all the properties to a SQLite database. At the end of conversion, the database is converted into a set of six compressed JSON array assets.
+
+The arrays are written with a particular formatting that, while still valid JSON, can be parsed with little memory overhead. For some reason, that includes adding a dummy "0" first entry to each array. 
+
+#### Property Attributes
+
+Property attributes ("objects_attrs.json") is an array of attribute definitions. To save space, it's serialized as an array of arrays.
+
+```
+[0,
+["name","__name__",20,null,null,null,0,0],
+["child","__child__",11,null,null,null,1,0],
+["parent","__parent__",11,null,null,null,1,0],
+["instanceof_objid","__instanceof__",11,null,null,null,1,0],
+["Gross Volume","Dimensions",3,"m^3",null,"Gross Volume",8,2],
+...
+]
+```
+
+The first two elements are property name and category. Categories beginning with "__" identify system properties that are common across all converters and have special case handling in the viewer. For example, `__child__` and `__parent__` are used to encode the parent-child relationship between entities in the model. The viewer uses them to construct a selection tree. 
+
+The `__instanceof__` property identifies entities that this entity should inherit properties from. The viewer uses them to populate the properties window. This is a much more flexible system than the Navisworks logical scene graph. For example, Revit elements can be defined so that they inherit properties from a type, family and category as well as the instance that inserts them into the model. 
+
+All other, non-system properties can have whatever name and category the converter likes. The viewer displays them in a property palette, grouped by category. 
+
+The third element is an enum id which specifies the type of property. For example, 20 is a string, 11 is an entity id and 3 is a number with units. The fourth element defines the units for the property, if any. 
+
+There are another four elements but I can't remember what they're used for. 
+
+#### Property Values
+
+Property Values ("objects_vals.json") contains all the unique property values in the model. It's serialized as an array of scalar values.
+
+```
+[0,
+"Model",
+"rvt",
+"1.0",
+1,
+"Revit Level",
+-2000240,
+2,
+"c3f5348f-6947-4ddf-aa1e-749882f86acc-00000138",
+0,
+3,
+2700.0000000000828,
+...
+]
+```
+
+#### Property AVs
+
+```
+[1,1,9,2,10,3,8,4,13,5,14,6,15,7,16,8,17,9,18,7,19,10,20,11,21,6,22,12,23,13,24,14,26,18,2,18,26,24,2,24,26,27,2,27,26,30,2,30,26,34,2,34,26,37,2,37,2,56,68,56,2,63,68,63,
+2,69,68,69,2,75,68,75,2,83,68,83,2,87,68,87,2,90,68,90,2,91,68,91,2,94,68,94,2,101,93,101,2,106,93,106,2,116,68,116,2,119,68,119,2,123,68,123,2,128,68,128,2,133,68,133,2,136,68,136,2,138,93,138,
+2,139,93,139,68,107,68,108,68,109,68,110,68,140,2,150,68,150,2,152,93,152,2,156,93,156,68,157,68,158,2,165,68,165,68,159,68,160,68,161,106,169,2,169,106,170,2,170,106,171,2,171,106,172,2,172,106,174,2,174,106,175,2,175,
+...
+]
+```
+
+#### Property Offsets
+
+```
+[0,0,233,532,550,564,711,746,801,841,875,914,953,993,1032,1069,1109,1146,1174,1206,1246,1286,1326,1366,1395,1424,1453,1490,1519,1548,1576,1605,
+1645,1683,1711,1742,1756,1770,1784,1798,1812,1845,1856,1867,1878,1889,1906,1917,1928,1939,1950,1967,1978,1989,2000,2011,2028,2038,2048,2058,2068,2078,2088,5010,
+5013,5016,5019,5022,5025,5028,5031,5034,5037,5040,5043,5046,5049,5052,5055,5058,5061,5064,5067,5070,5073,5076,5252,5272,5292,5312,5351,5371,5374,5377,5380,5383,
+...
+]
+```
+
+#### Property Ids
+
+```
+[0,
+"doc_4a44e56b-e725-4a61-ad49-47e36b3223b7",
+"e3e052f9-0156-11d5-9301-0000863f27ad-00000137",
+"458c0e49-01bb-11d5-9302-0000863f27ad-000002b6",
+"ef57b02a-5e81-49e7-93bb-ae5f002d921c-00030015",
+"ad0aad84-b47a-45ab-9e4a-7bfad0caa3be-0003beaf",
+...
+]
+```
+
+#### Property Viewables
 
 ## SVF2 Format
 
