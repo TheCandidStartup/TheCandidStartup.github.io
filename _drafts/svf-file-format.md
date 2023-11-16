@@ -44,7 +44,7 @@ I was a co-author of the final spec. It was a pretty straight forward transliter
 
 For the BIM 360 Glue backend we had implemented a system where properties were extracted from Navisworks files and stored in [SQLite](https://www.sqlite.org/index.html) database files, one per model. The files were easy to manage, efficient to query and the SQLite engine is built to page data in and out of memory as needed. SQLite is widely used. Most browsers implement their local storage databases using SQLite. 
 
-We agreed to use a SQLite database as the property representation in SVF. The schema was based on an Entity-Attribute-Value [triple store](https://en.wikipedia.org/wiki/Triplestore). Each instance is assigned an incrementing integer entity id when the SVF is created. The same entity ids are used when serializing the model representation, thus tying everything together. The database has a table of property attributes which defines each type of property and specifies property name, units, etc. A table of values defines each unique value. Finally, an EAV table defines triples which specify that an entity E has a property attribute A with value V.
+We agreed to use a SQLite database as the property representation in SVF. The schema was based on an Entity-Attribute-Value [triple store](https://en.wikipedia.org/wiki/Triplestore). Each instance is assigned an incrementing integer entity id (also known as a dbid) when the SVF is created. The same entity ids are used when serializing the model representation, thus tying everything together. The database has a table of property attributes which defines each type of property and specifies property name, units, etc. A table of values defines each unique value. Finally, an EAV table defines triples which specify that an entity E has a property attribute A with value V.
 
 This turns out to be a surprisingly compact representation. Most models have no more than a few hundred different property attributes, regardless of size. There are many common values across all the objects in a model, so the value table is a lot smaller than you might think. Finally, the EAV table just contains triples of integer indexes which compress really well. 
 
@@ -228,7 +228,7 @@ SVF supports a basic subset of the [Navisworks metadata]({{ nw_url | append: "#m
 
 Saved viewpoints are an odd case as they can be stored in both the SVF and the Model Derivative manifest. In the end, the Model Derivative manifest won out and those are the saved viewpoints you see in the viewer.
 
-The only extension to the metadata that I can remember is adding support for visibility overrides. This was done without changing the SVF format. The viewer didn't use the sets feature in SVF. That was repurposed to store a set of entities for each viewpoint that should be hidden. The set index was then added to the saved viewpoint definition in the Model Derivative manifest. After all, it's JSON, just throw in another property.
+The only extension to the metadata that I can remember is adding support for saved viewpoint visibility overrides. This was done without changing the SVF format. The viewer didn't use the sets feature in SVF. That was repurposed to store a set of entities for each viewpoint that should be hidden. The set index was then added to the saved viewpoint definition in the Model Derivative manifest. After all, it's JSON, just throw in another property.
 
 ### Model Representation
 
@@ -256,13 +256,15 @@ Materials are stored in the "ProteinMaterials" asset as compressed JSON. Autodes
 
 ### Object Properties
 
-I've already mentioned that object properties use an Entity-Attribute-Value triple store representation. The standard pipeline for writing SVF adds all the properties to a SQLite database. At the end of conversion, the database is converted into a set of six compressed JSON array assets.
+I've already mentioned that object properties use an Entity-Attribute-Value triple store representation. The standard pipeline for writing SVF adds all the properties to a SQLite database. At the end of conversion, the database is converted into a set of five compressed JSON array assets.
 
-The arrays are written with a particular formatting that, while still valid JSON, can be parsed with little memory overhead. For some reason, that includes adding a dummy "0" first entry to each array. 
+The arrays are written with a particular formatting that, while still valid JSON, can be parsed with little memory overhead. For some reason, that includes adding a dummy first entry to each array. 
+
+In most cases, each SVF file in a model derivative manifest has its own dedicated set of object properties. Revit, as usual, is a special case. The Revit converter outputs a single property database. All the SVF files in the model derivative manifest represent different views of the same model and reference the common property database. 
 
 #### Property Attributes
 
-Property attributes ("objects_attrs.json") is an array of attribute definitions. To save space, it's serialized as an array of arrays.
+Property attributes ("objects_attrs.json") is an array of attribute definitions. To save space, it's serialized as an array of arrays rather than an array of objects.
 
 ```
 [0,
@@ -308,6 +310,10 @@ Property Values ("objects_vals.json") contains all the unique property values in
 
 #### Property AVs
 
+To save space, the Entity-Attribute-Value triples are stored using two separate arrays. 
+
+Property AVs ("objects_avs.json") stores pairs of attribute and value indexes. The pairs are stored in order, first by entity id, then by property display order for each entity. 
+
 ```
 [1,1,9,2,10,3,8,4,13,5,14,6,15,7,16,8,17,9,18,7,19,10,20,11,21,6,22,12,23,13,24,14,26,18,2,18,26,24,2,24,26,27,2,27,26,30,2,30,26,34,2,34,26,37,2,37,2,56,68,56,2,63,68,63,
 2,69,68,69,2,75,68,75,2,83,68,83,2,87,68,87,2,90,68,90,2,91,68,91,2,94,68,94,2,101,93,101,2,106,93,106,2,116,68,116,2,119,68,119,2,123,68,123,2,128,68,128,2,133,68,133,2,136,68,136,2,138,93,138,
@@ -318,6 +324,10 @@ Property Values ("objects_vals.json") contains all the unique property values in
 
 #### Property Offsets
 
+Property Offsets ("objects_offs.json") stores the offset into the Property AVs array where each entity's properties start. 
+
+To load the properties for an entity, lookup the starting offset in the offsets array. Use the following offset to tell you where to stop. Read the corresponding range of AV pairs from the AVs array. For each pair, lookup the attribute definition using the attribute index, and the value using the value index. Group properties by category if you want. Use the rest of the attribute definition to format the properties appropriately for display.
+
 ```
 [0,0,233,532,550,564,711,746,801,841,875,914,953,993,1032,1069,1109,1146,1174,1206,1246,1286,1326,1366,1395,1424,1453,1490,1519,1548,1576,1605,
 1645,1683,1711,1742,1756,1770,1784,1798,1812,1845,1856,1867,1878,1889,1906,1917,1928,1939,1950,1967,1978,1989,2000,2011,2028,2038,2048,2058,2068,2078,2088,5010,
@@ -327,6 +337,12 @@ Property Values ("objects_vals.json") contains all the unique property values in
 ```
 
 #### Property Ids
+
+Entity ids aren't meaningful. You can't use them to lookup the equivalent object in the source design file. They're generated using incrementing integers when the SVF is serialized and only used to join the different parts of the overall object representation. 
+
+Entity ids aren't stable. Different versions of the same design file can have different entity ids for the same object. The same object in different SVFs within the same model derivative manifest can have different entity ids for the same object.
+
+Property Ids ("objects_ids.json") stores meaningful (and usually stable) external ids for each entity. These are whatever ids are natural for the source design file. 
 
 ```
 [0,
@@ -339,7 +355,38 @@ Property Values ("objects_vals.json") contains all the unique property values in
 ]
 ```
 
-#### Property Viewables
-
 ## SVF2 Format
+
+The SVF2 format developed out of work done by the [Autodesk Construction Cloud Design Collaboration](https://construction.autodesk.com/workflows/design-collaboration/) team. The Design Collaboration workflows depend on loading lots of models and switching between different views and versions of those models. In the original SVF format, each view and version is represented by a separate SVF file. In Revit, objects can have different geometric representations in each [view]((https://help.autodesk.com/view/RVT/2024/ENU/?guid=GUID-D6D06E2C-17F3-499B-B795-E2980C46BBF2)), so you can't convert them as saved viewpoints.
+
+### Geometry
+
+The design collaboration client had to download huge amounts of data, mostly in the form of geometry pack files, whenever the user switched views or versions. However, when you compare geometry between views and versions, lots of it is identical. 
+
+The main change for SVF2 is that geometry is shared across views and versions. The SVF2 converter is very aggressive when it comes to identifying geometry that can be shared. First, each mesh is transformed so that it fits in a unit cube. The required transform is combined with the instance transform, so the model visually looks the same. This allows different sizes of the same geometry to be shared. For example, a 1 meter pipe and a 2 meter pipe would use the same geometry definition.
+
+The converter then calculates a hash of the geometry. Each stored geometry definition is identified by its hash value. The hash function is based on a set of geometric metrics calculated from the geometry. SVF, like [Navisworks]({{ nw_url | append: "#geometry" }}), uses simplified geometry in the form of triangle meshes. It's easy to generate multiple different mesh representations for a surface or solid that look identical. The hash function is designed so that different mesh representations of the same source geometry have identical hashes and so can be shared. 
+
+Obviously, great care needs to be taken to ensure that geometry with the same hash really is visually identical. There were a few evolutions of the hash function in the early days as edge cases were discovered. I remember one case where a set of roofs in a building model were rotated by 90 degrees due to an error in the hash function.
+
+Geometry definitions are stored centrally using the hash value as the key. In SVF2 there are no geometry pack files. The geometry metadata has a hash value rather than a pack file id and geometry index. 
+
+SVF pack files work because the geometry in each file is well correlated. If the viewer needs one geometry definition from a pack file, it's very likely to need the others soon. SVF amortizes http request overhead by downloading an entire pack file rather than individual geometry definitions.
+
+The high level of sharing means geometry is much less well correlated in SVF2. The SVF2 viewer needs to download individual geometry definitions. There's far too much overhead in the http protocol to use normal REST API calls. At first, the team thought that the new http2 protocol was the answer. It's a much more efficient protocol, however there was still too much overhead, due to browser limits on the number of active requests. In the end, they had to use a websocket connection with their own ultra lightweight protocol. 
+
+Initially, geometry was shared as widely as possible. The developers originally wanted to share geometry globally. That raises all kinds of awkward intellectual property questions. In the end, SVF2 was launched with geometry shared within the scope of each tenant. Definitely the right decision. Imagine having a weird visual glitch in one of your models because another customer previously uploaded a model whose geometry hashed to the same value. 
+
+{% capture rule_url %}{% link _posts/2023-10-16-multi-tenant-rules.md %}{% endcapture %}
+Sharing per tenant also has issues. Imagine a customer has a [legal requirement to delete a file]({{ rule_url | append: "#5-right-to-delete" }}) and all its derivatives. It gets awkward when you have to explain that you can't delete the geometry definitions because they're used by other files. More recent versions of the SVF2 backend limit sharing to a single design file lineage. 
+
+### Entity Ids
+
+SVF2 changes the way that entity ids are assigned. One of the core workflows in Design Collaboration is showing you what's changed from one version of a model to another. The comparison process happens when the new version of the model is converted to SVF2. The SVF2 converter compares the new version against the previous one, and gives matching objects the same entity ids as the previous version. New objects are assigned the next available id as before. 
+
+Comparing two versions of a model becomes trivial. Any entity ids that appear in both versions are the same object. Any ids that appear only in the previous version have been deleted. Any ids that appear only in the current version are new objects. 
+
+This change means that SVF2 entity ids are now stable, which means you can use them for workflows that track objects across multiple versions. You can do the same thing in SVF using external ids, but not all design file formats have external ids.
+
+The downside is that the same file converted to SVF and SVF2 will have different entity ids. That caused a [lot](https://aps.autodesk.com/blog/model-derivative-svf2-enhancements-part-2-metadata) [of](https://aps.autodesk.com/blog/update-svf2-ga-new-streaming-web-format-forge-viewer-now-production-ready) [pain](https://aps.autodesk.com/blog/temporary-workaround-mapping-between-svf1-and-svf2-ids) during the transition to SVF2.
 
