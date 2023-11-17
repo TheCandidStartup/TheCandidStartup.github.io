@@ -40,7 +40,7 @@ We decided that we needed a new format based on the Navisworks [model representa
 
 The first job was to come up with a formal spec. There would be multiple teams working on reading and writing SVF in at least two different languages (C++ and JavaScript). Using "the code" as the spec wouldn't work.
 
-I was a co-author of the final spec. It was a pretty straight forward transliteration of the Navisworks file structure. It covered the model representation, geometry and viewing related meta-data. The [object property representation]({{ nw_url | append: "#properties" }}) in Navisworks had always been something of a compromise, so we reworked it significantly for SVF. 
+I was a co-author of the final spec. It was a pretty straight forward transliteration of the Navisworks file structure. It covered the model representation, geometry and viewing related metadata. The [object property representation]({{ nw_url | append: "#properties" }}) in Navisworks had always been something of a compromise, so we reworked it significantly for SVF. 
 
 For the BIM 360 Glue backend we had implemented a system where properties were extracted from Navisworks files and stored in [SQLite](https://www.sqlite.org/index.html) database files, one per model. The files were easy to manage, efficient to query and the SQLite engine is built to page data in and out of memory as needed. SQLite is widely used. Most browsers implement their local storage databases using SQLite. 
 
@@ -58,7 +58,7 @@ The final player in the SVF ecosystem is the Model Derivative service. The Model
 
 Converters are typically implemented as SVF export plugins that run within a standard desktop application. One of the SVF teams built a C++ library for reading and writing SVF files. The application teams were then responsible for using the library to write their plugin. In the early days of SVF, most conversions used Navisworks. Navisworks could read most formats, so all it took was implementing a Navisworks SVF export plugin to add Model Derivative support for twenty formats. 
 
-Model Derivative service expects all converters to output a JSON manifest in a standard format, together with a set of files described by the manifest. If you ask Model Derivative service to produce multiple different types of derivative, it merges the JSON manifests from each converter together to describe a combined "bubble" of derivatives. When querying the Model Derivative service, you need to be aware that the manifest returned can contain data from other conversions that you might not be expecting. 
+Model Derivative service expects all converters to output a JSON manifest in a standard format, together with a set of files described by the manifest. If you ask Model Derivative service to produce multiple different types of derivative, it merges the JSON manifests from each converter together to create a combined "bubble" of derivatives. When querying the Model Derivative service, you need to be aware that the manifest returned can contain data from other conversions that you might not be expecting. 
 
 In theory SVF is an extendable format. The initial spec was based on the Navisworks representation. As application teams started writing their own converters, they found things that Navisworks and hence SVF didn't support. Extending SVF would mean getting the spec and C++ library updated, which would mean coordinating with multiple teams, all with different priorities. Alternatively, the application team could throw whatever extra data they wanted into their converter's Model Derivative manifest. All they had to do then was persuade the viewer team to add support for it. 
 
@@ -167,6 +167,8 @@ There are `size` and `usize` properties which tell you the compressed and uncomp
 The `id` property is a unique identifier within the list of assets. It's usually just a truncated version of the URI. 
 
 Finally, there's a `type` property which tells you what kind of asset you're looking at. The type specifies the format of the content. Some types, like  "Autodesk.CloudPlatform.PackFile", are containers. An additional `typeset` property provides information about the types of object stored in the container.
+
+The `typeset` property is the id of a typeset object from the `typesets` top level property.
 
 ```
     "typesets": [{
@@ -357,7 +359,7 @@ Property Ids ("objects_ids.json") stores meaningful (and usually stable) externa
 
 ## SVF2 Format
 
-The SVF2 format developed out of work done by the [Autodesk Construction Cloud Design Collaboration](https://construction.autodesk.com/workflows/design-collaboration/) team. The Design Collaboration workflows depend on loading lots of models and switching between different views and versions of those models. In the original SVF format, each view and version is represented by a separate SVF file. In Revit, objects can have different geometric representations in each [view]((https://help.autodesk.com/view/RVT/2024/ENU/?guid=GUID-D6D06E2C-17F3-499B-B795-E2980C46BBF2)), so you can't convert them as saved viewpoints.
+The SVF2 format developed out of work done by the [Autodesk Construction Cloud Design Collaboration](https://construction.autodesk.com/workflows/design-collaboration/) team (who were mostly former members of the InfraWorks team). The Design Collaboration workflows depend on loading lots of models and switching between different views and versions of those models. In the original SVF format, each view and version is represented by a separate SVF file. In Revit, objects can have different geometric representations in each [view]((https://help.autodesk.com/view/RVT/2024/ENU/?guid=GUID-D6D06E2C-17F3-499B-B795-E2980C46BBF2)), so you can't convert them as saved viewpoints.
 
 ### Geometry
 
