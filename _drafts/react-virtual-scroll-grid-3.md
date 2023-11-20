@@ -14,7 +14,7 @@ React-window is an open source library for "efficiently rendering large lists an
 
 There's an associated [web site](https://react-window.now.sh/) with lots of example code and live samples. All the samples have links out to [CodeSandbox](https://codesandbox.io/s/github/bvaughn/react-window/tree/master/website/sandboxes/fixed-size-list-vertical) where you can play with the code next to a live running sample. 
 
-Looking at the code base, there's lots of focus on optimization and the sort of edge case handling that you would expect to see in a mature library. However, once you get past that, and all the features, it works just like my simple virtual scrolling example. There's a React [OnScroll handler](https://github.com/bvaughn/react-window/blob/6ff5694ac810617515acf74401ba68fe2951133b/src/createListComponent.js#L590) which sets state based on the scroll position which triggers a [render](https://github.com/bvaughn/react-window/blob/6ff5694ac810617515acf74401ba68fe2951133b/src/createListComponent.js#L310) that results in React creating the visible DOM elements.
+Looking at the code base, there's lots of focus on optimization and the sort of edge case handling that you would expect to see in a mature library. However, once you get past that, and all the features, it works just like my simple virtual scrolling example. There's a React [OnScroll handler](https://github.com/bvaughn/react-window/blob/6ff5694ac810617515acf74401ba68fe2951133b/src/createListComponent.js#L590) which sets state based on the scroll position which triggers a [render](https://github.com/bvaughn/react-window/blob/6ff5694ac810617515acf74401ba68fe2951133b/src/createListComponent.js#L310) that results in React updating the visible DOM elements.
 
 ## Differences
 
