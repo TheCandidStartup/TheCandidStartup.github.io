@@ -117,4 +117,4 @@ Modern browsers use a [multi-threaded architecture]({{ vs_url | append: "#chrome
 
 ## Next Time
 
-I need to dive down the rabbit hole, get a better understanding of browser and react rendering, and see whether there's some way of fixing it, or whether I need a completely different approach.
+I need to dive [down the rabbit hole]({% link _posts/2023-11-13-react-virtual-scroll-grid-2.md %}), get a better understanding of browser and react rendering, and see whether there's some way of fixing it, or whether I need a completely different approach.

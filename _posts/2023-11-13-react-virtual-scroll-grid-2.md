@@ -119,4 +119,4 @@ Absolutely solid. Completely responsive. No flashing or blank content. What are 
 
 If I was writing commercial software, I'd consider it case closed. Throw away my minimal virtual scrolling sample and switch to react-window. I may end up doing that, but first I want to understand *why*.
 
-Prepare for a deep dive into react-window.
+Prepare for a [deep dive into react-window]({% link _posts/2023-11-20-react-virtual-scroll-grid-3.md %}).
