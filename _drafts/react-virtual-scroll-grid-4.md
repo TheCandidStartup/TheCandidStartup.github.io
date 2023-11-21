@@ -74,9 +74,37 @@ There are other problems. The cache is unbounded in size. The scroll bar feels "
 
 ## Theoretical Limit
 
+Which got me thinking. Are there any other limits on grid size that I've missed? The number of elements that React and the DOM have to deal with is fixed, depending only on the size of the visible window. Is there anything that depends on the overall size of the grid?
+
+There's one thing. To ensure that the scroll bars are sized and respond correctly, the visible DOM elements are positioned in a container div that's the size of the entire grid. In theory, that shouldn't be a problem. There's no need for the browser to paint the entire empty div, just the area around the visible elements. As long as the browser can calculate the size and position of the scroll bar, then use that to position the visible elements, everything should be fine. 
+
+How big will the numbers get? The [data structures I designed for the spreadsheet]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) can support up to 6000 million rows and 12 million columns. My sample grid has rows 30 pixels high and 200 pixels wide, so the div will be up to 180 billion pixels high and 2.4 billion pixels wide. 
+
+That shouldn't be a problem if all the calculations are done in 64 bits, whether using doubles or integers. However, if there's any part of the calculation done in 32 bits, there won't be enough precision. A 32 bit integer can represent at most 4 billion values. 
+
 ## Turn It Up To Eleven
 
+Let's try it out. I'll keep increasing the size of the grid and see how big we can go before it breaks. 
+
+I started with a thousand rows and columns and kept multiplying the size by 10. I kept track of overall memory for the browser tab and the JavaScript heap to see if memory usage scaled with grid size at all. Overall memory stayed steady at around 20MB. JavaScript heap usage varied as I interacted with the grid, but always settled back to 7.7MB once garbage collection kicked in. 
+
+I was surprised how much garbage was produced when scrolling across the grid, heap usage peaked at 16MB at one point. The control uses a React key based on the cell row and column position. When scrolling quickly, React deletes all the current cell DOM elements and generates new ones on every render. 
+
+The control broke much sooner than I expected, at a million rows and columns. The behavior in Chrome and Safari is identical. The grid looks correct but when you scroll right over to the bottom right corner the furthest item is at 999999, 167771. All the rows are there, but only 167 thousand columns. If you dive into the developer tools you can see that the container div style has, as expected,  a height of 30 million pixels and a width of 200 million pixels. However, when you look at the computed layout diagram, the actual size is 30 million high but only 33 million wide. 
+
+{% include candid-image.html src="/assets/images/frontend/chrome-element-size-limit.png" alt="Computed Chrome layout for million row/column grid" %}
+
+Firefox is even more broken. The scroll bars are nearly full size so you can only scroll a little way at a time. As you scroll across, they shrink in size as if there was some kind of infinite scrolling implementation. It's impossible to get anywhere near the far side of the grid. Looking at the developer tools, the computed width is either 8947820 or 17895700, depending where you look in the UI. 
+
+I went back and checked Firefox at 100K rows and columns. That's broken too, but not as horribly. The grid behaves normally, but when you scroll across, the furthest item you can see is 99999, 89477. That's consistent with a div container width of 17895700 pixels.
+
 ## Maximum Element Size
+
+I had a look at the HTML spec to see if there are any documented limits. Width and height must be [valid non-negative integers](https://html.spec.whatwg.org/#valid-non-negative-integer), where a valid non-negative integer is a sequence of ascii numeric digits. Not very useful. 
+
+The CSS spec says that [lengths](https://drafts.csswg.org/css2/#length-units) may have implementation-specific limits. It also says that where the specified length is not supported, user agents must approximate it as closely as possible. Which explains the Chrome and Safari behavior. They have an implementation-specific limit on the size of an element and use the maximum supported size if it's exceeded.
+
+This [answer](https://stackoverflow.com/a/10884837) on Stack Overflow confirms that browsers have implementation-specific limits. The followups over the years also show that those limits have changed repeatedly over time. 
 
 
 
