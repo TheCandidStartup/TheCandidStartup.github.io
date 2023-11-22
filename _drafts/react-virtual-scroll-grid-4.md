@@ -106,5 +106,20 @@ The CSS spec says that [lengths](https://drafts.csswg.org/css2/#length-units) ma
 
 This [answer](https://stackoverflow.com/a/10884837) on Stack Overflow confirms that browsers have implementation-specific limits. The followups over the years also show that those limits have changed repeatedly over time. 
 
+Digging further threw up a couple of grid controls that have workarounds for browser element size limits.
+
+## SlickGrid
+
+The stack overflow answer referenced [code](https://github.com/6pac/SlickGrid/blob/a37d263ff315e9b2d2bb1a79efd9612095f46b5b/src/slick.grid.ts#L1240) in [SlickGrid](https://github.com/6pac/SlickGrid) which tries to find the maximum supported element height at runtime. SlickGrid is an interesting project. It's been around for over a decade with an active community around it. The focus is on speed, scale and flexibility. The current version is written in typescript and is almost entirely vanilla JS (only one external dependency). 
+
+There are extensive [examples](https://github.com/6pac/SlickGrid/wiki/Examples), including [setting up the grid as a spreadsheet](https://6pac.github.io/SlickGrid/examples/example-spreadsheet.html) and working with [large data sets](https://6pac.github.io/SlickGrid/examples/example-optimizing-dataview.html).
+
+The large data set example has 500,000 rows each 25 pixels high. That's 12.5 million pixels, close to the Firefox limit. SlickGrid has a hard coded maximum height for Firefox of 6 million. I opened the sample in Firefox and fired up the developer tools. 
+
+{% include candid-image.html src="/assets/images/frontend/slick-grid-firefox-dev-tools.png" alt="SlickGrid with Firefox Dev Tools showing height of container" %}
+
+The container div height has been clamped at 4 million pixels. The code compensates for the smaller container size by mapping backward and forward between the container's coordinate space and the larger grid coordinate space as needed.
+
+## React-Virtualized
 
 
