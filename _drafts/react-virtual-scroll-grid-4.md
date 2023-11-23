@@ -90,7 +90,9 @@ I started with a thousand rows and columns and kept multiplying the size by 10. 
 
 I was surprised how much garbage was produced when scrolling across the grid, heap usage peaked at 16MB at one point. The control uses a React key based on the cell row and column position. When scrolling quickly, React deletes all the current cell DOM elements and generates new ones on every render. 
 
-The control broke much sooner than I expected, at a million rows and columns. The behavior in Chrome and Safari is identical. The grid looks correct but when you scroll right over to the bottom right corner the furthest item is at 999999, 167771. All the rows are there, but only 167 thousand columns. If you dive into the developer tools you can see that the container div style has, as expected,  a height of 30 million pixels and a width of 200 million pixels. However, when you look at the computed layout diagram, the actual size is 30 million high but only 33 million wide. 
+The control broke much sooner than I expected, at a [million rows and columns]({% link assets/dist/react-scroll-grid-4b/index.html %}). I haven't used an embedded iframe this time in case it breaks your browser worse than it does mine. Maybe open [the link]({% link assets/dist/react-scroll-grid-4b/index.html %}) in another browser tab?
+
+The behavior in Chrome and Safari is identical. The grid looks correct but when you scroll right over to the bottom right corner the furthest item is at 999999, 167771. All the rows are there, but only 167 thousand columns. If you dive into the developer tools you can see that the container div style has, as expected,  a height of 30 million pixels and a width of 200 million pixels. However, when you look at the computed layout diagram, the actual size is 30 million high but only 33 million wide. 
 
 {% include candid-image.html src="/assets/images/frontend/chrome-element-size-limit.png" alt="Computed Chrome layout for million row/column grid" %}
 
@@ -118,8 +120,32 @@ The large data set example has 500,000 rows each 25 pixels high. That's 12.5 mil
 
 {% include candid-image.html src="/assets/images/frontend/slick-grid-firefox-dev-tools.png" alt="SlickGrid with Firefox Dev Tools showing height of container" %}
 
-The container div height has been clamped at 4 million pixels. The code compensates for the smaller container size by mapping backward and forward between the container's coordinate space and the larger grid coordinate space as needed.
+The container div height has been clamped at 4 million pixels. The code compensates for the smaller container size by mapping backward and forward between the container's coordinate space and the larger grid coordinate space as needed. The way it does it is fascinating. 
+
+It divides the grid coordinate space into "pages" that are 400 thousand pixels high. Each page is mapped into the container div coordinate space using an offset. There's no scaling. Our grid is 12.5 million pixels high which is over 300 pages. There's only room for 100 pages in the container div. How does that work? The pages overlap.
+
+{% include candid-image.html src="/assets/images/frontend/slick-grid-virtual-pages.svg" alt="SlickGrid Virtual Pages" %}
+
+SlickGrid is trying to reconcile two seemingly incompatible objectives. First, you should be able to scroll across the entire grid. As the container is smaller than the grid, that means scaling up your movement. If you scroll the container down one million pixels, that should correspond to scrolling the grid down three million pixels. However, you should also be able to scroll down by a few rows. If you click on the scroll bar below the handle, that should scroll the bottom row in the viewport to the top. If the container has scrolled down 500 pixels, the grid should scroll down 500 pixels, not 1500 pixels. 
+
+The trick is to change behavior depending on the size of the change. If you scroll by more than the size of the viewport (e.g. clicking on the handle and dragging), it's like you're flicking through a rolodex. The grid uses the scrollbar position to select a page. The display is jumping from the top few rows of one page to the next. To the user, it looks like you're just scrolling through really fast. 
+
+If you scroll by less than the size of the viewport (e.g. clicking below the handle), the grid scrolls within the current page, letting you explore the rows below the top few. This all works surprisingly well. If you're looking carefully, you can the odd glitch when small scale scrolling crosses a page boundary. The scroll bar handle jumps backwards to the offset where the next page should start. However, as there are at least a 100 pages, the scroll bar handle only jumps back a few pixels.
+
+So, is it time to change course? Abandon React, at least for the grid, and switch to SlickGrid? Unfortunately, that's not really an option. SlickGrid only provides vertical virtual scrolling. The expected use case is displaying large numbers of entities with a fixed number of columns. Given the size and maturity of the code base, I don't think trying to introduce horizontal virtual scrolling over an unlimited number of columns will be practical. 
 
 ## React-Virtualized
 
+The other grid control I found is [react-virtualized](https://github.com/bvaughn/react-virtualized). React-virtualized is the heavyweight, everything but the kitchen sink, predecessor of react-window. The idea behind react-window was to use the lessons learnt from react-virtualized to build a more minimal, flexible, focused component. Looks like one of things lost in the rewrite was support for large grids.
 
+Like react-window, react-virtualized has [online examples](https://github.com/bvaughn/react-virtualized/tree/master#examples). I used the [Grid example](https://bvaughn.github.io/react-virtualized/#/components/Grid) which lets you change the numbers of rows and columns while it's running. I configured it for a million rows and a million columns and had a play. 
+
+{% include candid-image.html src="/assets/images/frontend/react-virtualized-example-grid.png" alt="React-Virtualized Example Grid" %}
+
+Dragging the vertical scrollbar around worked as expected and I was able to reach row 999,999. The horizontal scrollbar was "janky", behaving like the variable column width react-window grid. I was able to reach column 999,999 eventually. You can see from the image that the first three columns have different sizes, but the rest of the million columns are identical, at 80 pixels wide. Checking the code shows that there's no `estimatedColumnSize` property set and the default is 100. Easy enough to fix.
+
+Small scale scrolling is less than ideal. If I click below the vertical scroll handle, row 15 moves to the top rather than row 8. If I click to the right of the horizontal scroll handle, column 38 moves to the left side rather than column 6. React-virtualized uses simple scaling to map between grid and container space. 
+
+## Conclusion
+
+One step forward, two steps back. I'm not having much luck finding an off the shelf, open source grid control that meets my needs. 
