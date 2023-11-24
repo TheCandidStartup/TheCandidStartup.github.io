@@ -74,7 +74,7 @@ There are other problems. The cache is unbounded in size. The scroll bar feels "
 
 ## Theoretical Limit
 
-Which got me thinking. Are there any other limits on grid size that I've missed? The number of elements that React and the DOM have to deal with is fixed, depending only on the size of the visible window. Is there anything that depends on the overall size of the grid?
+Which got me thinking. Are there any other limits on grid size that I've missed? The number of elements that React and the DOM have to deal with is fixed, depending only on the size of the visible viewport. Is there anything that depends on the overall size of the grid?
 
 There's one thing. To ensure that the scroll bars are sized and respond correctly, the visible DOM elements are positioned in a container div that's the size of the entire grid. In theory, that shouldn't be a problem. There's no need for the browser to paint the entire empty div, just the area around the visible elements. As long as the browser can calculate the size and position of the scroll bar, then use that to position the visible elements, everything should be fine. 
 
@@ -120,7 +120,7 @@ The large data set example has 500,000 rows each 25 pixels high. That's 12.5 mil
 
 {% include candid-image.html src="/assets/images/frontend/slick-grid-firefox-dev-tools.png" alt="SlickGrid with Firefox Dev Tools showing height of container" %}
 
-The container div height has been clamped at 4 million pixels. The code compensates for the smaller container size by mapping backward and forward between the container's coordinate space and the larger grid coordinate space as needed. The way it does it is fascinating. 
+The container div height has been clamped at 4 million pixels. The code compensates for the smaller container size by mapping backward and forward between the container's coordinate space and the larger grid coordinate space. The way it does it is fascinating. 
 
 It divides the grid coordinate space into "pages" that are 400 thousand pixels high. Each page is mapped into the container div coordinate space using an offset. There's no scaling. Our grid is 12.5 million pixels high which is over 300 pages. There's only room for 100 pages in the container div. How does that work? The pages overlap.
 
@@ -128,11 +128,11 @@ It divides the grid coordinate space into "pages" that are 400 thousand pixels h
 
 SlickGrid is trying to reconcile two seemingly incompatible objectives. First, you should be able to scroll across the entire grid. As the container is smaller than the grid, that means scaling up your movement. If you scroll the container down one million pixels, that should correspond to scrolling the grid down three million pixels. However, you should also be able to scroll down by a few rows. If you click on the scroll bar below the handle, that should scroll the bottom row in the viewport to the top. If the container has scrolled down 500 pixels, the grid should scroll down 500 pixels, not 1500 pixels. 
 
-The trick is to change behavior depending on the size of the change. If you scroll by more than the size of the viewport (e.g. clicking on the handle and dragging), it's like you're flicking through a rolodex. The grid uses the scrollbar position to select a page. The display is jumping from the top few rows of one page to the next. To the user, it looks like you're just scrolling through really fast. 
+The trick is to change behavior depending on the size of the change. If you scroll by more than the size of the viewport (e.g. clicking on the handle and dragging), it's like you're flicking through a rolodex. The grid uses the scrollbar position to select a page. The display is jumping from the top few rows of one page to the top few rows of the next. To the user, it looks like you're just scrolling through really fast. 
 
-If you scroll by less than the size of the viewport (e.g. clicking below the handle), the grid scrolls within the current page, letting you explore the rows below the top few. This all works surprisingly well. If you're looking carefully, you can the odd glitch when small scale scrolling crosses a page boundary. The scroll bar handle jumps backwards to the offset where the next page should start. However, as there are at least a 100 pages, the scroll bar handle only jumps back a few pixels.
+If you scroll by less than the size of the viewport (e.g. clicking below the handle), the grid scrolls within the current page, letting you explore the rows below the top few. This all works surprisingly well. If you're looking carefully, you can see the odd glitch when small scale scrolling crosses a page boundary. The scroll bar handle jumps backwards to the offset where the next page should start. However, as there are at least a 100 pages, the scroll bar handle only jumps back a few pixels.
 
-So, is it time to change course? Abandon React, at least for the grid, and switch to SlickGrid? Unfortunately, that's not really an option. SlickGrid only provides vertical virtual scrolling. The expected use case is displaying large numbers of entities with a fixed number of columns. Given the size and maturity of the code base, I don't think trying to introduce horizontal virtual scrolling over an unlimited number of columns will be practical. 
+So, is it time to change course? Abandon React, at least for the grid, and switch to SlickGrid? Unfortunately, that's not really an option. SlickGrid only provides *vertical* virtual scrolling. The expected use case is displaying large numbers of entities with a fixed number of columns. Given the size and maturity of the code base, I don't think trying to introduce horizontal virtual scrolling over an unlimited number of columns will be practical. 
 
 ## React-Virtualized
 
@@ -149,3 +149,7 @@ Small scale scrolling is less than ideal. If I click below the vertical scroll h
 ## Conclusion
 
 One step forward, two steps back. I'm not having much luck finding an off the shelf, open source grid control that meets my needs. 
+
+Where do I go next? Fork an existing component and hack it as needed? Write something from scratch? See if there's anything better in a different framework ecosystem? Try an approach that doesn't rely on the DOM and native scrollbars? 
+
+Gives me lots to dig into, next time. 
