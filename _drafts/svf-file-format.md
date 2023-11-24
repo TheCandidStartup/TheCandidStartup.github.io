@@ -28,9 +28,9 @@ And yet, the viewer worked, for big models too. It only supported InfraWorks mod
 
 Key members from each team formed a committee to decide the path forward. I represented Navisworks. We all felt that the emscripten like approaches were a dead end. The tooling wasn't mature enough and we had no idea when, if ever, it would be viable. We would use the InfraWorks JavaScript viewer as a starting point. However, we needed a more general file format.
 
-Navisworks was the obvious starting point. It was a neutral file format, with existing converters from every significant CAD file format. However, porting the existing parsing code to JavaScript seemed like a non-starter to me. There was [no spec]({{ nw_url | append: "#serialization" }}) and the code had all the warts you would expect from ten years of evolution with backwards compatibility. 
+The [Navisworks format]({{ nw_url }}) was the obvious starting point. It was a neutral file format, with existing converters from every significant CAD file format. However, porting the existing parsing code to JavaScript seemed like a non-starter to me. There was [no spec]({{ nw_url | append: "#serialization" }}) and the code had all the warts you would expect from ten years of evolution with backwards compatibility. 
 
-There was also the problem that Navisworks was an all-in-one format. That might seem like it should be an advantage, but it didn't fit the way browsers worked. To get good performance from a web viewer for large models, you need to cache the model locally. As well as helping speed things up when you reload the same model, it's critical if you need to page parts of the model in and out of memory. At the time, JavaScript had very limited access to local storage. The only practical way of caching data locally, was to let the browser do it. 
+There was also the problem that Navisworks was an all-in-one format. That might seem like it should be an advantage, but it didn't fit the way browsers worked. To get good performance from a web viewer for large models, you need to cache the model locally. As well as helping speed things up when you reload the same model, it's critical if you need to page parts of the model in and out of memory. At the time, JavaScript had very limited access to local storage. The only practical way of caching data locally was to let the browser do it. 
 
 The Navisworks format is designed so that you can load parts of the model on demand. You can do the same thing from JavaScript in a browser, by making [range GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests) requests for parts of a file stored on a server. The Navisworks web plugin already worked this way but implemented its own on disk caching. The problem is that the browsers would only cache complete requests. Any range request would work but would not be cached. The model needed to be broken into separate physical parts that could be retrieved using normal GET requests.
 
@@ -50,7 +50,7 @@ This turns out to be a surprisingly compact representation. Most models have no 
 
 During implementation, the viewer team suggested an alternative representation. The property database representation was so compact that SQLite's ability to page data in and out wasn't needed. The property data is read only within the viewer so you don't need the ability to edit it either. You could store the whole thing as a set of compressed JSON arrays. The big arrays only contain integers, so you can use a JavaScript [typed array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Typed_arrays) in memory. Most browsers store typed arrays outside the limited size JavaScript heap, making it practical to load all the property data into memory.
 
-SVF is, unfortunately, an Autodesk proprietary format. AFAIK the spec has never been made public. I suspect no one in Autodesk has looked at it in years. As we'll see later on, significant parts of what is now considered to be SVF, were added organically. The original spec helped to bootstrap the ecosystem, but after that SVF ended up being defined by what the code in the Autodesk Viewer would read. 
+AFAIK the spec has never been made public. I hadn't looked at in in years, and I suspect no one in Autodesk has either. As we'll see later on, significant parts of what is now considered to be SVF, were added organically. The original spec helped to bootstrap the ecosystem, but after that SVF ended up being defined by what the code in the Autodesk Viewer would read. 
 
 ## Model Derivative Service
 
@@ -64,7 +64,9 @@ In theory SVF is an extendable format. The initial spec was based on the Naviswo
 
 ## SVF Format
 
-Enough back story, let's get into the details of the format. I'm going to describe the format in terms of the set of files that an SVF converter writes out. If you use the developer tools in your browser, you can see the Autodesk viewer retrieving each of these files from the Model Derivative service. 
+Enough back story, let's get into the details of the format. Since leaving Autodesk, I have no access to the spec or viewer source code. The information here is based on my increasingly hazy memory and from looking at public SVF example models. All errors are mine.
+
+I'm going to describe the format in terms of the set of files that an SVF converter writes out. If you use the developer tools in your browser, you can see the Autodesk viewer retrieving each of these files from the Model Derivative service. 
 
 I'm going to start with the original SVF format, then go through what changed for SVF2.
 
@@ -248,7 +250,9 @@ The viewer team later realized that the instance tree wasn't needed either. All 
 
 ### Geometry
 
-Geometry is serialized into a set of pack files, with a new file started when the pack file size exceeds 512 KB. Each geometry pack file is identified by an integer id. You'll see files named "0.pf", "1.pf", "2.pf", etc. The geometry metadata stores the pack file id and index within the pack file for the corresponding geometry. 
+Geometry is serialized into a set of pack files, with a new file started when the pack file size exceeds 512 KB. Each geometry pack file is identified by an integer id. You'll see files named "0.pf", "1.pf", "2.pf", etc. The geometry metadata stores the pack file id and index within the pack file for the corresponding geometry.
+
+SVF uses [OpenCTM](https://en.wikipedia.org/wiki/OpenCTM) for serialization of triangle meshes. I can't remember what was used for the other geometry types like line and point sets. 
 
 When an SVF model is loaded into the viewer, all the model representation assets apart from the geometry are loaded up front. Geometry pack files are downloaded on demand as the geometry is needed for rendering. The viewer relies on the pack files being cached by the browser for good performance. 
 
@@ -377,10 +381,10 @@ SVF pack files work because the geometry in each file is well correlated. If the
 
 The high level of sharing means geometry is much less well correlated in SVF2. The SVF2 viewer needs to download individual geometry definitions. There's far too much overhead in the http protocol to use normal REST API calls. At first, the team thought that the new http2 protocol was the answer. It's a much more efficient protocol, however there was still too much overhead, due to browser limits on the number of active requests. In the end, they had to use a websocket connection with their own ultra lightweight protocol. 
 
-Initially, geometry was shared as widely as possible. The developers originally wanted to share geometry globally. That raises all kinds of awkward intellectual property questions. In the end, SVF2 was launched with geometry shared within the scope of each tenant. Definitely the right decision. Imagine having a weird visual glitch in one of your models because another customer previously uploaded a model whose geometry hashed to the same value. 
+The SVF2 format allows geometry definitions to be shared between multiple SVF2 models. How wide should the scope of sharing be? At one extreme, you could share geometry across all the models in the same tenant. At the other, only between models that are created from the same source file. As a consumer of SVF2, it doesn't matter. All you need to do is download geometry definitions you haven't seen before and cache them in browser local storage. 
 
 {% capture rule_url %}{% link _posts/2023-10-16-multi-tenant-rules.md %}{% endcapture %}
-Sharing per tenant also has issues. Imagine a customer has a [legal requirement to delete a file]({{ rule_url | append: "#5-right-to-delete" }}) and all its derivatives. It gets awkward when you have to explain that you can't delete the geometry definitions because they're used by other files. More recent versions of the SVF2 backend limit sharing to a single design file lineage. 
+As far as I can tell, the Model Derivative team have gone for something in between, with geometry shared between all versions of the same file lineage. That gives you most of the benefits of wide scale sharing while making it easy to manage lifetimes when [lineages are deleted]({{ rule_url | append: "#5-right-to-delete" }}). 
 
 ### Entity Ids
 
