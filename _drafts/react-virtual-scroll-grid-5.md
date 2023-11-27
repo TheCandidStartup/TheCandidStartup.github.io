@@ -4,7 +4,7 @@ title: >
 tags: frontend
 ---
 
-{% capture rvs4_url %}{% link _drafts/react-virtual-scroll-grid-4.md %}{% endcapture %}
+{% capture rvs4_url %}{% link _posts/2023-11-27-react-virtual-scroll-grid-4.md %}{% endcapture %}
 It [turns out]({{ rvs4_url }}) that implementing a grid control capable of scrolling over millions of rows and columns is much harder than I thought. The grid is virtualized, so the browser only has to deal with the cells visible in the viewport. Right now, there's no data. The content of each cell is generated on the fly. So why is this so difficult?
 
 ## Two Problems
