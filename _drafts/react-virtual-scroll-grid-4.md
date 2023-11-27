@@ -62,13 +62,13 @@ estimatedRowHeight: number = 50
     Average (or estimated) row height for unrendered rows. 
 ```
 
-The two required properties are functions that return the width and height of a specified item. Which got me thinking. Does that mean those two functions need to be called on every cell in the grid before the control can render? How's that going to work if I have a spreadsheet with [millions of rows and columns](https://www.thecandidstartup.org/2023/01/30/boring-spreadsheet.html)?
+The two required properties are functions that return the width and height of a specified item. Does that mean those two functions need to be called on every row and column before the control can render? How's that going to work if I have a spreadsheet with [millions of rows and columns](https://www.thecandidstartup.org/2023/01/30/boring-spreadsheet.html)?
 
 Fortunately, that's not how the control works. The control only measures the size of items that have been scrolled past. For the initial view, it only measures the visible items. The overall size of the container is based on the measured size for items up to the furthest scroll position plus an estimated size for the remaining items (which is where the `estimatedColumnWidth` and `estimatedColumnHeight` properties come in).
 
 Each time the control calculates the actual sizes up to the current scroll position, it saves the results away into a cache. When it has to calculate the size for a new scroll position it looks up the closest previous position and then works out the difference from there to the current position. 
 
-This system works nicely if you're scrolling across the grid a page at a time. There's a small incremental amount of work to do. However, if you drag the horizontal scroll bar right over to the right, then the vertical one all the way down, the cache doesn't help. You're back to needing to know the size of every cell before you can render. One of the underlying principles of my spreadsheet project is that only the visible data needs to be loaded. This isn't going to work.
+This system works nicely if you're scrolling across the grid a page at a time. There's a small incremental amount of work to do. However, if you drag the horizontal scroll bar right over to the right, then the vertical one all the way down, the cache doesn't help. You're back to needing to know the size of every row and column before you can render. One of the underlying principles of my spreadsheet project is that only the visible data needs to be loaded. This isn't going to work.
 
 There are other problems. The cache is unbounded in size. The scroll bar feels "janky" when you first scroll across due to the adjustment from estimated to actual sizes. 
 
@@ -122,7 +122,7 @@ The large data set example has 500,000 rows each 25 pixels high. That's 12.5 mil
 
 The container div height has been clamped at 4 million pixels. The code compensates for the smaller container size by mapping backward and forward between the container's coordinate space and the larger grid coordinate space. The way it does it is fascinating. 
 
-It divides the grid coordinate space into "pages" that are 400 thousand pixels high. Each page is mapped into the container div coordinate space using an offset. There's no scaling. Our grid is 12.5 million pixels high which is over 300 pages. There's only room for 100 pages in the container div. How does that work? The pages overlap.
+It divides the grid coordinate space into "pages" that are 40 thousand pixels high. Each page is mapped into the container div coordinate space using an offset. There's no scaling. Our grid is 12.5 million pixels high which is over 300 pages. There's only room for 100 pages in the container div. How does that work? The pages overlap.
 
 {% include candid-image.html src="/assets/images/frontend/slick-grid-virtual-pages.svg" alt="SlickGrid Virtual Pages" %}
 
@@ -142,7 +142,7 @@ Like react-window, react-virtualized has [online examples](https://github.com/bv
 
 {% include candid-image.html src="/assets/images/frontend/react-virtualized-example-grid.png" alt="React-Virtualized Example Grid" %}
 
-Dragging the vertical scrollbar around worked as expected and I was able to reach row 999,999. The horizontal scrollbar was "janky", behaving like the variable column width react-window grid. I was able to reach column 999,999 eventually. You can see from the image that the first three columns have different sizes, but the rest of the million columns are identical, at 80 pixels wide. Checking the code shows that there's no `estimatedColumnSize` property set and the default is 100. Easy enough to fix.
+Dragging the vertical scrollbar around worked as expected and I was able to reach row 999999. The horizontal scrollbar was "janky", behaving like the variable column width react-window grid. I was able to reach column 999999 eventually. You can see from the image that the first three columns have different sizes, but the rest of the million columns are identical, at 80 pixels wide. Checking the code shows that there's no `estimatedColumnSize` property set and the default is 100. Easy enough to fix.
 
 Small scale scrolling is less than ideal. If I click below the vertical scroll handle, row 15 moves to the top rather than row 8. If I click to the right of the horizontal scroll handle, column 38 moves to the left side rather than column 6. React-virtualized uses simple scaling to map between grid and container space. 
 
