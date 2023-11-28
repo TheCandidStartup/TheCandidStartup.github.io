@@ -33,11 +33,11 @@ I've got bored of looking. Time to build my own.
 
 Native browser scrollbars have limited precision. So why not implement my own custom scrollbar that can use all the precision available with JavaScript's 64 bit floating point numbers? The [consensus](https://stackoverflow.com/questions/72001508/custom-scrollbar-packages-react) seems to be that it's really hard. You need to try and match the look and feel of the native scrollbars across the major browsers on desktop and mobile platforms. You need to support all the standard ways of interacting: mouse, mouse wheel, keyboard. You need to ensure that your control will be as accessible as the native one.
 
-So hard, that I haven't found a single fully custom scrollbar. There are [lots](https://making.close.com/posts/introducting-react-custom-scroller-component) [of](https://github.com/sakhnyuk/rc-scrollbars) [custom](https://www.npmjs.com/package/react-scrollbars-custom) [scrollbars](https://www.npmjs.com/package/react-custom-scrollbars-2) out there but they all take one of two approaches. The simplest approach is to use [CSS styling](https://css-tricks.com/the-current-state-of-styling-scrollbars-in-css/) to alter the look of the native scrollbar. There are full featured browser specific extensions for webkit based browsers (e.g. Chrome and Safari), or more limited standards (e.g. Firefox). 
+So hard, that I haven't found a single fully custom scrollbar. There are [lots](https://making.close.com/posts/introducting-react-custom-scroller-component) [of](https://github.com/sakhnyuk/rc-scrollbars) [custom](https://www.npmjs.com/package/react-scrollbars-custom) [scrollbars](https://www.npmjs.com/package/react-custom-scrollbars-2) out there but they all take one of two approaches. The simplest approach is to use [CSS styling](https://css-tricks.com/the-current-state-of-styling-scrollbars-in-css/) to alter the look of the native scrollbar. There are full featured browser specific extensions for webkit based browsers (e.g. Chrome and Safari), or more limited official standards (e.g. Firefox). 
 
 The other approach is to [hide the native scrollbar](https://labs.thisdot.co/blog/creating-custom-scrollbars-with-react) while leaving it functional. Then provide your own visual representation of the scrollbar positioned on top. Use handlers for the native scroll events to update the look of the custom scrollbar.
 
-Both approaches rely on native scrollbar functionality (to do all the hard stuff), so don't help with the precision problem. I think my best bet is to stick with native scrollbars and use SlickGrid's paged scrolling approach to support large grids.
+Both approaches rely on native scrollbar functionality to do all the hard stuff, so don't help with the precision problem. I think my best bet is to stick with native scrollbars and use SlickGrid's paged scrolling approach to support large grids.
 
 ## Data Binding Interface
 
@@ -47,7 +47,7 @@ The problem with react-window is that it's not minimal enough. The interface req
 
 {% include candid-image.html src="/assets/images/frontend/offsets-vs-widths.svg" alt="Offset vs Width based data binding interface" %}
 
-A more minimal interface would require the app developer to provide the horizontal and vertical offset from the grid origin to the top left corner of the cell. Now all the grid control has to do is combine the supplied offsets with the offsets from it's paged scrolling system.
+A more minimal interface would require the app developer to provide the horizontal and vertical offset from the grid origin to the top left corner of the cell. Now all the grid control has to do is combine the supplied offsets with the offsets from its paged scrolling system.
 
 Isn't this just pushing all the complexity onto the app developer? Now they have to add up all the widths and heights, then figure out some kind of caching scheme to make performance tolerable. Well, let's look at some specific scenarios and see how it works out in practice.
 
@@ -70,3 +70,7 @@ The obvious answer is that [it's a lot of work](https://itnext.io/i-wrote-an-htm
 The same argument can be made against writing the most optimal vanilla JS DOM update routines. Do it the easy way by describing what you want and letting React figure out how to update the DOM. I'm also starting to appreciate the separation of concerns that is the natural outcome of breaking the problem down into separate React components. If I get it right, I can use existing components for the pieces that aren't directly related to managing an enormous grid. 
 
 ## The Plan
+
+I'm going to start with react-window, replace it's data binding interface and integrate SlickGrid's paged scrolling approach. I'm not going to start with a fork of react-window. Once I've changed the interface, any changes I make will never be merged back. 
+
+I'm going to use this as a learning experience. I'll port the parts of react-window I want to keep to TypeScript. I also want to update the implementation to [modern React with Hooks](https://react.dev/blog/2023/03/16/introducing-react-dev#going-all-in-on-modern-react-with-hooks). 
