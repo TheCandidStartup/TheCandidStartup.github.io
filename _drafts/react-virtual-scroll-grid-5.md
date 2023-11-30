@@ -5,7 +5,9 @@ tags: frontend
 ---
 
 {% capture rvs4_url %}{% link _posts/2023-11-27-react-virtual-scroll-grid-4.md %}{% endcapture %}
-It [turns out]({{ rvs4_url }}) that implementing a grid control capable of scrolling over millions of rows and columns is much harder than I thought. The grid is virtualized, so the browser only has to deal with the cells visible in the viewport. Right now, there's no data. The content of each cell is generated on the fly. So why is this so difficult?
+It [turns out]({{ rvs4_url }}) that implementing a grid control capable of scrolling over millions of rows and columns is much harder than I thought. The grid is virtualized, so the browser only has to deal with the cells visible in the viewport. Right now, there's no data. The content of each cell is generated on the fly. 
+
+So why is this so difficult?
 
 ## Two Problems
 
@@ -31,7 +33,7 @@ I've got bored of looking. Time to build my own.
 
 ## High Range Scrollbars
 
-Native browser scrollbars have limited precision. So why not implement my own custom scrollbar that can use all the precision available with JavaScript's 64 bit floating point numbers? The [consensus](https://stackoverflow.com/questions/72001508/custom-scrollbar-packages-react) seems to be that it's really hard. You need to try and match the look and feel of the native scrollbars across the major browsers on desktop and mobile platforms. You need to support all the standard ways of interacting: mouse, mouse wheel, keyboard. You need to ensure that your control will be as accessible as the native one.
+Native browser scrollbars have limited precision. So why not implement my own custom scrollbar that can use all the precision available with JavaScript's 64-bit floating point numbers? The [consensus](https://stackoverflow.com/questions/72001508/custom-scrollbar-packages-react) seems to be that it's really hard. You need to try and match the look and feel of the native scrollbars across the major browsers on desktop and mobile platforms. You need to support all the standard ways of interacting: mouse, mouse wheel, keyboard, touch. You need to ensure that your control will be as accessible as the native one.
 
 So hard, that I haven't found a single fully custom scrollbar. There are [lots](https://making.close.com/posts/introducting-react-custom-scroller-component) [of](https://github.com/sakhnyuk/rc-scrollbars) [custom](https://www.npmjs.com/package/react-scrollbars-custom) [scrollbars](https://www.npmjs.com/package/react-custom-scrollbars-2) out there but they all take one of two approaches. The simplest approach is to use [CSS styling](https://css-tricks.com/the-current-state-of-styling-scrollbars-in-css/) to alter the look of the native scrollbar. There are full featured browser specific extensions for webkit based browsers (e.g. Chrome and Safari), or more limited official standards (e.g. Firefox). 
 
@@ -45,13 +47,15 @@ I like the principles behind React-window. Build a minimal, flexible component t
 
 The problem with react-window is that it's not minimal enough. The interface requires the app developer to provide the width and height of each cell. That means the grid has to add up the widths and heights to work out where to position each cell. If the viewport is positioned over the bottom right corner of the grid that's an *O(n)* process.
 
+The grid also needs the reverse mapping from offset to cell index. That means, once again, an *O(n)* process of adding up widths and heights until the desired offset is reached. 
+
 {% include candid-image.html src="/assets/images/frontend/offsets-vs-widths.svg" alt="Offset vs Width based data binding interface" %}
 
-A more minimal interface would require the app developer to provide the horizontal and vertical offset from the grid origin to the top left corner of the cell. Now all the grid control has to do is combine the supplied offsets with the offsets from its paged scrolling system.
+A more minimal interface would require the app developer to provide mapping functions between the cell indexes and the horizontal and vertical offset from the grid origin to the top left corner of the cell. Now all the grid control has to do is combine the supplied offsets with the offsets from its paged scrolling system.
 
 Isn't this just pushing all the complexity onto the app developer? Now they have to add up all the widths and heights, then figure out some kind of caching scheme to make performance tolerable. Well, let's look at some specific scenarios and see how it works out in practice.
 
-The simplest scenario is fixed widths and heights, which is trivial to implement. `verticalOffset = rowHeight * rowIndex` and `horizontalOffset = columnWidth * columnIndex`. Next up in complexity we have a small fixed number of columns with non-standard widths and all the rest with the default width. We saw an example of this last time. The offset function is still pretty simple, you could do it as a case statement, so *O(1)* complexity.
+The simplest scenario is fixed widths and heights, which is trivial to implement. `verticalOffset = rowHeight * rowIndex` and `horizontalOffset = columnWidth * columnIndex` with the reverse mapping being equally simple. Next up in complexity we have a small fixed number of columns with non-standard widths and all the rest with the default width. We saw an example of this last time. The mapping functions are still pretty simple, you could do it with a switch statement, so *O(1)* complexity.
 
 {% include candid-image.html src="/assets/images/frontend/react-virtualized-example-grid.png" alt="Small fixed number of columns with non-standard widths" %}
 
@@ -73,4 +77,4 @@ The same argument can be made against writing the most optimal vanilla JS DOM up
 
 I'm going to start with react-window, replace it's data binding interface and integrate SlickGrid's paged scrolling approach. I'm not going to start with a fork of react-window. Once I've changed the interface, any changes I make will never be merged back. 
 
-I'm going to use this as a learning experience. I'll port the parts of react-window I want to keep to TypeScript. I also want to update the implementation to [modern React with Hooks](https://react.dev/blog/2023/03/16/introducing-react-dev#going-all-in-on-modern-react-with-hooks). 
+Instead, I'm going to use this as a learning experience. The plan is to build my own control from scratch, in Typescript. I'll port features from react-window and SlickGrid as I go. This is a great opportunity to get my head round [modern React with Hooks](https://react.dev/blog/2023/03/16/introducing-react-dev#going-all-in-on-modern-react-with-hooks). All the production React code I've looked at uses the old [class component](https://legacy.reactjs.org/docs/react-component.html) approach. Meanwhile, the [official React docs](https://react.dev/) don't mention class components at all until you hit the [legacy APIs reference section](https://react.dev/reference/react/Component) at the end. 
