@@ -50,11 +50,11 @@ This turns out to be a surprisingly compact representation. Most models have no 
 
 During implementation, the viewer team suggested an alternative representation. The property database representation was so compact that SQLite's ability to page data in and out wasn't needed. The property data is read only within the viewer so you don't need the ability to edit it either. You could store the whole thing as a set of compressed JSON arrays. The big arrays only contain integers, so you can use a JavaScript [typed array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Typed_arrays) in memory. Most browsers store typed arrays outside the limited size JavaScript heap, making it practical to load all the property data into memory.
 
-AFAIK the spec has never been made public. I hadn't looked at in in years, and I suspect no one in Autodesk has either. As we'll see later on, significant parts of what is now considered to be SVF, were added organically. The original spec helped to bootstrap the ecosystem, but after that SVF ended up being defined by what the code in the Autodesk Viewer would read. 
+AFAIK the spec has never been made public. I haven't looked at it in years, and I suspect no one in Autodesk has either. As we'll see later on, significant parts of what is now considered to be SVF, were added organically. The original spec helped to bootstrap the ecosystem, but after that SVF ended up being defined by what the code in the Autodesk Viewer would read. 
 
 ## Model Derivative Service
 
-The final player in the SVF ecosystem is the Model Derivative service. The Model Derivative service converts design files stored in Autodesk cloud apps into SVF, as well as a variety of other formats. The service creates and manages "derivatives" of your design files. Behind the scenes is a big S3 bucket and a fleet of servers with a variety of desktop applications installed. Model derivative service looks at the type of your input design file and the desired output format, then runs the appropriate converter. 
+The final player in the SVF ecosystem is the [Model Derivative service](https://aps.autodesk.com/en/docs/model-derivative/v2/developers_guide/overview/). The Model Derivative service converts design files stored in Autodesk cloud apps into SVF, as well as a variety of other formats. The service creates and manages "derivatives" of your design files. Behind the scenes is a big S3 bucket and a fleet of servers with a variety of desktop applications installed. Model derivative service looks at the type of your input design file and the desired output format, then runs the appropriate converter. 
 
 Converters are typically implemented as SVF export plugins that run within a standard desktop application. One of the SVF teams built a C++ library for reading and writing SVF files. The application teams were then responsible for using the library to write their plugin. In the early days of SVF, most conversions used Navisworks. Navisworks could read most formats, so all it took was implementing a Navisworks SVF export plugin to add Model Derivative support for twenty formats. 
 
@@ -318,7 +318,7 @@ Property Values ("objects_vals.json") contains all the unique property values in
 
 To save space, the Entity-Attribute-Value triples are stored using two separate arrays. 
 
-Property AVs ("objects_avs.json") stores pairs of attribute and value indexes. The pairs are stored in order, first by entity id, then by property display order for each entity. 
+Property AVs ("objects_avs.json") stores pairs of attribute and value indexes. The pairs are stored in order, first by entity id, then in property display order for each entity. 
 
 ```
 [1,1,9,2,10,3,8,4,13,5,14,6,15,7,16,8,17,9,18,7,19,10,20,11,21,6,22,12,23,13,24,14,26,18,2,18,26,24,2,24,26,27,2,27,26,30,2,30,26,34,2,34,26,37,2,37,2,56,68,56,2,63,68,63,
