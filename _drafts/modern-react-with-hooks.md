@@ -7,7 +7,7 @@ I first came across the phrase "[modern React with Hooks](https://react.dev/blog
 
 My preferred learning style is to dive into source code, see what I can figure out, then start googling when I see something I don't understand. For React, I looked at a [simple sample](https://github.com/dhilt/react-virtual-scrolling)  of how to implement [virtual scrolling]({% link _posts/2023-10-09-paged-infinite-virtual-scrolling.md %}), and two mature libraries that implemented virtual scrolling, [react-window](https://github.com/bvaughn/react-window) and [react-virtualized](https://github.com/bvaughn/react-virtualized). 
 
-All of them used class components. Had I been wasting my time, figuring out the old way to use React? I'm about to start implementing my own React [virtual scroll grid control]({% link _drafts/react-virtual-scroll-grid-5.md %}). I need to figure out what modern react is all about before I start.
+All of them used class components. Had I been wasting my time, figuring out the old way to use React? I'm about to start implementing my own React [virtual scroll grid control]({% link _posts/2023-12-04-react-virtual-scroll-grid-5.md %}). I need to figure out what modern react is all about before I start.
 
 ## Class Components
 
