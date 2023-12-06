@@ -51,11 +51,9 @@ Navisworks was written in, at the time cutting edge, now old school, object orie
 
 {% include candid-image.html src="/assets/images/file-formats/object-graph.svg" alt="Arbitrary graph includes multiple paths and cycles" %}
 
-Navisworks uses a fairly standard one pass [serialization](https://isocpp.org/wiki/faq/serialization) algorithm. You start at the root and ask the object to serialize itself, passing in the output stream and a dictionary that maps objects to an incrementing integer id. Each object checks whether it already exists in the dictionary and if so writes out a reference to the corresponding id. Otherwise, it adds itself to the dictionary with the next available id, then writes out its type and contents, including asking any referenced objects to serialize themselves, thus recursing over the entire graph. 
+Serialization is the process of turning that graph of objects in memory into a stream of bytes that can be written out as a file. Deserialization is the reverse process of reading from a stream of bytes and using that to reconstruct an equivalent graph of objects in memory. This is a well solved problem with lots of [standard algorithms](https://isocpp.org/wiki/faq/serialization). 
 
-Deserialization follows the same recursive pattern, passing in the input stream and a dictionary. If the stream contains a reference to an object, return the corresponding object in the dictionary. Otherwise, read in the object type, create a default instance of that type and add it to to the dictionary with the next available id. Then ask the object to read its contents, including deserializing any referenced objects.
-
-You may be wondering why I'm talking about the serialization algorithm rather than describing the file format spec. That's because there is no spec. The file format is whatever the Navisworks code writes out. 
+You may be wondering why I'm talking about serialization algorithms rather than describing the file format spec. That's because there is no spec. The file format is whatever the Navisworks code writes out. 
 
 There is some underlying structure. The input and output stream classes support versioning, binary or text output, compressed (using [zlib](https://www.zlib.net/)) or uncompressed. We used a rigorous versioning policy where every change in the format, no matter how small, resulted in a new file version with code that could read and write both the new and previous versions. Navisworks can, in theory, still read files created by the first versions of Navisworks. 
 
@@ -89,17 +87,11 @@ File converters would often struggle to create a scene graph structure that make
 
 The file formats for the early versions of Navisworks were simply the result of serializing the model representation and session metadata. The file started with a header that defined the file version and whether the content was binary or text, compressed or uncompressed. The rest of the file was a single serialized stream of data.
 
-With the Navisworks 4 "JetStream" release, we added the ability to work with models that were too large to fit in memory. That meant being able to load parts of the model from file and page data in and out. 
+With the Navisworks 4 "JetStream" release, we added the ability to work with models that were too large to fit in memory. That meant being able to load parts of the model from file and page data in and out. In order to do that, you need to switch to some form of container format that can store multiple streams and let you read each stream independently.
 
-The first step was to change the overall format from a single stream to a container that could store multiple streams. Yes, just like a [ZIP](https://en.wikipedia.org/wiki/ZIP_(file_format)) file. However, rather than simply adopting ZIP, I created my own. There was an element of [Not Invented Here](https://en.wikipedia.org/wiki/Not_invented_here) to that decision, but we felt that our file format was something we should have total control over. I also didn't like one of the design decisions made by ZIP. 
+The most common container format is the [ZIP](https://en.wikipedia.org/wiki/ZIP_(file_format)) file. However, rather than simply adopting ZIP, I created my own. There was an element of [Not Invented Here](https://en.wikipedia.org/wiki/Not_invented_here) to that decision, but we felt that our file format was something we should have total control over. The details don't matter. Just think of it as equivalent to a ZIP file: a header, multiple compressed streams and a directory telling you where to find the stream you're looking for.  
 
-The ZIP format is designed so that it can be created in a streaming fashion. You can start writing the ZIP archive without having to know in advance how many files you're going to add. You can even create a ZIP archive on the fly in response to an http request. A ZIP file consists of a set of files concatenated together, each optionally compressed, followed by a directory which tells you where each file starts, and ending with a record which tells you where the directory starts. 
-
-To read a ZIP file you have to start at the end, first reading the final record, then using that to read the directory and then finally being able to start reading files. To me it seemed like ZIP files were optimized for ease of writing by making them less efficient to read. I wanted Navisworks files to be readable largely sequentially from the front. 
-
-{% include candid-image.html src="/assets/images/file-formats/navis-container-format.svg" alt="Navisworks Container Format" %}
-
-They start with the standard Navisworks header. This helps support backwards compatibility. Earlier versions of Navisworks can recognize that this is a later version of a Navisworks file. The header defines the version and encoding of all of the streams in the container. Unlike ZIP, the directory follows immediately after the header, and then the individual streams concatenated together. When writing a Navisworks file, you have to know how many streams it will include in advance, so you can write out the right amount of padding space for the directory. Once you've written all the streams you can come back and overwrite the padding with the actual directory entries.
+{% include candid-image.html src="/assets/images/file-formats/ZIP-64-layout.svg" alt="ZIP-64 Internal Layout" attrib="Niklaus Aeschbache, Public domain, via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:ZIP-64_Internal_Layout.svg)" %}
 
 The main parts of the Navisworks data model are written out as separate streams, in the order that they are usually read. There are separate streams for the logical scene graph, the spatial hierarchy and the set of instances. Each feature with its own metadata (clash tests, saved viewpoints, selection sets, etc.) also uses a separate stream.
 
