@@ -88,7 +88,7 @@ Apart from the S3 Express One Zone and zero ETL announcements, this is dominated
 * Segways into the standard AWS pitch
 * Announcing **AWS S3 Express One Zone**
     * Highest performance and lowest latency cloud storage
-    * Designed for caching workloads (*aka can lose data*)
+    * Designed for low latency workloads that can tolerate lower durability (e.g. caching, ML training)
     * Data is stored in single customer selected AZ (colocate with your compute)
     * Single-digit millisecond latency
     * Millions of requests per minute (*which is a weird metric, guess requests per second number wasn't impressive enough*)
@@ -288,9 +288,9 @@ A great technical accomplishment, much better than original ElastiCache, but not
 
 ## Achieving scale with Amazon Aurora Limitless Database
 
-If you ever scale a service beyond what a single database cluster can handle, you'll know how painful implementing sharding can be. In principle, Aurora Limitless should make it simple, especially for cases like sharding by tenant in a multi-tenant SaaS application. However, there's a lot going on behind the scenes with deep changes to Postgres internals. Make sure you test your use case well before going all in. 
-
 [YouTube](https://youtu.be/a9FfjuVJ9d8?si=hmYUsYZKFAQaYBIa)
+
+If you ever scale a service beyond what a single database cluster can handle, you'll know how painful implementing sharding can be. In principle, Aurora Limitless should make it simple, especially for cases like sharding by tenant in a multi-tenant SaaS application. However, there's a lot going on behind the scenes with deep changes to Postgres internals. Make sure you test your use case well before going all in. 
 
 * Scaling beyond what a single instance can happen
 * Ultimately have to scale horizontally
@@ -360,4 +360,48 @@ If you ever scale a service beyond what a single database cluster can handle, yo
 * Sharding system exposed through Postgres EXPLAIN so you can tune queries appropriately
 * Lots of embarrassingly parallel operations that just run faster
      * Create index, Analyze, Vacuum, Aggregates (sum, min, max, etc)
+
+## Deep dive on Amazon S3 Express One Zone storage class
+
+[YouTube](https://youtu.be/TJp4ayDC8m0?si=pYcU3Lvs873bovgv)
+
+Could be interesting for some use cases. Not clear how it works with Lambda as there's no direct way of specifying which AZ the lambda instances should be deployed to. You can do it indirectly by connecting the Lambda to a VPC and then mapping the subnet to only one AZ. However, then not truly serverless due to fixed cost of VPC.
+
+* S3 scales to trillions of objects and millions of requests per second
+* Some applications need to reduce access latency, or end up building custom caching systems
+* S3 Express One Zone is for them
+    * Single-digit millisecond consistent first byte latency
+    * Millions of requests per minute
+    * 10X faster than S3 standard
+* Built differently
+    * One AZ architecture enabling co-location with compute
+    * New S3 directory bucket type to enable high transaction workloads
+    * Session-based access for faster authorization
+* One Zone architecture
+    * Still have 3 redundant copies but now they're all in the same AZ
+    * Co-locating compute reduces latency but doesn't change cost. Standard S3 doesn't charge for inter-AZ transfers, so you're not saving any money by avoiding them.
+    * Change in durability model - no longer resilient to failures which take out the entire AZ.
+* S3 directory buckets
+    * Rather than scaling incrementally under load, scales in large chunks
+* New security model
+    * CreateSession API
+    * Returns a session token to include in all your requests
+    * Grants access to the bucket
+    * Token can be either ReadOnly or ReadWrite
+* Single-step batch operations to move data from regular S3 bucket to S3 One Zone
+* Integration with other AWS services
+    * CloudWatch
+    * VPC/IAM
+    * EMR/Athena
+    * SageMaker
+    * EKS/EC2/Lambda
+    * SDKs and other developer tools
+* Performance gains - typical pattern is to move data from standard S3 to One Zone before running job against it
+    * Athena 2.1X faster with 50% lower request costs
+    * EMR 4X faster
+    * SageMaker 5.8X faster
+    * Improved GPU usage for ML training jobs due to lower more consistency latency, less blocking waits
+    * Mountpoint for S3 6X faster
+* Live side by side performance tests showing One Zone is indeed much faster than regular S3
+* Customer case study: Pinterest
 
