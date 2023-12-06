@@ -80,7 +80,9 @@ The "Monday Night Live tradition of diving deep into the engineering that powers
 
 [YouTube](https://youtu.be/PMfn9_nTDbM?si=nkBa4A-K__BxFtX0)
 
-AWS CEO "shares his perspective on cloud transformation". Highlighting innovation in data, infrastructure, AI and ML.
+AWS CEO "shares his perspective on cloud transformation". "Highlighting innovation in data, infrastructure, AI and ML".
+
+Apart from the S3 Express One Zone and zero ETL announcements, this is dominated by AI and in particular AWS playing catch up with OpenAI. 
 * Partnership with Salesforce
 * 80% of "unicorn" startups on AWS
 * Segways into the standard AWS pitch
@@ -145,3 +147,217 @@ AWS CEO "shares his perspective on cloud transformation". Highlighting innovatio
     * Amazon DataZone to populate and maintain a data catalog
     * Announcing **Amazon DataZone AI Recommendations** to add more automation to the process
 * Project Kuiper internet satellites. Announcing **Kuiper Private Connectivity Services**, direct link style connection from customer to AWS via Kuiper
+
+## Dr. Swami Sivasubramanian - VP Data & AI
+
+[YouTube](https://youtu.be/8clH7cbnIQw?si=KGM0LEm2ftrJEa4f)
+
+This is an extended version of the AI and Data section in Adam Selipsky's keynote. All the same announcements with more context, background and customer stories. No point watching both. Pick whether you want the short or long version. I only took one additional bullet point.
+* Latest versions of Foundational Models have 50% less hallucinations!
+
+## Dr. Werner Vogels - CTO Amazon.com
+
+[YouTube](https://youtu.be/UTRBVPvzt9w?si=K2M9bCIxGl9LDGDc)
+
+All about architecting for cost with a few developer focused announcements sprinkled in. Not as thought provoking as last year but still worth a watch.
+
+* Cloud removed constraint of working with finite hardware resources
+* Lost the art of architecting for cost - that's what this talk will focus on
+* PBS moved to the cloud and rearchitected achieving 80% savings
+* Cost is a good proxy for sustainability
+* Book - "[The Frugal Architect](https://thefrugalarchitect.com/)"
+* Design
+    * Cost is a non-functional requirement (like security, compliance, accessibility)
+    * AWS price model follows their costs
+    * Three basic dimensions: bytes stored, bytes transferred, number of requests
+    * When you figure out your app's pricing model need to do the same thing
+    * "Systems that last align cost to business value"
+    * "Find the dimension that you're going to make money over, then make sure your architecture follows the money"
+    * Align cost and revenue
+    * Example of uncapped data plan leading telecoms company to bankruptcy
+    * If you get it right, cost as proportion of revenue goes down as you scale up (economies of scale)
+    * Early days of Lambda built on architecture that wasn't cost effective (dedicated EC2 instances per customer). Did it to gain insight on customer requirements. In parallel started greenfield project to do it properly which became Firecracker microVM.
+    * Build evolvable architectures (Lambda transitioned to Firecracker without customer impact)
+    * You need to pay off your technical debt
+    * Customer story: Nubank
+    * Every engineering decision is a buying decision
+    * Align your priorities
+* Measure
+    * Understand what you're measuring and how it can change behavior
+    * Amazon.com measures cost per request at microservice level and aggregates cost of overall experience on the website
+    * Try to drive down cost per request over time
+    * Diminishing returns
+    * Measure impact of new features, stop investing if extra costs don't drive extra revenue
+    * Announcing **AWS Management Console myApplications**
+        * Tag resources by application and get metrics broken out for you
+    * Announcing **AWS CloudWatch Application Signals**
+        * Auto-setup of key metrics dashboard for your EKS application
+    * Unobserved systems lead to unknown costs
+    * Cost-aware architectures implement cost controls
+    * Ability to turn off features if exceeding cost limits - in partnership with business
+    * Amazon.com has tiers of features depending on importance (e.g. checkout is in tier 1). Use tiers to determine what gets throttled back in case of incident or cost controls exceeeded.
+* Optimize
+    * Cost optimization is incremental
+    * Eliminate digital waste: Stop, Rightsize, Shift, Reduce
+    * AWS CodeGuru Profiler - continually understand where your cycles are going
+    * Unchallenged success leads to bad assumptions - "we've always done it this way"
+    * Cost to build much smaller than cost to operate
+    * Paper looking at [Energy Efficiency of programming languages](https://states.github.io/files/j2.pdf). Ruby/Python 60 times more expensive than Rust/C++. *Interestingly JavaScript only 5 times more expensive*. 
+    * Use fast prototyping to disconfirm your beliefs
+* Constraints breed creativity
+* To predict the future, observe the present
+* Originally AI was top down, symbolic reasoning. Over last 15 years shifted to bottom up, computer vision, then deep learning.
+* Don't have to jump on the generative AI hype train. Lots of examples of success using "good old fashioned AI".
+* Werner's personal project - looking for something he could do using ML for radiology. After all, has been telling us how easy it is to integrate ML.
+    * Trying to recognize signs of brain hemorrhage in CT scans
+    * Already a public labelled set of brain scans available for training
+    * Used standard Python frameworks to train a model, running on SageMaker
+    * Used CodeWhisperer to speed up getting something working
+    * Built app around the model using Lambda and AWS Amplify
+    * Cleaned up sample available on [GitHub](https://github.com/aws-samples/radiology-worklist-ich-detection)
+    * "If I can do it, you can do it"
+    * Needs to be small, fast, inexpensive. Ideally run locally.
+    * [Generative AI CDK Constructs](https://github.com/awslabs/generative-ai-cdk-constructs) also on Github
+* Announcing **Amazon SageMaker Studio Code Editor**
+    * Integrated open source version of VS Code
+* Using Amazon Q to empower developers
+    * Ask it about appropriate AWS services - there's too many to keep track of
+    * Integrated into CodeCatalyst - great way to learn a new area
+    * Integrated into IDE
+* Announcing **AWS Application Composer in VS Code**
+    * Visually compose infrastructure as code directly in VS Code, see changes reflected in code
+    * Amazon Q also integrated
+
+# Innovation Talks
+
+[YouTube](https://youtube.com/playlist?list=PL2yQDdvlhXf9dPFE1cCdiBovjN4Q6oCg-&si=ETTICNhAUKR3DWVX)
+
+New category of talk at Re:Invent. I dipped into a couple. Seems to be AWS VPs talking at a very high level about their area of responsibility. Like mini-keynotes but without the production values and new announcements. 
+
+I gave up and moved onto the breakout sessions
+
+# Breakout Sessions
+
+[YouTube](https://youtube.com/playlist?list=PL2yQDdvlhXf93SMk5EpQVIq4kdWQhUcMV&si=ViTv9GBEGmDxd18Q)
+
+At time of writing breakdown sessions were "coming soon" on the AWS on-demand site, but were all uploaded to YouTube. Being presented with a playlist of 655 videos makes it hard to find what's worth watching. This is my random sampling, concentrating on 300 and 400 level sessions on new announcements. 
+
+## Introducing Amazon ElastiCache Serverless
+
+[YouTube](https://youtu.be/YYStP97pbXo?si=1_aRyXXF9z-7Gpfv)
+
+A great technical accomplishment, much better than original ElastiCache, but not [truly serverless]({% link _posts/2022-12-05-serverless-or-not.md %}). Still need a VPC and storage charge is for a minimum of 1 GB per cache (which is $90 per month).
+
+* Intro stuff: What is caching, what is Redis, what is memcached
+* Capacity planning for ElastiCache is hard. How do you choose appropriate instance size?
+* Monitoring and adjusting capacity up and down is hard
+* High availability for memcached is hard - client has to handle everything
+* Already supported auto-scaling rules for scale up and down
+* ElastiCache does it all for you
+    * No choosing instance size
+    * No capacity management needed
+    * Create a cache in under a minute
+    * 700 microseconds p50, 1300 microseconds p99 latency reads
+    * 1100 microseconds p50, 1900 microseconds p99 latency writes
+    * Millions of requests/second
+    * Pay per use pricing
+    * 99.99% availability SLA
+    * Single endpoint
+    * Up to 5 TB of storage
+* Deployed to two AZs in your VPC (*not true serverless if you need a VPC?*)
+* Scales vertically and horizontally based on memory/compute/network use
+* Pricing based on data stored in GB-hours and request processing in ElastiCache Processing Units (ECPUs)
+* ECPUs are fine grained. Depend on Redis/Memcached commands used. At simplest Redis get/set commands use 1 ECPU per KB transferred.
+* More complex commands are charged based on resources consumed compared to baseline of get/set commands
+* Encryption at rest always on
+* Automatic software updates and backups
+* Single endpoint - client has no visibility of cluster topology, no reconnect on node failure or scaling
+* How it works
+
+{% include candid-image.html src="/assets/images/reinvent-2023/elasticache-serverless-scaling.png" alt="ElastiCache Serverless Scaling" %}
+
+* Scales when 50% usage of any resource reached, to ensure it can handle spikes up to 2X current load
+* Lots of optimizations to speed up process of migrating shards
+* Built on Caspian platform - instant in place scale up of EC2 instances (if resources available on physical host)
+* Noisy neighbor isolation
+* Each shard has a primary and a replica
+* New proxy layer to provide single endpoint, high availability, written in Rust
+* Multiplex multiple requests into single network request to cache engine for better throughput
+* Engine and proxy nodes deployed to multiple AZs, clients in customer VPC routed to AZ-local proxy
+* Read from replica if needed to stay in local AZ
+
+## Achieving scale with Amazon Aurora Limitless Database
+
+If you ever scale a service beyond what a single database cluster can handle, you'll know how painful implementing sharding can be. In principle, Aurora Limitless should make it simple, especially for cases like sharding by tenant in a multi-tenant SaaS application. However, there's a lot going on behind the scenes with deep changes to Postgres internals. Make sure you test your use case well before going all in. 
+
+[YouTube](https://youtu.be/a9FfjuVJ9d8?si=hmYUsYZKFAQaYBIa)
+
+* Scaling beyond what a single instance can happen
+* Ultimately have to scale horizontally
+* Easier for reads - add more replicas
+* Single master instance is bottleneck for writes
+* Solution is sharding but adds lots of complexity on application side
+* Limited preview for Postgres flavor of Aurora
+* Serverless deployment with distributed architecture accessed through single interface
+* Transactionally consistent
+* Scales to petabytes of data
+* Application needs to identify a column in each table to use as a shard key
+* Data from tables with same shard key can be co-located on same physical instance for improved performance
+* Reference tables can be duplicated across all shards
+* Rather than extending SQL syntax to create sharded table, use aurora session parameters to enable shared mode and define shard key that subsequent create table statement will use. *Bit clunky?*
+* Additional session parameter to specify that next table created should be colocated with existing table
+* Similarly, there's another setting that will make the next table created a reference table
+* Limitless  database adds concept of a shard group to the existing Aurora architecture
+
+{% include candid-image.html src="/assets/images/reinvent-2023/aurora-limitless-shard-group.png" alt="Aurora Limitless Database Shard Group" %}
+
+* New endpoint that resolves to transaction routers
+    * Serve all application traffic to sharded tables
+    * Scale vertically and horizontally based on load
+    * Routers know schema and key range placement
+    * Assign time for transaction snapshot and drive distributed commits
+    * Perform initial query planning and aggregate results from multi-shard queries
+* Data access shards
+    * Own portion of sharded table key space and have full copies of reference tables
+    * Scale vertically and then split based on load
+    * Perform local planning and execution of query fragments
+    * Execute local transaction logic
+    * Backed by Aurora distributed storage
+* When creating a shard group you specify max number of ACUs you want the shard group to scale to and the level of compute redundancy
+* Compute redundancy controls level of HA for data access shards. This is compute only, no persistent data.
+    * Level 0 has everything spread across multiple AZs. If shard fails it needs to be restarted and get back up to speed which will take some time.
+    * Level 1 adds one redundant copy of each shard in another AZ
+    * Level 2 adds two redundant copies in another two AZs
+    * Also need to configure failover instances for the standard database primary writer (which is outside shard group)
+
+{% include candid-image.html src="/assets/images/reinvent-2023/aurora-limitless-compute-redundancy.png" alt="Aurora Limitless Database Compute Redundancy" %}
+
+* Hash-range partitioning
+    * Shard key hashed to 64-bits
+    * Ranges of 64-bit space are assigned to shards
+    * From example, looks like this ties into  Postgres's existing table partitioning feature
+    * Shards are all in sync and strongly consistent - no change to Postgres semantics
+    * Internally (not visible to user), table fragments are partitioned into sub-range slices to improve intra-shard parallelism and to make it easy to repartition on horizontal scale out
+    * Leveraging Aurora storage layer to duplicate and move table slices around
+* Reference table updates are strongly consistent. Intended to enable join pushdown for infrequently written tables
+* Supports READ COMMITTED and REPEATABLE READ transaction levels with same consistency as in a single system
+* Distributed transactions built on bounded clocks
+    * Using EC2 TimeSync have an approximate current time and an earliest and latest possible time which bound actual time
+    * Enhanced Postgres to store (earliest,current,latest) tuple with each transaction
+    * Updated commit logic so that commit won't complete until full time range is in the past, so no possibility of a conflicting update arriving after commit with an earlier timestamp due to clock skew
+    * Provides global read-after-write, one phase local commit, two phase distributed commit
+* Overall
+    * Same RC/RR semantics as single instance Postgres (*what about serialized isolation?*)
+    * All reads are consistent without having to use a quorum, even on failover
+    * Commits within a single shard scale linearly (millions per second)
+    * Distributed commits are slower, using two phase commit, but still atomic
+* SQL compatibility
+    * Postgres wire compatible
+    * Postgres SQL parser and semantics
+    * "Broad coverage" of feature set with selected extensions
+    * Implemented using a custom foreign data wrapper
+* Optimized fast path for single shard cases
+* Sharding system exposed through Postgres EXPLAIN so you can tune queries appropriately
+* Lots of embarrassingly parallel operations that just run faster
+     * Create index, Analyze, Vacuum, Aggregates (sum, min, max, etc)
+
