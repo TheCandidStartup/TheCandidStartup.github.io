@@ -127,7 +127,7 @@ Apart from the S3 Express One Zone and zero ETL announcements, this is dominated
         * CodeWhisperer Customization using your own code (private to you)
         * Announcing **Amazon Q** generative AI powered assistant
             * Understands user's role and access to information, prevents access to information you shouldn't have access to
-            * Integrated into console and AWS marketing site (*lots of third party reports that Q is leaking private AWS information like non-public roadmaps*!)
+            * Integrated into console and AWS marketing site (*lots of [third party reports](https://www.lastweekinaws.com/blog/aws-degenerative-ai-blunder/) that Q is not as accurate as it should be*)
             * Amazon CodeCatalyst Q integration to plan and automate feature development lifecycle
             * Amazon Q Code Transformation - upgrade code, remove deprecated code, apply security best practices. Only available on Java so far. 
             * Amazon Q as business expert - integrations with 40 enterprise applications
@@ -405,3 +405,200 @@ Could be interesting for some use cases. Not clear how it works with Lambda as t
 * Live side by side performance tests showing One Zone is indeed much faster than regular S3
 * Customer case study: Pinterest
 
+## Best practics for querying vector data for gen AI apps in PostgresSQL
+
+[YouTube](https://youtu.be/PhIC4JlYg7A?si=ukDUxEf6gVB945Qb)
+
+The keynotes had mentioned database extensions to store vector data for generative AI. Not something I was aware of and was keen to find out more.
+
+* Generational AI is powered by foundation models
+* Can be augmented with additional data - retrieval augmented generation
+* For example, a knowledge base in a database
+* Need a common interface to take text, image, video, whatever data and make it accessible to the foundational model
+* Which is where vectors come in
+* Uses an "embedding model" to convert raw data to vector
+* Core workflow is performing similarity searches on vectors
+
+{% include candid-image.html src="/assets/images/reinvent-2023/vector-embedding-rag.png" alt="Using Vector Embeddings to augment an LLM with RAG" %}
+
+* Vectors used typically have large dimensions dependent on embedding model
+* Titan embeddings uses 1536 dimensions with a 4 byte float for each value which is 6KB per vector
+* If your knowledge base is large, can have millions of vectors to generate and store
+* Vectors are hard to compress
+* Queries use distance operations on vectors which need to query every element in the vector, for every vector in the set
+* Use Approximate Nearest Neighbour (ANN) to speed things up
+* Need to keep in mind that queries are approximate - can trade off accuracy (aka "recall") vs cost and speed
+* Lots of choices for vector storage system depending on scale - in memory, database, S3
+* Why use PostgreSQL
+    * Existing client libraries
+    * Convenient to co-locate app and AI data
+    * Access to transactions and all the other relational database features
+* pgvector is an open source extension for Postgres that adds support for storage, indexing, searching, metadata with choice of distance vector data type
+    * IVFFlat and HNSW indexing
+    * Exact K nearest neighbour and ANN
+* IVFFlat
+    * Inverted flat file
+    * Organizes vectors into lists
+    * Needs to be prebuilt (determine lists and how to map vectors to lists up front)
+    * Insert time bounded by number of lists
+* HNSW
+    * Graph based
+    * Navigate down into neighbourhood where vectors are most similar to what you're looking for
+    * Iterative insertion
+    * Insertion time increases as size of graph increases
+* Which index to use?
+    * If you need exact results, no index. Search over everything.
+    * IVFFlat is fast, HNSW is easy to manage
+* Best Practices
+    * By default vectors are so large that Postgres will tstore as TOAST (out of line from main pages) and compressed
+    * Will get better results by turning off compression and in most cases turning off TOAST
+    * Lots of detailed guidance on tuning HNSW and IVFFlat index parameters
+    * HNSW needs more work up front to build index but has best query performance
+    * Use concurrent inserts starting from empty table to speed up building HNSW index
+    * Be careful using filtering - may not use index
+    * Consider using partial indexing to build index on pre-filtered values
+    * Consider partitioning table and building indexes on specific partitions
+* Aurora features for vector workloads
+    * Optimized reads - NVMe caching of otherwise evicted pages
+    * When working set exceeds memory can get up to 9X speed up from Aurora caching
+    * Graviton3 significantly faster than Graviton2
+
+## Amazon DynamoDB zero-ETL integration with Amazon OpenSearch Service
+
+[YouTube](https://youtu.be/DOsQojGHXPo?si=sHvcKYKNGhEkLTUE)
+
+Existing commonly used integration pattern managed for you. No new functionality needed in DynamoDB or OpenSearch.
+
+* Example data set of Amazon.com product questions
+* How to set it up for OpenSearch integration
+* Design schema in usual way thinking about access patterns - single table design
+* Now PM wants to add search features ...
+* Classic OpenSearch integration is export snapshot to S3, ingest into OpenSearch. Use DynamoDB streams with Lambda to incrementally update OpenSearch
+* Zero ETL integration basically does that for you
+* OpenSearch ingestion powered by DataPrepper - rich set of processors to manipulate data for OpenSearch
+* Walk through using console to set up and configure. DataPrepper config files to describe how to map the data
+* Use whatever version of OpenSearch you like as a target
+* Table in DynamoDB maps to index in OpenSearch
+* Item in DynamoDB maps to document in OpenSearch
+* OpenSearch indexes have a schema. DynamoDB attributes map to fields in OpenSearch index. Schema defines types for each field.
+    * Avoid relying on dynamic mapping (OpenSearch guesses types for you)
+    * Can't change schema later without rebuilding the index from scratch
+* Best Practices
+    * Make use of DataPrepper pipelines
+    * Consider routing different item types in a single table to different indexes
+    * Enable CloudWatch logs for ingestion pipeline
+    * Always use a "dead letter queue"
+    * To recreate; stop the pipeline, delete and recreate index, then restart pipeline
+    * Add S3 as a second sink to capture transformed documents being ingested which you can use to find problems / debug
+* Rule of thumb for OpenSearch capacity
+    * Each OCU can support about 5MB/s ingestion rate (YMMV)
+    * Allow 1 OCU per 5000 DynamoDB WCU
+
+## SaaS Anywhere: Designing distribute multi-tenant architectures
+
+[YouTube](https://youtu.be/jwWku2TAtvg?si=xSU_AOjsMVnNDXPU)
+
+High level view of how you can let your customers own and control some of the infrastructure for their own tenant.
+
+* SaaS Anywhere: Architecture model where part of your system's resources are hosted in a remote environment that may not be under the control of the SaaS provider
+* Typically some or all of data plane infrastructure is owned and managed by your customer/tenant
+* Implies per tenant infrastructure resources - not getting economies of multiple tenants sharing a resource
+* Patterns and strategies to create multi-tenant solutions that support centralized provisioning, configuration, operation and deployment of remote application resources
+* Design considerations
+    * Availability and Reliability: Shared responsbility model between SaaS provider and tenant
+    * Frictionless onboarding: Can you achieve anything close to self service sign up of fully managed SaaS?
+
+{% include candid-image.html src="/assets/images/reinvent-2023/saas-anywhere-onboarding.png" alt="SaaS Anywhere Onboarding" %}
+
+* Remote Management and Updates
+    * Need connectivity to remove environments
+    * Ability to push updates to applications
+* How little can you get any with having remotely? The more you need, the more complex and expensive it becomes to manage
+* Different flavors of anywhere
+    * Customer have their own AWS account
+    * Hybrid cloud
+    * On-premises
+* Focusing on customer AWS account flavor
+* Deployment models
+    * Distributed data stores (storage only)
+    * Distributed application services (storage and compute for some micro-services running remotely)
+    * Remote application plane (all your application data plane services running remotely, SaaS provider only manages control plane)
+
+{% include candid-image.html src="/assets/images/reinvent-2023/saas-anywhere-deployment-models.png" alt="SaaS Anywhere Deployment Models" %}
+
+*  Distributed data store
+    * Tenant maintains ownership and control of data
+    * Tenants could have too much existing data to transfer to Saas environment
+    * Tenant responsible for backup
+    * Use IAM roles to enable cross-account access
+    * Tenant has to create role and give SaaS provider permission to use the role
+    * SaaS application needs to assume each tenant's role whenever it accesses that tenant's database
+
+{% include candid-image.html src="/assets/images/reinvent-2023/saas-anywhere-iam.png" alt="SaaS Anywhere Cross-Account Access" %}
+
+* Distributed application services
+    * Complete micro-service in remote environment
+    * SaaS provider should try and minimize number of remote services
+    * Tenant responsible for securing environment where application services run
+    *  Consider using AWS PrivateLink to connect the two VPCs
+
+{% include candid-image.html src="/assets/images/reinvent-2023/saas-anywhere-remote-workload.png" alt="SaaS Anywhere Remote Application Services" %}
+
+* Remote application plane
+    * Tenant wants complete control
+    * Maybe needs to integrate tightly with other local services
+
+* Remote deployments
+    * Whichever model, you need a system for remote deployments
+    * Need role in remote tenant that has permissions needed to grab and deploy latest build
+    * Control plane needs to automate pushing updates to all remote environments
+* Cross-account observability
+    * Need infrastructure that sends selected observability metrics back from remote environments
+
+## 5 things you should know about resilience at scale
+
+[YouTube](https://youtu.be/CowAYv3qNCs?si=fn-ckC3cbFmgBUJA)
+
+* Dependencies and modes
+    * Dependencies introduce failure potential
+    * A model behavior is one in which a change to the system causes a total shift in how it operates
+    * Example: Normally using a cache, but falling back to the database
+    * Cache falling over shifts huge load onto the database which can't scale fast enough to handle it
+    * DNS war story. Originally DNS servers queried database for changes. As service grew switched to database regularly publishing changes to S3 and servers reading objects from S3. Much more scalable. Unfortunately they left a fallback path in place if updates to S3 not having. System scales some more. At one point database starts lagging slightly behind when publishing, hits fallback threshold and all DNS servers instantly overwhelm it.
+    * Avoid modal shifts at scale. No fallback paths, no hard limits, no cliffs. If you need a shift in behavior, exercise it often.
+    * Design system so that it does less work rather than more if it all goes wrong.
+* Preparing to fail
+    * Don't try and design system that will never fail - not practically possible
+    * Assume system will fail and think about how to mitigate
+    * Blast radius, cellular architecture
+    * Don't push all updates at once, partial deployment, canaries, rolling out to other regions, etc.
+    * Be careful with rollback threshold. The more instances you have, the more sensitive your threshold needs to be to pick up canary failure
+        * *Why don't you look specifically at canary availability when doing a canary deploy rather than overall availability?*
+    * Reduce blast radius in time. Deploy and then immediately rollback. Then check if there would have been alarms afterwards.
+* Queues
+    * Textbook use: Decoupling producer and consumer
+    * Great for small scale, intermittent outages in consumer
+    * If there's a long outage, queue keeps growing
+    * Metric of queue health: number of items or better maximum age of items
+    * What do you do about backlogs?
+    * [AWS builders library on unbounded queues](https://aws.amazon.com/builders-library/avoiding-insurmountable-queue-backlogs/)
+    * Sidelining: On recovery Sideline old requests and use separate higher priority queue for new requests. Assumption is that older items are less relevant and producer may have given up and retried.
+    * Backpressure: Limit size of queue and if full propagate error state back to producer
+    * Know where your queues are, have a metric for how far behind consumer is, understand what your catch up rate is, have a queue bounding strategy
+* Errors
+    * 4XX client errors, 5XX server errors
+    * When operating at scale will get 5XX rate close to but never at zero
+    * When writing a service make sure you separate 4XX and 5XX errors in your monitoring. 5XX is signal on health of your service, 4XX is mostly noise. 
+    * 5XX: Generally unexpected, needs your attention, clients should retry
+    * 4XX: Expected all the time, may or may not be a signal, clients should not retry
+    * Looking at overall metrics can mask real problems. If you have sharded or cellular architecture need to look at metric for each shard/cell.
+        * Different customers will have different experiences.
+    * Interesting to look at 4XX by customer/tenant. Tells you something about how they're using or abusing your service.
+* Retries
+    * SDK clients have good built-in retry behavior
+    * Backoff, jitter, limited retries
+    * Retries mean when your service is having problems it will receive higher load
+    * Series of services 1 -> 2 -> 3 -> 4. If service 4 has outage and all services do repeated retries before failing back, then get geometric build up of retries hitting 4. 
+    * Throttling: Service 4 could start throttling, 429 type errors should be propagated straight back without retries
+    * Contextual behavior: If service 2 and 3 known they're internal, could propagate errors straight back and let service 1 control retry behavior
+    * Duplicate requests: Special case, where result is important, make two duplicate requests in parallel, use first response, ignore second. Propagate failure back if both fail. Avoids modal behavior where load increases if there's an outage. 
