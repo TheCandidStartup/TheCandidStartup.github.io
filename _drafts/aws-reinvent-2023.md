@@ -559,6 +559,8 @@ High level view of how you can let your customers own and control some of the in
 
 [YouTube](https://youtu.be/CowAYv3qNCs?si=fn-ckC3cbFmgBUJA)
 
+Very similar content and style to the Beyond five 9s talk that happens every year. Worth a watch if you haven't come across these concepts before.
+
 * Dependencies and modes
     * Dependencies introduce failure potential
     * A model behavior is one in which a change to the system causes a total shift in how it operates
@@ -602,3 +604,229 @@ High level view of how you can let your customers own and control some of the in
     * Throttling: Service 4 could start throttling, 429 type errors should be propagated straight back without retries
     * Contextual behavior: If service 2 and 3 known they're internal, could propagate errors straight back and let service 1 control retry behavior
     * Duplicate requests: Special case, where result is important, make two duplicate requests in parallel, use first response, ignore second. Propagate failure back if both fail. Avoids modal behavior where load increases if there's an outage. 
+
+## Solving large-scale data access challenges with Amazon S3
+
+[YouTube](https://youtu.be/Ts-ZMBzGeh0?si=N8Ed0jHpkldL3aqC)
+
+Based on the title I thought this would be about scaling to large workloads on S3. It's actually about how you manage permissions and grant access, focusing on a new "Access Grants" feature.
+
+* Bucket is secure by default, only owner has access
+* Owner adds permissions for others
+* By default new buckets now have public access and ACLs disabled - security best practice to do the same for your existing buckets
+* IAM Basics
+* IAM techniques using S3 prefixes
+    * IAM S3 bucket policies granting access to S3 objects with a particular prefix
+    * Usually need both a read and a list policy
+    * Each policy typically uses about 300 characters with a maximum of 20KB per bucket
+    * Which gives limit of about 30 different prefixes before you run out of policy space
+    * Alternative is to use IAM roles and define a role for each combination of permissions
+    * Soft limit is 1000 roles per account (5000 max)
+    * More complex to do for cross-account cases as will need bucket policy that grants access to the roles
+* S3 Access Points
+    * What if you want to control access to huge number of different prefixes?
+    * Can setup S3 Access Points. An access point is an alias for a bucket with its own access policy
+    * Can have a separate access point for each prefix or group of prefixes
+    * Two level permission scheme. Put detailed permissions in access point policy and general permissions that apply to everyone in bucket policy.
+    * Soft limit is 10000 access points per account per region
+* AWS Lake Formation
+    * What if you want to control fine grained access to structured data? e.g. Should only have access to particular column in parquet file
+    * Lake Formation uses AWS Athena to query structured data and lets you specify granular permissions for which columns particular roles have access to
+* IAM session broker pattern for more scale/granularity
+    * What if you have lots of users, constantly changing teams? Or need very granular access control?
+    * Build your own session broker service. 
+        * Authenticate caller
+        * Make access decision
+        * If yes call AWS STS AssumeRole API to create a session token that grants access to requested location
+        * Return STS token to caller who will use to sign requests to S3
+    * Works well because
+        * STS is high-volume, region specific data plane, highly available
+        * Minimal overhead for S3 to validate token, can achieve high scale and throughput
+        * Minimal number of static IAM resources
+        * Session broker service scales with number of sessions, not data or object requests
+* S3 Access Grants
+    * Managed service instead of building your own session broker
+    * Three main use cases
+        * Pain of managing monolithic bucket policy
+        * Mapping users to data without having to implement the same thing in each app
+        * Auditing users - want to know who accessed data, not just app that implemented access controls
+    * Access grant is tuple combining S3 prefix, access level (read or write) and identity
+    * Identity is either IAM id or a "directory identity"
+    * Built as layer on top of IAM - not a bypass
+    * Works in same way as a DIY session broker service
+    * Addresses use cases
+        * Can use lots of discrete access grants rather than one big bucket policy
+        * Mapping of users for multiple apps can be done in one place, in S3 Access Grants
+        * Integrated with IAM identify center. CloudTrail event now includes an onBehalfOf object which specifies user directly
+    * App Integration
+        * Call S3 Access Grants to get session token, just like with session broker case
+        * Simple case: caller's IAM identity matches IAM identity in access grant
+        * Response includes STS credentials + which access pattern you matched (can reuse for other objects if still match)
+        * New case: Application authenticated end users
+        * Makes use of IAM identity center service (previously called Single Sign On)
+        * Uses SCIM protocol to sync identities from external providers like Okta into identity center
+        * Identity center also has its own users/groups system if you don't have an external provider
+        * New: Trusted Identity Propagation. Allows identity center ids to be used in services like S3
+        * App does it's usual single sign on thing to authenticate user with whatever provider you use
+        * App makes request to identity center to get equivalent identify center id
+        * Blog post with all the details [Developing a User-Facing Application Using Identity Center and S3 Access Grants](https://aws.amazon.com/blogs/storage/how-to-develop-a-user-facing-data-application-with-iam-identity-center-and-s3-access-grants/)
+        * Finally app makes request to S3 access grants with it's own IAM role and the identity center id as extra context. Gets back STS credentials that represent IAM session for this app operating on behalf of this user.
+    * Access Grants is a regional feature. Grants are for buckets in same region and same account.
+    * Cross-account access supported (assuming the appropriate cross-account access policies are in place)
+    * Creating grants
+        * UI in the console
+        * Grant has account id, grantee (list of identities), permission, S3 prefix, location
+        * Location is advanced feature, usually default. Combine location and prefix to get actual object name.
+        * Location is associated with an IAM role that is used in the resulting credentials if the grant matches
+        * Can define multiple locations with different roles if you need that flexibility
+    * Works transparently with S3 objects encrypted with KMS
+    * EMR has integration with access grants
+
+## "Rustifying" serverless: Boost AWS Lambda performance with Rust
+
+[YouTube](https://youtu.be/Mdh_2PXe9i8?si=6fiznZZnGHIgNIcs)
+
+Step by step guide to writing Lambdas in Rust. Three strategies: Using Rust bindings to allow existing Python code to call Rust, writing a standalone Rust lambda, writing a Lambda extension that can be included as a layer by an existing Lambda.
+
+* Scenario: Company building serverless app on Lambda/Python. Running into performance and cost challenges.
+* Decided to switch runtime to Rust
+* Incremental approach, can't immediately throw everything away and rewrite in Rust
+* Rust bindings
+    * Replace most performance sensitive part of code using Rust
+    * Expose Rust functionality in python using Rust bindings
+    * [PyO3/maturin](https://github.com/PyO3/maturin) tool will generate bindings for Rust code and package them up as  python "wheels"
+    * Official Rust SDK aws-sdk-rust. Currently in developer preview. Built in support for async. 
+    * Make sure you use --strip, --release and --zig flags when building production release during maturin
+    * On python side just import the module, create instance of class in Lambda initialization and call it in request handler
+    * Include .pyi interface definition file in package to enable intellisense for consuming developer
+    * Used SAR-measure-cold-start and aws-lambda-power-tuning to measure performance and cost
+    * Get same performance using a quarter of the memory (hence 4X cheaper)
+    * Comparing same size Lambda, get 4X lower cost per invocation
+    * Cold start performance is 3X faster. Important for front facing Lambda, irrelevant for batch. 
+    * Large part of that is due to size/inefficiency of python boto3 package. Can get most of the benefits by replacing those parts with Rust+binding
+* Rewrite Lambda in Rust
+    * For simple Lambda you might as well rewrite the whole thing
+    * AWS SAM has built in support (beta) for Rust using [cargo-lambda](https://github.com/cargo-lambda/cargo-lambda) package
+    * Lambda deployments require a language specific runtime layer between the Lambda native runtime and your code
+    * For languages, like Rust, which compile to native code, you need to include the runtime in your build
+    * For Rust, AWS has [aws-lambda-rust-runtime](https://github.com/awslabs/aws-lambda-rust-runtime). This is officially an "experimental" package, subject to change.
+    * AWS provides the aws_lambda_events crate that defines all the lambda related type definitions you'll need
+    * Currently have choice of Amazon Linux 2 or Amazon 2023 Lambda native runtime which you'll also bundle in to final build
+    * Performance is even better, particularly with low memory. For simple Lambda, performance is same at all sizes, including 128 MB. At that size you're 5X faster than Python, which only gets comparable (but slower) performance at 512MB or higher.
+    * Cost is 4X lower, as before
+    * Biggest change is cold start. Now 6 or 7 times faster once you ditch Python runtime startup.
+* Lambda Extensions
+    * Lambda extension is a separate process that runs in same execution environment and communicates with your handler.
+    * Extension has own lifecycle. Standalone handler stops running as soon as it returns a response. If you add an extension, the extension can keep running even after the handler has exited. Can return response to caller and do clean up or other fire and forget work in extension. Good use case is writing out analytics data.
+    * As extension is separate process, can use different language from handler
+    * As Rust is native, aren't adding another big virtual machine. Small and fast.
+    * aws-lambda-rust-runtime/lambda-extension is special case runtime for extensions
+    * Extension gets added as a layer to Lambda runtime
+    * Using extension reduces latency because you can return sooner. Downside is small increase in cold start times as more to initialize.
+* Learning Rust
+    * The official Rust book, [The Rust Programming Language](https://doc.rust-lang.org/book/) is great.
+    * Use [rustlings](https://github.com/rust-lang/rustlings) for small exercises and tests as you read through
+
+## Surviving overloads: How Amazon Prime Day avoid congestion collapse
+
+Great explanation of congestion collapse with lots of examples. Some takeaways I haven't seen before. In particular, limiting number of retries. Forget about exponential backoff, never do more than one retry. Beyond that, make sure that in aggregate, your retry rate is much less than one. 
+
+[YouTube](https://youtu.be/fOYOvp6X10g?si=AGW84WIyaLu33IlT)
+
+* Delicate balance between reducing compute cost and increasing chance of a brown out
+* What is congestion collapse?
+    * System gets slightly overloaded and then goes into death spiral
+    * Resource utilization (CPU? Disk? Network?) goes to 100%
+    * Queues get longer and longer
+    * Eventually system is doing zero productive work
+    * System gets stuck in this state, very difficult to unstick even as external load comes down
+* Examples
+    * Metering lights to control rate of cars joining highway
+        * What happens if highway gets too congested? All the cars stop
+        * Congestion stops traffic flowing
+        * Takes a long time to clear
+        * Metering lights go red if highway density getting too high, trying to avoid congestion collapse
+    * Mother's day phone problem
+        * Everyone calls their Mom on Mother's day
+        * Eventually no lines available and get a busy signal
+        * Caller tries again, and again
+        * Network is saturated waiting for dial tones
+        * Eventually phone companies replaced busy signal with a recorded message: "All lines are busy now, please try your call later"
+    * TCP Congestion
+        * Each sender transmits at some speed
+        * Routers direct many inputs to an output
+        * Egress bandwidth may be less than total ingress, so router queues
+        * Queues build, routers have finite memory, eventually packets are discarded
+        * Discarded (NACK'd) packets are sign of congestion overload
+        * Can't just retransmit lost packets, putting more load on system would cause congestion collapse
+        * Doomed packets waste bandwidth
+        * Hard problem. Eventually came up with a protocol that shrinks "send-window" when congestion detected, reducing load in such a way that you achieve exponential backoff of the *overall* transmission rate.
+    * Web application overload
+        * Assume application can handle 100 TPS, what happens when demand is 110 TPS?
+        * Queue builds up, user experiences delay, users hits reload, effective rate now 220 TPS
+        * Death spiral starts, user keeps reloading, 330, 440 TPS
+        * Whatever responses do come back are ignored because user had already given up and reloaded again
+        * Try throttling the server by discarding half of incoming packets. Back down to 220 TPS and queue still growing.
+        * Stateful death, application is stuck
+        * Simple recovery strategy: flush all the queues so you start processing new requests and can make progress for users still waiting for a response
+        * Service oriented architectures make it worse, if each service retries get doubling behavior
+        * *Same problem discussed in resilience at scale talk above*
+    * Prime Day 2018 outage
+        * Distributed hash table behind 100s of routing servers
+        * Hot key for specific item overloaded hot partition
+        * Systems above started retrying. Fives times retry at multiple levels compounding up.
+        * Hidden queue: Database instance had a 1MB TCP receive buffer - enough for a 1000 requests
+        * 3 hours of scrambling, multiple fixes pushed out, to get it under control. On prime day.
+        * Followed up with thorough reviews and testing for congestion related failures
+        * Changed retry policy: never more than 1 per request
+        * Aim was to get to asymptotically no retries - each client instance tracks number of successful requests. Not allowed to retry until you've had 100 successful requests. Retry rate of 1%.
+        * Restricted size of large/unbounded queues
+        * Crush testing - drive traffic to component over limit it's designed for and see what happens to latency. If it grows there's a hidden queue.
+    *  Availability vs Efficiency
+        * Traditionally add excess capacity to avoid overload and collapse. Don't get too close to max loading.
+        * BUT efficiency requires minimizing capacity - trying to be close to max loading
+        * Random traffic variations happen -> overloads happen
+        * Need better ways to handle random overloads, avoid congestion collapse, degrade gracefully
+        * Be willing to fail requests, avoid retries to stressed services
+* Evading congestion collapse
+    * Overloads will happen
+    * You have to indicate overload state back to caller so they can avoid retries
+    * Accept that overloads require service degradation, be willing to throttle and fail requests
+    * Be very careful about retries, especially for timeouts. Bound retries at less than 1.
+    * If you retry, share/gossip across callers
+    * Per-request exponential backoff with multiple retries DOES NOT WORK. Need to restrain growth of aggregate retries
+    * Try to get more efficient during overload
+        * Consider adaptive batching to amortize setup costs across requests
+        * Read more things from the queue the fuller it gets
+    * Crush test beyond maximum load
+        * Testing at expected load is not enough
+        * Test to failure and beyond
+        * Watch for unbounded latency
+        * Fail fast is good
+        * Watch for problematic retry storms
+        * After overload, reduce test call rate to normal and see how quickly latency recovers
+        * Less than a minute is good, more suggests a problem queue
+* How do you apply this to your apps on AWS?
+    * Detection
+        * CloudWatch for CPUUtilization, DiskReadOps, DiskWriteOps, NetworkIn, NetworkOut, NetworkPacketsIn, NetworkPacketsOut
+        * High resolution metrics if you have Elastic Network Adaptor (ENA) enabled, e.g. pps_allowance_exceeded
+        * ALB new anomaly detection feature for excessive 5XX errors
+        * Create dashboards
+    * Avoiding overload
+        * Keep malicious traffic out - stick your app behind CloudFRont and enable AWS Shield Advanced / WAF
+        * Ask users to back off - AWS WAF can be configured to return 429 or error page after rate-limit reached
+        * Throttle upstream
+            * Use decoupled systems (e.g. SQS queue rather than direct call) where services might have different scaling behaviors
+            * Producer can look at ApproximateAgeOfOldestMessage metric to see whether consumer is getting overloaded and slow down
+            * *Consumer could drop messages that are too old*
+    * Crush testing
+        * Model application on smaller scale
+        * Test with all dependencies
+        * Test each layer separately
+        * Can replay real user traffic, e.g. using Amazon VPC traffic mirroring
+        * If you have too little data can end up being entirely cached
+        * Alternative is to simulate traffic with a tool like iPerf (open source)
+    * Chaos engineering
+        * Introduce faults/pauses using Fault Injection Simulator
+        * See how quickly you can recover
+        * Verify that runbooks are fit for purpose during incidents
