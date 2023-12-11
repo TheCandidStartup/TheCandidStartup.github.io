@@ -5,6 +5,8 @@ tags: aws
 
 It's that time of year again. Just like [last year]({% link _posts/2022-12-12-aws-reinvent-2022.md %}), I'm going to use the week after re:Invent to binge on recorded sessions at 1.5X speed, and share my thoughts with you. 
 
+{% include candid-image.html src="/assets/images/reinvent-2023/aws-reinvent.png" alt="AWS re:Invent Nov. 27 - Dec.1, 2023" %}
+
 All the sessions are recorded with high quality audio/video and available via both the [AWS web site](https://reinvent.awsevents.com/on-demand/) and [YouTube](https://www.youtube.com/@AWSEventsChannel). 
 
 If you're looking for a comprehensive list of all the new announcements, then head over to the [AWS News Blog](https://aws.amazon.com/blogs/aws/top-announcements-of-aws-reinvent-2023/). 
@@ -365,7 +367,7 @@ If you ever scale a service beyond what a single database cluster can handle, yo
 
 [YouTube](https://youtu.be/TJp4ayDC8m0?si=pYcU3Lvs873bovgv)
 
-Could be interesting for some use cases. Not clear how it works with Lambda as there's no direct way of specifying which AZ the lambda instances should be deployed to. You can do it indirectly by connecting the Lambda to a VPC and then mapping the subnet to only one AZ. However, then not truly serverless due to fixed cost of VPC.
+New S3 storage class where everything is stored in a single AZ. Could be interesting for some use cases. Not clear how it works with Lambda as there's no direct way of specifying which AZ the lambda instances should be deployed to. You can do it indirectly by connecting the Lambda to a VPC and then mapping the subnet to only one AZ. However, then not truly serverless due to fixed cost of VPC.
 
 * S3 scales to trillions of objects and millions of requests per second
 * Some applications need to reduce access latency, or end up building custom caching systems
@@ -405,7 +407,7 @@ Could be interesting for some use cases. Not clear how it works with Lambda as t
 * Live side by side performance tests showing One Zone is indeed much faster than regular S3
 * Customer case study: Pinterest
 
-## Best practics for querying vector data for gen AI apps in PostgresSQL
+## Best practices for querying vector data for gen AI apps in PostgresSQL
 
 [YouTube](https://youtu.be/PhIC4JlYg7A?si=ukDUxEf6gVB945Qb)
 
@@ -494,11 +496,11 @@ Existing commonly used integration pattern managed for you. No new functionality
     * Each OCU can support about 5MB/s ingestion rate (YMMV)
     * Allow 1 OCU per 5000 DynamoDB WCU
 
-## SaaS Anywhere: Designing distribute multi-tenant architectures
+## SaaS Anywhere: Designing distributed multi-tenant architectures
 
 [YouTube](https://youtu.be/jwWku2TAtvg?si=xSU_AOjsMVnNDXPU)
 
-High level view of how you can let your customers own and control some of the infrastructure for their own tenant.
+High level overview of how you can let your customers own and control some of the infrastructure for their own tenant.
 
 * SaaS Anywhere: Architecture model where part of your system's resources are hosted in a remote environment that may not be under the control of the SaaS provider
 * Typically some or all of data plane infrastructure is owned and managed by your customer/tenant
@@ -686,7 +688,7 @@ Based on the title I thought this would be about scaling to large workloads on S
 
 [YouTube](https://youtu.be/Mdh_2PXe9i8?si=6fiznZZnGHIgNIcs)
 
-Step by step guide to writing Lambdas in Rust. Three strategies: Using Rust bindings to allow existing Python code to call Rust, writing a standalone Rust lambda, writing a Lambda extension that can be included as a layer by an existing Lambda.
+Step by step guide to writing Lambdas in Rust. Three strategies: Using Rust bindings to allow existing Python code to call Rust, writing a standalone Rust lambda, writing a Lambda extension that can be included as a layer by a Lambda using any runtime.
 
 * Scenario: Company building serverless app on Lambda/Python. Running into performance and cost challenges.
 * Decided to switch runtime to Rust
@@ -727,9 +729,9 @@ Step by step guide to writing Lambdas in Rust. Three strategies: Using Rust bind
     * The official Rust book, [The Rust Programming Language](https://doc.rust-lang.org/book/) is great.
     * Use [rustlings](https://github.com/rust-lang/rustlings) for small exercises and tests as you read through
 
-## Surviving overloads: How Amazon Prime Day avoid congestion collapse
+## Surviving overloads: How Amazon Prime Day avoids congestion collapse
 
-Great explanation of congestion collapse with lots of examples. Some takeaways I haven't seen before. In particular, limiting number of retries. Forget about exponential backoff, never do more than one retry. Beyond that, make sure that in aggregate, your retry rate is much less than one. 
+Great explanation of congestion collapse with lots of examples. Some takeaways I haven't seen before. In particular, limiting number of retries. Forget about exponential backoff, never do more than one retry! Beyond that, make sure that in aggregate, your retry rate is much less than one. 
 
 [YouTube](https://youtu.be/fOYOvp6X10g?si=AGW84WIyaLu33IlT)
 
@@ -774,9 +776,9 @@ Great explanation of congestion collapse with lots of examples. Some takeaways I
     * Prime Day 2018 outage
         * Distributed hash table behind 100s of routing servers
         * Hot key for specific item overloaded hot partition
-        * Systems above started retrying. Fives times retry at multiple levels compounding up.
+        * Systems in layers above started retrying. Fives times retry at multiple levels compounding up.
         * Hidden queue: Database instance had a 1MB TCP receive buffer - enough for a 1000 requests
-        * 3 hours of scrambling, multiple fixes pushed out, to get it under control. On prime day.
+        * 3 hours of scrambling, multiple fixes pushed out to get it under control. On prime day.
         * Followed up with thorough reviews and testing for congestion related failures
         * Changed retry policy: never more than 1 per request
         * Aim was to get to asymptotically no retries - each client instance tracks number of successful requests. Not allowed to retry until you've had 100 successful requests. Retry rate of 1%.
@@ -813,7 +815,7 @@ Great explanation of congestion collapse with lots of examples. Some takeaways I
         * ALB new anomaly detection feature for excessive 5XX errors
         * Create dashboards
     * Avoiding overload
-        * Keep malicious traffic out - stick your app behind CloudFRont and enable AWS Shield Advanced / WAF
+        * Keep malicious traffic out - stick your app behind CloudFront and enable AWS Shield Advanced / WAF
         * Ask users to back off - AWS WAF can be configured to return 429 or error page after rate-limit reached
         * Throttle upstream
             * Use decoupled systems (e.g. SQS queue rather than direct call) where services might have different scaling behaviors
