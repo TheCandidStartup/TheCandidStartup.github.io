@@ -25,31 +25,60 @@ It took me a few passes to make sense of their response. I've paraphrased it and
 * Information like this is considered Autodesk *confidential* and/or *trade secret* and should not be shared outside of Autodesk.
 * This obligation extends beyond your employment, for as long as the information is *trade secret*.
 
-There's a vague list of things that they asset are not *public information*. There's a statement that these things are either *confidential* or *trade secrets*. And a final statement that I am under an obligation not to disclose *trade secrets*.
+There's a vague list of things that they assert are not *public information*. There's a statement that these things are either *confidential* or *trade secrets*. And a final statement that I am under an obligation not to disclose *trade secrets*.
 
 I had two takeaways. First, I need to understand what *public*, *confidential* and *trade secret* actually mean. Second, I only have to worry about things that are *trade secrets*.
 
-## I am not a Lawyer
+## I Am Not A Lawyer
 
-I'm not a lawyer, but my understanding is that I can use knowledge "in my head" after leaving Autodesk. 
+Before this adventure, I hadn't done any research into the legal implications of writing this blog. I had a vague understanding that I can use whatever knowledge is left "in my head", after leaving Autodesk. 
 
+All I remember of my trade secrets training, is that information is only a trade secret if you (a) tell everyone in the company that it's a trade secret, (b) identify the subset of employees that need to know and (c) put systems in place to restrict access to those that need to know. 
 
-## My Writing Process
+These posts are written based on my somewhat unreliable memory, combined with whatever I can turn up with a bit of frantic googling. Nothing I worked on, as far as I'm aware, was ever declared to be a trade secret. So, I assumed I was in the clear.
 
-It would be helpful if you can point out which sections of the post you have problems with. From your description I'm guessing it's Serialization, Geometry and  File Format Details. Is that right?
+What does the law actually say? I'm based in the UK and was employed by Autodesk UK. I assume UK law applies. I found plenty of UK law firms with websites that [explain](https://www.gannons.co.uk/insights/duty-confidentiality-employment/) [just](https://www.cooley.com/news/insight/2023/2023-07-05-what-employers-should-know-about-protecting-confidential-information-in-england) [enough](https://www.womblebonddickinson.com/uk/insights/articles-and-briefings/can-former-employees-take-your-confidential-information-their-new) that I can shoot myself in the foot.
 
-Serialization describes a standard object serialization algorithm. This is how pretty much everyone does serialization, see the linked wikipedia article. It doesn't say anything about specific objects. There's no trade secrets here. 
+The consensus seems to be
+* There are three types of information: public, confidential and trade secret
+* There is no duty of confidentiality for public information
+* There is a clear ongoing duty of confidentiality for trade secrets
+* In between there's a grey area up to interpretation by judges
+    * In almost all cases, you're OK to use information which remains in your head and becomes part of your experience and skills.
+    * In most cases, judges find against employees who take away confidential information in written or electronic form. 
+    * Employers can attempt to better protect confidential information with explicit confidentiality clauses in employment contracts. This is difficult to get right. Courts may reject provisions that are overly broad. Conversely, it's hard to write specific clauses that cover everything.
 
-The Geometry section mentions the types of geometry stored in a Navisworks file but that's all. There's no detail about the geometry definitions or how they're serialized. The types of geometry supported by  Navisworks are public knowledge - it's in the product documentation. 
+I checked my employment contract and there are two provisions regarding confidential information. First, there's a very broad clause that says I can't disclose any confidential information for three years after leaving. No idea how enforceable that is. Second, I need to return all confidential information in my possession on leaving. I complied with that when I handed my laptop back.
 
-The File Format details section for NWC and NWD is very high level. I don't think it says any more than you could infer from public knowledge of what the product does. 
+## Further Clarification
 
-The NWF section does have quite a lot of detail on how object matching works and the properties used for matching. If you have a problem with this, I can remove the detailed lists and use a more general description.
+As I might have expected, that didn't help much. Clear as mud. Time to ask for further clarification.
+
+I wasn't sure what "serializing objects" refers to. I have a section that talks about serialization techniques in general and outlines the algorithm used by Navisworks. However, it doesn't give any details about how specific object types like geometry are serialized. The algorithm that Navisworks uses is absolutely bog standard. There's no trade secrets or unique competitive advantage here.
+
+I do list the types of geometry that Navisworks supports but that's public knowledge. It's in the product documentation.
+
+Finally, I have no idea what the "detailed file format overview" is. 
 
 ## Autodesk Confidential Serialization
  
+We got there in the end. It turns out that there were five paragraphs that Autodesk legal had concerns about. Two were in the Serialization section, and the other three were in the Container section. 
+
+They also restated their position, once again summarized in bullet point form.
 * We understand your point that the information about serialization is not a trade secret.
 * The information is not explicitly shared publicly, which makes it confidential information.
 * It doesn't have to be a trade secret to be confidential.
 * We would still like it removed.
+
+What was it about those five paragraphs that legal didn't like?
+
+## My Writing Process
+
+## Conclusion
+
+I rewrote the Serialization and Container sections. The Serialization section describes what serialization is and refers you to a discussion of serialization algorithms on the ISO C++ website. I removed the step by step description of Navisworks serialization. The details really don't matter for the point I'm trying to make in the post.
+
+I removed the overview of how the Navisworks container format differs from ZIP. Again, the details don't matter and arguably distract from the overall point. There's a container format, it's functionally equivalent to a ZIP file. 
+
+Now that I know what pushes Autodesk legal's buttons, I'll be more careful in future. I have a post on the Autodesk SVF format coming up. That should be a good test case.
 
