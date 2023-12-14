@@ -1,6 +1,6 @@
 ---
 title: Legal Jeopardy
-tags: blog
+tags: blog autodesk
 ---
 
 A few weeks ago I received a LinkedIn message from a former colleague at Autodesk. Nothing unusual about that. It's always a pleasure to reconnect with old acquaintances and catch up with their news. 
