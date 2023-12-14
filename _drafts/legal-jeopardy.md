@@ -44,6 +44,7 @@ The consensus seems to be
 * There is no duty of confidentiality for public information
 * There is a clear ongoing duty of confidentiality for trade secrets
 * In between there's a grey area up to interpretation by judges
+    * It can be hard to tell what is "merely confidential" and what is a trade secret. 
     * In almost all cases, you're OK to use information which remains in your head and becomes part of your experience and skills.
     * In most cases, judges find against employees who take away confidential information in written or electronic form. 
     * Employers can attempt to better protect confidential information with explicit confidentiality clauses in employment contracts. This is difficult to get right. Courts may reject provisions that are overly broad. Conversely, it's hard to write specific clauses that cover everything.
@@ -54,11 +55,11 @@ I checked my employment contract and there are two provisions regarding confiden
 
 As I might have expected, that didn't help much. Clear as mud. Time to ask for further clarification.
 
-I wasn't sure what "serializing objects" refers to. I have a section that talks about serialization techniques in general and outlines the algorithm used by Navisworks. However, it doesn't give any details about how specific object types like geometry are serialized. The algorithm that Navisworks uses is absolutely bog standard. There's no trade secrets or unique competitive advantage here.
+I wasn't sure what "serializing objects" refers to. I have a section that talks about serialization techniques in general and outlines the algorithm used by Navisworks. However, it doesn't give any details about how specific object types like geometry are serialized. The algorithm that Navisworks uses is pretty standard. There's no trade secrets or unique competitive advantage here.
 
 I do list the types of geometry that Navisworks supports but that's public knowledge. It's in the product documentation.
 
-Finally, I have no idea what the "detailed file format overview" is. 
+Finally, I have no idea what the "detailed file format overview" refers to.
 
 ## Autodesk Confidential Serialization
  
@@ -74,11 +75,31 @@ What was it about those five paragraphs that legal didn't like?
 
 ## My Writing Process
 
+A quick detour. When I start writing a post, I have an idea in mind for what I want to achieve. In this case it was defining a baseline for what a BIM design review format needs. 
+
+For most posts I also have a couple of secondary objectives. I want to capture my thought process and reasoning. So when I come back in six months time, after chopping and changing between projects, I can get back up to speed quickly. If I'm talking about something historical, I want to document as much as possible, while I still remember it.
+
+Once I get going, posts take on a life of their own, heading off in unexpected directions. I clarify what I'm thinking by writing it down, which sparks off a load of new ideas. I jot down something I half remember. That nudges long dormant synapses back to life, and I remember more. Rinse and repeat. 
+
+Sometimes I remember some tantalizing fact but can't remember why it worked that way. Which irritates me enough that I try and figure it out again from scratch. 
+
+The Serialization section was the result of that process. I looked at a discussion of serialization algorithms on the ISO C++ website. It seemed different from what I remember doing but I couldn't remember exactly what I did. This is all ancient history. The Navisworks serialization code was written ten years before Navisworks was acquired by Autodesk. So I worked it out again. I was so pleased with myself, that I had to write it down.
+
+From Autodesk legal's point of view, I had provided a step by step description of something that was clearly an internal Navisworks implementation detail. That it was all ancient history, provides no competitive advantage to anyone, and could be replaced with any other standard serialization algorithm is irrelevant.
+
+The Container section was similar. I knew that Navisworks didn't use ZIP as a container format. I remembered one of the differences but only half remembered why. So I wrote down what I remembered, which sparked some more memories and then I worked out the rest from there. 
+
+To Autodesk legal, this looks like a description of something internal that provides Navisworks with a competitive advantage. I think I went into such detail because I was embarrassed that I didn't just use ZIP. I was trying to justify what I'd done. In the end, ZIP or any other standard container format would have worked just as well. 
+
 ## Conclusion
+
+I do this for fun. I suspect that picking a fight with Autodesk legal won't be fun. So what did I do?
 
 I rewrote the Serialization and Container sections. The Serialization section describes what serialization is and refers you to a discussion of serialization algorithms on the ISO C++ website. I removed the step by step description of Navisworks serialization. The details really don't matter for the point I'm trying to make in the post.
 
 I removed the overview of how the Navisworks container format differs from ZIP. Again, the details don't matter and arguably distract from the overall point. There's a container format, it's functionally equivalent to a ZIP file. 
+
+I made the change a couple of weeks ago and let my contact know. I haven't heard from them since. I guess that means we're good?
 
 Now that I know what pushes Autodesk legal's buttons, I'll be more careful in future. I have a post on the Autodesk SVF format coming up. That should be a good test case.
 
