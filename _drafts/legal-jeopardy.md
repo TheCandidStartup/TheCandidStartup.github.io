@@ -53,7 +53,7 @@ I checked my employment contract and there are two provisions regarding confiden
 
 ## Further Clarification
 
-As I might have expected, that didn't help much. Clear as mud. Time to ask for further clarification.
+As I might have expected, that didn't help much. Time to ask for further clarification.
 
 I wasn't sure what "serializing objects" refers to. I have a section that talks about serialization techniques in general and outlines the algorithm used by Navisworks. However, it doesn't give any details about how specific object types like geometry are serialized. The algorithm that Navisworks uses is pretty standard. There's no trade secrets or unique competitive advantage here.
 
@@ -89,13 +89,15 @@ From Autodesk legal's point of view, I had provided a step by step description o
 
 The Container section was similar. I knew that Navisworks didn't use ZIP as a container format. I remembered one of the differences but only half remembered why. So I wrote down what I remembered, which sparked some more memories and then I worked out the rest from there. 
 
-To Autodesk legal, this looks like a description of something internal that provides Navisworks with a competitive advantage. I think I went into such detail because I was embarrassed that I didn't just use ZIP. I was trying to justify what I'd done. In the end, ZIP or any other standard container format would have worked just as well. 
+To Autodesk legal, this looks like a description of something internal that provides Navisworks with a competitive advantage. 
+
+It doesn't. I think I went into such detail because I was embarrassed that I didn't just use ZIP. I was trying to justify what I'd done. In the end, ZIP, or any other standard container format, would have worked just as well. 
 
 ## Conclusion
 
-I do this for fun. I suspect that picking a fight with Autodesk legal won't be fun. So what did I do?
+I do this for fun. I suspect that picking a fight with Autodesk legal won't be fun. So what should I do?
 
-I rewrote the Serialization and Container sections. The Serialization section describes what serialization is and refers you to a discussion of serialization algorithms on the ISO C++ website. I removed the step by step description of Navisworks serialization. The details really don't matter for the point I'm trying to make in the post.
+In the end, I rewrote the Serialization and Container sections. The Serialization section describes what serialization is and refers you to a discussion of serialization algorithms on the ISO C++ website. I removed the step by step description of Navisworks serialization. The details really don't matter for the point I'm trying to make in the post.
 
 I removed the overview of how the Navisworks container format differs from ZIP. Again, the details don't matter and arguably distract from the overall point. There's a container format, it's functionally equivalent to a ZIP file. 
 
