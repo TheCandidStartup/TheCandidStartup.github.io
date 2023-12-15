@@ -50,7 +50,7 @@ This turns out to be a surprisingly compact representation. Most models have no 
 
 During implementation, the viewer team suggested an alternative representation. The property database representation was so compact that SQLite's ability to page data in and out wasn't needed. The property data is read only within the viewer so you don't need the ability to edit it either. You could store the whole thing as a set of compressed JSON arrays. The big arrays only contain integers, so you can use a JavaScript [typed array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Typed_arrays) in memory. Most browsers store typed arrays outside the limited size JavaScript heap, making it practical to load all the property data into memory.
 
-AFAIK the spec has never been made public. I haven't looked at it in years, and I suspect no one in Autodesk has either. As we'll see later on, significant parts of what is now considered to be SVF, were added organically. The original spec helped to bootstrap the ecosystem, but after that SVF ended up being defined by what the code in the Autodesk Viewer would read. 
+AFAIK the SVF spec has never been made public. I haven't looked at it in years, and I suspect no one in Autodesk has either. As we'll see later on, significant parts of what is now considered to be SVF, were added organically. The original spec helped to bootstrap the ecosystem, but after that SVF ended up being defined by what the code in the Autodesk Viewer would read. 
 
 ## Model Derivative Service
 
@@ -58,13 +58,13 @@ The final player in the SVF ecosystem is the [Model Derivative service](https://
 
 Converters are typically implemented as SVF export plugins that run within a standard desktop application. One of the SVF teams built a C++ library for reading and writing SVF files. The application teams were then responsible for using the library to write their plugin. In the early days of SVF, most conversions used Navisworks. Navisworks could read most formats, so all it took was implementing a Navisworks SVF export plugin to add Model Derivative support for twenty formats. 
 
-Model Derivative service expects all converters to output a JSON manifest in a standard format, together with a set of files described by the manifest. If you ask Model Derivative service to produce multiple different types of derivative, it merges the JSON manifests from each converter together to create a combined "bubble" of derivatives. When querying the Model Derivative service, you need to be aware that the manifest returned can contain data from other conversions that you might not be expecting. 
+Model Derivative service expects all converters to output a JSON manifest in a [standard format](https://aps.autodesk.com/en/docs/model-derivative/v2/developers_guide/field-guide/), together with a set of files described by the manifest. If you ask Model Derivative service to produce multiple different types of derivative, it merges the JSON manifests from each converter together to create a combined "bubble" of derivatives. When querying the Model Derivative service, you need to be aware that the manifest returned can contain data from other conversions that you might not be expecting. 
 
 In theory SVF is an extendable format. The initial spec was based on the Navisworks representation. As application teams started writing their own converters, they found things that Navisworks and hence SVF didn't support. Extending SVF would mean getting the spec and C++ library updated, which would mean coordinating with multiple teams, all with different priorities. Alternatively, the application team could throw whatever extra data they wanted into their converter's Model Derivative manifest. All they had to do then was persuade the viewer team to add support for it. 
 
 ## SVF Format
 
-Enough back story, let's get into the details of the format. Since leaving Autodesk, I have no access to the spec or viewer source code. The information here is based on my increasingly hazy memory and from looking at public SVF example models. All errors are mine.
+Enough back story, let's get into the details of the format. Since leaving Autodesk, I have no access to the spec or viewer source code. Fortunately, the Autodesk developer advocacy team have written extensively about the format, including code samples for parsing the high level structure. Many of the assets use standard file formats, so you can work the rest out by looking at example models. All errors are mine.
 
 I'm going to describe the format in terms of the set of files that an SVF converter writes out. If you use the developer tools in your browser, you can see the Autodesk viewer retrieving each of these files from the Model Derivative service. 
 
@@ -72,7 +72,7 @@ I'm going to start with the original SVF format, then go through what changed fo
 
 ### Model Derivative Manifest
 
-The Model Derivative manifest is structured as a tree. Each node of the tree is represented by a JSON object.
+The [Model Derivative manifest](https://aps.autodesk.com/en/docs/model-derivative/v2/developers_guide/overview/) is structured as a tree. Each node of the tree is represented by a JSON object.
 
 ```
 {
@@ -86,7 +86,7 @@ The Model Derivative manifest is structured as a tree. Each node of the tree is 
 
 Every node has a `guid` identifier and `type`. If it's an internal node in the tree, it will have an array of `children`. Many nodes will have a human readable `name`.  Some types are categorized further with a `role` property. Each type of node will have additional type specific properties (not shown here).
 
-The manifest can be verbose. Complex design files can contain multiple models and views in both 2D and 3D. Each model and view is represented as a sub-tree containing thumbnails, 3D SVF, 2D DWF and F2D, viewpoints, thumbnails, additional design file specific metadata, object property databases, etc. There isn't any fixed structure. Consumers need to iterate over the the tree looking for types and roles they're interested in. The Autodesk platform services team have [sample code](https://aps.autodesk.com/blog/forge-svf-extractor-nodejs) that will parse the manifest and download all the SVF resources. 
+The manifest can be verbose. Complex design files can contain multiple models and views in both 2D and 3D. Each model and view is represented as a sub-tree containing thumbnails, 3D SVF, 2D DWF and F2D, viewpoints, thumbnails, additional design file specific metadata, object property databases, etc. There isn't any fixed structure. Consumers need to iterate over the the tree looking for types and roles they're interested in. There is [sample code](https://aps.autodesk.com/blog/forge-svf-extractor-nodejs) that will parse the manifest and download all the SVF resources. 
 
 The `guid` identifiers don't have any specific meaning. They're used when merging manifests. The Model Derivative service recurses down the tree structure of each manifest, merging nodes with the same `guid`.
 
@@ -126,7 +126,7 @@ The heuristic most consumers end up using is to try matching up resources on eac
 
 ### SVF container
 
-You've parsed the Model Derivative manifest, identified an SVF resource and downloaded the corresponding content. What have you got? Luckily, the Autodesk platform services team have a [code sample](https://aps.autodesk.com/blog/forge-svf-extractor-nodejs) that shows how to parse the top level of the SVF file. 
+You've parsed the Model Derivative manifest, identified an SVF resource and downloaded the corresponding content. What have you got? Luckily, there's [sample code](https://aps.autodesk.com/blog/forge-svf-extractor-nodejs) that shows how to parse the top level of the SVF file. 
 
 The top level SVF container is a ZIP file. Change the extension from `.svf` to `.zip` and open it up to see what's inside. Typically, all you'll find is two JSON files: manifest.json and metadata.json. 
 
@@ -214,11 +214,9 @@ Each typeset has an `id`, referenced by the container asset, and an array of typ
 
 ### Pack Files
 
-Pack files are a generic lightweight container format used for many SVF assets. They're an evolution of the Navisworks [container format]({{ nw_url | append: "#container" }}). Each pack file stores multiple separately serialized objects identified by index. The pack file starts with a directory of offsets which maps an object index to a location in the file.
+Pack files are a generic lightweight container format, similar to a ZIP file, used for many SVF assets.
 
 Generally, the objects stored in pack files are small. So, rather than compressing each object individually, the whole pack file is compressed. In cases where random access to individual objects is needed, multiple pack files are used with a limit on the size of each individual file. 
-
-The pack file also stores a type index per object. To read an object, decompress the pack file, lookup the location in the directory, then use the type index to look up a type definition in the corresponding typeset in the manifest. The type definition tells you the type and version of the object, which lets you choose the correct deserialization routine. 
 
 ### Serialization
 
@@ -242,7 +240,7 @@ You've probably recognized the common theme by now. The [SVF model representatio
 
 The instances and geom refs from the spatial graph work the same way. Instances are stored in the "FragmentList" asset, geom refs in the "GeometryMetadata" asset. Each instance includes an entity id to identify the entity it's part of. 
 
-These two assets are special in that they don't use the pack file format. They have their own specialized container formats. Large models contain huge numbers of small instances and geom refs so we wanted to be as efficient as possible. In each case, there's only one type of object stored, so no need to include a per object type index. Geom refs are fixed size, so no need for a directory either. 
+These two assets are special in that they don't use the pack file format. They have their own specialized container formats. Large models contain huge numbers of small instances and geom refs so we wanted to be as efficient as possible. 
 
 There's no serialized spatial hierarchy. The viewer uses an optimized spatial hierarchy that can be built at load time from the geometry metadata. There's also no logical scene graph. Once all the object properties were moved out to a separate database it wasn't needed any more. The viewer can display the same selection tree using the [instance tree](https://aps.autodesk.com/blog/working-2d-and-3d-scenes-and-geometry-forge-viewer) representation. So, instead of serializing the logical scene graph and using it to build an instance tree at runtime, we just serialize the instance tree. 
 
@@ -369,9 +367,9 @@ The SVF2 format developed out of work done by the [Autodesk Construction Cloud D
 
 The design collaboration client had to download huge amounts of data, mostly in the form of geometry pack files, whenever the user switched views or versions. However, when you compare geometry between views and versions, lots of it is identical. 
 
-The main change for SVF2 is that geometry is [shared across views and versions](https://aps.autodesk.com/blog/model-derivative-svf2-enhancements-part-1-viewer). The SVF2 converter is very aggressive when it comes to identifying geometry that can be shared. First, each mesh is transformed so that it fits in a unit cube. The required transform is combined with the instance transform, so the model visually looks the same. This allows different sizes of the same geometry to be shared. For example, a 1 meter pipe and a 2 meter pipe would use the same geometry definition.
+The main change for SVF2 is that geometry is [shared across views and versions](https://aps.autodesk.com/blog/model-derivative-svf2-enhancements-part-1-viewer). The SVF2 converter is very aggressive when it comes to identifying geometry that can be shared. A typical AEC model might see a [90% reduction in the number of meshes](https://aps.autodesk.com/blog/svf2-public-beta-new-optimized-viewer-format), with even greater savings as meshes from version 1 are reused in other views and versions. 
 
-The converter then calculates a hash of the geometry. Each stored geometry definition is identified by its hash value. The hash function is based on a set of geometric metrics calculated from the geometry. SVF, like [Navisworks]({{ nw_url | append: "#geometry" }}), uses simplified geometry in the form of triangle meshes. It's easy to generate multiple different mesh representations for a surface or solid that look identical. The hash function is designed so that different mesh representations of the same source geometry have identical hashes and so can be shared. 
+The SVF2 converter calculates a [hash](https://aps.autodesk.com/blog/find-model-difference-model-properties-api) for each geometry. Each stored geometry definition is identified by its hash value. 
 
 Obviously, great care needs to be taken to ensure that geometry with the same hash really is visually identical. There were a few evolutions of the hash function in the early days as [edge cases were discovered that led to geometry corruption](https://aps.autodesk.com/blog/update-svf2-ga-new-streaming-web-format-forge-viewer-now-production-ready). I remember one case where a set of roofs in a building model were rotated by 90 degrees due to an error in the hash function.
 
