@@ -68,9 +68,9 @@ There's one normal looking member variable, viewportElement, which is the most s
 
 Time to fill in the blanks and form a mental model of what React is doing. The links in this section are all to the [old React docs](https://legacy.reactjs.org/docs/getting-started.html), as they made more sense to me at the time. 
 
-Let's start with the render method. Whatever's being returned doesn't look like JavaScript to me. It's [JSX](https://legacy.reactjs.org/docs/introducing-jsx.html), a syntax extension for JavaScript. You need to run your code through a transpiler to [convert the JSX into regular JavaScript](https://legacy.reactjs.org/docs/jsx-in-depth.html) that builds up a data structure using `React.createElement` calls. The render method describes the desired UI using a [tree of element instances](https://legacy.reactjs.org/docs/rendering-elements.html). The attributes and children of each element in the JSX are [passed to your component instance](https://legacy.reactjs.org/docs/components-and-props.html#rendering-a-component) as `props`. 
+Let's start with the render method. Whatever's being returned doesn't look like JavaScript to me. It's [JSX](https://legacy.reactjs.org/docs/introducing-jsx.html), a syntax extension for JavaScript. You need to run your code through a transpiler to [convert the JSX into regular JavaScript](https://legacy.reactjs.org/docs/jsx-in-depth.html) that builds up a data structure using `React.createElement` calls. The render method describes the desired UI using a [tree of element instances](https://legacy.reactjs.org/docs/rendering-elements.html). Instances of your components are created by React based on the JSX rendered by their parents. The attributes and children of each element in the JSX are [passed to your component instance](https://legacy.reactjs.org/docs/components-and-props.html#rendering-a-component) as `props`. 
 
-Props are controlled by the parent element and [read-only](https://legacy.reactjs.org/docs/components-and-props.html#props-are-read-only). Mutable and private member variables need to be managed as [state](https://legacy.reactjs.org/docs/state-and-lifecycle.html). In order to update the UI, your components need to change their state. React responds to the change by re-rendering the component and all its children. If a child component inherits from `PureComponent` rather than `Component`, it will [only be re-rendered if its props have changed](https://legacy.reactjs.org/docs/optimizing-performance.html#examples). React compares the current and previous element tree to [work out](https://legacy.reactjs.org/docs/reconciliation.html) what updates need to be made to the DOM. 
+Props are controlled by the parent element and are [read-only](https://legacy.reactjs.org/docs/components-and-props.html#props-are-read-only). Mutable and private member variables need to be managed as [state](https://legacy.reactjs.org/docs/state-and-lifecycle.html). In order to update the UI, your components need to change their state. React responds to the change by re-rendering the component and all its children. If a child component inherits from `PureComponent` rather than `Component`, it will [only be re-rendered if its props have changed](https://legacy.reactjs.org/docs/optimizing-performance.html#examples). React compares the current and previous element tree to [work out](https://legacy.reactjs.org/docs/reconciliation.html) what updates need to be made to the DOM. 
 
 As suspected, [Refs](https://legacy.reactjs.org/docs/refs-and-the-dom.html) provide a way to access the HTML DOM elements created by React based on the React elements returned by `render`. You add a ref attribute to the appropriate element in your JSX and React updates the corresponding member variable. You can also use refs to [access](https://legacy.reactjs.org/docs/refs-and-the-dom.html#accessing-refs) React components created as a result of rendering. 
 
@@ -80,13 +80,74 @@ Apart from the funny member variable conventions and the funky [JSX](https://leg
 
 Which shows how superficial my understanding was. I was thinking of React as a widget library with a really convoluted way of updating the UI. My own fault for focusing on mechanism rather than intent. 
 
+* Quick start thinking in React page: https://react.dev/learn/thinking-in-react
+  * Break UI into tree of component parts
+  * Implement a static version
+  * Find minimal UI state
+  * Work out where state should live
+  * Add inverse data flow (interactivity)
+* Data flow diagram
+* Seems superficial - still all about components
+* Some important points
+  * Data flows from the top of the tree down
+  * Props vs State
+  * Keep state minimal
+* React in Equations
+  * Render: Props In + Local State -> Rendered elements with Props and event handlers
+  * Events: Event + event handler and state captured at last render -> New State
+  * Side Effects: Rendered UI + State captured at last render -> New external state and/or New component state
+* Writing resilient components from Dan Abramhov's blog: https://overreacted.io/writing-resilient-components/
+  * Don't stop the data flow
+    * In Rendering
+      * Props can change at any time
+      * Common mistake is initializing state in constructor based on props. Later changes in props get ignored
+      * Use memoization/pure component behavior to optimize cases where some props don't change, rather than lifecycle methods
+    * In Side Effects
+      * Classic mistake is fetching data based on a prop value. Then displaying stale data if prop changes.
+      * Really hard to get right with class components - need to override both componentDidMount and componentDidUpdate. Fiddly code.
+    * In Optimizations
+      * Easy to break data flow if you try to aggressively optimize
+      * Classic mistake is to write your own comparison function and forget to compare function props
+      * Stick to approaches that use shallow equality like `PureComponent` and `React.memo`
+  * Always be ready to render
+    * Better expressed as rendering should be a pure function
+    * Same starting state+props -> same output
+    * Doesn't matter how many times render is called or whether state, props or both change each render
+  * No component is a singleton
+    * Write your components as if there can be more than one instance of them
+    * Better design, even if right now there's only one instance
+    * As things evolve you'll often end up with multiple instances of something you thought was a singleton
+  * Keep the local state isolated
+    * What state is truly local vs something that can be managed in a state manager like Redux?
+    * If there are instances of the component with the same props, will interaction in one be reflected in the other?
+    * No -> then it's local state
+    * Don't hoist state higher than necessary
+* [React as a UI Runtime](https://overreacted.io/react-as-a-ui-runtime/)
+  * Understand React programming model in more depth
+  * React programs output a tree that may change over time
+  * We're mostly concerned with DOM trees, but in principle you could use the React core with any kind of tree structure
+  * The tree has some kind of imperative API for manipulating the structure. React is a layer on top. 
+  * React helps you predictably manipulate a complex tree in response to external events
+  * React makes two assumptions
+    1. The tree is relatively stable and most updates don't radically change the structure
+    2. That individual nodes of the tree represent consistent objects
+  * A *renderer* is the interface between React and the tree. For example, ReactDOM is a renderer for DOM trees.
+  * React can work with both mutable and immutable tree structures
+  * There's a 1:1 relationship between React elements and nodes in the tree. React elements describe what the corresponding node should look like.
+  * The main job of React is to make the tree structure match a provided React element tree.
+  * *Which bits of this are worth calling out?*
+
+
 ## React with Hooks
 
 * Capture of render state is a feature not a bug
+* [Thinking in React hooks](https://2019.wattenberger.com/blog/react-hooks)
+* [What is JavaScript Made Of](https://overreacted.io/what-is-javascript-made-of/)
 
 ## Rules of Hooks
 
 * useState order dependence
 * safe composition (what is NOT a hook)
+* [A Complete Guide to useEffect](https://overreacted.io/a-complete-guide-to-useeffect/)
 
 ## Effects as Synchronization
