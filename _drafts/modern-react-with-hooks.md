@@ -80,18 +80,21 @@ Apart from the funny member variable conventions and the funky [JSX](https://leg
 
 Which shows how superficial my understanding was. I was thinking of React as a widget library with a really convoluted way of updating the UI. My own fault for focusing on mechanism rather than intent. 
 
-* Quick start thinking in React page: https://react.dev/learn/thinking-in-react
-  * Break UI into tree of component parts
-  * Implement a static version
-  * Find minimal UI state
-  * Work out where state should live
-  * Add inverse data flow (interactivity)
+Let's have another look at the new React docs, and in particular the "[Thinking in React](https://react.dev/learn/thinking-in-react)" page in the Quick Start section. Mockup how your UI should look, break it down into a hierarchy of components, build a static version using simple functional React components, work out what local state each component needs and add event handlers to update the state.
+
+Still feels object oriented, but now the objects are hidden behind a functional facade. Is modern React just a widget library with a really convoluted way of building an object hierarchy that has a really convoluted way of updating the UI?
+
+There are hints of something more going on. The data flow is interesting. Each component is controlled by *props* passed in by its parent and in turn controls the *props* passed to any child components. More than that, each component controls what children it has, the number of children and their types, not just the arguments passed to them. It's very malleable, you could change the whole structure on every render if you wanted.
+
+The discussion of *props* vs *state* is illuminating. I like the process of thinking about the pieces of data in the sample application and excluding all the things that are **NOT** state. 
+* Does it remain unchanged over time? Not state. 
+* Is it passed in from a parent via props? Not state. 
+* Can you compute it based on existing state or props? Not state.
+
+You should have the minimum amount of state possible. 
+
 * Data flow diagram
-* Seems superficial - still all about components
-* Some important points
-  * Data flows from the top of the tree down
-  * Props vs State
-  * Keep state minimal
+
 * React in Equations
   * Render: Props In + Local State -> Rendered elements with Props and event handlers
   * Events: Event + event handler and state captured at last render -> New State
