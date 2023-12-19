@@ -84,16 +84,30 @@ Let's have another look at the new React docs, and in particular the "[Thinking 
 
 Still feels object oriented, but now the objects are hidden behind a functional facade. Is modern React just a widget library with a really convoluted way of building an object hierarchy that has a really convoluted way of updating the UI?
 
-There are hints of something more going on. The data flow is interesting. Each component is controlled by *props* passed in by its parent and in turn controls the *props* passed to any child components. More than that, each component controls what children it has, the number of children and their types, not just the arguments passed to them. It's very malleable, you could change the whole structure on every render if you wanted.
+{% include candid-image.html src="/assets/images/frontend/react-data-flow.svg" alt="React Data Flow" %}
 
-The discussion of *props* vs *state* is illuminating. I like the process of thinking about the pieces of data in the sample application and excluding all the things that are **NOT** state. 
+There are hints of something more going on. The data flow is interesting. Each component is controlled by *props* passed in by its parent and in turn controls the *props* passed to any child components. More than that, each component controls what children it has, the number of children and their types, not just the arguments passed to them. It's very malleable, you could change the whole structure on every render if you wanted. 
+
+The discussion of *props* vs *state* is illuminating. I like the process of thinking about the pieces of data in the sample application and excluding all the things that are **NOT** state. You should have the minimum amount of state possible. 
 * Does it remain unchanged over time? Not state. 
 * Is it passed in from a parent via props? Not state. 
 * Can you compute it based on existing state or props? Not state.
 
-You should have the minimum amount of state possible. 
+Data flows downwards. There's an idempotent, even immutable feel to the system. The rendered UI is entirely dependent on the current state and input props. Render a component as many times as you like, change parts of the state in whatever order you like, the end result should be the same. 
 
-* Data flow diagram
+Props can be values or functions. Function props allow updates to flow upwards. A button component might have a function prop that should be called whenever the button is clicked. Its parent component can pass down a function that updates the parent's state. Or it could pass down a function that it receives as an input prop from a distant ancestor. 
+
+Now I'm starting to feel nervous again. In my experience, most UI frameworks run into trouble when you start changing things. You run into race conditions, seemingly impossible logic states, unreproducible bugs. There's data flowing cleanly down the hierarchy and then you introduce loops in the flow triggered by events. 
+
+This mental model is wrong. Instead, [state behaves like a snapshot](https://react.dev/learn/state-as-a-snapshot). When you change state, you're asking React to re-render the UI based on a different state. It doesn't change the current state immediately. State stays consistent while the UI is rendered *and* while events are processed, until the next render is triggered. 
+
+{% include candid-image.html src="/assets/images/frontend/react-state-as-snapshot.svg" alt="React State as a Snapshot" %}
+
+Think of the state of your UI as a sequence of frames in a film, with each render creating a new frame. Each frame is immutable once rendered. Changes triggered by events create a new state for the next frame and then render the UI to match.
+
+Conceptually at least.
+* DOM is not immutable
+* React component instances mutate and persist from frame to frame
 
 * React in Equations
   * Render: Props In + Local State -> Rendered elements with Props and event handlers
