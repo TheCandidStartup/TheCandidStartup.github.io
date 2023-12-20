@@ -99,21 +99,103 @@ Props can be values or functions. Function props allow updates to flow upwards. 
 
 Now I'm starting to feel nervous again. In my experience, most UI frameworks run into trouble when you start changing things. You run into race conditions, seemingly impossible logic states, unreproducible bugs. There's data flowing cleanly down the hierarchy and then you introduce loops in the flow triggered by events. 
 
-This mental model is wrong. Instead, [state behaves like a snapshot](https://react.dev/learn/state-as-a-snapshot). When you change state, you're asking React to re-render the UI based on a different state. It doesn't change the current state immediately. State stays consistent while the UI is rendered *and* while events are processed, until the next render is triggered. 
+Don't worry, you just need to adjust your mental model. [State behaves like a snapshot](https://react.dev/learn/state-as-a-snapshot). When you change state, you're asking React to re-render the UI based on a different state. It doesn't change the current state immediately. State stays consistent while the UI is rendered *and* while events are processed, until the next render is triggered. 
 
 {% include candid-image.html src="/assets/images/frontend/react-state-as-snapshot.svg" alt="React State as a Snapshot" %}
 
 Think of the state of your UI as a sequence of frames in a film, with each render creating a new frame. Each frame is immutable once rendered. Changes triggered by events create a new state for the next frame and then render the UI to match.
 
-Conceptually at least.
-* DOM is not immutable
-* React component instances mutate and persist from frame to frame
+Conceptually at least. Behind the scenes, React is mutating the DOM to match the current rendered UI and managing a hierarchy of component instances that mutate and persist from frame to frame. As long as you follow the rules, everything will be fine. Unfortunately, there's lots of ways you can shoot yourself in the foot.
+
+## Function vs Class Components
+
+Class components are [particularly prone to problems](https://overreacted.io/writing-resilient-components/). The rules on proper use of props and state are simply conventions that you are encouraged to follow. It's easy to leave the path of success, especially if you're used to normal object oriented idioms. 
+
+Props are passed to your constructor. You might assume that some or all of the props are configuration fixed for the life of the component instance. Not so. Props can be changed whenever the parent component re-renders. It's up to React's reconciliation algorithm to decide whether it creates a new component instance or changes the props on an existing instance. 
+
+You may remember that props are read only within a component. It's common to copy props values into your state so that you can change them later. The virtual scrolling code I looked at initially does exactly this. That causes two problems if the props change. First, you might end up ignoring the change. If you add the extra code needed to handle [updating your derived state](https://legacy.reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html), you are likely to introduce race conditions by having two sources of truth.
+
+Your `render` method should be a pure function with the output entirely determined by the input props and state. In a class component, `render` has access to the component instance's `this` pointer. You will be tempted to use that power. So much so, that by default React assumes that render is **NOT** a pure function. You have to explicitly derive from [PureComponent](https://react.dev/reference/react/PureComponent) to tell React that you're following the rules.
+
+Async code, such as function props invoked as event handlers, can have subtle errors. Remember the conceptual model of frames in a film? Events triggered in one "frame" of the UI should execute their logic based on the state for that frame. However, event handlers are usually async, triggered some time after the UI was rendered. The data they access may have changed since then, particularly if accessing normal member variables of the class. 
+
+In the diagrams above the render and event handler functions are shown in yellow to illustrate that they are not entirely dependent on the state that rendered the UI. If the implementation matched the conceptual model, the diagram should look more like this:
+
+{% include candid-image.html src="/assets/images/frontend/react-state-as-snapshot-function.svg" alt="React State as a Snapshot using Function components" %}
+
+Function components [give you this behavior by default](https://overreacted.io/how-are-function-components-different-from-classes/). A function component is simply a function that implements rendering. It has no direct access to the component instance state. It naturally behaves as a pure function. 
+
+Event handlers are implemented as nested functions within the render function. React state and the method for updating the state are only available inside the rendering function. The event handler can access variables in the outer scope of the rendering function via the JavaScript closure feature. 
+
+```
+function Scroller({ viewportHeight, settings }) {
+  const [scrollTop, setScrollTop] = useState(0);
+
+  function runScroller({ target: { newScrollTop } }) {
+    console.log(`Scroll top at last render was ${scrollTop}`);
+    setScrollTop( newScrollTop );
+  }
+
+  // Calculate top and bottom padding and retrieve data
+  { topPaddingHeight, bottomPaddingHeight, data } = 
+    calculateLayout(viewportHeight, settings, scrollTop);
+
+  return (
+    <div
+      className="viewport"
+      onScroll={runScroller}
+      style={{ '{{' }} height: viewportHeight }}>
+      <div style={{ '{{' }} height: topPaddingHeight }}></div>
+      {
+        data.map(settings.row)
+      }
+      <div style={{ '{{' }} height: bottomPaddingHeight }}></div>
+    </div>
+  )
+}
+```
+
+React makes use of many lesser known JavaScript features, so it's worth having a good [mental model of how JavaScript works](https://overreacted.io/what-is-javascript-made-of/). In this case, the killer feature is that the values of variables declared in the rendering function are captured at the point where the nested `runScroller` function is defined. If the original values later change, the event handler still uses the values captured when the UI was rendered.
+
+The first time I saw code like this, I thought it was a mistake. You're defining a new instance of your event handler function every time the component renders. Isn't that tremendously wasteful? At least with a class component method, you can reuse the same function definition. 
+
+Of course this is a feature, not a bug. If the variables captured by the closure are different each time the component renders, then you need a new function definition each time. If the captured variables rarely change, use the handy [useCallback](https://react.dev/reference/react/useCallback) hook to cache the definition between renders.
+
+## React with Hooks
+
+* [Thinking in React hooks](https://2019.wattenberger.com/blog/react-hooks)
+
+## Rules of Hooks
+
+* useState order dependence
+* safe composition (what is NOT a hook)
+* [A Complete Guide to useEffect](https://overreacted.io/a-complete-guide-to-useeffect/)
+
+* [React as a UI Runtime](https://overreacted.io/react-as-a-ui-runtime/)
+  * Understand React programming model in more depth
+  * React programs output a tree that may change over time
+  * We're mostly concerned with DOM trees, but in principle you could use the React core with any kind of tree structure
+  * The tree has some kind of imperative API for manipulating the structure. React is a layer on top. 
+  * React helps you predictably manipulate a complex tree in response to external events
+  * React makes two assumptions
+    1. The tree is relatively stable and most updates don't radically change the structure
+    2. That individual nodes of the tree represent consistent objects
+  * A *renderer* is the interface between React and the tree. For example, ReactDOM is a renderer for DOM trees.
+  * React can work with both mutable and immutable tree structures
+  * There's a 1:1 relationship between React elements and nodes in the tree. React elements describe what the corresponding node should look like.
+  * The main job of React is to make the tree structure match a provided React element tree.
+  * *Which bits of this are worth calling out?*
+
+## Effects as Synchronization
+
+## React Best Practices
 
 * React in Equations
   * Render: Props In + Local State -> Rendered elements with Props and event handlers
   * Events: Event + event handler and state captured at last render -> New State
   * Side Effects: Rendered UI + State captured at last render -> New external state and/or New component state
-* Writing resilient components from Dan Abramhov's blog: https://overreacted.io/writing-resilient-components/
+
+* Writing resilient components from Dan Abramhov's blog: 
   * Don't stop the data flow
     * In Rendering
       * Props can change at any time
@@ -139,32 +221,3 @@ Conceptually at least.
     * If there are instances of the component with the same props, will interaction in one be reflected in the other?
     * No -> then it's local state
     * Don't hoist state higher than necessary
-* [React as a UI Runtime](https://overreacted.io/react-as-a-ui-runtime/)
-  * Understand React programming model in more depth
-  * React programs output a tree that may change over time
-  * We're mostly concerned with DOM trees, but in principle you could use the React core with any kind of tree structure
-  * The tree has some kind of imperative API for manipulating the structure. React is a layer on top. 
-  * React helps you predictably manipulate a complex tree in response to external events
-  * React makes two assumptions
-    1. The tree is relatively stable and most updates don't radically change the structure
-    2. That individual nodes of the tree represent consistent objects
-  * A *renderer* is the interface between React and the tree. For example, ReactDOM is a renderer for DOM trees.
-  * React can work with both mutable and immutable tree structures
-  * There's a 1:1 relationship between React elements and nodes in the tree. React elements describe what the corresponding node should look like.
-  * The main job of React is to make the tree structure match a provided React element tree.
-  * *Which bits of this are worth calling out?*
-
-
-## React with Hooks
-
-* Capture of render state is a feature not a bug
-* [Thinking in React hooks](https://2019.wattenberger.com/blog/react-hooks)
-* [What is JavaScript Made Of](https://overreacted.io/what-is-javascript-made-of/)
-
-## Rules of Hooks
-
-* useState order dependence
-* safe composition (what is NOT a hook)
-* [A Complete Guide to useEffect](https://overreacted.io/a-complete-guide-to-useeffect/)
-
-## Effects as Synchronization
