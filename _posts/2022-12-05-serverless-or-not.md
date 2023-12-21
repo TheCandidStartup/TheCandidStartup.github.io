@@ -71,6 +71,7 @@ AWS Batch is a job management service that runs jobs on your choice of EC2 insta
 | EBS | $1.60[^f1a] | 1 | 5 9s | 64 TB | 64 TB | $0.08 per GB-month and $0.005 per IOPS *provisioned* | 60s | **Not** |
 | EFS | $0.3[^f2a] | 3 | 11 9s | 48 TB | Unlimited | $0.30 per GB-month, $0.03 per GB reads and $0.06 per GB writes | 1 Hour | &#10004; |
 | S3 | $0 | 3 | 11 9s | 5 TB | Unlimited | $0.023 per GB-month, $0.09 per GB transferred out to internet, $0.4 per million read requests, $5 per million write requests | 1 Hour | &#10004; |
+| S3 Express One Zone | $0 | 1 | 11 9s | 5 TB | Unlimited | $0.16 per GB-month, $0.09 per GB transferred out to internet, $0.2 per million read requests, $2.5 per million write requests | 1 Hour | &#10004; |
 
 [^f1a]: Minimum size is 20GB
 [^f2a]: An empty file system occupies some space so will be charged for at least 1 GB
@@ -138,10 +139,12 @@ Standard and Express STEP functions look very similar. Both implement orchestrat
 |---------|-----|------------------|---------------|-------|-----------------------|-----|-----|
 | MemoryDB for Redis  | Y  | $69.12[^c1]     | 1.37-419.09 GB  | 0.4-64 | Per instance per hour, $0.20 per GB written | 60s  |  **Not**  | 
 | Elasticache  | Y  | $23.04[^c3]     | 0.5-635.61 GB  | 0.2-96 | Per instance per hour | 60s  |  **Not**  | 
+| Elasticache  Serverless | Y  | $90[^c2]     | 1GB-5TB  | Unknown | Per [ECPU](https://aws.amazon.com/elasticache/pricing/#Serverless), GB per hour | 1 hour  |  **Not**  | 
 | DAX (DynamoDB accelerator)  | Y  | $57.60[^c4]     | 2-768 GB  | 0.4-96 | Per instance per hour | 60s  |  **Not**  | 
 | API Gateway Caching | N  | $14.40[^c5]     | 0.5-237 GB  | Unknown | Per hour | 60s  |  **Not**  | 
 
 [^c1]: Min Multi-AZ config is  2 x db.t4g.small [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 20% utilization, 1.37GB) at $0.048 each per hour
+[^c2]: Minimum charge is for 1 GB of storage at $0.125 per GB-hour
 [^c3]: Min Multi-AZ config is  2 x cache.t4g.micro [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 10% utilization, 0.5GB) at $0.016 each per hour
 [^c4]: Min Multi-AZ config is  2 x dax.t3.small [burstable instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-credits-baseline-concepts.html) (2 vCPU at 20% utilization, 2GB) at $0.04 each per hour
 [^c5]: Min config is 0.5GB cache capacity at $0.02 per hour
@@ -173,6 +176,16 @@ I'm as surprised as you are that load balancers are not serverless. Functionally
 Despite the name, IOT Core is a general purpose asynchronous messaging gateway. Messages from clients can be ingested at scale and routed to S3, SNS, SQS, Lambda, DynamoDB, STEP Functions and many more.
 
 Whatever you use to implement your gateway, you'll need some form of user authentication. Cognito User Pools is the AWS solution and has an unusual high level cost model aligned with how SaaS vendors typically think about their cost and revenue.
+
+# Revisions
+
+{% capture note-content %}
+* **2023-12-21** Added ElastiCache Serverless, S3 Express One Zone
+* **2022-12-16** Added API Gateway REST api
+* **2022-12-13** Added S3 Object Lambda, S3 Select
+* **2022-12-12** Added App Runner, Amplify Web App Server Side Rendering, Neptune Serverless, OpenSearch Serverless, Amplify Web App Hosting, AppSync, Lambda Function URLs, Cognito User Pools
+{% endcapture %}
+{% include candid-note.html content=note-content %}
 
 # Footnotes
 
