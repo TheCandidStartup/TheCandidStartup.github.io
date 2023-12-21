@@ -113,9 +113,9 @@ Class components are [particularly prone to problems](https://overreacted.io/wri
 
 Props are passed to your constructor. You might assume that some or all of the props are configuration fixed for the life of the component instance. Not so. Props can be changed whenever the parent component re-renders. It's up to React's reconciliation algorithm to decide whether it creates a new component instance or changes the props on an existing instance. 
 
-You may remember that props are read only within a component. It's common to copy props values into your state so that you can change them later. The virtual scrolling code I looked at initially does exactly this. That causes two problems if the props change. First, you might end up ignoring the change. If you add the extra code needed to handle [updating your derived state](https://legacy.reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html), you are likely to introduce race conditions by having two sources of truth.
+You may remember that props are read-only within a component. It's common to copy props values into your state so that you can change them later. The virtual scrolling code I looked at initially does exactly this. That causes two problems if the props change. First, you might end up ignoring the change. If you add the extra code needed to handle [updating your derived state](https://legacy.reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html), you are likely to introduce race conditions by having two sources of truth.
 
-Your `render` method should be a pure function with the output entirely determined by the input props and state. In a class component, `render` has access to the component instance's `this` pointer. You will be tempted to use that power. So much so, that by default React assumes that render is **NOT** a pure function. You have to explicitly derive from [PureComponent](https://react.dev/reference/react/PureComponent) to tell React that you're following the rules.
+Your `render` method should be a pure function with the output entirely determined by the input props and state. In a class component, `render` has access to the component instance's `this` pointer. You will be tempted to use that power. So much so, that by default React assumes that `render` is **NOT** a pure function. You have to explicitly derive from [PureComponent](https://react.dev/reference/react/PureComponent) to tell React that you're following the rules.
 
 Async code, such as function props invoked as event handlers, can have subtle errors. Remember the conceptual model of frames in a film? Events triggered in one "frame" of the UI should execute their logic based on the state for that frame. However, event handlers are usually async, triggered some time after the UI was rendered. The data they access may have changed since then, particularly if accessing normal member variables of the class. 
 
@@ -123,7 +123,7 @@ In the diagrams above the render and event handler functions are shown in yellow
 
 {% include candid-image.html src="/assets/images/frontend/react-state-as-snapshot-function.svg" alt="React State as a Snapshot using Function components" %}
 
-Function components [give you this behavior by default](https://overreacted.io/how-are-function-components-different-from-classes/). A function component is simply a function that implements rendering. It has no direct access to the component instance state. It naturally behaves as a pure function. 
+Function components [give you this behavior by default](https://overreacted.io/how-are-function-components-different-from-classes/). A function component is simply a function that implements rendering. It has no direct access to the component instance object. It naturally behaves as a pure function. 
 
 Event handlers are implemented as nested functions within the render function. React state and the method for updating the state are only available inside the rendering function. The event handler can access variables in the outer scope of the rendering function via the JavaScript closure feature. 
 
