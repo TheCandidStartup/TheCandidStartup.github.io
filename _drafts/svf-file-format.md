@@ -30,7 +30,7 @@ Key members from each team formed a committee to decide the path forward. I repr
 
 The [Navisworks format]({{ nw_url }}) was the obvious starting point. It was a neutral file format, with existing converters from every significant CAD file format. However, porting the existing parsing code to JavaScript seemed like a non-starter to me. There was [no spec]({{ nw_url | append: "#serialization" }}) and the code had all the warts you would expect from twenty years of evolution while maintaining backwards compatibility. 
 
-There was also the problem that Navisworks was an all-in-one format. That might seem like it should be an advantage, but it didn't fit the way browsers worked. To get good performance from a web viewer for large models, you need to cache the model locally. As well as helping speed things up when you reload the same model, it's critical if you need to page parts of the model in and out of memory. At the time, JavaScript had very limited access to local storage. The only practical way of caching data locally was to let the browser do it. 
+There was also the problem that Navisworks was an all-in-one format. That might seem like it should be an advantage, but it didn't fit the way browsers worked. To get good performance from a web viewer for large models, you need to cache the model locally. As well as helping speed things up when you reload the same model, it's critical if you need to page parts of the model in and out of memory. At the time, JavaScript had very limited access to local storage. The only practical way of caching large amounts of data locally was to let the browser do it. 
 
 The Navisworks format is designed so that you can load parts of the model on demand. You can do the same thing from JavaScript in a browser, by making [range GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests) requests for parts of a file stored on a server. The Navisworks web plugin already worked this way but implemented its own on disk caching. The problem is that the browsers would only cache complete requests. Any range request would work but would not be cached. The model needed to be broken into separate physical parts that could be retrieved using normal GET requests.
 
@@ -64,11 +64,13 @@ In theory SVF is an extendable format. The initial spec was based on the Naviswo
 
 ## SVF Format
 
-Enough back story, let's get into the details of the format. Since leaving Autodesk, I have no access to the spec or viewer source code. Fortunately, the Autodesk developer advocacy team have written extensively about the format, including code samples for parsing the high level structure. Many of the assets use standard file formats, so you can work the rest out by looking at example models. All errors are mine.
+Enough back story, let's get into the details of the format. I was a little worried about how much I can say, since my [run in with Autodesk legal]({% link _posts/2023-12-18-legal-jeopardy.md %}) after my [Navisworks file formats]({{ nw_url }}) post. 
+
+Fortunately, the Autodesk developer advocacy team have written extensively about the SVF format, including code samples for parsing the high level structure. Many of the assets use standard file formats, so you can work the rest out by looking at example models. Everything I want to write about is public information, if you know where to look.
 
 I'm going to describe the format in terms of the set of files that an SVF converter writes out. If you use the developer tools in your browser, you can see the Autodesk viewer retrieving each of these files from the Model Derivative service. 
 
-I'm going to start with the original SVF format, then go through what changed for SVF2.
+I'll start with the original SVF format, then go through what changed for SVF2.
 
 ### Model Derivative Manifest
 
@@ -260,7 +262,7 @@ Materials are stored in the "ProteinMaterials" asset as compressed JSON. Autodes
 
 ### Object Properties
 
-I've already mentioned that object properties use an Entity-Attribute-Value triple store representation. The standard pipeline for writing SVF adds all the properties to a SQLite database, which you can [download from Model Derivative service](https://aps.autodesk.com/blog/working-viewer-data-serverlessly-thumbnails-screesnshots-and-serverless-upload) if you want to. At the end of conversion, the database is converted into a set of five compressed JSON array assets.
+I've already mentioned that object properties use an Entity-Attribute-Value triple store representation. The standard pipeline for writing SVF adds all the properties to a SQLite database, which you can [download from Model Derivative service](https://aps.autodesk.com/blog/working-viewer-data-serverlessly-thumbnails-screesnshots-and-serverless-upload) if you want to. At the end of conversion, the database is converted into a set of [five compressed JSON array assets](https://aps.autodesk.com/blog/accessing-design-metadata-without-viewer).
 
 The arrays are written with a particular formatting that, while still valid JSON, can be parsed with little memory overhead. For some reason, that includes adding a dummy first entry to each array. 
 
