@@ -60,9 +60,9 @@ class Scroller extends Component {
 
 Pieces of UI are represented as components. React provides a component base class which you extend to create your own components. The base component has a set of methods which you override to define your component's behavior. There's a `render` method which is called to describe how your UI looks and a `componentDidMount` method which is called after an instance of your component has been created. The sample also defines a `runScroller` method which is subscribed to scroll events. 
 
-There's lots of conventions around how member variables are managed. All arguments to the component constructor are passed in a `props` object. Most of the other member variables are in a big structure called `state`. The `runScroller` method updates the state in response to scroll events and the `render` method describes what the UI should look like using a mixture of `props` and `state`.
+There's lots of conventions around how member variables are managed. All arguments to the component constructor are passed in a `props` object. Most of the other member variables are in a big structure called `state`. The `runScroller` method updates the state in response to scroll events and the `render` method describes what the UI should look like based on a mixture of `props` and `state`.
 
-There's one normal looking member variable, viewportElement, which is the most special case of the lot. It's some kind of special `Ref` type provided by React. It looks like it acts as a reference to the HTML viewport element that is eventually created using the data returned by the `render` method.
+There's one normal looking member variable, viewportElement, which turns out to be the most special case of the lot. It's some kind of special `Ref` type provided by React. It looks like it acts as a reference to the HTML viewport element that is eventually created using the data returned by the `render` method.
 
 ## React Mental Model
 
@@ -70,7 +70,7 @@ Time to fill in the blanks and form a mental model of what React is doing. The l
 
 Let's start with the render method. Whatever's being returned doesn't look like JavaScript to me. It's [JSX](https://legacy.reactjs.org/docs/introducing-jsx.html), a syntax extension for JavaScript. You need to run your code through a transpiler to [convert the JSX into regular JavaScript](https://legacy.reactjs.org/docs/jsx-in-depth.html) that builds up a data structure using `React.createElement` calls. The render method describes the desired UI using a [tree of element instances](https://legacy.reactjs.org/docs/rendering-elements.html). Instances of your components are created by React based on the JSX rendered by their parents. The attributes and children of each element in the JSX are [passed to your component instance](https://legacy.reactjs.org/docs/components-and-props.html#rendering-a-component) as `props`. 
 
-Props are controlled by the parent element and are [read-only](https://legacy.reactjs.org/docs/components-and-props.html#props-are-read-only). Mutable and private member variables need to be managed as [state](https://legacy.reactjs.org/docs/state-and-lifecycle.html). In order to update the UI, your components need to change their state. React responds to the change by re-rendering the component and all its children. If a child component inherits from `PureComponent` rather than `Component`, it will [only be re-rendered if its props have changed](https://legacy.reactjs.org/docs/optimizing-performance.html#examples). React compares the current and previous element tree to [work out](https://legacy.reactjs.org/docs/reconciliation.html) what updates need to be made to the DOM. 
+Props are controlled by the parent element and are [read-only](https://legacy.reactjs.org/docs/components-and-props.html#props-are-read-only). Mutable and private member variables need to be managed as [state](https://legacy.reactjs.org/docs/state-and-lifecycle.html). In order to update the UI, your components need to change their state. React responds to the change by re-rendering the component and all its children. If a child component inherits from `PureComponent` rather than `Component`, it will [only be re-rendered if its props or state have changed](https://legacy.reactjs.org/docs/optimizing-performance.html#avoid-reconciliation). React compares the current and previous element tree to [work out](https://legacy.reactjs.org/docs/reconciliation.html) what updates need to be made to the DOM. 
 
 As suspected, [Refs](https://legacy.reactjs.org/docs/refs-and-the-dom.html) provide a way to access the HTML DOM elements created by React based on the React elements returned by `render`. You add a ref attribute to the appropriate element in your JSX and React updates the corresponding member variable. You can also use refs to [access](https://legacy.reactjs.org/docs/refs-and-the-dom.html#accessing-refs) React components created as a result of rendering. 
 
@@ -125,7 +125,7 @@ In the diagrams above the render and event handler functions are shown in yellow
 
 Function components [give you this behavior by default](https://overreacted.io/how-are-function-components-different-from-classes/). A function component is simply a function that implements rendering. It has no direct access to the component instance object. It naturally behaves as a pure function. 
 
-Event handlers are implemented as nested functions within the render function. React state and the method for updating the state are only available inside the rendering function. The event handler can access variables in the outer scope of the rendering function via the JavaScript closure feature. 
+Event handlers are implemented as nested functions within the render function. React state and the method for updating the state are only available inside the rendering function via the useState hook. The event handler can access variables in the outer scope of the rendering function via the JavaScript closure feature. 
 
 ```
 function Scroller({ viewportHeight, settings }) {
@@ -157,13 +157,29 @@ function Scroller({ viewportHeight, settings }) {
 
 React makes use of many lesser known JavaScript features, so it's worth having a good [mental model of how JavaScript works](https://overreacted.io/what-is-javascript-made-of/). In this case, the killer feature is that the values of variables declared in the rendering function are captured at the point where the nested `runScroller` function is defined. If the original values later change, the event handler still uses the values captured when the UI was rendered.
 
-The first time I saw code like this, I thought it was a mistake. You're defining a new instance of your event handler function every time the component renders. Isn't that tremendously wasteful? At least with a class component method, you can reuse the same function definition. 
+The first time I saw code like this, I thought it was a mistake. You're defining a new instance of your event handler function every time the component renders. Isn't that tremendously wasteful? At least with a class component method, you can reuse the same function instance. 
 
-Of course this is a feature, not a bug. If the variables captured by the closure are different each time the component renders, then you need a new function definition each time. If the captured variables rarely change, use the handy [useCallback](https://react.dev/reference/react/useCallback) hook to cache the definition between renders.
+This is a feature, not a bug. If the variables captured by the closure are different each time the component renders, then you *need* a new function instance each time. If the captured variables rarely change, use the handy [useCallback](https://react.dev/reference/react/useCallback) hook to cache the function instance between renders.
 
 ## React with Hooks
 
-* [Thinking in React hooks](https://2019.wattenberger.com/blog/react-hooks)
+Finally, it's time to talk about hooks. [Hooks](https://react.dev/reference/react/hooks) allow function components to "hook into" the React runtime. Class components do this by overriding class member functions that the React runtime calls. A function component is the equivalent of a class component's render method. React invokes it during rendering in the same way that it invokes the render method of a class component.
+
+What about all the other class component methods that the React runtime invokes at different times? The constructor disappears, and with it goes the set of bugs caused by props dependent code in the constructor. The other "lifecycle" methods are replaced by hooks. This isn't just a syntactic change. It's a [fundamental mindset change](https://2019.wattenberger.com/blog/react-hooks) that aligns better with the React mental model described above. 
+
+Hooks are just global functions whose names start with `use` by convention. Behind the scenes, React manages a set of global variables. Before each function component is rendered, a global variable is updated with a reference to the corresponding component instance object. The hook global functions retrieve state from the current component instance and register callback functions to be invoked when the corresponding lifecycle event happens. This is why state can only be accessed within the scope of a function component.
+
+* Class component methods result in code for a feature being split between component methods
+* If you have a complex component with multiple features, you will have code from multiple features within each component method
+* Easy to end up with monolithic blocks of code that are hard to maintain
+* Similarly end up with one monolithic state containing data from multiple features
+* Hard to share features across components
+* Hooks are designed to be fine grained
+* You can call the useState hook multiple times within a function component to declare different parts of the state
+  * useState implementation as array
+* You can call the useEffect hook multiple times within a function to defined different fragments of code to invoke during a lifecycle event
+* Separating concerns with custom hooks - create your own global function per feature that contains the hooks the feature needs
+* Easy to share custom hooks across components
 
 ## Rules of Hooks
 
