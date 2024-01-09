@@ -28,7 +28,7 @@ And yet, the viewer worked, for big models too. It only supported InfraWorks mod
 
 Key members from each team formed a committee to decide the path forward. I represented Navisworks. We all felt that the emscripten like approaches were a dead end. The tooling wasn't mature enough and we had no idea when, if ever, it would be viable. We would use the InfraWorks JavaScript viewer as a starting point. However, we needed a more general file format.
 
-The [Navisworks format]({{ nw_url }}) was the obvious starting point. It was a neutral file format, with existing converters from every significant CAD file format. However, porting the existing parsing code to JavaScript seemed like a non-starter to me. There was [no spec]({{ nw_url | append: "#serialization" }}) and the code had all the warts you would expect from twenty years of evolution while maintaining backwards compatibility. 
+The [Navisworks format]({{ nw_url }}) was the obvious choice. It was a neutral file format, with existing converters from every significant CAD file format. However, porting the existing parsing code to JavaScript seemed like a non-starter to me. There was [no spec]({{ nw_url | append: "#serialization" }}) and the code had all the warts you would expect from twenty years of evolution while maintaining backwards compatibility. 
 
 There was also the problem that Navisworks was an all-in-one format. That might seem like it should be an advantage, but it didn't fit the way browsers worked. To get good performance from a web viewer for large models, you need to cache the model locally. As well as helping speed things up when you reload the same model, it's critical if you need to page parts of the model in and out of memory. At the time, JavaScript had very limited access to local storage. The only practical way of caching large amounts of data locally was to let the browser do it. 
 
@@ -54,7 +54,7 @@ AFAIK the SVF spec has never been made public. I haven't looked at it in years, 
 
 ## Model Derivative Service
 
-The final player in the SVF ecosystem is the [Model Derivative service](https://aps.autodesk.com/en/docs/model-derivative/v2/developers_guide/overview/). The Model Derivative service converts design files stored in Autodesk cloud apps into SVF, as well as a variety of other formats. The service creates and manages "derivatives" of your design files. Behind the scenes is a big S3 bucket and a fleet of servers with a [variety of desktop applications installed](https://aps.autodesk.com/blog/updates-navisworks-nwd-translation-engine). Model derivative service looks at the type of your input design file and the desired output format, then runs the appropriate converter. 
+The final player in the SVF ecosystem is the [Model Derivative service](https://aps.autodesk.com/en/docs/model-derivative/v2/developers_guide/overview/). The Model Derivative service converts design files stored in Autodesk cloud apps into SVF, as well as a variety of other formats. The service creates and manages "derivatives" of your design files. Behind the scenes is a big [S3 bucket](https://aws.amazon.com/pm/serv-s3/) and a fleet of servers with a [variety of desktop applications installed](https://aps.autodesk.com/blog/updates-navisworks-nwd-translation-engine). Model derivative service looks at the type of your input design file and the desired output format, then runs the appropriate converter. 
 
 Converters are typically implemented as SVF export plugins that run within a standard desktop application. One of the SVF teams built a C++ library for reading and writing SVF files. The application teams were then responsible for using the library to write their plugin. In the early days of SVF, most conversions used Navisworks. Navisworks could read most formats, so all it took was implementing a Navisworks SVF export plugin to add Model Derivative support for twenty formats. 
 
@@ -66,7 +66,7 @@ In theory SVF is an extendable format. The initial spec was based on the Naviswo
 
 Enough back story, let's get into the details of the format. I was a little worried about how much I can say, since my [run in with Autodesk legal]({% link _posts/2023-12-18-legal-jeopardy.md %}) after my [Navisworks file formats]({{ nw_url }}) post. 
 
-Fortunately, the Autodesk developer advocacy team have written extensively about the SVF format, including code samples for parsing the high level structure. Many of the assets use standard file formats, so you can work the rest out by looking at example models. Everything I want to write about is public information, if you know where to look.
+Fortunately, the Autodesk developer advocacy team have written extensively about the SVF format, including code samples for parsing the high level structure. Many of the assets use standard file formats or are self describing, so you can work the rest out by looking at example models. Everything I want to write about is public information, if you know where to look.
 
 I'm going to describe the format in terms of the set of files that an SVF converter writes out. If you use the developer tools in your browser, you can see the Autodesk viewer retrieving each of these files from the Model Derivative service. 
 
@@ -252,7 +252,7 @@ The viewer team later realized that the serialized instance tree wasn't needed e
 
 Geometry is serialized into a set of pack files, with a new file started when the pack file size exceeds 512 KB. Each geometry pack file is identified by an integer id. You'll see files named "0.pf", "1.pf", "2.pf", etc. The geometry metadata stores the pack file id and index within the pack file for the corresponding geometry.
 
-SVF uses [OpenCTM](https://en.wikipedia.org/wiki/OpenCTM) for serialization of triangle meshes. I can't remember what was used for the other geometry types like line and point sets. 
+SVF uses [OpenCTM](https://en.wikipedia.org/wiki/OpenCTM) for serialization of triangle meshes. I can't find a public description for what was used for the other geometry types like line and point sets. 
 
 When an SVF model is loaded into the viewer, all the model representation assets apart from the geometry are loaded up front. Geometry pack files are downloaded on demand as the geometry is needed for rendering. The viewer relies on the pack files being cached by the browser for good performance. 
 
@@ -291,7 +291,7 @@ All other, non-system properties can have whatever name and category the convert
 
 The third element is an enum id which [specifies the type of property](https://stackoverflow.com/questions/46619701/how-to-get-property-types). For example, 20 is a string, 11 is an entity id and 3 is a number with units. The fourth element defines the units for the property, if any. 
 
-There are another four elements but I can't remember what they're used for. 
+There are another four elements but I can't find any description of what they're used for.
 
 #### Property Values
 
