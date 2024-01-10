@@ -167,25 +167,60 @@ Finally, it's time to talk about hooks. [Hooks](https://react.dev/reference/reac
 
 What about all the other class component methods that the React runtime invokes at different times? The constructor disappears, and with it goes the set of bugs caused by props dependent code in the constructor. The other "lifecycle" methods are replaced by hooks. This isn't just a syntactic change. It's a [fundamental mindset change](https://2019.wattenberger.com/blog/react-hooks) that aligns better with the React mental model described above. 
 
-Hooks are just global functions whose names start with `use` by convention. Behind the scenes, React manages a set of global variables. Before each function component is rendered, a global variable is updated with a reference to the corresponding component instance object. The hook global functions retrieve state from the current component instance and register callback functions to be invoked when the corresponding lifecycle event happens. This is why state can only be accessed within the scope of a function component.
+Hooks are just global functions whose names start with `use` by convention. [Behind the scenes](https://overreacted.io/react-as-a-ui-runtime), React manages a set of global variables. Before each function component is rendered, a global variable is updated with a reference to the corresponding component instance object. The hook global functions retrieve state from the current component instance and register callback functions to be invoked when the corresponding lifecycle event happens. This is why state can only be accessed within the scope of a function component.
 
-* Class component methods result in code for a feature being split between component methods
-* If you have a complex component with multiple features, you will have code from multiple features within each component method
-* Easy to end up with monolithic blocks of code that are hard to maintain
-* Similarly end up with one monolithic state containing data from multiple features
-* Hard to share features across components
-* Hooks are designed to be fine grained
-* You can call the useState hook multiple times within a function component to declare different parts of the state
-  * useState implementation as array
-* You can call the useEffect hook multiple times within a function to defined different fragments of code to invoke during a lifecycle event
-* Separating concerns with custom hooks - create your own global function per feature that contains the hooks the feature needs
-* Easy to share custom hooks across components
+All this may seem like a hack to avoid the need for component methods. However, in many ways hooks are an improvement. When implementing a feature using class components, code often needs to be split between multiple component lifecycle methods. That's fine for a simple component with only one real feature. It becomes hard to manage with complex components with multiple features. Now you have code from multiple features mixed together within each component method. You can easily end up with monolithic blocks of code that are hard to maintain. It's hard to reuse features across multiple components. 
+
+```
+class MyComponent extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { featureAState, featureBState }
+  }
+  
+  componentDidMount() {
+    featureADidMount();
+    featureBDidMount();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    featureADidUpdate(prevProps, prevState.featureAState);
+    featureBDidUpdate(prevProps, prevState.featureBState);
+  }
+}
+```
+
+In contrast, hooks are designed to be fine grained. You can call the useState hook multiple times within a function component to declare different parts of the state. You can call the useEffect hook multiple times within a function to defined different fragments of code to invoke during a lifecycle event. You can implement individual features as custom hooks. Create your own global function per feature that contains all the hook related code the feature needs. At the component level, you can easily compose multiple features together and reuse features across components.
+
+```
+function useFeatureA()
+{
+  const [stateA, setStateA] = useState({});
+  useEffect(() => { doFeatureAStuff(stateA, setStateA); });
+}
+
+function useFeatureB()
+{
+  const [stateB, setStateB] = useState({});
+  useEffect(() => { doFeatureBStuff(stateB, setStateB); });
+}
+
+function MyComponent(props) {
+  useFeatureA();
+  useFeatureB();
+}
+```
 
 ## Rules of Hooks
 
 * useState order dependence
+  * useState implementation as array
 * safe composition (what is NOT a hook)
 * [A Complete Guide to useEffect](https://overreacted.io/a-complete-guide-to-useeffect/)
+
+## Effects as Synchronization
+
+## Further Reading
 
 * [React as a UI Runtime](https://overreacted.io/react-as-a-ui-runtime/)
   * Understand React programming model in more depth
@@ -202,16 +237,7 @@ Hooks are just global functions whose names start with `use` by convention. Behi
   * The main job of React is to make the tree structure match a provided React element tree.
   * *Which bits of this are worth calling out?*
 
-## Effects as Synchronization
-
-## React Best Practices
-
-* React in Equations
-  * Render: Props In + Local State -> Rendered elements with Props and event handlers
-  * Events: Event + event handler and state captured at last render -> New State
-  * Side Effects: Rendered UI + State captured at last render -> New external state and/or New component state
-
-* Writing resilient components from Dan Abramhov's blog: 
+  * Writing resilient components from Dan Abramhov's blog: 
   * Don't stop the data flow
     * In Rendering
       * Props can change at any time
@@ -237,3 +263,11 @@ Hooks are just global functions whose names start with `use` by convention. Behi
     * If there are instances of the component with the same props, will interaction in one be reflected in the other?
     * No -> then it's local state
     * Don't hoist state higher than necessary
+
+## Summary
+
+* React in Equations
+  * Render: Props In + Local State -> Rendered elements with Props and event handlers
+  * Events: Event + event handler and state captured at last render -> New State
+  * Side Effects: Rendered UI + State captured at last render -> New external state and/or New component state
+
