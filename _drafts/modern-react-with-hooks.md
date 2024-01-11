@@ -163,7 +163,7 @@ This is a feature, not a bug. If the variables captured by the closure are diffe
 
 ## React with Hooks
 
-Finally, it's time to talk about hooks. [Hooks](https://react.dev/reference/react/hooks) allow function components to "hook into" the React runtime. Class components do this by overriding class member functions that the React runtime calls. A function component is the equivalent of a class component's render method. React invokes it during rendering in the same way that it invokes the render method of a class component.
+Finally, it's time to talk about hooks. [Hooks](https://react.dev/reference/react/hooks) allow function components to "hook into" the React runtime. Class components do this by overriding class methods that the React runtime calls. A function component is the equivalent of a class component's render method. React invokes it during rendering in the same way that it invokes the render method of a class component.
 
 What about all the other class component methods that the React runtime invokes at different times? The constructor disappears, and with it goes the set of bugs caused by props dependent code in the constructor. The other "lifecycle" methods are replaced by hooks. This isn't just a syntactic change. It's a [fundamental mindset change](https://2019.wattenberger.com/blog/react-hooks) that aligns better with the React mental model described above. 
 
@@ -213,61 +213,37 @@ function MyComponent(props) {
 
 ## Rules of Hooks
 
-* useState order dependence
-  * useState implementation as array
-* safe composition (what is NOT a hook)
-* [A Complete Guide to useEffect](https://overreacted.io/a-complete-guide-to-useeffect/)
+As with class components, there are conventions that you need to follow for safe use of hooks. The [rules of hooks](https://react.dev/warnings/invalid-hook-call-warning#breaking-rules-of-hooks) restrict where hooks can be called. You can't call them inside loops, conditions or nested functions. They should only be called in the top level body of function component's or custom hooks. 
+
+That's pretty restrictive. The way you use hooks is more like a module import that a regular function call. You have to invoke every hook that you *might* want to use, even if its not needed for this specific component invocation. Why is that? It comes down to a combination of implementation choices in the React core and the desire to ensure hooks can be safely composed.
+
+We've already seen why hooks can only be called within the scope of a function component. The main driver for the rest of the rules is the `useState` implementation. How does `useState` know which bit of state you want to access if you can make multiple `useState` calls? It assumes that every time your function component is invoked, it will make the same number of useState calls in the same order. 
+
+The [simplest implementation](https://medium.com/@ryardley/react-hooks-not-magic-just-arrays-cd4f1857236e) of useState is an array stored in the component object instance. Set a global index to 0 before invoking the function component. Each call to useState can then return the contents of the array at that index and then increment the index.
+
+Once you get your head round hooks, there's an assumption that everything should be a hook. The React designers have some great guidance on when things [should NOT be hooks](https://overreacted.io/why-isnt-x-a-hook/). In summary, hooks need to compose cleanly and lead to code that is easy to debug.
 
 ## Effects as Synchronization
 
+The second most common hook is `useEffect` which addresses similar use cases to the `componentDidMount` and `ComponentDidUpdate` lifecycle methods. However, it's not a like for like replacement. You need to change your mindset and think in terms of the React conceptual model. Rendered UI is entirely dependent on the current state and props. For each "frame in the film", React synchronizes the DOM with the UI defined by the current state and props. Event handlers are bound to a specific render by capturing the state and props as they were at render time. 
+
+The same thing [happens with effects](https://overreacted.io/a-complete-guide-to-useeffect/). Effects allow component authors to synchronize external data with the current state and props. Effects are bound to a specific render by capturing the state and props as they were at render time. 
+
 ## Further Reading
 
-* [React as a UI Runtime](https://overreacted.io/react-as-a-ui-runtime/)
-  * Understand React programming model in more depth
-  * React programs output a tree that may change over time
-  * We're mostly concerned with DOM trees, but in principle you could use the React core with any kind of tree structure
-  * The tree has some kind of imperative API for manipulating the structure. React is a layer on top. 
-  * React helps you predictably manipulate a complex tree in response to external events
-  * React makes two assumptions
-    1. The tree is relatively stable and most updates don't radically change the structure
-    2. That individual nodes of the tree represent consistent objects
-  * A *renderer* is the interface between React and the tree. For example, ReactDOM is a renderer for DOM trees.
-  * React can work with both mutable and immutable tree structures
-  * There's a 1:1 relationship between React elements and nodes in the tree. React elements describe what the corresponding node should look like.
-  * The main job of React is to make the tree structure match a provided React element tree.
-  * *Which bits of this are worth calling out?*
-
-  * Writing resilient components from Dan Abramhov's blog: 
-  * Don't stop the data flow
-    * In Rendering
-      * Props can change at any time
-      * Common mistake is initializing state in constructor based on props. Later changes in props get ignored
-      * Use memoization/pure component behavior to optimize cases where some props don't change, rather than lifecycle methods
-    * In Side Effects
-      * Classic mistake is fetching data based on a prop value. Then displaying stale data if prop changes.
-      * Really hard to get right with class components - need to override both componentDidMount and componentDidUpdate. Fiddly code.
-    * In Optimizations
-      * Easy to break data flow if you try to aggressively optimize
-      * Classic mistake is to write your own comparison function and forget to compare function props
-      * Stick to approaches that use shallow equality like `PureComponent` and `React.memo`
-  * Always be ready to render
-    * Better expressed as rendering should be a pure function
-    * Same starting state+props -> same output
-    * Doesn't matter how many times render is called or whether state, props or both change each render
-  * No component is a singleton
-    * Write your components as if there can be more than one instance of them
-    * Better design, even if right now there's only one instance
-    * As things evolve you'll often end up with multiple instances of something you thought was a singleton
-  * Keep the local state isolated
-    * What state is truly local vs something that can be managed in a state manager like Redux?
-    * If there are instances of the component with the same props, will interaction in one be reflected in the other?
-    * No -> then it's local state
-    * Don't hoist state higher than necessary
+There's lots more I could say, but this piece is already too long. If you want to go deeper, [Dan Abramov's blog](https://overreacted.io/) is a great resource. Dan is a member of the React core team. Posts that I found particularly useful include:
+* [React as a UI Runtime](https://overreacted.io/react-as-a-ui-runtime/) - Understand the React programming model in more depth
+* [Writing Resilient Components](https://overreacted.io/writing-resilient-components/) - Advice on how to write components that work with React's conceptual model rather than fighting against it
+* [A Complete Guide to useEffect](https://overreacted.io/a-complete-guide-to-useeffect/) - How to truly "grok" `useEffect`
+* [How are Function Components Different from Classes](https://overreacted.io/how-are-function-components-different-from-classes/) - The main subject of this post
+* [Why Isn't X a Hook](https://overreacted.io/why-isnt-x-a-hook/) - To really understand a concept you also need to know when it doesn't apply
+* [What is JavaScript Made Of](https://overreacted.io/what-is-javascript-made-of/) -  Super compressed primer on the core features of JavaScript needed to understand how React works
 
 ## Summary
 
-* React in Equations
-  * Render: Props In + Local State -> Rendered elements with Props and event handlers
-  * Events: Event + event handler and state captured at last render -> New State
-  * Side Effects: Rendered UI + State captured at last render -> New external state and/or New component state
+React is a state machine, moving from one immutable UI "frame" to another in response to input events. The React state machine has three types of transition.
+* Render: State + Props -> Rendered UI composed of sub-components with their own Props and State, HTML elements with Event Handlers and async Side Effects
+* Events: Event + Event Handler + State and Props captured at last render -> New Component State
+* Side Effects: Effect + Rendered UI + State and Props captured at last render -> New External State and/or New Component State
 
+The aim of "modern React with Hooks" is to make building your application as a React state machine simpler and more direct. 
