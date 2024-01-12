@@ -80,9 +80,9 @@ Apart from the funny member variable conventions and the funky [JSX](https://leg
 
 Which shows how superficial my understanding was. I was thinking of React as a widget library with a really convoluted way of updating the UI. My own fault for focusing on mechanism rather than intent. 
 
-Let's have another look at the new React docs, and in particular the "[Thinking in React](https://react.dev/learn/thinking-in-react)" page in the Quick Start section. Mockup how your UI should look, break it down into a hierarchy of components, build a static version using simple functional React components, work out what local state each component needs and add event handlers to update the state.
+Let's have another look at the new React docs, and in particular the "[Thinking in React](https://react.dev/learn/thinking-in-react)" page in the Quick Start section. "Mockup how your UI should look, break it down into a hierarchy of components, build a static version using simple functional React components, work out what local state each component needs and add event handlers to update the state".
 
-Still feels object oriented, but now the objects are hidden behind a functional facade. Is modern React just a widget library with a really convoluted way of building an object hierarchy that has a really convoluted way of updating the UI?
+Still feels object oriented, but now the objects are hidden behind a functional facade. Is modern React just a widget library with a really convoluted way of building a widget hierarchy that has a really convoluted way of updating the UI?
 
 {% include candid-image.html src="/assets/images/frontend/react-data-flow.svg" alt="React Data Flow" %}
 
@@ -111,7 +111,7 @@ Conceptually at least. Behind the scenes, React is mutating the DOM to match the
 
 Class components are [particularly prone to problems](https://overreacted.io/writing-resilient-components/). The rules on proper use of props and state are simply conventions that you are encouraged to follow. It's easy to leave the path of success, especially if you're used to normal object oriented idioms. 
 
-Props are passed to your constructor. You might assume that some or all of the props are configuration fixed for the life of the component instance. Not so. Props can be changed whenever the parent component re-renders. It's up to React's reconciliation algorithm to decide whether it creates a new component instance or changes the props on an existing instance. 
+Props are passed to your constructor. You might assume that some or all of the props are configuration, fixed for the life of the component instance. Not so. Props can be changed whenever the parent component re-renders. It's up to React's reconciliation algorithm to decide whether it creates a new component instance or changes the props on an existing instance. 
 
 You may remember that props are read-only within a component. It's common to copy props values into your state so that you can change them later. The virtual scrolling code I looked at initially does exactly this. That causes two problems if the props change. First, you might end up ignoring the change. If you add the extra code needed to handle [updating your derived state](https://legacy.reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html), you are likely to introduce race conditions by having two sources of truth.
 
@@ -225,7 +225,7 @@ Once you get your head round hooks, there's an assumption that everything should
 
 ## Effects as Synchronization
 
-The second most common hook is `useEffect` which addresses similar use cases to the `componentDidMount` and `ComponentDidUpdate` lifecycle methods. However, it's not a like for like replacement. You need to change your mindset and think in terms of the React conceptual model. Rendered UI is entirely dependent on the current state and props. For each "frame in the film", React synchronizes the DOM with the UI defined by the current state and props. Event handlers are bound to a specific render by capturing the state and props as they were at render time. 
+The second most common hook is `useEffect`, which addresses similar use cases to the `componentDidMount` and `ComponentDidUpdate` lifecycle methods. However, it's not a like for like replacement. You need to change your mindset and think in terms of the React conceptual model. Rendered UI is entirely dependent on the current state and props. For each "frame in the film", React synchronizes the DOM with the UI defined by the current state and props. Event handlers are bound to a specific render by capturing the state and props as they were at render time. 
 
 The same thing [happens with effects](https://overreacted.io/a-complete-guide-to-useeffect/). Effects allow component authors to synchronize external data with the current state and props. Effects are bound to a specific render by capturing the state and props as they were at render time. 
 
