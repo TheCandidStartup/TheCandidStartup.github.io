@@ -152,4 +152,4 @@ One step forward, two steps back. I'm not having much luck finding an off the sh
 
 Where do I go next? Fork an existing component and hack it as needed? Write something from scratch? See if there's anything better in a different framework ecosystem? Try an approach that doesn't rely on the DOM and native scrollbars? 
 
-Gives me lots to dig into, next time. 
+Gives me lots to dig into, [next time]({% link _posts/2023-12-04-react-virtual-scroll-grid-5.md %}). 
