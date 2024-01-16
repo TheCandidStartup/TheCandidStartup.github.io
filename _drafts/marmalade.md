@@ -85,7 +85,9 @@ Use the wooden spoon to stir the mixture and help pass the liquid and pulp throu
 
 Scrape the last of the pectin rich mixture from the bottom of the sieve into the large pan, then discard what's left in the sieve.
 
-Heat the large pan. Give everything a good stir and then start adding the sugar, a bit at a time. Stir until you can feel that all the sugar has dissolved. Taste and repeat as needed. 
+Heat the large pan. Resist the temptation to add more water. It's surprising how much the volume and liquidity increases once you add the sugar. The more water you have, the longer you'll need to simmer and reduce the jam before it's ready.
+
+Give everything a good stir and then start adding the sugar, a bit at a time. Stir until you can feel that all the sugar has dissolved. Taste and repeat as needed. 
 
 {% include candid-image.html src="/assets/images/marmalade/boil-before.jpg" alt="Sugar added, ready to simmer" %}
 
@@ -93,11 +95,11 @@ Now for the tricky bit. You need to simmer the mixture until it's ready. It's re
 
 {% include candid-image.html src="/assets/images/marmalade/jamming-point.jpg" alt="Reaching jamming point" %}
 
-I've learnt the hard way that jamming point is a necessary but not sufficient requirement for the jam to set. Once there, you have anywhere from a few more minutes to an hour of simmering left. If the temperature goes much above jamming point, you've left it too long and you're on your way to making orange flavor toffee. 
+I've learnt the hard way that jamming point is a necessary but not sufficient condition for the jam to set. Once there, you have anywhere from a few more minutes to an hour of simmering left. If the temperature goes much above jamming point, you've left it too long and you're on your way to making orange flavor toffee. 
 
 Everyone has their own test for when it's ready. My father-in-law claims he can tell by the way the simmering sound changes and how the marmalade falls off the spoon. I put a drop of mixture on a cold saucer, let it cool, then draw my finger through it. Tip the saucer up. If the edge of the jam holds firm and stays in place it's ready. If it runs, it's not. 
 
-Test every five to ten minutes. 
+Test every five to ten minutes. If you started with a lot of water, the volume will need to reduce considerably before it's ready. Be careful towards the end as the jam may start to stick to the bottom of the pan. 
 
 While all that's going on, you can prepare the jars. Remove the lids, wash both jars and lids using hot foamy water, and rinse well. Put the jars (but not the lids) into the oven and heat to 100 degrees celsius, then turn the oven off. 
 
@@ -111,4 +113,8 @@ Once the marmalade is ready, ladle it into the warm jars and close the lids tigh
 {% include candid-image.html src="/assets/images/marmalade/boil-after.jpg" alt="It's ready!" %}
 
 # Results
+
+I hope you enjoy your breakfast as much as I enjoy mine. 
+
+{% include candid-image.html src="/assets/images/marmalade/breakfast.jpg" alt="Enjoy your breakfast" %}
 
