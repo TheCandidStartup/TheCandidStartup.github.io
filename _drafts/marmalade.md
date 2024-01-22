@@ -114,6 +114,10 @@ Once the marmalade is ready, ladle it into the warm jars and close the lids tigh
 
 # Results
 
+ Six batches later and I've secured my supply of marmalade for the year.
+
+{% include candid-image.html src="/assets/images/marmalade/years-supply.jpg" alt="A year's supply of marmalade" %}
+
 I hope you enjoy your breakfast as much as I enjoy mine. 
 
 {% include candid-image.html src="/assets/images/marmalade/breakfast.jpg" alt="Enjoy your breakfast" %}
