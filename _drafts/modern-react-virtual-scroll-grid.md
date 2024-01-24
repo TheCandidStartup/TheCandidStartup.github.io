@@ -23,19 +23,42 @@ There's additional, smaller scale duplication, across the constructor, render me
 
 The modern React solution for these problems is to extract common code into custom hooks which can be reused across multiple components. It seems like I have the perfect test case. Let's try and extract all the code needed for virtual scrolling in a single dimension as a virtual scroller custom hook. List components use a single instance of the hook, configured for horizontal or vertical scrolling as appropriate. Grid components use two instances of the hook, one for vertical and one for horizontal scrolling. 
 
+# State
+
+## List
+
+* **isScrolling**: Boolean that specifies whether control is currently being scrolled
+* **scrollDirection**: Backwards or Forwards
+* **scrollOffset**: Position of scroll bar copied from scroll event scrollLeft or scrollTop
+* **scrollUpdateWasRequested**: Parent component has requested a different scroll offset
+
+## Grid
+
+* **isScrolling**: Boolean that specifies whether control is currently being scrolled
+* **horizontalScrollDirection**: Backwards or Forwards
+* **verticalScrollDirection**: Backwards or Forwards
+* **scrollLeft**: Position of scroll bar copied from scroll event scrollLeft
+* **scrollTop**: Position of scroll bar copied from scroll event scrollTop
+* **scrollUpdateWasRequested**: Parent component has requested a different scroll left/top
+
 # Control Flow
 
 * Creation - default state, can include desired initial scroll position
 * ComponentDidMount - scrolls DOM element to desired initial position, if any specified
 * OnScroll - update scroll position in state
-    * Uses updater flavour of setState to compare current and previous offset, determine scroll direction
-    * isScrolling bool for whether scrolling is currently active (passed to child components as a prop)
+    * Uses updater flavour of setState to compare current and previous offset, determine scrollDirection
+    * Sets isScrolling to true
     * Uses post-update callback to request a 150ms timeout
-    * Clears isScrolling flag when timeout triggers. Used to "debounce" clear of flag. 
+    * Clears isScrolling when timeout triggers. Used to "debounce" clear of flag. 
 * Render - Render items in window based on scroll position
     * Two divs - fixed size outer, inner child set to full extent of virtual children
     * Refs that capture outer and inner HTML element
     * Outer ref accessible by parent component via ref callback
 * ScrollTo - method that parent component can access via ref and call to scroll to desired offset or item
-    * Updates state with *desired* position and flag to say update needed
-* ComponentDidUpdate - lifecycle method called post-render, if updated needed flag set, sets scroll position of DOM element as requested. Means items are rendered in a non-visible position and then scrolled into view post-render. May cause problems for paged scrolling. 
+    * Updates state with *desired* position and sets scrollUpdateWasRequested to true
+* ComponentDidUpdate - lifecycle method called post-render, if scrollUpdateWasRequested set, sets scroll position of DOM element as requested and clears flag. Means items are rendered in a non-visible position and then scrolled into view post-render. May cause problems for paged scrolling. 
+
+# Initial Position
+
+# Scroll To
+
