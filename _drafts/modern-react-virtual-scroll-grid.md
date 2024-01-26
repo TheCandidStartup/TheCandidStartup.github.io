@@ -25,7 +25,7 @@ The modern React solution for these problems is to extract common code into cust
 
 # State
 
-First, let's look at the state. Here's what it looks like for the react-window list and grid components (the state is the same for both fixed and variable sized item flavors).
+First, let's look at the state. Here's what it looks like for the react-window list and grid components. The state is the same for both fixed and variable sized item flavors.
 
 ## List
 
@@ -65,7 +65,7 @@ The [recommended solution](https://legacy.reactjs.org/blog/2018/06/07/you-probab
 
 Renders items in the visible window defined by the scroll offset and the size of the component. Calls class methods to map between offsets and item indexes. There are separate implementations for fixed and variable size items provided by the fixed and variable size component subclasses. 
 
-Rendering creates an outer, fixed size div, and an inner child div, big enough to hold all the items.  The component maintains refs to both divs which are exposed to it's parent component. The component also uses the outer ref itself when imperatively adjusting the scroll offset. 
+Rendering creates an outer, fixed size div, and an inner child div, big enough to hold all the items.  The component maintains refs to both divs which are exposed to its parent component. The component also uses the outer ref itself when imperatively adjusting the scroll offset. 
 
 ## ComponentDidMount
 
@@ -92,7 +92,7 @@ Just like React lets you bind a ref to an HTML element, you can also [bind a ref
 
 You can make this work with a function component but the approach is a little obscure. First you need to wrap your function component definition with [`forwardRef`](https://react.dev/reference/react/forwardRef) so that it can accept a ref from its parent. Like the name suggests, this is normally used so that you can forward the ref on to one of your child HTML elements or child components. 
 
-There is a third option. Instead of binding the ref to an HTML element or react component, you can [bind it to an arbitrary JavaScript object](https://react.dev/reference/react/forwardRef#exposing-an-imperative-handle-instead-of-a-dom-node) with the [`useImperativeHandle`](https://react.dev/reference/react/useImperativeHandle) hook. This is normally used to restrict what the parent component can do with your internal child element or component. The object you return is a wrapper that forwards on only the methods you want to expose.
+There is a third option. Instead of binding the ref to an HTML element or react class component, you can [bind it to an arbitrary JavaScript object](https://react.dev/reference/react/forwardRef#exposing-an-imperative-handle-instead-of-a-dom-node) with the [`useImperativeHandle`](https://react.dev/reference/react/useImperativeHandle) hook. This is normally used to restrict what the parent component can do with your internal child element or component. The object you return is a wrapper that forwards on only the methods you want to expose.
 
 Nearly there. The trick is that you can [add whatever methods you want to this object](https://react.dev/reference/react/useImperativeHandle#exposing-your-own-imperative-methods). You don't have to limit yourself to forwarding standard DOM methods. We can include `scrollTo` and `scrollToItem` methods as well as providing access to the outer and inner divs. 
 
@@ -104,7 +104,7 @@ What does the ScrollTo method actually do? Weirdly, it calculates and sets the r
 
 The overall effect is that ScrollTo renders items that are outside the window, then scrolls them into view. What I can't work out is why it does it this way. There's nothing in the comments that explains why. 
 
-Why not set the scroll offset of the outer div directly in `ScrollTo`, then rely on the scroll event handler to set the state, which in turn will trigger a render? After all, it does it this way when setting an initial scroll position. It seems overly complex and worse won't work when I implement paged scrolling. Scrolling items outside the window into view only works if the items are on the current page. 
+Why not set the scroll offset of the outer div directly in `ScrollTo`, then rely on the scroll event handler to set the state, which in turn will trigger a render? After all, react-window does it this way when setting an initial scroll position. It seems overly complex and worse won't work when I implement paged scrolling. Scrolling items outside the window into view only works if the items are on the current page. 
 
 I'll implement the simple, direct approach instead, which means I won't need `scrollUpdateWasRequested`.
 
