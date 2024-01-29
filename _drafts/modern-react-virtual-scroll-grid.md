@@ -69,11 +69,11 @@ Rendering creates an outer, fixed size div, and an inner child div, big enough t
 
 ## ComponentDidMount
 
-[ComponentDidMount](https://legacy.reactjs.org/docs/react-component.html#componentdidmount) is a React lifecycle method, called after the component is created and first rendered. It uses the outer ref to set the div's current scroll offset to the `initialScrollOffset`, if defined.  We can replace this with the `useEffect` hook in modern React.
+[ComponentDidMount](https://legacy.reactjs.org/docs/react-component.html#componentdidmount) is a React lifecycle method, called after the component is created and first rendered. It uses the outer ref to set the div's current scroll offset to the `initialScrollOffset`, if defined.  We can replace this with a `useEffect` hook in modern React.
 
 ## OnScroll
 
-The scroll event handler, added to the outer div. Updates the state in response to the scroll event.
+This is the scroll event handler, added to the outer div. Updates the state in response to the scroll event.
 * Sets `scrollDirection` based on comparing the previous scroll offset stored in the state to the current scroll offset
 * Sets `scrollOffset` to the current scroll offset
 * Sets `isScrolling` to true and `scrollUpdateWasRequested` to false
@@ -86,7 +86,7 @@ According to the comments, the timeout is used to "debounce" the clear of the `i
 
 The component provides `scrollTo` and `scrollToItem` methods that a parent component can call to imperatively scroll to a specified offset or to bring a specified item into view. How do you do that with a modern React functional component? 
 
-Which I eventually realized was the wrong question. How can a parent component call these methods when it has no control over how or when its child components get created?
+Which is the wrong question. What you should be asking yourself, is how can a parent component call these methods when it has no control over how or when its child components get created?
 
 Just like React lets you bind a ref to an HTML element, you can also [bind a ref to an instance of a class component](https://legacy.reactjs.org/docs/refs-and-the-dom.html#adding-a-ref-to-a-class-component). Once the initial `Render` completes, you can use the ref to access the component instance and call any methods on it. However, as the documentation helpfully points out, you [can't bind a ref to a function component](https://legacy.reactjs.org/docs/refs-and-the-dom.html#refs-and-function-components) because they don't have instances. 
 
