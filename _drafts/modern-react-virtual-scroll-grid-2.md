@@ -52,7 +52,7 @@ Instead of importing a `FixedListControl` from react-window, I'm now using my ne
 
 While editing this file I immediately noticed the impact of TypeScript. I get auto-completion prompts when adding props to `VirtualList`, errors if I try to specify a prop that the control doesn't support and even an error if I specify more than the single child that the control expects. 
 
-Like react-window, the VirtualList control creates an instance of it's child component for every item in the list, passing in a set of per-item props. I was pleasantly surprised that the IDE immediately warns me if I try to add a prop to `Cell` that `VirtualList` doesn't provide. 
+Like react-window, the VirtualList control creates an instance of its child component for every item in the list, passing in a set of per-item props. I was pleasantly surprised that the IDE immediately warns me if I try to add a prop to `Cell` that `VirtualList` doesn't provide. 
 
 # VirtualList control
 
@@ -127,7 +127,7 @@ Finally, we return the JSX for the rendered control. As usual there's a fixed si
 
 ## Rendering Items
 
-The react-window implementation directly calls `React.createElement` rather than using JSX. Modern react is all in on JSX, so I decided to port it. The two divs were simple enough, rendering the visible items was not. 
+The react-window implementation directly calls `React.createElement` rather than using JSX. Modern react is all-in on JSX, so I decided to port it. The two divs were simple enough, rendering the visible items was not. 
 
 You can't use loops within JSX. The normal idiom is to build up content in an array and then use `map` to generate JSX for each entry in the array. On top of that I'd have to find a way to specify the child component type being created using a variable rather than a literal in the JSX. In the end I left the implementation as is and pulled it out into a separate function.
 
