@@ -83,7 +83,7 @@ export type VirtualListProps = {
 };
 ```
 
-Straight away we're off the reservation. The React+TypeScript cheat sheets have only a brief mention of `ComponentType` in the advanced section. Conceptually it makes sense. We're declaring a type for the props that can be passed to VirtualList including the built-in `children` prop. I'm just glad that somebody else worked out how to do it. 
+Straight away we're off the reservation. The React+TypeScript cheat sheets have only a brief mention of `ComponentType` in the advanced section. Conceptually it makes sense. We're declaring a type for the props that can be passed to VirtualList including the built-in `children` prop, then drilling down further and specifying the props that child should expect. I'm just glad that somebody else worked out how to do it. 
 
 ## The Component Function
 
@@ -213,5 +213,8 @@ Analysis paralysis averted. I have my basic structure in place, it's written in 
 I also have a parking lot of things to come back to
 * JSX all the way down
 * Try using relative positioning of child items with a grid layout. Can we reduce the number of unique item styles needed?
+* Unit tests
+* Monorepo setup
+* Build npm package
 
 Next time, we'll see how far we get with the scalable data binding interface.
