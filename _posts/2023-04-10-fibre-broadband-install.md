@@ -155,7 +155,7 @@ OK. Thanks for letting me know. I guess I don't need a VOIP adaptor.
 
 One phone working, now what about the one in the hall? I don't want to have to run a phone cable down to there. At which point I had a brainwave. I already have a phone cable down to there. It runs from the extension socket in the home office to the main socket in the hall. That also connects to the copper phone line back to the exchange but that's been disconnected. I plugged the second RJ11 socket on the router into the extension socket. Checked the hall phone and got a dial tone. It's alive!
 
-Later, I did a little [more](https://www.draytek.co.uk/information/blog/the-end-of-analogue-phone-lines-pt2) [research](https://support.aa.net.uk/VoIP_How_to:_Voice_reinjection) which suggests this may not work for everyone. If your copper phone line is still active (you have VOIP over ADSL or FTTC), you'll need to disconnect your extension wiring from the phone line. If you have a modern main socket with both RJ45 and RJ11 sockets you will need to upgrade it.
+Later, I did a little [more](https://www.draytek.co.uk/information/blog/the-end-of-analogue-phone-lines-pt2) [research](https://support.aa.net.uk/VoIP_How_to:_Voice_reinjection) which suggests this may not work for everyone. If your copper phone line is still active (you have VOIP over ADSL or FTTC), you'll need to disconnect your extension wiring from the phone line. This is easy if you have an old [NTE5A master socket](https://www.run-it-direct.co.uk/blog/how-to-install-an-nte5a-master-socket-2.php). If you have a modern main socket with both RJ45 and RJ11 sockets you will need to upgrade it.
 
 ## Conclusion
 
