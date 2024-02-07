@@ -3,7 +3,7 @@ title: Modern React Virtual Scroll Grid
 tags: frontend
 ---
 
-Time to go again. I've learnt a lot about how best to [implement virtual scrolling in React]({% link _posts/2023-12-04-react-virtual-scroll-grid-5.md %}). I've got my head round [modern React with Hooks](/_posts/2024-01-15-modern-react-with-hooks.md). Now I'm going to implement my own super scalable virtual scrolling grid control using modern React with Typescript.
+Time to go again. I've learnt a lot about how best to [implement virtual scrolling in React]({% link _posts/2023-12-04-react-virtual-scroll-grid-5.md %}). I've got my head round [modern React with Hooks]({% link _posts/2024-01-15-modern-react-with-hooks.md%}). Now I'm going to implement my own super scalable virtual scrolling grid control using modern React with Typescript.
 
 The high level plan is to port features from the React class component based [react-window](https://github.com/bvaughn/react-window), change the interface to make it scalable, add [SlickGrid](https://github.com/6pac/SlickGrid)'s scalable paged scrolling implementation, and demonstrate that modern React principles lead to a cleaner implementation. 
 
