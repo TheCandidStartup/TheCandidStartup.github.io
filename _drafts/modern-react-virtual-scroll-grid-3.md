@@ -4,7 +4,7 @@ title: >
 tags: frontend
 ---
 
-[Last time]({% link _posts/2024-02-05-modern-react-virtual-scroll-grid-2.md %}) we got the basic structure in place for our scalable virtual scrolling controls built with modern React and TypeScript. The next job is to put in place a scalable data binding interface. We want the rendering costs for our controls to be proportional to the number of visible items, rather than the total number of items being scrolled over. We don't control how the data and metadata being displayed is retrieved and managed, but we can make sure that the interface we provide is as efficient as possible.
+[Last time]({% link _posts/2024-02-05-modern-react-virtual-scroll-grid-2.md %}) we created the basic structure for our scalable virtual scrolling controls built with modern React and TypeScript. The next job is to put a scalable data binding interface in place. We want the rendering costs for our controls to be proportional to the number of visible items, rather than the total number of items being scrolled over. We don't control how the data and metadata being displayed is retrieved and managed, but we can make sure that the interface we provide is as efficient as possible.
 
 The data interface we copied over from react-window is fine. The control instantiates an instance of its child component for each visible item and passes in the item index. The host app can use whatever mechanism it likes to retrieve data for that index. Where it all goes wrong is the metadata interface used to determine the size of each item and the offset that positions it within its parent. 
 
