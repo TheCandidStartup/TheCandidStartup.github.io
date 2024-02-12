@@ -47,12 +47,13 @@ How does that help us with our variable containing a `React.ComponentType`? Firs
 ```
   const items: JSX.Element[] = [];
   var offset = startOffset;
-  const ChildType = children;
+  const ChildVar = children;
   sizes.forEach((size, arrayIndex) => {
     const index = startIndex + arrayIndex;
     items.push(
-      <ChildType data={itemData} key={itemKey(index, itemData)} index={index}
-                 style={{ position: "absolute", top: offset, height: size, width: "100%" }}/>
+      <ChildVar data={itemData} key={itemKey(index, itemData)} index={index}
+                style={{ position: "absolute", top: offset, height: size, width: "100%" }}
+      </ChildVar>
     );
     offset += size;
   });
@@ -63,6 +64,42 @@ How does that help us with our variable containing a `React.ComponentType`? Firs
 
 Converting the style definition to JSX took a little bit of figuring out. Curly braces insert the output of a JavaScript expression. So, to pass an object you need to use [double curlies](https://react.dev/learn/javascript-in-jsx-with-curly-braces#using-double-curlies-css-and-other-objects-in-jsx). I initially assumed this was some kind of escape sequence, so that I would still be in JSX land inside the curlies. It's actually much simpler. The first curly puts me in Javascript land and the second curly is just the start of a JavaScript object. 
 
+# Incomprehensible TypeScript Error
+
+I didn't realize it at the time but I'd just made a significant error. When I saved the changes in Visual Studio Code and Vite hot reloaded my test app, everything looked fine. However, when I later tried to do a full build using `npm run build`, I got an incomprehensible TypeScript error.
+
+```
+error TS2322: Type '{ children: never[]; data: any; key: any; index: number; style: { position: string; top: number; height: number; width: string; }; }' is not assignable to type 'IntrinsicAttributes & RenderComponentProps'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & RenderComponentProps'.
+
+107           <ChildVar data={itemData} key={itemKey(index, itemData)} index={index}
+               ~~~~~~~~
+
+```
+
+This is the first time TypeScript got in my way and slowed me down. My first thought was that there was a problem with the child variable trick. I went as far as copying in the `Cell` function component from the sample app and using it directly. Same problem. I fiddled around with the type declarations and got nowhere. 
+
+Luckily the internet was there to help me out. A search for "react TS2322 children never" took me straight to the [answer](https://stackoverflow.com/questions/63252161/ts2322-property-children-does-not-exist-on-type-intrinsic-attributes-and-prop). JSX helpfully converts any text between a component's open and closing tag into a child html element. It may look like `<ChildVar>` has no children but it actually has a newline text element as a child. The answer is to make the JSX tag self-closing for any component that shouldn't have any children. 
+
+{% raw %}
+
+```
+  const items: JSX.Element[] = [];
+  var offset = startOffset;
+  const ChildVar = children;
+  sizes.forEach((size, arrayIndex) => {
+    const index = startIndex + arrayIndex;
+    items.push(
+      <ChildVar data={itemData} key={itemKey(index, itemData)} index={index}
+                style={{ position: "absolute", top: offset, height: size, width: "100%" }}/>
+    );
+    offset += size;
+  });
+  return items;
+```
+
+{% endraw %}
+
 # Iterating over an array in JSX
 
 There's no special support for iteration in JSX. You just need to find a JavaScript expression to insert that does the job for you. The [usual idiom](https://react.dev/learn/rendering-lists) is to use [`Array.map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) to insert a snippet of JSX for each element in the array. Something like
@@ -71,8 +108,8 @@ There's no special support for iteration in JSX. You just need to find a JavaScr
 
 ```
   return sizes.map((size) => (
-    <ChildType data={itemData} key={itemKey(index, itemData)} index={index
-               style={{ position: "absolute", top: offset, height: size, width: "100%" }}/>
+    <ChildVar data={itemData} key={itemKey(index, itemData)} index={index
+              style={{ position: "absolute", top: offset, height: size, width: "100%" }}/>
   ));
 ```
 
@@ -84,10 +121,10 @@ Unfortunately, it's not that simple. My iteration is more complex. I need access
 
 ```
   var offset = startOffset;
-  const ChildType = children;
+  const ChildVar = children;
   return sizes.map((size, arrayIndex) => {
     const index = startIndex + arrayIndex;
-    const item = <ChildType data={itemData} key={itemKey(index, itemData)} index={index}
+    const item = <ChildVar data={itemData} key={itemKey(index, itemData)} index={index}
         style={{ position: "absolute", top: offset, height: size, width: "100%" }}/>
     offset += size;
     return item;
@@ -107,12 +144,12 @@ If we could write the iteration in the form of an expression, we could get rid o
 ```
   let nextOffset = startOffset;
   let index, offset;
-  const ChildType = children;
+  const ChildVar = children;
   return sizes.map((size, arrayIndex) => (
     offset = nextOffset,
     nextOffset += size,
     index = startIndex + arrayIndex,
-    <ChildType data={itemData} key={itemKey(index, itemData)} index={index}
+    <ChildVar data={itemData} key={itemKey(index, itemData)} index={index}
         style={{ position: "absolute", top: offset, height: size, width: "100%" }}/>
   ));
 ```
@@ -128,18 +165,18 @@ JSX is markup. It's declarative rather than imperative. It lets you see and easi
 {% raw %}
 
 ```
-    <div onScroll={onScroll} style={{ position: "relative", height, width,
-                                      overflow: "auto", willChange: "transform" }}>
-      <div style={{ height: totalSize, width: "100%" }}>
-        {sizes.map((size, arrayIndex) => (
-          offset = nextOffset,
-          nextOffset += size,
-          index = startIndex + arrayIndex,
-          <ChildType data={itemData} key={itemKey(index, itemData)} index={index}
+ <div onScroll={onScroll} style={{ position: "relative", height, width,
+                                   overflow: "auto", willChange: "transform" }}>
+  <div style={{ height: totalSize, width: "100%" }}>
+    {sizes.map((size, arrayIndex) => (
+      offset = nextOffset,
+      nextOffset += size,
+      index = startIndex + arrayIndex,
+      <ChildVar data={itemData} key={itemKey(index, itemData)} index={index}
                 style={{ position: "absolute", top: offset, height: size, width: "100%" }}/>
-        ))}
-      </div>
-    </div>
+    ))}
+  </div>
+</div>
 ```
 
 {% endraw %}
