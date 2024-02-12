@@ -181,7 +181,7 @@ JSX is markup. It's declarative rather than imperative. It lets you see and easi
 
 {% endraw %}
 
-It is far too clever but I kind of like it. For now, I'm keeping it.
+It is far [too clever](https://www.joshwcomeau.com/career/clever-code-considered-harmful/) but I kind of like it. For now, I'm keeping it.
 
 # Next Time
 
