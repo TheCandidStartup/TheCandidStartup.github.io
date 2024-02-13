@@ -165,15 +165,15 @@ JSX is markup. It's declarative rather than imperative. It lets you see and easi
 {% raw %}
 
 ```
- <div onScroll={onScroll} style={{ position: "relative", height, width,
-                                   overflow: "auto", willChange: "transform" }}>
+<div onScroll={onScroll}
+     style={{position: "relative", height, width, overflow: "auto", willChange: "transform"}}>
   <div style={{ height: totalSize, width: "100%" }}>
     {sizes.map((size, arrayIndex) => (
       offset = nextOffset,
       nextOffset += size,
       index = startIndex + arrayIndex,
       <ChildVar data={itemData} key={itemKey(index, itemData)} index={index}
-                style={{ position: "absolute", top: offset, height: size, width: "100%" }}/>
+                style={{position: "absolute", top: offset, height: size, width: "100%"}}/>
     ))}
   </div>
 </div>
