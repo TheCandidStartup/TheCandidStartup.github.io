@@ -20,12 +20,7 @@ tags: frontend
 * The other reason why requestAnimationFrame is seen as better for performance is that it doesn't fire on inactive tabs. No wasted cycles animating something that isn't visible.
 * But we're not animating! Timeout only active while scrolling. You can't scroll on an inactive tab ...
 * Note that since requestAnimationFrame was released, setTimeOut implementations have been updated to reduce the rate at which they fire on inactive tabs
-* Seems like cargo cult to me. I'll use the real thing.
-
-# Existing React Hooks
-
-* All the ones I've found are for scrolling in the top level window ...
-* Also use a timeout based approach
+* Which turns out to be the [reason](https://github.com/bvaughn/react-virtualized/pull/742) for using requestAnimationFrame! Browsers seem to be quite eager to throttle rate of setTimeout with the result that it can take a second or two for end scrolling to be detected. 
 
 # Scrollend Event
 
@@ -46,9 +41,12 @@ tags: frontend
 * [Many](https://github.com/donavon/use-event-listener) [implementations](https://github.com/realwugang/use-event-listener) [of](https://github.com/uidotdev/usehooks/blob/experimental/index.js#L329) useEventListener that uses same pattern for generic event listener
 * Ideally I'd be able to use useEventListener if scrollend is supported, otherwise fall back to setTimeout based implementation
 * Rule of hooks makes that difficult. Have to declare all hooks I might need in same order every render. In principle choice will be the same every render as support for scrollend won't change during a session, but code looks wrong and will trigger linter. 
-* Best you can do following rule of hooks is useEventListener and useTimeOut implementations that can bet setup conditionally to do nothing. Have to declare both and both have effects that run but only one does anything. 
+* Standard pattern following rule of hooks is useEventListener and useTimeOut implementations that can be setup conditionally to do nothing. Have to declare both and both have effects that run but only one does anything. 
 
 # Hooks and Reuse
 
 * Hooks are small enough that it feels like adding too many bitty dependencies when you could just copy the snippet of code needed
 * Pulling in a library of hooks means settling for less than ideal implementation of some hooks
+* I'm naturally paranoid about taking dependencies. I still remember the [left-pad debacle](https://www.theregister.com/2016/03/23/npm_left_pad_chaos/). Only want to do it for things that add enough value. 
+* Reusing hard won learning from react-window means writing my own useAnimationTimeout
+* Alternatively could write useIsScrolling without any intermediate hooks. Have one useEffect that either manages event listener or timeout as appropriate.
