@@ -85,3 +85,6 @@ function isHtmlControl (obj: any): boolean {
 * For debouncing end of scroll detection we *want* a timer that resets every time we render while the control is still scrolling.
 * At first I thought I'd need to build something higher level and special purpose, like `useDebounceTimeout`. The more I thought about it, the more I realized that the top level useIsScrolling hook would need precise control over when the timer resets. So, I went back to my generic timer and added an additional `key` argument that resets the timer when changed.
 
+# Try It!
+
+{% include candid-iframe.html src="/assets/dist/modern-react-scroll-grid-5/index.html" width="100%" height="fit-content" %}
