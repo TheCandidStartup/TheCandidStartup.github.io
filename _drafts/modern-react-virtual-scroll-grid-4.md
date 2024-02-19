@@ -4,7 +4,7 @@ title: >
 tags: frontend
 ---
 
-Last time I implemented a scalable binding interface and demonstrated an implementation for variable sized items. I was seemingly poised to complete the basic functionality for my list control and move onto grids. Then I got distracted. 
+[Last time]({% link _posts/2024-02-12-modern-react-virtual-scroll-grid-3.md %}) I implemented a scalable binding interface and demonstrated an implementation for variable sized items. I was seemingly poised to complete the basic functionality for my list control and move onto grids. Then I got distracted. 
 
 I was still bothered by the way I'd opted out of using JSX to render the items in my list control. My `renderItems` function was now rendering the items by iterating over an array. Iterating over an array using `map` is the standard way of [rendering a list](https://react.dev/learn/rendering-lists) of items using JSX.
 
@@ -36,7 +36,7 @@ Here's the core of the code. We iterate over the array of item sizes, calling `R
 
 The first step is to replace the direct call to `React.createElement` with the equivalent JSX. Which immediately throws up a problem. What type do we put in the JSX angle brackets? The type is represented by an instance of `React.ComponentType` in the children variable. 
 
-My first thought was that I somehow needed to extract a string literal containing the type name. The answer is actually much simpler. The React transpiler converts JSX with HTML element names, like `<div ...>`, into `React.createElement("div", ...)`. It converts JSX with React component names, like `<Cell ...>` into `React.createElement(Cell, ...)`. You directly pass in the corresponding component class or function. No strings involved. 
+My first thought was that I somehow needed to extract a string literal containing the type name. The answer is actually much simpler. The React transpiler converts JSX with HTML element names, like `<div ...>`, into `React.createElement("div", ...)`. It converts JSX with React component names, like `<Cell ...>`, into `React.createElement(Cell, ...)`. You directly pass in the corresponding component class or function. No strings involved. 
 
 How does the React transpiler know whether your JSX refers to an html element or a React component? It doesn't. It relies on the developer following the convention that [component names are capitalized](https://legacy.reactjs.org/docs/jsx-in-depth.html#user-defined-components-must-be-capitalized) while html elements are all lowercase. 
 
@@ -62,7 +62,7 @@ How does that help us with our variable containing a `React.ComponentType`? Firs
 
 {% endraw %}
 
-Converting the style definition to JSX took a little bit of figuring out. Curly braces insert the output of a JavaScript expression. So, to pass an object you need to use [double curlies](https://react.dev/learn/javascript-in-jsx-with-curly-braces#using-double-curlies-css-and-other-objects-in-jsx). I initially assumed this was some kind of escape sequence, so that I would still be in JSX land inside the curlies. It's actually much simpler. The first curly puts me in Javascript land and the second curly is just the start of a JavaScript object. 
+Converting the style definition to JSX took a little bit of figuring out. Curly braces insert the output of a JavaScript expression. So, to pass an object you need to use [double curlies](https://react.dev/learn/javascript-in-jsx-with-curly-braces#using-double-curlies-css-and-other-objects-in-jsx). I initially assumed this was some kind of escape sequence, so that I would still be in JSX land inside the curlies. That's not it. The first curly puts me in Javascript land and the second curly is just the start of a JavaScript object. 
 
 # Incomprehensible TypeScript Error
 
