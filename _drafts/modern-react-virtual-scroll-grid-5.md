@@ -15,13 +15,15 @@ The react-window implementation is fairly simple. An `isScrolling` state variabl
 
 # setTimeout vs requestAnimationFrame
 
-React-window uses a [utility function](https://github.com/bvaughn/react-window/blob/master/src/timer.js) based on a [gist from 2010](https://gist.github.com/joelambert/1002116#file-requesttimeout-js) that emulates the `setTimeout` interface using `requestAnimationFrame`. When the code is called back from `requestAnimationFrame` it checks whether enough time has elapsed and if not calls `requestAnimationFrame` again. Effectively, it's replaced a single call of `setTimeout` with a busy-wait loop.
+React-window uses a [utility function](https://github.com/bvaughn/react-window/blob/master/src/timer.js) based on a [gist from 2010](https://gist.github.com/joelambert/1002116#file-requesttimeout-js) that emulates the `setTimeout` interface using `requestAnimationFrame`. When the code is called back from `requestAnimationFrame` it checks whether enough time has elapsed and if not calls `requestAnimationFrame` again. Effectively, it's replaced a single call to `setTimeout` with a busy-wait loop.
 
 Why bother? All the comment on the gist says is "for better performance". 
 
-`requestAnimationFrame` was introduced around this time as a better way of implementing animations than using `setTimeout`. The problem with `setTimeout` is that you don't know how fast frames are being rendered. You need to make the timeout interval short enough that you don't miss a frame but not so short that you're wasting cycles and hurting battery life by running too often. Using `requestAnimationFrame` is clearly better. You get called once before each frame is rendered, so you do exactly the right amount of work.
+`requestAnimationFrame` was introduced around this time, as a better way of implementing animations than using `setTimeout`. The problem with `setTimeout` is that you don't know how fast frames are being rendered. You need to make the timeout interval short enough that you don't miss a frame but not so short that you're wasting cycles and hurting battery life by running too often. Using `requestAnimationFrame` is clearly better. You get called once before each frame is rendered, so you do exactly the right amount of work.
 
-However, in this case, we're not implementing an animation. We actually want a timeout. The other improvement that `requestAnimationFrame` brings is that it doesn't fire on inactive tabs. There are no wasted cycles animating something that isn't visible. But we're not animating! The scroll end timeout is only active while the user is scrolling. You can't scroll on an inactive tab.
+However, in this case, we're not implementing an animation. We actually want a timeout. 
+
+The other improvement that `requestAnimationFrame` brings is that it doesn't fire on inactive tabs. There are no wasted cycles animating something that isn't visible. But we're not animating! The scroll end timeout is only active while the user is scrolling. You can't scroll on an inactive tab.
 
 Since `requestAnimationFrame` was released, `setTimeOut` implementations have been updated to reduce the rate at which they fire on inactive tabs. Which turns out to be the [reason](https://github.com/bvaughn/react-virtualized/pull/742) for using requestAnimationFrame. 
 
@@ -46,13 +48,13 @@ The suggestion is to check at runtime whether the event is available and if not 
 
 My current useVirtualScroll hook returns a function which the hosting component needs to call from the onScroll event handler. That's just about manageable for a single event. Doing the same for useIsScrolling would be a mess. It would need to return both an onScroll and onScrollEnd function, with the hosting component having to deal with checking for whether onScrollEnd is supported.
 
-Support for OnScrollEvent was added to the React main branch on October 11, 2023. It's not in any stable release yet. The only way of handling unsupported events is to add an event listener directly to the DOM element. Which means using a ref and binding it to the element, then a `useEffect` to manage the DOM event listener. 
+Support for OnScrollEnd was added to the React main branch on October 11, 2023. It's not in any stable release yet. The only way of handling unsupported events is to add an event listener directly to the DOM element. Which means using a ref and binding it to the element, then a `useEffect` to manage the DOM event listener. 
 
 Surely someone has already written custom hooks to manage timeouts and event listeners? 
 
-I found a [useTimeout](https://www.joshwcomeau.com/snippets/react-hooks/use-timeout/) implementation quite quickly, based on Dan Abramahov's in depth description of how to build [useInterval](https://overreacted.io/making-setinterval-declarative-with-react-hooks/). Which is a great read on some of the gotchas involved with trying to wrap an imperative API like `setInterval` and create a declarative API like `useInterval`. The solution he came up with uses two separate `useEffect` hooks (with different dependencies) and a `useRef`, rather than the single `useEffect` you might think you need. 
+I found a [useTimeout](https://www.joshwcomeau.com/snippets/react-hooks/use-timeout/) implementation quite quickly, based on Dan Abramahov's in depth description of how to build [useInterval](https://overreacted.io/making-setinterval-declarative-with-react-hooks/). Which is a great read on some of the gotchas involved with trying to wrap an imperative API like `setInterval` and create a declarative API like `useInterval`. The solution he came up with has two separate `useEffect` hooks (with different dependencies) and a `useRef`, rather than the single `useEffect` you might think you need. 
 
-I'm glad I came across Dan's blog first, because all of the many [many](https://github.com/donavon/use-event-listener) [implementations](https://github.com/realwugang/use-event-listener) [of](https://github.com/uidotdev/usehooks/blob/experimental/index.js#L329) `useEventListener` that I found use the same pattern. 
+I'm glad I came across Dan's blog first, because all of the [many](https://github.com/donavon/use-event-listener) [implementations](https://github.com/realwugang/use-event-listener) [of](https://github.com/uidotdev/usehooks/blob/61655761f069ad06c698fb71092480906e1171be/index.js#L329) `useEventListener` that I found use the same pattern. 
 
 Ideally I'd be able to use `useEventListener` if scrollend is supported, otherwise fall back to a `useTimeout` based implementation. The [rules of hooks](https://react.dev/warnings/invalid-hook-call-warning) make that difficult. You have to declare all hooks that you might need in the same order for every render. The standard pattern is hooks that can be setup conditionally to do nothing. You declare both hooks, which both have effects that run, but only one actually does anything. 
 
@@ -131,7 +133,7 @@ export function useEventListener(eventName: string,
 }
 ```
 
-The [implementation](https://github.com/TheCandidStartup/react-virtual-scroll-grid/blob/2f565e6f0fe76398b6a1e268d12d44e008c790ff/src/useEventListener.ts#L18) supports elements that you can directly call `addEventListener` on, as well as React refs to `HTMLElement`. The utility function `isListener` is my implementation of the `isHtmlControl` check. It showcases use of TypeScript [type predicates](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates). The check is simple enough, does the input have an `addEventListener` property defined? We're relying on TypeScript static typing so we don't have to cope with every possible pathological input.
+The [implementation](https://github.com/TheCandidStartup/react-virtual-scroll-grid/blob/2f565e6f0fe76398b6a1e268d12d44e008c790ff/src/useEventListener.ts#L18) supports elements that you can directly call `addEventListener` on, as well as React refs to `HTMLElement`. The utility function `isListener` is my implementation of the `isHtmlControl` check. It showcases use of TypeScript [type predicates](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates). The check is simple enough. Does the input have an `addEventListener` property defined? We're relying on TypeScript static typing so we don't have to cope with every possible pathological input.
 
 ```
 function isListener(element: Listener | RefObject<HTMLElement>): element is Listener {
@@ -139,11 +141,11 @@ function isListener(element: Listener | RefObject<HTMLElement>): element is List
 }
 ```
 
-The `element is Listener` type predicate tells TypeScript that if this function returns true, the input must be one of the `Listener` types. TypeScript automatically infers that if `isListener` returns false, the input must be a `RefObject<HTMLElement`. TypeScript can then infer and check all the types in `useEventListener` without any other type declarations or type casts needed. 
+The `element is Listener` type predicate tells TypeScript that if this function returns true, the input must be one of the `Listener` types. TypeScript automatically infers that if `isListener` returns false, the input must be a `RefObject<HTMLElement>`. TypeScript can then infer and check all the types in `useEventListener` without any other type declarations or type casts needed. 
 
 # useAnimationTimeout
 
-I started [implementing](https://github.com/TheCandidStartup/react-virtual-scroll-grid/blob/2f565e6f0fe76398b6a1e268d12d44e008c790ff/src/useAnimationTimeout.ts#L18) `useAnimationTimeout` based on [`useTimeout`](https://www.joshwcomeau.com/snippets/react-hooks/use-timeout/) and replacing use of `setTimeout` with `requestAnimationFrame` as in [react-window](https://github.com/bvaughn/react-window/blob/master/src/timer.js). It was a bit fiddly but I just about had it done before realizing it wasn't what I needed. 
+I started [implementing](https://github.com/TheCandidStartup/react-virtual-scroll-grid/blob/2f565e6f0fe76398b6a1e268d12d44e008c790ff/src/useAnimationTimeout.ts#L18) `useAnimationTimeout` based on [`useTimeout`](https://www.joshwcomeau.com/snippets/react-hooks/use-timeout/) and replacing use of `setTimeout` with `requestAnimationFrame`, as in [react-window](https://github.com/bvaughn/react-window/blob/master/src/timer.js). It was a bit fiddly but I just about had it done before realizing it wasn't what I needed. 
 
 This implementation and the Dan Abramahov [blog](https://overreacted.io/making-setinterval-declarative-with-react-hooks/) that inspired it, are focused on *NOT* resetting the timeout on each render. They only reset if the delay changes. They go out of their way  to let you change the callback without a reset (the reason for the second effect and `useRef`).
 
@@ -218,7 +220,7 @@ Rather than storing an `isScrolling` boolean in the state, I have a `scrollCount
 
 # Early Adopter Woes
 
-I updated the test app to change the CSS style of the child items while scrolling - the items are greyed out. I tested with Chrome, Firefox and Safari. Chrome and Firefox support the scrollend event and use the scrollend listener, Safari doesn't so has to use the animation timeout. They all worked great when scrolling using the mouse. Chrome and Firefox respond instantly when you let go of the mouse button. There's a noticeable delay waiting for the timeout when using Safari.
+I updated the test app to grey out the child items while scrolling. I tested with Chrome, Firefox and Safari. Chrome and Firefox support the scrollend event and use the scrollend listener, Safari doesn't so has to use the animation timeout. They all worked great when scrolling using the mouse. Chrome and Firefox respond instantly when you let go of the mouse button. There's a noticeable delay waiting for the timeout when using Safari.
 
 The problems start when using the keyboard and mouse wheel to scroll. Safari continues to work fine. Chrome and Firefox would occasionally get stuck in scrolling mode. After a lot of debugging, the reason was clear cut. Scroll end events were sometimes missing. With Chrome the trigger is scrolling using the arrow keys, holding a key down until you hit the top or bottom of the control. It was different with Firefox. There were no missing scroll end events. However, you sometimes get a spurious extra scroll event after the scroll end. Particularly when using the mouse wheel.
 
