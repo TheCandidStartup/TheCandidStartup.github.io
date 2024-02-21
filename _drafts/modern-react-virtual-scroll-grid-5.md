@@ -9,7 +9,7 @@ Next up on my list of features to implement is a `useIsScrolling` custom hook. I
 # React-Window Implementation
 
 {% capture mrvs3_url %}{% link _posts/2024-02-12-modern-react-virtual-scroll-grid-3.md %}{% endcapture %}
-This is another feature that I'm porting over from the [react-window](https://github.com/bvaughn/react-window) controls. The controls keep track of whether the user is actively scrolling. This is used internally to determine how to render [overscan items]({{ mrvs3_url | append: "#get-range-to-render" }}). It can optionally be passed to child items so that they can change how they're rendered while scrolling. For example, they might disable heavyweight styles to ensure the control is as responsive as possible while scrolling.
+This is another feature that I'm porting over from the [react-window](https://github.com/bvaughn/react-window) controls. The controls keep track of whether the user is actively scrolling. This is used internally to determine how to render [overscan items]({{ mrvs3_url | append: "#get-range-to-render" }}). It can optionally be passed to child items so that they can change how they're rendered while scrolling. For example, they might disable heavyweight styles to ensure the control is as responsive as possible.
 
 The react-window implementation is fairly simple. An `isScrolling` state variable gets set whenever a scroll event is received. The flag is cleared after a 150ms timeout. Strangely, the timeout isn't implemented using the obvious JavaScript built-in `setTimeOut` function. 
 
@@ -46,13 +46,13 @@ The suggestion is to check at runtime whether the event is available and if not 
 
 # Hooks and Events
 
-My current useVirtualScroll hook returns a function which the hosting component needs to call from the onScroll event handler. That's just about manageable for a single event. Doing the same for useIsScrolling would be a mess. It would need to return both an onScroll and onScrollEnd function, with the hosting component having to deal with checking for whether onScrollEnd is supported.
+My current `useVirtualScroll` hook returns a function which the hosting component needs to call from the onScroll event handler. That's just about manageable for a single event. Doing the same for useIsScrolling would be a mess. It would need to return both an onScroll and onScrollEnd function, with the hosting component having to deal with checking for whether onScrollEnd is supported.
 
 Support for OnScrollEnd was added to the React main branch on October 11, 2023. It's not in any stable release yet. The only way of handling unsupported events is to add an event listener directly to the DOM element. Which means using a ref and binding it to the element, then a `useEffect` to manage the DOM event listener. 
 
 Surely someone has already written custom hooks to manage timeouts and event listeners? 
 
-I found a [useTimeout](https://www.joshwcomeau.com/snippets/react-hooks/use-timeout/) implementation quite quickly, based on Dan Abramahov's in depth description of how to build [useInterval](https://overreacted.io/making-setinterval-declarative-with-react-hooks/). Which is a great read on some of the gotchas involved with trying to wrap an imperative API like `setInterval` and create a declarative API like `useInterval`. The solution he came up with has two separate `useEffect` hooks (with different dependencies) and a `useRef`, rather than the single `useEffect` you might think you need. 
+I found a [useTimeout](https://www.joshwcomeau.com/snippets/react-hooks/use-timeout/) implementation quite quickly, based on Dan Abramahov's in depth description of how to build [useInterval](https://overreacted.io/making-setinterval-declarative-with-react-hooks/). It's a great read, describing the gotchas involved with trying to wrap an imperative API like `setInterval` and create a declarative API like `useInterval`. The solution he came up with has two separate `useEffect` hooks (with different dependencies) and a `useRef`, rather than the single `useEffect` you might think you need. 
 
 I'm glad I came across Dan's blog first, because all of the [many](https://github.com/donavon/use-event-listener) [implementations](https://github.com/realwugang/use-event-listener) [of](https://github.com/uidotdev/usehooks/blob/61655761f069ad06c698fb71092480906e1171be/index.js#L329) `useEventListener` that I found use the same pattern. 
 
@@ -64,7 +64,7 @@ Which leaves me with a question. To what extent should I try and reuse existing 
 
 Hooks are small enough that it feels like adding too many bitty dependencies when you could just copy the snippet of code needed. Pulling in a library of hooks means settling for less than the ideal implementation of some hooks. I'm naturally paranoid about taking dependencies. I still remember the [left-pad debacle](https://www.theregister.com/2016/03/23/npm_left_pad_chaos/). I only want to add dependencies for things that add enough value.
 
-If I want to reuse the hard won learning from react-window's isScrolling implementation I'll have to write my own useAnimationTimeout. I couldn't find an existing hooks based implementation. If I'm doing that, would it be better to write `useIsScrolling` without any intermediate hooks? I could have one effect that either manages an event listener or a timeout as appropriate. 
+If I want to reuse the hard won learning from react-window's isScrolling implementation I'll have to write my own `useAnimationTimeout`. I couldn't find an existing hooks based implementation. If I'm doing that, would it be better to write `useIsScrolling` without any intermediate hooks? I could have one effect that either manages an event listener or a timeout as appropriate. 
 
 After some thought, I've decided that I'm going to try to do it the "right" way first. One of the advantages claimed for hooks is the way that they can be composed and used as building blocks, so let's try it out.
 
@@ -145,7 +145,7 @@ The `element is Listener` type predicate tells TypeScript that if this function 
 
 # useAnimationTimeout
 
-I started [implementing](https://github.com/TheCandidStartup/react-virtual-scroll-grid/blob/2f565e6f0fe76398b6a1e268d12d44e008c790ff/src/useAnimationTimeout.ts#L18) `useAnimationTimeout` based on [`useTimeout`](https://www.joshwcomeau.com/snippets/react-hooks/use-timeout/) and replacing use of `setTimeout` with `requestAnimationFrame`, as in [react-window](https://github.com/bvaughn/react-window/blob/master/src/timer.js). It was a bit fiddly but I just about had it done before realizing it wasn't what I needed. 
+I started [implementing](https://github.com/TheCandidStartup/react-virtual-scroll-grid/blob/2f565e6f0fe76398b6a1e268d12d44e008c790ff/src/useAnimationTimeout.ts#L18) `useAnimationTimeout` based on [`useTimeout`](https://www.joshwcomeau.com/snippets/react-hooks/use-timeout/), replacing use of `setTimeout` with `requestAnimationFrame`, as in [react-window](https://github.com/bvaughn/react-window/blob/master/src/timer.js). It was a bit fiddly but I just about had it done before realizing it wasn't what I needed. 
 
 This implementation and the Dan Abramahov [blog](https://overreacted.io/making-setinterval-declarative-with-react-hooks/) that inspired it, are focused on *NOT* resetting the timeout on each render. They only reset if the delay changes. They go out of their way  to let you change the callback without a reset (the reason for the second effect and `useRef`).
 
@@ -224,7 +224,7 @@ I updated the test app to grey out the child items while scrolling. I tested wit
 
 The problems start when using the keyboard and mouse wheel to scroll. Safari continues to work fine. Chrome and Firefox would occasionally get stuck in scrolling mode. After a lot of debugging, the reason was clear cut. Scroll end events were sometimes missing. With Chrome the trigger is scrolling using the arrow keys, holding a key down until you hit the top or bottom of the control. It was different with Firefox. There were no missing scroll end events. However, you sometimes get a spurious extra scroll event after the scroll end. Particularly when using the mouse wheel.
 
-It seems like they haven't got all of the bugs out of their scroll end implementations yet. Which left me in a quandary. Should I give up on using the scroll end event? Then I realized. It's a very simple change to [use both](https://github.com/TheCandidStartup/react-virtual-scroll-grid/blob/2f565e6f0fe76398b6a1e268d12d44e008c790ff/src/useIsScrolling.ts#L8C62-L8C87). If the scroll end event fires, then great. If not I have the animation timeout available as a fallback. Even better, if the scroll end event fires, it clears the scroll count which disables the timer. No redundant work needed.
+It seems like they haven't got all of the bugs out of their scroll end implementations yet. Which left me in a quandary. Should I give up on using the scroll end event? Then I realized. It's a very simple change to [use both](https://github.com/TheCandidStartup/react-virtual-scroll-grid/blob/2f565e6f0fe76398b6a1e268d12d44e008c790ff/src/useIsScrolling.ts#L8C62-L8C87). If the scroll end event fires, then great. If not I have the animation timeout available as a fallback. Even better, if the scroll end event fires, it clears the scroll count which disables the timer. No redundant callbacks.
 
 ```
 const DEBOUNCE_INTERVAL = 150;
@@ -247,7 +247,7 @@ export function useIsScrolling(
 }
 ```
 
-There's one extra change. I use a longer delay when using the timeout as a fallback for missing scroll events. I don't need to be as trigger happy when covering for the occasional missing scroll end event. 
+There's one extra change. I use a longer delay when using the timeout as a fallback for missing scroll events. I don't need to be as trigger happy when covering for the occasional missing event. 
 
 # Try It!
 
