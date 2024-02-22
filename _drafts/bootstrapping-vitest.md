@@ -207,7 +207,73 @@ ReferenceError: window is not defined
 
 Which I guess is progress of a sort. 
 
-* Need to install and configure happy-dom or jsdom ...
+* Tests run in a node.js environment, not a browser. No window global object.
+* Need to bring my own DOM implementation. 
+* Vitest integrates with happy-dom and jsdom but need to install whichever I choose myself
 * https://blog.seancoughlin.me/jsdom-vs-happy-dom-navigating-the-nuances-of-javascript-testing
 * Also experimental support for real browser environment
 * Will start with jsdom for more complete coverage of features, try happy-dom if speed is an issue
+
+```
+% npm install -D jsdom
+
+added 38 packages, and audited 262 packages in 1s
+
+61 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+```
+
+Also need to update the config to tell  Vitest to use the jsdom environment
+
+```
+/// <reference types="vitest" />
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    includeSource: ['src/**/*.{js,ts}'], 
+    environment: 'jsdom'
+  },
+  define: { 
+    'import.meta.vitest': 'undefined', 
+  },
+})
+```
+
+Cross my fingers and run the tests again.
+
+```
+% npm run test
+
+> react-virtual-scroll-grid@0.0.0 test
+> vitest
+
+
+ DEV  v1.3.1 /Users/tim/GitHub/react-virtual-scroll-grid
+
+ ✓ src/useEventListener.ts (1)
+   ✓ isListener
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  10:45:47
+   Duration  387ms (transform 16ms, setup 0ms, collect 12ms, tests 1ms, environment 245ms, prepare 41ms)
+
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit
+```
+
+Victory! Now I can complete my `isListener` test suite.
+
+```
+    expect(isListener(window)).toBe(true)
+    expect(isListener(document)).toBe(true)
+    expect(isListener(document.createElement("div"))).toBe(true)
+    expect(isListener(createRef())).toBe(false)
+```
