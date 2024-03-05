@@ -185,6 +185,6 @@ It is far [too clever](https://www.joshwcomeau.com/career/clever-code-considered
 
 # Next Time
 
-Next time, I really will add more core functionality. Let's see how much the JSX will take before it becomes completely unintelligible. 
+[Next time]({% link _posts/2024-03-05-modern-react-virtual-scroll-grid-5.md %}), I really will add more core functionality. Let's see how much the JSX will take before it becomes completely unintelligible. 
 
 
