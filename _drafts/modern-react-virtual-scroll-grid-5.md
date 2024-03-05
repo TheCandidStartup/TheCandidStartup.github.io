@@ -42,7 +42,7 @@ Amazingly, until six months ago, it really was the best way of detecting when sc
 
 At time of writing, it's only available on the most recent releases of the major browsers. On my machine, the installed versions of Chrome and Firefox support it, but Safari doesn't. 
 
-The suggestion is to check at runtime whether the event is available and if not to fallback to a timeout based implementation. It would be great if a `useIsScrolling` hook could handle all that for me. 
+The suggestion is to check at runtime whether the event is available and, if not, to fallback to a timeout based implementation. It would be great if a `useIsScrolling` hook could handle all that for me. 
 
 # Hooks and Events
 

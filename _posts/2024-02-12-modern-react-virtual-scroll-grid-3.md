@@ -247,4 +247,4 @@ The sample app treats the first item in the list as a header with a large font w
 
 # Next Time
 
-The thrills don't stop here. Next time we'll continue with the core list functionality, setting us up to move onto grids. 
+The thrills don't stop here. [Next time]({% link _posts/2024-02-19-modern-react-virtual-scroll-grid-4.md %}) we'll continue with the core list functionality, setting us up to move onto grids. 

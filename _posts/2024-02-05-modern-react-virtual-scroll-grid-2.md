@@ -217,4 +217,4 @@ I also have a parking lot of things to come back to
 * Monorepo setup
 * Build npm package
 
-Next time, we'll see how far we get with the scalable data binding interface.
+[Next time]({% link _posts/2024-02-12-modern-react-virtual-scroll-grid-3.md %}), we'll see how far we get with the scalable data binding interface.

@@ -110,6 +110,6 @@ I'll implement the simple, direct approach instead, which means I won't need `sc
 
 ## Next Time
 
-I think I know what I'm doing. Now I just need to get on and implement it. Let's see how long the plan can survive contact with the real world. 
+I think I know what I'm doing. Now I just need to [get on and implement it]({% link _posts/2024-02-05-modern-react-virtual-scroll-grid-2.md %}). Let's see how long the plan can survive contact with the real world. 
 
 
