@@ -277,3 +277,48 @@ Victory! Now I can complete my `isListener` test suite.
     expect(isListener(document.createElement("div"))).toBe(true)
     expect(isListener(createRef())).toBe(false)
 ```
+
+At the next level up we have custom hooks. After extensive googling it seems that [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) is the standard solution and pretty much the only game in town for testing hooks. Hooks are tricky to test because they're designed to be run within the context of a component render. You need a tool that emulates that environment to test them in a standalone fashion. Vitest includes an [example](https://github.com/vitest-dev/vitest/tree/main/examples/react-testing-lib) that shows how to integrate with React Testing Library and has tests for both components and hooks. 
+
+```
+% npm install -D @testing-library/react
+
+added 76 packages, and audited 338 packages in 4s
+```
+
+* Ready to add an actual unit test source file
+* But where to put it? What's best project layout?
+* If I put until tests elsewhere in my folder structure, should I use [relative or absolute imports](https://medium.com/thefork/escaping-relative-import-paths-hell-in-javascript-9f258baeb15e?
+* For now, I'm going to punt on all that and put the tests next to the source files being tested.
+* Start with the simplest hook. I added `useVirtualScroll.test.ts`.
+
+```
+import { act, renderHook } from '@testing-library/react'
+import { useVirtualScroll } from './useVirtualScroll'
+
+describe('useVirtualScroll', () => {
+  it('should have initial value', () => {
+    const { result } = renderHook(() => useVirtualScroll())
+    const [{ scrollOffset, scrollDirection }] = result.current;
+    expect(scrollOffset).toBe(0);
+    expect(scrollDirection).toBe("forward");
+  })
+
+  it('should update offset and direction OnScroll', () => {
+    const { result } = renderHook(() => useVirtualScroll());
+    const [{}, onScrollExtent] = result.current;
+    
+    act(() => {
+      onScrollExtent(100, 1000, 50);
+    })
+    {
+      const [{ scrollOffset, scrollDirection }] = result.current;
+      expect(scrollOffset).toBe(50);
+      expect(scrollDirection).toBe("forward");
+    }
+  })
+})
+```
+
+* Needed a couple of config tweaks to `tsconfig.js` (add `vitest/globals` to types) and `vite.config.ts` (add `globals: true` flag) to get it to recognize the jest style "global API" use of `describe`.
+* Needed careful line by line comparison of my current config and that in the example to get it working
