@@ -11,7 +11,7 @@ Time to bootstrap a unit testing framework and get some tests running. I decided
 
 # Why Vitest?
 
-I've had a really good experience [using Vite]({% link _posts/2023-10-23-bootstrapping-vite.md %}) as my front end tooling. Vitest is Vite's native test runner. It's built on the same foundations as Vite, shares the same config and transformation pipeline, and also supports Vite's Hot Module Reload. 
+I've had a really good experience [using Vite]({% link _posts/2023-10-23-bootstrapping-vite.md %}) as my front-end tooling. Vitest is Vite's native test runner. It's built on the same foundations as Vite, shares the same config and transformation pipeline, and also supports Vite's Hot Module Reload. 
 
 The API is compatible with [Jest](https://jestjs.io/), the most popular JavaScript unit test framework, so there's lots of examples to copy from.
 
@@ -334,7 +334,7 @@ describe('useVirtualScroll', () => {
 })
 ```
 
-You use React Testing Library's `renderHook` method to run your hook and return a result that you can assert against. `act` is a utility provided by React to support unit testing. It [ensures](https://legacy.reactjs.org/docs/testing-recipes.html#act) that all work (e.g. renders, effects) triggered by a change are complete before continuing. 
+You use React Testing Library's `renderHook` method to run your hook and return a result that you can assert against. `act` is a utility provided by React to support unit testing. It [ensures](https://legacy.reactjs.org/docs/testing-recipes.html#act) that all work, such as renders and effects, triggered by a change are complete before continuing. 
 
 Of course the test didn't work first time. I needed a couple of config tweaks to `tsconfig.js` (add "vitest/globals" to types) and `vite.config.ts` (add "globals: true" flag) to get it to recognize the jest style "global API" use of `describe`. 
 
