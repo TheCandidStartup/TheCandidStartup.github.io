@@ -12,7 +12,120 @@ tags: frontend
 
 ## v8
 
+* No upfront instrumentation, happens during JIT compile in v8
+* Instrumentation at the block level.
+* Raw speed much higher than Istanbul. Lead maintainer of Istanbul suggests [10% performance penalty for v8 vs 300% for Istanbul](https://medium.com/the-node-js-collection/rethinking-javascript-test-coverage-5726fb272949).
+* No control over what gets instrumented. Everything that is executed, including the many npm modules your code sits on top off. Execution data for everything is collected and post-processed, with most of it then thrown away when it doesn't relate to your code. 
+* May negate the raw speed benefits of v8 if, like me, you have very little user code sitting on a mountain of third party modules. 
+* Some [reports](https://github.com/jestjs/jest/issues/11188) that v8 can get mixed up between user code and generated code, mark non-executable code like TypeScript type definitions as uncovered, doesn't track coverage of an if-statement that evaluates to false unless it has an explicit else clause.
+*  v8 output is converted to istanbul compatible format and then fed into the istanbul reporting tools. Can lead to loss of precision where v8 and istanbul formats don't align.
+
+```
+ % npm install -D @vitest/coverage-v8
+
+added 26 packages, and audited 375 packages in 6s
+
+found 0 vulnerabilities
+```
+
+Then run it after configuring `vite.config.ts` to only include files in the `src` directory and to exclude files in `src/test`.
+
+```
+% npm run test -- --run --reporter verbose --coverage
+
+   Duration  921ms (transform 252ms, setup 403ms, collect 377ms, tests 31ms, environment 850ms, prepare 194ms)
+
+ % Coverage report from v8
+----------------------------------|---------|----------|---------|---------|-------------------
+File                              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+----------------------------------|---------|----------|---------|---------|-------------------
+All files                         |   58.08 |    58.69 |   65.21 |   58.08 |                   
+ App.tsx                          |       0 |        0 |       0 |       0 | 1-28              
+ VirtualList.tsx                  |   93.38 |    66.66 |      75 |   93.38 | 39-40,50-52,89-91 
+ VirtualScroller.jsx              |       0 |        0 |       0 |       0 | 1-94              
+ main.tsx                         |       0 |        0 |       0 |       0 | 1-12              
+ useAnimationTimeout.ts           |   81.13 |    66.66 |   66.66 |   81.13 | 16,34-39,46-48    
+ useEventListener.ts              |     100 |       70 |   66.66 |     100 | 31-35             
+ useFixedSizeItemOffsetMapping.ts |     100 |      100 |     100 |     100 |                   
+ useIsScrolling.ts                |     100 |       25 |     100 |     100 | 16-20             
+ ...iableSizeItemOffsetMapping.ts |       0 |        0 |       0 |       0 | 1-54              
+ useVirtualScroll.ts              |   88.46 |       50 |     100 |   88.46 | 13-15             
+ vite-env.d.ts                    |       0 |        0 |       0 |       0 | 1                 
+----------------------------------|---------|----------|---------|---------|-------------------
+```
+
 ## Istanbul
+
+* Instrumentation [requires a transpilation pass](https://istanbul.js.org/) implemented using a Babel plugin. 
+* Instrumentation at the level of individual lines of code by inserting calls to increment counters
+* Depends on deep understanding of language to instrument correctly without altering meaning
+* Can lag behind when language changes. 
+* Precise control over what gets instrumented
+
+```
+% npm install -D @vitest/coverage-istanbul
+
+added 31 packages, and audited 406 packages in 6s
+
+found 0 vulnerabilities
+```
+
+Updated vite.config.ts to switch coverage provider to istanbul then run it.
+
+```
+% npm run test -- --run --reporter verbose --coverage
+
+   Duration  992ms (transform 578ms, setup 412ms, collect 697ms, tests 31ms, environment 806ms, prepare 151ms)
+
+ % Coverage report from istanbul
+----------------------------------|---------|----------|---------|---------|-------------------
+File                              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+----------------------------------|---------|----------|---------|---------|-------------------
+All files                         |    54.7 |       45 |   55.81 |   56.25 |                   
+ App.tsx                          |       0 |        0 |       0 |       0 | 12                
+ VirtualList.tsx                  |   86.84 |    84.61 |      80 |   85.71 | 39,50-51,89-90    
+ VirtualScroller.jsx              |       0 |        0 |       0 |       0 | 4-74              
+ main.tsx                         |       0 |      100 |     100 |       0 | 7                 
+ useAnimationTimeout.ts           |   71.42 |       50 |   85.71 |   71.42 | 16,35-38,46-47    
+ useEventListener.ts              |    87.5 |       60 |   85.71 |    91.3 | 31,35             
+ useFixedSizeItemOffsetMapping.ts |     100 |      100 |     100 |     100 |                   
+ useIsScrolling.ts                |   69.23 |    42.85 |      20 |     100 | 8-20              
+ ...iableSizeItemOffsetMapping.ts |       0 |        0 |       0 |       0 | 5-51              
+ useVirtualScroll.ts              |    87.5 |       50 |     100 |    87.5 | 14                
+----------------------------------|---------|----------|---------|---------|-------------------
+```
+
+## Comparison
+
+* Istanbul is slower but not by much.
+* Significantly slower in transform and collect phases. Must be some parallel execution going on as little impact on overall duration.
+* There's a lot of variation in the coverage percentages with v8 generally reporting higher percentages.
+* When you look at the uncovered line numbers for the files that matter, such as VirtualList.tsx and useAnimationTimeout.ts they're very close.
+* By default, Vitest also outputs a detailed html report. Let's look at VirtualList.tsx in more detail.
+
+{% include candid-image.html src="/assets/images/coverage/coverage-v8-getRangeToRender.png" alt="v8 Coverage for VirtualList.tsx/getRangeToRender" attrib="v8" %}
+
+{% include candid-image.html src="/assets/images/coverage/coverage-istanbul-getRangeToRender.png" alt="Istanbul Coverage for VirtualList.tsx/getRangeToRender" attrib="Istanbul" %}
+
+* The html reports include a per line execution count in green, highlight unexecuted lines in pink, highlight the unexecuted part of a conditional in yellow and annotate if statements with an `I` or an `E` when the if or else part of the statement is unexecuted. 
+* Can see immediately why the percentages are different. v8 appears to work out which lines aren't covered and then mark every other line in the file as executed, even if they're blank or comments.
+* v8 treats lines containing just a closing brace as significant. Istanbul's source code level instrumentation only considers lines that include executable statements as significant and ignores everything else. 
+* v8 Can't tell the difference between an if statement, a ternary condition or the condition in a for loop. It highlights them all as conditional expressions. Istanbul is more precise.
+
+If you look carefully at the summary output from each coverage run, you'll see that v8 includes an additional file, `vite-env.d.ts`. This is a vite configuration file which includes a single non-executable line. As such, Istanbul ignores the whole file. With v8, I would have to manually exclude it. 
+
+There's a significant different in the uncovered lines reported for useIsScrolling.ts. Let's dig into that next.
+
+{% include candid-image.html src="/assets/images/coverage/coverage-v8-useIsScrolling.png" alt="v8 Coverage for useIsScrolling.ts" attrib="v8" %}
+
+{% include candid-image.html src="/assets/images/coverage/coverage-istanbul-useIsScrolling.png" alt="Istanbul Coverage for useIsScrolling.ts" attrib="Istanbul" %}
+
+* v8 can tell that one side of the conditional expressions hasn't been executed but the instrumentation isn't precise enough to say which side. Istanbul has the detail needed.
+* v8 completely misses two other issues which Istanbul has highlighted.
+* The function has a default argument of `window` but our test never calls useIsScrolling without an argument.
+* We pass Lambdas to useEventListener and useAnimationTimeout. However, as our tests don't send any events, they never get executed.
+
+For me, Istanbul is the clear winner. Unless speed becomes an issue, I can't see any reason to use v8.
 
 # Vitest UI
 
