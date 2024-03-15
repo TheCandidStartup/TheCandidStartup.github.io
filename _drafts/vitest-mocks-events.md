@@ -1,5 +1,5 @@
 ---
-title: Vitest Timer Mocks and User Events
+title: Vitest with User Events
 tags: frontend
 ---
 
@@ -27,13 +27,10 @@ We should be able to get a big jump in coverage by updating the `VirtualList` te
 * We're using virtual scrolling with absolute positioning so we can check that the expected subset of items is present in the DOM and check the positioning properties in their styles.
 * Need to use lower level `fireEvent` interface built into React Testing Library
 * Not clear exactly what you need to include in the event
-* Coded something up and gave it a try
+* Coded something up based on a [Stack Overflow answer](https://stackoverflow.com/questions/52665318/how-to-fireevent-scroll-on-a-element-inside-container-with-react-testing-library) and gave it a try
 
 ```
- const outerDiv = document.querySelector("div");
- if (!outerDiv)
-   throw "No outer div";
-
+  const outerDiv = document.querySelector("div") || throwErr("Can't find div");
   {act(() => {
     fireEvent.scroll(outerDiv, { target: { scrollTop: 100 }});
   })}
@@ -49,17 +46,56 @@ We should be able to get a big jump in coverage by updating the `VirtualList` te
 
 # Debug Hell
 
-* Stuck on breakpoint on the control's OnScroll handler and confirmed nothing coming through
+* Stuck a breakpoint on the control's OnScroll handler and confirmed nothing coming through
 * Suspected a problem with React/jsdom interaction
+* Let's step into `fireEvent` in a debugger and see where it goes wrong
+
+## Not My Code
+
+* Visual Studio Code won't let me step into the `fireEvent` function
+* I've run into this before with full fat Visual Studio. To avoid the poor innocent developer being confused by other people's code, there's a feature that automatically steps over it. 
+* Now I have to figure out how to turn it off. I vaguely remember a boolean setting called "just my code" or similar but can't find anything like it in Visual Studio Code
+* Some googling finds the [Visual Studio Code equivalent](https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_skipping-uninteresting-code). A `skipFiles` property in `launch.json` where you can provide glob patterns for source files to skip.
+* My problem now is that I don't have a `launch.json` file. Launching is handled for me by the vitest plugin.
+* Eventually I track down the answer in the [Vitest vscode github repo](https://github.com/search?q=repo%3Avitest-dev%2Fvscode%20debugexclude&type=code). The plugin has a [`debugExclude` setting](https://github.com/vitest-dev/vscode/blob/dd3e081a4c35ef183bd80a59ac54bf79a67eb3e3/README.md) which is copied to `skipFiles` in the launch settings. It's a per user setting in the Visual Studio Code `settings.json` which defaults to ignoring anything in node internals and modules.
+* I removed the node_modules exclusion and finally I can step into `fireEvent`.
+
+## Tunnelling Through
+
 * Spent all day debugging through the many layers in between
 * The event goes through jsdom and ends up in React land
-* React then tries to find the React "fiber" that corresponds to the HTML Element the event has been delivered to
+* React then tries to find the React "fiber" that corresponds to the target HTML Element the event has been delivered to
 * First smoking gun: It can't find one and bails out
-* The div element I'm delivering the event to is tagged as a reactContainer rather than a reactFiber
-* Container seems to be how React identifies the "root" node in the tree of elements it's rendered. For some reason it won't deliver events to it.
-* Aha, in my test app I have an app level div wrapped around the control. I'll add one to the test case and replace the selector with "div div" to grab it's child which should be my outer div.
-* Great. Now the div is tagged as reactFiber but the event still doesn't get delivered. React can't find an event handler.
-* Grabbing defeat from the jaws of victory.
+* The div element I'm delivering the event to is tagged as a `reactContainer` rather than a `reactFiber`
+* Container seems to be how React identifies the "root" node in the tree of elements it's rendered. For some reason it won't even try to deliver events that directly target it.
+
+## Progress of a Sort
+
+* Aha, in my test app I have an app level div wrapped around the control. Maybe you need a static div to act as the root.
+* I'll add one to the test case and replace the selector with "div div" to grab it's child which should be my outer div.
+* Great. Now the div is tagged as reactFiber but the event still doesn't get delivered. We get further into the React code but now React can't find an event handler to deliver it to. 
+
+## Capturing and Bubbling
+
+* Need a better understanding of [how events are delivered](https://javascript.info/bubbling-and-capturing)
+* First phase is capturing. The DOM starts at the root of the document and goes down the chain of ancestors to the target element checking to see if any element is listening for that event in capture mode.
+* This is rarely used. You need to pass an additional argument to whatever API you're using.
+* Second phase is bubbling. The DOM starts at the target element and goes up the chain of ancestors checking to see if any element is listening for the event in bubbling mode.
+* Event handlers can optionally prevent any further propagation which is what you'd normally do on the rare occasions you use capture mode. It's there so you can "capture" the event and prevent it being delivered to a child.
+* The jsdom implementation makes more sense now. React gets invoked twice. Once in capture node and once in bubbling mode.
+* There's an added complication. The scroll event is a special case. It [doesn't bubble](https://www.aleksandrhovhannisyan.com/blog/interactive-guide-to-javascript-events/#not-all-events-bubble). It only gets delivered to the target element in bubbling mode. 
+
+## React Events
+
+* Now need to understand what happens on the React side
+* First thing is that React only [attaches event handlers to the root node](https://legacy.reactjs.org/blog/2020/08/10/react-v17-rc.html#changes-to-event-delegation) of it's DOM tree.
+* It then uses its own implementation of capturing and bubbling to search it's "fiber" tree for React event handlers.
+* How does a scroll event ever get delivered? It doesn't bubble so the DOM won't deliver it to the React root node.
+* Another special case. If you have a scroll event handler, React adds an event listener directly to the corresponding HTML element rather than relying on delegation. 
+* Which still doesn't explain why my unit test isn't working. 
+
+## Face Palm Time
+
 * More futile debugging until eventually.
 * Dive deeper into the debug inspector and open up the reactFiber structure. 
 
