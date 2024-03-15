@@ -60,10 +60,20 @@ We should be able to get a big jump in coverage by updating the `VirtualList` te
 * Eventually I track down the answer in the [Vitest vscode github repo](https://github.com/search?q=repo%3Avitest-dev%2Fvscode%20debugexclude&type=code). The plugin has a [`debugExclude` setting](https://github.com/vitest-dev/vscode/blob/dd3e081a4c35ef183bd80a59ac54bf79a67eb3e3/README.md) which is copied to `skipFiles` in the launch settings. It's a per user setting in the Visual Studio Code `settings.json` which defaults to ignoring anything in node internals and modules.
 * I removed the node_modules exclusion and finally I can step into `fireEvent`.
 
+## fireEvent
+
+* It took me a while to figure out what `fireEvent` was actually doing
+* At first glance you would think it's creating an event with a "payload" containing `{ target: { scrollTop: 100 }}`
+* Aren't I missing loads of important properties?
+* There's actually very little payload in an event - just a handful of properties. The target property in the event is just a reference to the HTML element that the event is dispatched on.
+* There is no "payload". When `fireEvent` is passed a `target` property, it simply copies the contents into the HTML element the event is being dispatched to and then calls the DOM dispatchEvent method.
+* The DOM in turn sets the event's `target` property to the element being dispatched on
+* Similarly it sets the event's `currentTarget` property to the element that it delivers the event too
+
 ## Tunnelling Through
 
 * Spent all day debugging through the many layers in between
-* The event goes through jsdom and ends up in React land
+* fireEvent calls the DOM dispatchEvent method implemented by jsdom. Eventually the event crosses the border into React land
 * React then tries to find the React "fiber" that corresponds to the target HTML Element the event has been delivered to
 * First smoking gun: It can't find one and bails out
 * The div element I'm delivering the event to is tagged as a `reactContainer` rather than a `reactFiber`
@@ -105,6 +115,17 @@ We should be able to get a big jump in coverage by updating the `VirtualList` te
 * Which is the line with the "app div" I wrapped around the control
 * There's a `child` property with another fiber. It's another div referencing the line in `VirtualList.tsx` where I declare the outer div.
 * Face palm moment. React wraps its own root div around whatever I provide. I need to go one level deeper.
-* What I really need is a more reliable way to grab the div which works regardless of what React chooses to wrap around my elements.
+* When I did I saw that the correct outer div element also has a handy `reactEvents` property if it has an event handler
 
-* Event is being delivered but scrolling still doesn't work. clientHeight and scrollHeight are both zero.
+* What I really need is a more reliable way to grab the div which works regardless of what React chooses to wrap around my elements. For now I'm going to start with one of the list items that my test successfully queries and work upwards from there.
+
+```
+  const header = screen.getByText('Header');
+  const innerDiv = header.parentElement || throwErr("No inner div");
+  const outerDiv = innerDiv.parentElement || throwErr("No outer div");
+```
+
+# Layout
+
+* Event is being delivered but scrolling still doesn't work. Scroll handling depends on clientHeight and scrollHeight properties on target element. Both are zero. Remember, jsdom doesn't implement layout. The only layout related properties with meaningful values are those that my code explicitly sets.
+* I need to mock up enough layout to set the properties that the control depends on. 
