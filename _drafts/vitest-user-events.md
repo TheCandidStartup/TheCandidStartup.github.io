@@ -15,7 +15,7 @@ Ignore `App.tsx`, `VirtualScroller.jsx` and `main.tsx`. They're part of my sampl
 
 The three source files with dedicated unit tests look pretty healthy: `useEventListener.ts`, `useVirtualScroll.ts` and `VirtualList.ts`. The current `VirtualList` unit test is for fixed size items. Hence `useFixedSizeItemOffsetMapping.ts` has 100% coverage across the board and `useVariableSizeItemOffsetMapping.ts` has 0%. 
 
-The remaining two files, `useAnimationTimeout.ts` and `useIsScrolling.ts`, have partial coverage. Which is understandable because the features they implement aren't are a focus for the existing tests. The tests don't scroll anything yet, so the `useIsScrolling` hook does nothing except initialize itself. The `useAnimationTimeout` hook is activated when `useIsScrolling` receives scroll events, so it's not doing anything either.
+The remaining two files, `useAnimationTimeout.ts` and `useIsScrolling.ts`, have partial coverage. Which is understandable because the features they implement aren't a focus for the existing tests. The tests don't scroll anything yet, so the `useIsScrolling` hook does nothing except initialize itself. The `useAnimationTimeout` hook is activated when `useIsScrolling` receives scroll events, so it's not doing anything either.
 
 We should be able to get a big jump in coverage by updating the `VirtualList` tests to include scroll events and a variable sized item list.
 
@@ -32,7 +32,7 @@ We should be able to get a big jump in coverage by updating the `VirtualList` te
 ```
   const outerDiv = document.querySelector("div") || throwErr("Can't find div");
   {act(() => {
-    fireEvent.scroll(outerDiv, { target: { scrollTop: 100 }});
+    fireEvent.scroll(outerDiv, { target: { scrollTop: 120 }});
   })}
 ```
 
@@ -129,3 +129,41 @@ We should be able to get a big jump in coverage by updating the `VirtualList` te
 
 * Event is being delivered but scrolling still doesn't work. Scroll handling depends on clientHeight and scrollHeight properties on target element. Both are zero. Remember, jsdom doesn't implement layout. The only layout related properties with meaningful values are those that my code explicitly sets.
 * I need to mock up enough layout to set the properties that the control depends on. 
+* Trickier than you might think. All the layout related properties are read-only so direct assignment doesn't work.
+* The jsdom README [suggests](https://github.com/jsdom/jsdom?tab=readme-ov-file#unimplemented-parts-of-the-web-platform) using `Object.defineProperty` if you need to override the stub implementation.
+
+```
+function overrideProp(element: HTMLElement, prop: string, val: any) {
+  if (!(prop in element))
+    throw `Property ${prop} doesn't exist when trying to override`;
+
+  Object.defineProperty(element, prop, {
+    value: val,
+    writable: false
+  });
+}
+
+function updateLayout(innerDiv: HTMLElement, outerDiv: HTMLElement) {
+  const scrollHeight = parseInt(innerDiv.style.height);
+  overrideProp(outerDiv, "scrollHeight", scrollHeight);
+
+  const clientHeight = parseInt(outerDiv.style.height);
+  overrideProp(outerDiv, "clientHeight", clientHeight);
+}
+```
+
+* I don't need much. Just setting scrollHeight to the height of the inner div and clientHeight to the height of the outer div. 
+* Finally, scrolling works. I can write assertions that validate the expected items are in the DOM after scrolling down. The first few items in the list have been removed and newly visible items have been added.
+
+# Scroll End
+
+* jsdom implements the scrollend event but React Testing Library doesn't have `fireevent.scrollend`
+* Need to use lower level `fireevent` instead
+
+```
+  {act(() => {
+    fireEvent.scroll(outerDiv, { target: { scrollTop: 120 }});
+    fireEvent(outerDiv, new UIEvent('scrollend'));
+  })}
+```
+
