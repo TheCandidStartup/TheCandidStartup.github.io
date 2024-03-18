@@ -81,7 +81,7 @@ added 31 packages, and audited 406 packages in 6s
 found 0 vulnerabilities
 ```
 
-You do need to update `vite.config.ts` to specify Istanbul, as v8 is the default. After that you run it in exactly the same way.
+You do need to update `vite.config.ts` to specify Istanbul, as v8 is the default. After that, you run it in exactly the same way.
 
 ```
 % npm run test -- --run --reporter verbose --coverage
@@ -120,7 +120,7 @@ By default, Vitest also outputs a detailed html report. Let's look at VirtualLis
 
 The html reports include a per line execution count in green, highlight unexecuted lines in pink, highlight the unexecuted part of a conditional in yellow and annotate if statements with an `I` or an `E` when the if or else part of the statement is unexecuted. 
 
-You can see immediately why the percentages are different. v8 appears to work out which lines aren't covered and then mark every other line in the file as executed, even if they're blank or comments. v8 treats lines containing just a closing brace as significant. Istanbul's source code level instrumentation only considers lines that include executable statements as significant and ignores everything else. 
+You can see immediately why the percentages are different. v8 appears to work out which lines aren't covered and then mark every other line in the file as executed, even if they're blank or comments. Istanbul's source code level instrumentation only considers lines that include executable statements as significant and ignores everything else. 
 
 v8 can't tell the difference between an if statement, a ternary condition or the condition in a for loop. It highlights them all as conditional expressions. Istanbul is more precise.
 
@@ -132,7 +132,7 @@ There's a significant difference in the uncovered lines reported for useIsScroll
 
 {% include candid-image.html src="/assets/images/coverage/coverage-istanbul-useIsScrolling.png" alt="Istanbul Coverage for useIsScrolling.ts" attrib="Istanbul" %}
 
-v8 can tell that one side of the conditional expressions hasn't been executed but the instrumentation isn't precise enough to say which side. Istanbul has the detail needed.
+v8 can tell that one side of the conditional expressions hasn't been executed but the reporting isn't precise enough to say which side. Istanbul has the detail needed.
 
 v8 completely misses two other issues which Istanbul has highlighted. The function has a default argument of `window` but our test never calls `useIsScrolling` without an argument. We pass lambdas to `useEventListener` and `useAnimationTimeout`. However, as our tests don't send any events, they never get executed.
 
@@ -187,7 +187,7 @@ You get a new test tool in the left toolbar. Clicking on it brings up a list of 
 
 {% include candid-image.html src="/assets/images/coverage/vitest-code-integration.png" alt="Visual Studio Code Integration" %}
 
-On the positive side the integration between test and editor works well. Clicking on a failing test takes me straight to the corresponding code with a tooltip showing the assertion failure. The integrated debugger also worked first time. I was able to set a breakpoint and rerun the failing test under the debugger. 
+On the positive side, the integration between test and editor works well. Clicking on a failing test takes me straight to the corresponding code with a tooltip showing the assertion failure. The integrated debugger also worked first time. I was able to set a breakpoint and rerun the failing test under the debugger. 
 
 You can do a one off run of an individual test or the whole suite. You can also run the test suite in watch mode so that it automatically reruns relevant tests when you save a file. Any failures in the file being edited are shown in context with tooltips.
 
