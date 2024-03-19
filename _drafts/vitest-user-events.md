@@ -167,3 +167,22 @@ function updateLayout(innerDiv: HTMLElement, outerDiv: HTMLElement) {
   })}
 ```
 
+* Here I've chosen to simulate the case where React batches the state changes caused by the events before rendering
+* Just to easy to simulate the other case where it renders after each event
+* Can do both to make sure I'm not reliant on internal React behavior that may change
+
+# Ending Point
+
+* I added another test case that runs the same tests with variable size items, `useIsScrolling` enabled and renders after each event
+* Should cover all of the major features I have implemented
+
+{% include candid-image.html src="/assets/images/coverage/coverage-end.png" alt="Coverage Ending Point" %}
+
+* That looks a lot healthier
+* Hitting most statements but still work to do on branches
+* Many of those are edge cases, such as early outs for invalid arguments. Will be easy to address.
+* The last big thing I'm missing is coverage of my fallback timeout implementation if scrollend isn't implemented or goes missing
+
+{% include candid-image.html src="/assets/images/coverage/timeout-fallback.png" alt="No coverage of fallback timeout for scrollend" %}
+
+* Which raises the question, how do you handle time in unit tests?
