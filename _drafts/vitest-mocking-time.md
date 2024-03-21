@@ -188,3 +188,6 @@ describe('useIsScrolling undefining onscrollend', () => {
   * `useAnimationTimeout` has a fallback for missing `performance.now()` that will never be used. It was copied from the original code in the react-window project. Code can only be used in a browser context and all major browsers have supported `performance` since 2014. I just need to remove the pointless fallback.
   * useEventListener has branches that handle being called with a default argument and being called with a React ref to a null element.
   * useVariableSizeItemOffsetMapping
+      * Variable size item list with less items than list of variable sizes
+      * Variable size item list with no variable sizes
+* `useVirtualScroll` optimization when scroll position hasn't changed
