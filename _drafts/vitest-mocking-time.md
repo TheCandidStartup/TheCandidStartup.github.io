@@ -126,3 +126,65 @@ describe('useIsScrolling undefining onscrollend', () => {
 ```
 
 # Mocking Time
+
+* Vitest uses an embedded copy of [@sinonjs/fake-timers](https://github.com/sinonjs/fake-timers) for its time mocking functionality
+* The timers are mocked to depend on a fake internal clock which you can control in your unit test. There are both synchronous and asynchronous versions of the APIs for advancing time. If we use the synchronous ones we can go back to a simple synchronous unit test.
+* Vitest docs don't say exactly which time related functions are mocked. We depend on `requestAnimationFrame`, `cancelAnimationFrame` and `performance` (falling back to system date if `performance` is not supported).
+* According to the [fake-timers README](https://github.com/sinonjs/fake-timers?tab=readme-ov-file#var-clock--faketimersinstallconfig), it supports `setTimeout`, `clearTimeout`, `setImmediate`, `clearImmediate`,`setInterval`, `clearInterval`, `Date`, `requestAnimationFrame`, `cancelAnimationFrame`, `requestIdleCallback`, `cancelIdleCallback`, `hrtime`, and `performance` by default.
+* Great. Let's try it out. 
+
+```
+  it('should fallback to timer if scrollend unimplemented', () => {
+    vi.useFakeTimers();
+    stubProperty(window, 'onscrollend', undefined);
+
+    const { result } = renderHook(() => useIsScrolling())
+    expect(result.current).toBe(false);
+
+    {act(() => {
+      fireEvent.scroll(window, { target: { scrollTop: 100 }});
+    })}
+    expect(result.current).toBe(true);
+
+    {act(() => {
+      vi.advanceTimersByTime(1000);
+    })}
+    expect(result.current).toBe(false);
+  })
+```
+
+* Sadly it didn't work. Diving in with the debugger shows that `requestAnimationFrame` is invoking its callback. The callback uses `performance.now()` to see whether enough time has elapsed but it hasn't. I tried replacing `vi.advanceTimersByTime()` with `vi.runAllTimers()`. It repeatedly invokes timer callbacks until there are none left. That results in `requestAnimationFrame` being called a 1000 times before vitest declares itself to be in an infinite loop.
+* Looks like `performance` hasn't been mocked.
+* Further exploration with the debugger confirms that vitest only mocks a [subset of the available timers by default](https://github.com/vitest-dev/vitest/blob/fee7d8be9d6e6f710270600ae91fa35d861b7075/packages/vitest/src/defaults.ts#L49). In particular, `setTimeout`, `clearTimeout`, `setImmediate`, `clearImmediate`,`setInterval`, `clearInterval`, and `Date`.
+* Which is weird in two ways. First, why change the defaults in this way? Second, why is my `requestAnimationFrame` callback being invoked if `requestAnimationFrame` hasn't been mocked?
+* The second question is easy to answer using the debugger. jsdom internally implements `requestAnimationFrame` using `setInterval`. 
+* The first question is covered by a [vitest known issue](https://github.com/vitest-dev/vitest/issues/4004). Apparently, vitest's default list was copied from the fake-timers README when the feature was implemented. As fake-timers functionality improved, the defaults weren't updated. Changing them now might cause backwards compatibility issues, so the maintainers haven't touched it. However, they did have the helpful suggestion of fixing the problem by updating the defaults in your project's `vite.config.ts` file.
+
+```
+    fakeTimers: {
+      toFake: [...(configDefaults.fakeTimers.toFake ?? []), 'performance'],
+    },
+```
+
+* Vite command line watch sorted itself out straight away and all tests passed. I needed to restart Visual Studio Code to fix tests run using the Vitest plugin. 
+* I added one more test to cover the case where `scrollend` is supported but the event goes missing.
+* Thought I was done but I hit one final problem. I was playing around in Visual Studio Code, running individual tests when suddenly one of my `VirtualList` tests  started failing. I hadn't changed any code and the test ran OK in the command line vitest. First thought was flakiness in the vitest plugin.
+* Finally realized that failure was consistent with fake timers leaking into other tests. But I had an `afterAll` clause that removed all mocking.
+* Another documentation problem. The [example code](https://vitest.dev/guide/mocking.html#timers) for timers in the vitest guide suggests that `restoreAllMocks` will also cleanup timers. Not so. Each mocking feature in vitest is independent. There is no cleanup everything call. You have to match `useFakeTimers()` with `useRealTimers()`.
+
+# Conclusion
+
+* More involved that I thought.
+* Recurring theme that Vitest documentation is inadequate so you have to look at the original documentation for features embedded in Vitest, then find unnecessary differences in the Vitest implementation.
+* Vitest is still fast and feature rich. Nothing insurmountable. Teething issues?
+* How's the coverage looking?
+
+{% include candid-image.html src="/assets/images/coverage/coverage-after-mock-time.png" alt="Coverage Ending Point" %}
+
+* We've got useIsScrolling coverage up to 100% across the board, including all branches. 
+* The two dependent hooks, `useEventListener` and `useAnimationTimeout` have hit over 95% statement coverage
+* What's left to do? Just edge cases.
+  * VirtualList with 0 items
+  * `useAnimationTimeout` has a fallback for missing `performance.now()` that will never be used. It was copied from the original code in the react-window project. Code can only be used in a browser context and all major browsers have supported `performance` since 2014. I just need to remove the pointless fallback.
+  * useEventListener has branches that handle being called with a default argument and being called with a React ref to a null element.
+  * useVariableSizeItemOffsetMapping
