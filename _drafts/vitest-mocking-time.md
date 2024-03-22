@@ -191,3 +191,21 @@ describe('useIsScrolling undefining onscrollend', () => {
       * Variable size item list with less items than list of variable sizes
       * Variable size item list with no variable sizes
 * `useVirtualScroll` optimization when scroll position hasn't changed
+* It took me an hour to work through all these. This time everything worked first time. I even got to make use of another mocking feature. Creating a mock event handler that made it easy to verify that it was invoked.
+
+```
+  function handler(_: Event) {};
+  const mock = vi.fn().mockImplementation(handler);
+  renderHook(() => useEventListener('scroll', mock));
+  act(() => {  fireEvent.scroll(window); });
+  expect(mock).toHaveBeenCalled()
+```
+
+{% include candid-image.html src="/assets/images/coverage/coverage-100-percent.png" alt="Coverage Ending Point" %}
+
+* Mission accomplished. 100% coverage across the board.
+* Does that mean my code is full tested? Of course not. Every statement and branch is invoked by my tests but that doesn't tell me whether the code is correct. It also doesn't mean that every possible path through the code, every possible combination of branches has been covered.
+* Coverage is a useful tool to highlight areas of code that your tests go no where near. You still need good judgement to decide how many tests and assertions are enough.
+* Balance of time spent writing test code, writing actual code, manually testing. 
+
+* Next time, let's write some more code. Maybe we can do it in a TDD style.
