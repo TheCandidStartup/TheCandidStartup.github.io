@@ -11,7 +11,7 @@ How's our coverage looking at the moment?
 
 {% include candid-image.html src="/assets/images/coverage/coverage-start.png" alt="Coverage Starting Point" %}
 
-Ignore `App.tsx`, `VirtualScroller.jsx` and `main.tsx`. They're part of my sample app so not in scope for unit testing. At some point I'll have to put a proper monorepo structure in place so that I can separate the different logical modules properly.
+Ignore `App.tsx`, `VirtualScroller.jsx` and `main.tsx`. They're part of my sample app so not in scope for unit testing. At some point I'll have to put a monorepo structure in place so that I can separate the different logical modules properly.
 
 The three source files with dedicated unit tests look pretty healthy: `useEventListener.ts`, `useVirtualScroll.ts` and `VirtualList.ts`. The current `VirtualList` unit test is for fixed size items. Hence `useFixedSizeItemOffsetMapping.ts` has 100% coverage across the board and `useVariableSizeItemOffsetMapping.ts` has 0%. 
 
@@ -23,7 +23,9 @@ We should be able to get a big jump in coverage by updating the `VirtualList` te
 
 I was ready to be amazed at how easy it is to generate scroll events with the [user-event](https://testing-library.com/docs/user-event/intro/) companion library for Testing Library. The library simulates full interactions, firing the multiple events that correspond to an end user interaction. I thought I'd start with a page down scroll interaction.
 
-It turns out that user-event doesn't support scroll events. It's pointer (mouse, touch) and keyboard events only. Unit test focused DOM implementations, like jsdom, support the logical DOM structure. They don't implement a real browser's layout system. If you want to test that, use a browser engine. If there's no layout then how can you know what needs scrolling?
+It turns out that user-event doesn't support scroll events. It's pointer (mouse, touch) and keyboard events only. Unit test focused DOM implementations, like jsdom, support the logical DOM structure. They don't implement a real browser's layout system. If you want to test that, use a browser engine. 
+
+If there's no layout then how can you know what needs scrolling?
 
 We're using virtual scrolling with absolute positioning. We render items that we expect to be visible inside a window of known size given a scroll position. We should be able to send a scroll event, trigger a render and check that the expected subset of items is present in the DOM. 
 
@@ -53,7 +55,7 @@ Visual Studio Code won't let me step into the `fireEvent` function. It just step
 
 I've run into this before with the full fat version of Visual Studio. To avoid the poor innocent developer being confused by other people's code, there's a feature that automatically steps over it. Now I have to figure out how to turn it off. I vaguely remember a boolean setting called "just my code" or similar but can't find anything like it in Visual Studio Code.
 
-Some googling finds the [Visual Studio Code equivalent](https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_skipping-uninteresting-code). A `skipFiles` property in `launch.json` where you can provide glob patterns for source files to skip. My problem now is that I don't have a `launch.json` file. Launching is handled for me by the vitest plugin.
+Some googling finds the [Visual Studio Code equivalent](https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_skipping-uninteresting-code). A `skipFiles` property in `launch.json` where you can provide glob patterns for source files to skip. My problem now is that I don't have a `launch.json` file. Launching is handled for me by the Vitest plugin.
 
 Eventually I track down the answer in the [Vitest vscode github repo](https://github.com/search?q=repo%3Avitest-dev%2Fvscode%20debugexclude&type=code). The plugin has a [`debugExclude` setting](https://github.com/vitest-dev/vscode/blob/dd3e081a4c35ef183bd80a59ac54bf79a67eb3e3/README.md) which is copied to `skipFiles` in the launch settings. It's a per user setting in the Visual Studio Code `settings.json` which defaults to ignoring anything in node internals and modules.
 
@@ -131,7 +133,7 @@ What I really need is a more reliable way to grab the div which works regardless
   const outerDiv = innerDiv.parentElement || throwErr("No outer div");
 ```
 
-On a side note, my definition of a `throwErr` function was the simplest way I could find to implement "[do or die](https://wiki.c2.com/?DoOrDie)" semantics in TypeScript. The "throw" keyword is a statement, not an expression, in JavaScript so needs to be wrapped in a function. I had to add the `never` type assertion before TypeScript would reliably infer that `outerDiv` has the type `HTMLELement` rather than `HTMLElement | null`. 
+On a side note, my definition of a `throwErr` function was the simplest way I could find to implement "[do or die](https://wiki.c2.com/?DoOrDie)" semantics in TypeScript. The "throw" keyword is a statement in JavaScript, not an expression, so needs to be wrapped in a function. I had to add the `never` type assertion before TypeScript would reliably infer that `outerDiv` has the type `HTMLELement` rather than `HTMLElement | null`. 
 
 # Layout
 
@@ -200,7 +202,7 @@ Here I've chosen to simulate the case where React [batches the state changes](ht
 
 # Ending Point
 
-I added another test case that runs the same tests with variable size items, `useIsScrolling` enabled and renders after each event. That should cover all of the major features I have implemented. 
+I added another test case that runs the same tests with variable size items with`useIsScrolling` enabled and renders after each event. That should cover all of the major features I have implemented. 
 
 {% include candid-image.html src="/assets/images/coverage/coverage-end.png" alt="Coverage Ending Point" %}
 
