@@ -3,7 +3,7 @@ title: Vitest with User Events
 tags: frontend
 ---
 
-[Last time]({% link _posts/2024-03-18-vitest-code-coverage.md %}) we got Vitest's code coverage tools up and running. Now I'm going to use the code coverage results to drive improvements to my unit test suite. As we go through this process I'll need to lean on additional [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) features.
+[Last time]({% link _posts/2024-03-18-vitest-code-coverage.md %}) we got Vitest's code coverage tools up and running. Now I'm going to use the code coverage results to drive improvements to my unit test suite. As we go through this process, I'll need to lean on additional [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) features.
 
 # Starting Point
 
@@ -42,8 +42,9 @@ My `VirtualList` control is built out of a fixed size outer div with a child inn
 
 React Test Library has lots of handy methods for retrieving elements from the DOM. Their [philosophy](https://kentcdodds.com/blog/making-your-ui-tests-resilient-to-change) is for tests to be user centered so those methods only let you query by things like role, label or text. None of which a div has. They support `queryByTestId` for cases like this but I don't have a clean way to pass a test id down to the div inside the control. 
 
-I know the div I want is the top level div in the control, which is all that I'm passing to render. I can use `querySelector` on document to grab it.
-Unfortunately, it didn't work. I fired off the event and it had no effect on the state of the control. 
+I know the div I want is the top level div in the control, which what I'm passing to render. I can use `querySelector` on document to grab it.
+
+Unfortunately, the test didn't work. I fired off the event and it had no effect on the state of the control. 
 
 # Debug Hell
 
@@ -73,7 +74,7 @@ When `fireEvent` is passed a `target` property, it simply copies the contents in
 
 My event makes it into jsdom. I spent the rest of the day debugging through the many layers between `dispatchEvent` and the `OnScroll` handler in React. If I dive deep enough I can see that the event crosses the border into React land. 
 
-React first tries to find the internal React "fiber" that corresponds to the target HTML Element. Which is where I found my first smoking gun. It can't find one and bails out. 
+React first tries to find the internal [React fiber](https://blog.logrocket.com/deep-dive-react-fiber/) that corresponds to the target HTML Element. Which is where I found my first smoking gun. It can't find one and bails out. 
 
 React maintains the correspondence between its internal data structures and the elements in the DOM by adding properties to the elements. The div element I'm delivering the event to has a `reactContainer` property added to it rather than the `reactFiber` property React is looking for.
 
@@ -93,7 +94,7 @@ The first phase is "capturing". The DOM starts at the root of the document and g
 
 The second phase is "bubbling". The DOM starts at the target element and goes up the chain of ancestors checking to see if any element is listening for the event in bubbling mode. This is the default behavior and is how my `OnScroll` handler is configured. 
 
-Event handlers can optionally prevent any further propagation which is what you'd normally do on the rare occasions you use capture mode. It's there so you can "capture" the event and prevent it being delivered to a child.
+Event handlers can optionally prevent any further propagation, which is what you'd normally do on the rare occasions you use capture mode. It's there so you can "capture" the event and prevent it being delivered to a child.
 
 The jsdom implementation makes more sense now. React gets invoked twice. Once in capture mode and once in bubbling mode. 
 
@@ -202,7 +203,7 @@ Here I've chosen to simulate the case where React [batches the state changes](ht
 
 # Ending Point
 
-I added another test case that runs the same tests with variable size items with`useIsScrolling` enabled and renders after each event. That should cover all of the major features I have implemented. 
+I added another test case that runs the same tests with variable size items, with`useIsScrolling` enabled, rendering after each event. That should cover all of the major features I have implemented. 
 
 {% include candid-image.html src="/assets/images/coverage/coverage-end.png" alt="Coverage Ending Point" %}
 
