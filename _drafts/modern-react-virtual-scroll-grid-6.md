@@ -124,7 +124,7 @@ I don't need to wrap my call to `scrollTo` in an `act` as it's being mocked and 
 
 It does mean that I'm back to manual testing to validate that `scrollTo` works end to end as expected. In future I might look at [Playwright](https://playwright.dev/) or similar for automated end to end tests.
 
-I added an input field to my test app and hooked it up to the `scrollToItem` method. It all seemed to work with a couple of annoyances. 
+I added an input field to my test app and hooked it up to the `scrollToItem` method. It all seemed to work, with a couple of annoyances. 
 
 The OnChange handler on the input field fires on every key stroke which gets annoyingly jumpy. The HTML change event is only meant to fire on enter or [when the control loses focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/change_event). It turns out that OnChange in React [behaves differently](https://stackoverflow.com/questions/31272207/to-call-onchange-event-after-pressing-enter-key). It intentionally fires on any change, perhaps in order to be more "reactive". 
 
