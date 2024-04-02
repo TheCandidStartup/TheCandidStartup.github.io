@@ -5,7 +5,7 @@ tags: frontend
 ---
 
 {% capture rvs_url %}{% link _posts/2024-01-29-modern-react-virtual-scroll-grid.md %}{% endcapture %}
-Now that we've got [unit testing set up]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) and achieved [good coverage]({% link _drafts/vitest-mocking-time.md %}) with our initial tests, it's time to go back to the [plan]({{ rvs_url }}) and implement the next feature on the list. This time we're looking at providing [`ScrollTo` and `ScrollToItem`]({{ rvs_url | append: "#scrollto" }}) methods for our virtual list control. 
+Now that we've got [unit testing set up]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) and achieved [good coverage]({% link _posts/2024-04-02-vitest-mocking-time.md %}) with our initial tests, it's time to go back to the [plan]({{ rvs_url }}) and implement the next feature on the list. This time we're looking at providing [`ScrollTo` and `ScrollToItem`]({{ rvs_url | append: "#scrollto" }}) methods for our virtual list control. 
 
 # The Plan
 
