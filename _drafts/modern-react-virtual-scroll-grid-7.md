@@ -184,7 +184,13 @@ A little more fiddly but still a pretty mechanical process. That leaves the meat
 
 For `VirtualGrid` I'm going to need nested loops over the rows and then over the columns within each row. Wish me luck. 
 
-I used the same mechanical process to add the nested iteration and replace item references with row and column references. 
+I used the same mechanical process to add the nested iteration and replace item references with row and column references. Unfortunately, I was soon staring at row after row of red squiggles in Visual Studio Code, trying to make sense of incomprehensible error messages.
+
+{% include candid-image.html src="/assets/images/frontend/jsx-nested-map-errors.png" alt="JSX nested array map errors" %}
+
+I thought maybe I'd pushed JSX too far. Once again the internet [came to my rescue](https://stackoverflow.com/questions/47402365/how-to-have-nested-loops-with-map-in-jsx). 
+
+You can't directly nest calls to map. The JSX compiler is expecting the result of the outer map to be a JSX element. However, that result can be a JSX element that has the inner map as a child. At first I thought I would have to render a container div per row to make it work. Then I remembered the [`<Fragment>` element](https://react.dev/reference/react/Fragment). Syntactically, it behaves like a container element but is not present in the resulting DOM. Instead, only it's children are output. 
 
 ```
     <div onScroll={onScroll} ref={outerRef} style={{ position: "relative", height, width, overflow: "auto", willChange: "transform" }}>
@@ -194,7 +200,7 @@ I used the same mechanical process to add the nested iteration and replace item 
           nextRowOffset += rowSize,
           rowIndex = startRowIndex + rowArrayIndex,
           nextColumnOffset = startColumnOffset,
-          <>
+          <Fragment>
           {columnSizes.map((columnSize, columnArrayIndex) => (
             columnOffset = nextColumnOffset,
             nextColumnOffset += columnSize,
@@ -204,17 +210,13 @@ I used the same mechanical process to add the nested iteration and replace item 
                       isScrolling={useIsScrolling ? isScrolling : undefined}
                       style={{ position: "absolute", top: rowOffset, height: rowSize, left: columnOffset, width: columnSize }}/>
           ))}
-          </>
+          </Fragment>
         ))}
       </div>
     </div>
 ```
 
-My first attempt was almost but not quite what you see above. I was staring at row after row of red squiggles in Visual Studio Code, trying to make sense of incomprehensible error messages. I thought maybe I'd pushed JSX too far. Once again the internet [came to my rescue](https://stackoverflow.com/questions/47402365/how-to-have-nested-loops-with-map-in-jsx). 
-
-You can't directly nest calls to map. The JSX compiler is expecting the result of the outer map to be a JSX element. However, that result can be a JSX element that has the inner map as a child. At first I thought I would have to render a container div per row to make it work. Then I remembered the [`<Fragment>` element](https://react.dev/reference/react/Fragment). Syntactically, it behaves like a container element but is not present in the resulting DOM. Instead, only it's children are output. 
-
-The critical extra ingredient is the `<>` and `</>` tags around the inner map (shorthand for `<Fragment>` and `</Fragment>`). As if by magic, all the red squiggles and mad error messages disappeared. 
+The critical extra ingredient is the `<Fragment>` and `</Fragment>` tags around the inner map. As if by magic, all the red squiggles and mad error messages disappeared. 
 
 # Testing
 
@@ -247,10 +249,51 @@ function App() {
 }
 ```
 
-* I fully expected the app to collapse into a horrible mess at runtime, kicking off a lengthy debugging process as I dived through the DOM elements in the browser's debugging tools. To my amazement it worked first time. I love it when a plan comes together. 
+I fully expected the app to collapse into a horrible mess at runtime, kicking off a lengthy debugging process as I dived through the DOM elements in the browser's debugging tools. To my amazement it worked first time. 
+
+I love it when a plan comes together. 
 
 # Try it!
 
 If you don't believe me, [try it](/assets/dist/modern-react-scroll-grid-7/index.html) for yourself. 
 
 {% include candid-iframe.html src="/assets/dist/modern-react-scroll-grid-7/index.html" width="100%" height="fit-content" %}
+
+# Unique key warning
+
+After my euphoria calmed down, I noticed a React warning in the browser console.
+
+```
+Warning: Each child in a list should have a unique "key" prop.
+
+Check the render method of `ForwardRef`. See https://reactjs.org/link/warning-keys for more information.
+    at http://localhost:5173/src/VirtualGrid.tsx:19:13
+    at div
+    at App
+printWarning	@	react-jsx-dev-runtime.development.js:87
+error	@	react-jsx-dev-runtime.development.js:61
+validateExplicitKey	@	react-jsx-dev-runtim…development.js:1078
+validateChildKeys	@	react-jsx-dev-runtim…development.js:1105
+jsxWithValidation	@	react-jsx-dev-runtim…development.js:1276
+(anonymous)	@	VirtualGrid.tsx:77
+```
+
+The [warning-keys url](https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key) explains that each element generated by an array map needs to have a key so that React can correctly update the DOM. 
+
+That's weird, I thought. Each cell in the grid *does* have a unique key. The `Fragment` element isn't included in the DOM output, so as far as the reconciler is concerned it looks like one big flat array. I used the browser's debug tools to confirm that the DOM did indeed have all the cells as direct children of the inner div. The React developer tools confirmed that the React component structure is also flat. 
+
+On a whim, I tried adding a key to the fragment element. The warning went away. The DOM structure was the same as before. However, the React component structure (represented by React's fiber tree) had changed. It now has a two level structure with a `Fragment` for each row. 
+
+{% include candid-image.html src="/assets/images/frontend/fragment-cell-component-structure.png" alt="Two level component structure after defining keys for fragments" %}
+
+I decided to leave the key in place for now. I don't like leaving unresolved warnings and, who knows, the more structured fiber tree might make reconciliation faster. I don't want to expose these internal details to my clients, so I reused the per cell key function for the rows. 
+
+```
+          <Fragment key={itemKey(rowIndex, 0, itemData)}>
+```
+
+# Tidying Up
+
+Yes, I did go back and add unit tests for `VirtualGrid`. I started with a copy, paste and rename of the `VirtualList` unit tests. I had to add additional lines to each test case to check the additional columns. However, I could remove test cases that only checked functionality in common components. Overall, I needed fewer lines than the original to get back to 100% coverage.
+
+{% include candid-image.html src="/assets/images/coverage/virtual-grid.png" alt="Back to 100% coverage after adding VirtualGrid unit tests" %}
