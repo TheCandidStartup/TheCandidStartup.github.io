@@ -4,30 +4,30 @@ title: >
 tags: frontend
 ---
 
-Opening paragraph.
+So far I've written six articles in this "Modern React Virtual Scroll Grid" [series]({% link _posts/2024-01-29-modern-react-virtual-scroll-grid.md %}), with a four article detour into [unit testing]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) my work, all without attempting to make a grid. That changes today.
 
-* Got structure in place for `VirtualList` control.  all structurally significant features done. 
-* Lots of functionality to fill out to get feature parity with react-window but all stuff that should work within existing structure
-* Structure was chosen to enable reuse of significant amounts of functionality between List and Grid controls. Contrast with react-window where there's lots of copy and paste.
-* Now time to see if the theory holds up in practice.
-* Makes sense to clean house before going further
+I have the main structure in place for my `VirtualList` control. All the structurally significant features are [done]({% link _drafts/modern-react-virtual-scroll-grid-6.md %}). There's lots of functionality to fill out to get feature parity with [react-window](https://github.com/bvaughn/react-window), but it's all stuff that should work within the existing structure.
+
+The structure was chosen to enable reuse of significant amounts of functionality between List and Grid controls. All the scrolling logic has been factored into utility functions and custom hooks that handle scrolling in one dimension. To build a grid, all I need to do is reuse what I've already implemented by using separate hook instances for vertical and horizontal scrolling. 
+
+That's the theory at least. Now let's see if it holds up in practice. Maybe there's a reason why react-window needed to copy-and-paste so much of it's implementation. However, before I dive in it makes sense to cleanup what I've built so far. 
 
 # TypeScript Interface vs Type
 
-* Be more intentional about using Typescript interface vs type
-* Differences and advice have [changed over the years](https://stackoverflow.com/questions/37233735/interfaces-vs-types-in-typescript) as TypeScript has evolved
-* Types started out as a way of defining an alias for a more complex type declaration. Like a `#define` in C style languages.
-* Interfaces started out as a way of defining an interface that would be implemented by a class in the normal object oriented way.
-* [Currently](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#differences-between-type-aliases-and-interfaces) there are only three significant differences
-** Interfaces can only be used to declare the shapes of objects. Types can be used to name any type that TypeScript can define.
-** Interface names always appear in error messages when a named interface is used. Type names may appear or you may see the anonymous type that the name is an alias for.
-** Interfaces support [declaration merging](https://www.typescriptlang.org/docs/handbook/declaration-merging.html), types don't. Declaration merging can be useful when working with third party modules where you patch or extend objects defined in the module. You can use declaration merging to update the type signature to match. 
-* Follow guidance to use an interface where you can
+I've been learning TypeScript as I go. Mostly by cribbing examples from other people's code and using what works. I haven't been consistent in my use of TypeScript features. In particular I've used interfaces and types pretty much at random. I want to be more intentional.
+
+There's lots of advice out there which has [changed over the years](https://stackoverflow.com/questions/37233735/interfaces-vs-types-in-typescript) as TypeScript has evolved. Types started out as a way of defining an alias for a more complex type declaration. Like a `#define` in C style languages. Interfaces started out as a way of defining an interface that would be implemented by a class in the normal object oriented way.
+
+[Currently](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#differences-between-type-aliases-and-interfaces) there are only three significant differences between them:
+* Interfaces can only be used to declare the shapes of objects. Types can be used to name any type that TypeScript can define.
+* Interface names always appear in error messages when a named interface is used. Type names may appear or you may see the anonymous type that the name is an alias for.
+* Interfaces support [declaration merging](https://www.typescriptlang.org/docs/handbook/declaration-merging.html), types don't. Declaration merging can be useful when working with third party modules where you patch or extend objects defined in the module. You can use declaration merging to update the type signature to match. 
+
+I'm going to follow the heuristic in the TypeScript handbook to use interfaces where possible.
 
 # Common Code
 
-* Identify code in `VirtualList.tsx` that can be shared with `VirtualGrid.tsx` and move it into a common `VirtualBase.ts` source file
-* Current `VirtualList.tsx` contains three kinds of content
+Before copying `VirtualList.tsx` as my starting point for `VirtualGrid.tsx`, I need to take one final pass through. Any code that can be shared with `VirtualGrid.tsx` will be moved into a common `VirtualBase.ts` source file. Currently `VirtualList.tsx` contains three kinds of content:
   * A bunch of TypeScript declarations that define the interface to `VirtualList`
   * Utility functions
   * The VirtualList function component itself which in turn consists of
@@ -36,18 +36,15 @@ Opening paragraph.
     * Calls to utility functions
     * The JSX rendering loop
 
-* The code is structured into hooks and utility functions that handle scrolling in a single dimension
-* The idea is that these can be reused with one instance (vertical) of each in `VirtualList` and two instances (vertical and horizontal) in `VirtualGrid`.
-* Single dimension utility functions are obvious candidates for common code
-* Single dimension interfaces, like `ItemOffsetMapping`, can also be moved out
-* The remaining interfaces, like `VirtualListProps` contain a variety of properties. Some are component level properties that would be common to both `VirtualList` and `VirtualGrid`. Some are component level properties unique to each component. The remainder are dimensional properties. 
-* I can break out the common properties as `VirtualBaseProps` which `VirtualListProps` can then extend from.
-* I could use a sub-object for the dimensional properties and include once instance in `VirtualListProps` and two instances in `VirtualGridProps`. Makes the interface unwieldy to use for the client. They don't care whether I'm sharing implementation internally. React props are usually flat. 
-* Decided to just move common component properties to common code and otherwise have separate, flat `VirtualListProps` and `VirtualGridProps`.
+Single dimension utility functions are obvious candidates for common code, as are single dimension interfaces like `ItemOffsetMapping`. The remaining interfaces, like `VirtualListProps`, contain a variety of properties. Some are component level properties that would be common to both `VirtualList` and `VirtualGrid`. Some are component level properties unique to each component. The remainder are dimensional properties. 
+
+I can break out the common properties as `VirtualBaseProps`, which `VirtualListProps` can extend from. I could use a sub-object for the dimensional properties and include one instance in `VirtualListProps` and two instances in `VirtualGridProps`. However, it would make the interface unwieldy to use for the client. They don't care whether I'm sharing implementation internally. React props are usually flat.
+
+I decided to move just the common component properties to `VirtualBaseProps` and otherwise have separate, flat `VirtualListProps` and `VirtualGridProps`.
 
 # Declarations
 
-* Here's the declarations from `VirtualList.tsx` after the refactoring
+Here's the declarations from `VirtualList.tsx` after the refactoring.
 
 ```
 export interface VirtualListItemProps extends VirtualBaseItemProps {
@@ -71,8 +68,7 @@ export interface VirtualListProxy {
 const defaultItemKey = (index: number, _data: any) => index;
 ```
 
-* Not too much left
-* Created `VirtualGrid.tsx`, copied in the content of `VirtualList.tsx`, replaced all instances of `List` with `Grid`. Then worked through replacing each item specific property and argument with row and column specific ones. Ended up with this.
+There's not much left. I created `VirtualGrid.tsx`, copied in the content of `VirtualList.tsx`, and replaced all instances of `List` with `Grid`. Then I worked through replacing each item specific property and argument with row and column specific ones. I ended up with this.
 
 ```
 export interface VirtualGridItemProps extends VirtualBaseItemProps {
@@ -96,12 +92,15 @@ export interface VirtualGridProxy {
   scrollToItem(rowIndex: number, columnIndex: number): void;
 };
 
-const defaultItemKey = (rowIndex: number, columnIndex: number, _data: any) => `${rowIndex}:${columnIndex}`;
+const defaultItemKey = (rowIndex: number, columnIndex: number, _data: any) 
+  => `${rowIndex}:${columnIndex}`;
 ```
+
+Painless so far. 
 
 # Function Component Setup
 
-* Painless so far. Onto the body of the function component. Same process but also replacing item specific custom hooks and calls to utility functions with row and column specific ones. Here's the hook declarations and setup from `VirtualList`, before we get to the JSX.
+Onto the body of the function component. It's the same basic process but now I also need to replace item specific custom hooks and calls to utility functions with row and column specific ones. Here's the hook declarations and setup from `VirtualList`, before we get to the JSX.
 
 ```
   const outerRef = React.useRef<HTMLDivElement>(null);
@@ -130,7 +129,7 @@ const defaultItemKey = (rowIndex: number, columnIndex: number, _data: any) => `$
   const [startIndex, startOffset, sizes] = getRangeToRender(itemCount, itemOffsetMapping, height, scrollOffset);
 ```
 
-and here's the equivalent for `VirtualGrid.tsx`
+Here's the equivalent for `VirtualGrid.tsx`.
 
 ```
   const outerRef = React.useRef<HTMLDivElement>(null);
@@ -163,9 +162,13 @@ and here's the equivalent for `VirtualGrid.tsx`
   const [startColumnIndex, startColumnOffset, columnSizes] = getRangeToRender(columnCount, columnOffsetMapping, width, scrollColumnOffset);
 ```
 
+It was a little more fiddly but still a pretty mechanical process. 
+
 # Function Component JSX
 
-A little more fiddly but still a pretty mechanical process. That leaves the meat of the function component - the JSX rendering. For `VirtualList` I wrote some far too clever code that involved an iteration over the item sizes array.
+That leaves the meat of the function component - the JSX rendering. For `VirtualList` I wrote some [far too clever code]({% link _posts/2024-02-19-modern-react-virtual-scroll-grid-4.md %}) that involved an iteration over the item sizes array.
+
+{% raw %}
 
 ```
     <div onScroll={onScroll} ref={outerRef} style={{ position: "relative", height, width, overflow: "auto", willChange: "transform" }}>
@@ -182,15 +185,19 @@ A little more fiddly but still a pretty mechanical process. That leaves the meat
     </div>
 ```
 
+{% endraw %}
+
 For `VirtualGrid` I'm going to need nested loops over the rows and then over the columns within each row. Wish me luck. 
 
 I used the same mechanical process to add the nested iteration and replace item references with row and column references. Unfortunately, I was soon staring at row after row of red squiggles in Visual Studio Code, trying to make sense of incomprehensible error messages.
 
 {% include candid-image.html src="/assets/images/frontend/jsx-nested-map-errors.png" alt="JSX nested array map errors" %}
 
-I thought maybe I'd pushed JSX too far. Once again the internet [came to my rescue](https://stackoverflow.com/questions/47402365/how-to-have-nested-loops-with-map-in-jsx). 
+I thought maybe I'd pushed JSX too far. Once again, the internet [came to my rescue](https://stackoverflow.com/questions/47402365/how-to-have-nested-loops-with-map-in-jsx). 
 
-You can't directly nest calls to map. The JSX compiler is expecting the result of the outer map to be a JSX element. However, that result can be a JSX element that has the inner map as a child. At first I thought I would have to render a container div per row to make it work. Then I remembered the [`<Fragment>` element](https://react.dev/reference/react/Fragment). Syntactically, it behaves like a container element but is not present in the resulting DOM. Instead, only it's children are output. 
+You can't directly nest calls to map. The JSX compiler is expecting the result of the outer map to be a JSX element. However, that result can be a JSX element that has the inner map as a child. At first I thought I would have to render a container div per row to make it work. Then I remembered the [`<Fragment>` element](https://react.dev/reference/react/Fragment). Syntactically, it behaves like a container element but is not present in the resulting DOM. Instead, only its children are output. 
+
+{% raw %}
 
 ```
     <div onScroll={onScroll} ref={outerRef} style={{ position: "relative", height, width, overflow: "auto", willChange: "transform" }}>
@@ -216,14 +223,16 @@ You can't directly nest calls to map. The JSX compiler is expecting the result o
     </div>
 ```
 
+{% endraw %}
+
 The critical extra ingredient is the `<Fragment>` and `</Fragment>` tags around the inner map. As if by magic, all the red squiggles and mad error messages disappeared. 
 
 # Testing
 
-* I should have followed the same process to create unit tests for `VirtualGrid`. However,  I couldn't resist hacking together a sample app and taking it for a spin.
+I should have followed the same process to create unit tests for `VirtualGrid`. However, I couldn't resist hacking together a sample app and taking it for a spin.
 
 ```
-const Cell = ({ rowIndex, columnIndex, style }: { rowIndex: number, columnIndex: number, style: any }) => (
+const Cell = ({ rowIndex, columnIndex, style }) => (
   <div className={ rowIndex == 0 ? "header" : "cell" } style={style}>
     { (rowIndex == 0) ? `${columnIndex}` : `${rowIndex}:${columnIndex}` }
   </div>
@@ -294,6 +303,6 @@ I decided to leave the key in place for now. I don't like leaving unresolved war
 
 # Tidying Up
 
-Yes, I did go back and add unit tests for `VirtualGrid`. I started with a copy, paste and rename of the `VirtualList` unit tests. I had to add additional lines to each test case to check the additional columns. However, I could remove test cases that only checked functionality in common components. Overall, I needed fewer lines than the original to get back to 100% coverage.
+Yes, I did go back and add unit tests for `VirtualGrid`. I started with a copy-paste-rename of the `VirtualList` unit tests. I had to add additional lines to each test case to check the additional columns. However, I could remove test cases that only checked functionality in common components, as they were already covered by `VirtualList`. Overall, I needed fewer lines than the original to get back to 100% coverage.
 
 {% include candid-image.html src="/assets/images/coverage/virtual-grid.png" alt="Back to 100% coverage after adding VirtualGrid unit tests" %}
