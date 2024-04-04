@@ -10,7 +10,7 @@ I have the main structure in place for my `VirtualList` control. All the structu
 
 The structure was chosen to enable reuse of significant amounts of functionality between List and Grid controls. All the scrolling logic has been factored into utility functions and custom hooks that handle scrolling in one dimension. To build a grid, all I need to do is reuse what I've already implemented by using separate hook instances for vertical and horizontal scrolling. 
 
-That's the theory at least. Now let's see if it holds up in practice. Maybe there's a reason why react-window needed to copy-and-paste so much of it's implementation. However, before I dive in it makes sense to cleanup what I've built so far. 
+That's the theory at least. Now let's see if it holds up in practice. Maybe there's a reason why react-window needed to copy-and-paste so much of it's implementation. However, before I dive in, it makes sense to clean up what I've built so far. 
 
 # TypeScript Interface vs Type
 
@@ -100,7 +100,7 @@ Painless so far.
 
 # Function Component Setup
 
-Onto the body of the function component. It's the same basic process but now I also need to replace item specific custom hooks and calls to utility functions with row and column specific ones. Here's the hook declarations and setup from `VirtualList`, before we get to the JSX.
+On to the body of the function component. It's the same basic process but now I also need to replace item specific custom hooks and calls to utility functions with row and column specific ones. Here's the hook declarations and setup from `VirtualList`, before we get to the JSX.
 
 ```
   const outerRef = React.useRef<HTMLDivElement>(null);
