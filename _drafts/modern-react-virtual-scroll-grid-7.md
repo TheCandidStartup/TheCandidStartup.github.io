@@ -6,7 +6,7 @@ tags: frontend
 
 So far I've written six articles in this "Modern React Virtual Scroll Grid" [series]({% link _posts/2024-01-29-modern-react-virtual-scroll-grid.md %}), with a four article detour into [unit testing]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) my work, all without attempting to make a grid. That changes today.
 
-I have the main structure in place for my `VirtualList` control. All the structurally significant features are [done]({% link _drafts/modern-react-virtual-scroll-grid-6.md %}). There's lots of functionality to fill out to get feature parity with [react-window](https://github.com/bvaughn/react-window), but it's all stuff that should work within the existing structure.
+I have the main structure in place for my `VirtualList` control. All the structurally significant features are [done]({% link _posts/2024-04-08-modern-react-virtual-scroll-grid-6.md %}). There's lots of functionality to fill out to get feature parity with [react-window](https://github.com/bvaughn/react-window), but it's all stuff that should work within the existing structure.
 
 The structure was chosen to enable reuse of significant amounts of functionality between List and Grid controls. All the scrolling logic has been factored into utility functions and custom hooks that handle scrolling in one dimension. To build a grid, all I need to do is reuse what I've already implemented by using separate hook instances for vertical and horizontal scrolling. 
 
