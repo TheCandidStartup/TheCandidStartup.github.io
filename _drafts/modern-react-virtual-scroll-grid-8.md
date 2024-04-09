@@ -72,11 +72,11 @@ export interface ScrollState {
 export interface VirtualScroll extends ScrollState {
   renderSize: number;
 
-  // Returns updated scrollOffset. Caller should update scroll bar position if different from value passed in. 
+  // Returns updated scrollOffset to apply to scroll bar if changed 
   onScroll(clientExtent: number, scrollExtent: number, scrollOffset: number): number;
 
   // Scroll to offset in logical space returning offset to update scroll bar position to
-  doScrollTo(offset: number): number;
+  doScrollTo(offset: number, clientExtent: number): number;
 };
 
 export function useVirtualScroll(totalSize: number): VirtualScroll;
@@ -121,7 +121,7 @@ and here's the updated integration
   React.useImperativeHandle(ref, () => {
     return {
       scrollTo(offset: number): void {
-        outerRef.current?.scrollTo(0, doScrollTo(offset));
+        outerRef.current?.scrollTo(0, doScrollTo(offset, outerRef.current?.clientHeight));
       },
     }
   }, [ itemOffsetMapping ]);
@@ -143,3 +143,15 @@ Not too different. Mostly minor changes to the existing lines of code. The only 
 
 # Implementation
 
+# Problems
+
+* Scroll To item near end of penultimate page
+  * Items 86-89? on small scale 100 item test
+  * Page is positioned very near to the bottom of the container, then physically can't scroll down far enough to get item at top
+* At very large number of rows (trillions) once you do small scale scroll from first to second page can no longer scroll back
+  * Scale factor so large that first two pages are positioned on top of each other right against top of container
+  * Can't physically scroll up as you're at top
+* `ScrollTo` middle item, physical scroll position a little before the center of the scroll bar
+* Set `scrollTop` to center of scroll bar, item displayed is a few after the middle item
+* If you `ScrollTo` item vs manipulate `scrollTop` to get the same item in view, end up with scroll bar in different positions
+  * The SlickGrid code uses slightly different expressions for calculating current page in each case
