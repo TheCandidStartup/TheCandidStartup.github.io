@@ -143,15 +143,123 @@ Not too different. Mostly minor changes to the existing lines of code. The only 
 
 # Implementation
 
-# Problems
+The paged scrolling implementation in SlickGrid is contained within a [6000 line source file](https://github.com/6pac/SlickGrid/blob/master/src/slick.grid.ts). Luckily, the paged scrolling part is only around 50 lines of code at four locations. The easiest way to find it is to search for "cj" within the source file. Unfortunately, there are few meaningful comments and variable names that only one to two characters long. 
 
-* Scroll To item near end of penultimate page
-  * Items 86-89? on small scale 100 item test
+I extracted the relevant code, made the variable names more meaningful and integrated it into [`useVirtualScroll.ts`](https://github.com/TheCandidStartup/react-virtual-scroll-grid/blob/398183774c1cf6bbdfdd2d6f896c7d1239718579/src/useVirtualScroll.ts). Let's look at the `useVirtualScroll`, `doScrollTo` and `onScroll` functions separately.
+
+## useVirtualScroll
+
+```
+const MAX_SUPPORTED_CSS_SIZE = 6000000;
+const MIN_NUMBER_PAGES = 100;
+
+export function useVirtualScroll(totalSize: number): VirtualScroll {
+  let renderSize=0, pageSize=0, numPages=0, scaleFactor=0;
+  if (totalSize < MAX_SUPPORTED_CSS_SIZE) {
+    // No paging needed
+    renderSize = pageSize = totalSize;
+    numPages = 1;
+    scaleFactor = 0;
+  } else {
+    // Break into pages
+    renderSize = MAX_SUPPORTED_CSS_SIZE;
+    pageSize = renderSize / MIN_NUMBER_PAGES;
+    numPages = Math.floor(totalSize / pageSize);
+    scaleFactor = (totalSize - renderSize) / (numPages - 1);
+  }
+
+  const [scrollState, setScrollState] = useState(initValue);
+  return {...scrollState, renderSize, onScroll, doScrollTo} as const;
+}
+```
+
+There's not much left in `useVirtualScroll` once you split out the `doScrollTo` and `onScroll` definitions. We setup some derivative props based on the `totalSize` input prop, declare state and return what's relevant to our caller. 
+
+The critical decision is whether paging is needed at all. If the total size of the container is small enough there's no paging needed. We define the derivative props to use a single page spanning the container. Everything will behave as before.
+
+If the container is too large, we setup for paging. SlickGrid has some complicated code that tries to dynamically determine the size at which a container would break. Unless the browser is Firefox, where the dynamic code doesn't work, in which a hardcoded limit of six million pixels is used.
+
+I prefer the simplicity of using the same limit for all browsers. I don't want to chase after obscure bugs caused by subtle differences in behavior. A six million pixel container should be plenty. Each page is sixty thousand pixels so there are at least 100 pages. Even on the highest resolution monitor it will take a lot of scrolling before you get to a page boundary. 
+
+## doScrollTo
+
+```
+  function doScrollTo(offset: number, clientExtent: number) {
+    const safeOffset = Math.min(totalSize - clientExtent, Math.max(offset, 0));
+    const scrollDirection = (scrollState.scrollOffset + scrollState.renderOffset) <= safeOffset ? 'forward' : 'backward';
+    const page = Math.min(numPages - 1, Math.floor(safeOffset / pageSize));
+    const renderOffset = Math.round(page * scaleFactor);
+    const scrollOffset = safeOffset - renderOffset;
+
+    setScrollState({ scrollOffset, renderOffset, page, scrollDirection });
+    return scrollOffset;
+  }
+```
+
+## onScroll
+
+```
+  function onScroll(clientExtent: number, scrollExtent: number, scrollOffset: number) {
+    if (scrollState.scrollOffset == scrollOffset) {
+      // No need to change state if scroll position unchanged
+      return scrollOffset;
+    }
+
+    // Prevent Safari's elastic scrolling from causing visual shaking when scrolling past bounds.
+    let newOffset = Math.max(0, Math.min(scrollOffset, scrollExtent - clientExtent));
+    const newScrollDirection = scrollState.scrollOffset <= newOffset ? 'forward' : 'backward';
+
+    // Switch pages if needed
+    let newPage, newRenderOffset;
+    let retScrollOffset = scrollOffset;
+    const scrollDist = Math.abs(newOffset - scrollState.scrollOffset);
+    if (scrollDist < clientExtent) {
+      // Scrolling part of visible window, don't want to skip items, so can't scale up movement
+      // If we cross page boundary we need to reset scroll bar position back to where it should be at start of page
+      newPage = Math.min(numPages - 1, Math.floor((scrollOffset + scrollState.renderOffset) / pageSize));
+      newRenderOffset = Math.round(newPage * scaleFactor);
+      if (newPage != scrollState.page) {
+        // Be very intentional about when we ask caller to reset scroll bar
+        // Don't want to trigger event loops
+        newOffset = scrollOffset + scrollState.renderOffset - newRenderOffset;
+        retScrollOffset = newOffset;
+      }
+    } else {
+      // Large scale scrolling, choosing page from a rolodex
+      if (renderSize === clientExtent) {
+        newPage = 0;
+      } else {
+        newPage = Math.min(numPages - 1, Math.floor(newOffset * ((totalSize - clientExtent) / (renderSize - clientExtent)) * (1 / pageSize)));
+      }
+      newRenderOffset = Math.round(newPage * scaleFactor);
+    }
+
+    setScrollState({ scrollOffset: newOffset, renderOffset: newRenderOffset, page: newPage, scrollDirection: newScrollDirection });
+    return retScrollOffset;
+  }
+```
+
+# Small Scale Testing
+
+{% include candid-iframe.html src="/assets/dist/modern-react-scroll-grid-8a/index.html" width="100%" height="fit-content" %}
+
+* `ScrollTo` item near end of penultimate page
+  * Items 87-89? on small scale 100 item test
   * Page is positioned very near to the bottom of the container, then physically can't scroll down far enough to get item at top
+* Manual scroll does let you scroll 89 to top of window but response to cursor drag feels strange, like multiple page crossings
+  * Looking at rendered elements in debugger tools, the last few items are positioned off the end of the inner container which in turn changes the extent you can scroll to
+* `ScrollTo` middle item, physical scroll position a little before the center of the scroll bar
+  * Set `scrollTop` to center of scroll bar, item displayed is a few after the middle item
+  * Page layout has tops of pages evenly spread from 0 to containerSize-pageSize, so position of center biased towards top
+
+
+# Ultimate Power!
+
+{% include candid-iframe.html src="/assets/dist/modern-react-scroll-grid-8b/index.html" width="100%" height="fit-content" %}
+
 * At very large number of rows (trillions) once you do small scale scroll from first to second page can no longer scroll back
   * Scale factor so large that first two pages are positioned on top of each other right against top of container
   * Can't physically scroll up as you're at top
-* `ScrollTo` middle item, physical scroll position a little before the center of the scroll bar
-* Set `scrollTop` to center of scroll bar, item displayed is a few after the middle item
-* If you `ScrollTo` item vs manipulate `scrollTop` to get the same item in view, end up with scroll bar in different positions
+* If you `ScrollTo` item vs manipulate `scrollTop` to get the same item in view, end up with scroll bar in slightly different positions
   * The SlickGrid code uses slightly different expressions for calculating current page in each case
+  * Has to make sure that dragging scrollbar to end of range of motion (containerSize-clientSize) will result in last page being selected
