@@ -171,7 +171,7 @@ There's not much left in `useVirtualScroll` once you split out the `doScrollTo` 
 
 The critical decision is whether paging is needed at all. If the total size of the grid is small enough there's no paging needed. We define the derivative props to use a single page spanning the container. Everything will behave as before.
 
-If the size is too large, we setup for paging. SlickGrid has some complicated code that tries to dynamically determine the size at which a container would break. Unless the browser is Firefox, where the dynamic code doesn't work, in which a hardcoded limit of six million pixels is used.
+If the size is too large, we set up for paging. SlickGrid has some complicated code that tries to dynamically determine the size at which a container would break. Unless the browser is Firefox, where the dynamic code doesn't work, in which a hardcoded limit of six million pixels is used.
 
 I prefer the simplicity of using the same limit for all browsers. I don't want to chase after obscure bugs caused by subtle differences in behavior. A six million pixel container should be plenty. Each page is sixty thousand pixels so there are at least 100 pages. Even on the highest resolution monitor it will take a lot of scrolling before you get to a page boundary. 
 
@@ -242,9 +242,7 @@ Now we get to the complicated bit. We start with an early out if nothing has cha
   }
 ```
 
-Next, we choose between two separate implementations depending on whether we're scrolling less than the viewport height or more. For small scale scrolling we convert the offset to grid space using the current page's `renderOffset` and then see whether we've crossed the boundary to a new page. If so, we convert back to container space using the new page's `renderOffset`, and make sure we return the updated offset to our caller so they can change the scroll bar position to match. 
-
-The code is careful to ensure that the `scrollOffset` returned is different from the one passed in only when small scale scrolling to a new page. 
+Next, we choose between two separate implementations depending on whether we're scrolling less than the viewport height or more. For small scale scrolling we convert the offset to grid space using the current page's `renderOffset` and then see whether we've crossed the boundary to a new page. If so, we convert back to container space using the new page's `renderOffset`, and make sure we return the updated offset to our caller so they can change the scroll bar position to match. The code is careful to ensure that only small scale scrolling to a new page returns a changed `scrollOffset`. 
 
 The other side of the branch implements the metaphorical page rolodex. It divides the valid range of the scroll bar into pages in container space and then sees which page the current `scrollOffset` selects.
 
@@ -254,17 +252,17 @@ In the end I realized that it's using a scale factor that maps the largest valid
 
 # Functional Testing
 
-The code is integrated. I vaguely understand what it's trying to do. Now to find out if it works. I could have created a test app with a million rows and had a play. However, at that kind of scale it's hard to understand what's going on. Each page contains twenty thousand items. I'd be scrolling a long time before I reached a page boundary. It's not practical to scroll through the entire list in detail.
+The code is integrated. I vaguely understand what it's trying to do. Now to find out if it works. I could have created a test app with a million rows and had a play. However, at that kind of scale it's hard to understand what's going on. Each page contains two thousand items. I'd be scrolling a long time before I reached a page boundary. It's not practical to scroll through the entire list in detail.
 
-Instead I kept my existing 100 item test app and hacked my `useVirtualScroll` implementation to enable paging for containers larger than 1500, half the size of my grid, with a total of 10 pages. Each page is a little bigger than the height of the viewport. I can scroll through the entire list in detail, crossing page boundaries frequently. The fewer pages I have, the more noticeable the jump in scroll bar position during small scale scrolling.
+Instead, I kept my existing 100 item test app and hacked my `useVirtualScroll` implementation to enable paging for containers larger than 1500, half the size of my grid, with a total of 10 pages. Each page is a little bigger than the height of the viewport. I can scroll through the entire list in detail, crossing page boundaries frequently. The fewer pages I have, the more noticeable the jump in scroll bar position during small scale scrolling.
 
-Give it a try. I wonder if you'll notice the same things I did. 
+Give it a try. I wonder if you'll notice the same things I did. Note that I used Chrome for my initial testing.
 
 {% include candid-iframe.html src="/assets/dist/modern-react-scroll-grid-8a/index.html" width="100%" height="fit-content" %}
 
 It seems functional, if a little janky. I can drag the scroll bar from top to bottom and see the entire list. If you do it slowly enough you can see the scroll bar jumping around as you cross page boundaries. If you drag it quickly, activating the large scale scroll behavior, it behaves more naturally. However, it feels somewhat sticky as you get close to the bottom. You think you've got to the bottom and then find you need to keep pulling the scroll bar down.
 
-If you focus on the content and use the arrow keys you can step roughly an item at a time through the whole list. You can use "Scroll To Item" to jump to any item in the list. However, something weird happens for items 87, 88 and 89. Item 86 appears at the top of the viewport instead. Even weirder, if you focus on the item and then use the arrow keys to scroll manually, you can get those items to the top. 
+If you focus on the content and use the arrow keys you can step roughly an item at a time through the whole list. You can use "Scroll To Item" to jump to any item in the list. However, something weird happens for items 87, 88 and 89. Item 86 appears at the top of the viewport instead. However, if you focus on the item and then use the arrow keys to scroll manually, you can get those items to the top. 
 
 It took me a while to work out what the problem was. Have another look at the diagram showing how pages are laid out in container space.
 
@@ -274,13 +272,13 @@ Items 87, 88 and 89 are the last items on the penultimate page (the red one in t
 
 The rendering logic is to position items using the offset defined by the first rendered item's page. However, when a page boundary is in view, you end up using that offset for the top items on the next page. Ordinarily, that wouldn't be a problem. In this case, with the page being positioned so close to the bottom of the container, it means that the last items rendered are positioned beyond the end of the container. 
 
-The browser handles this by extending the size of the region being scrolled over. That's why scrolling manually works. The valid scroll range is now bigger so you can scroll down, which extends the range again. That's why scrolling feels sticky close to the bottom. 
+Chrome handles this by extending the size of the region being scrolled over (Safari and Firefox behave differently). That's why scrolling manually works. The valid scroll range is now bigger so you can scroll down, which extends the range again. That's why scrolling feels sticky close to the bottom. 
 
 I also noticed a more minor problem. If you scroll to item 50 at the center of the list, the scroll bar isn't quite in the middle of its range. Using the browser debugging tools you can see that `scrollTop` is at 676 rather than 750. If you scroll to item 49, the scroll bar is too far the other way at 814. 
 
 Once again the diagram explains what's going on. Item 49 and 50 are on different pages in the middle of the list. Imagine that item 49 is the last item on the green page and item 50 is the top item on the red page. The overlapping layout means that item 50 is before the center of the container and item 49 after it. 
 
-The effect is amplified by using only 10 pages. For a real large scale grid with at least a 100 pages, the error is at most 1%. Should be barely noticeable. 
+The effect is amplified by using only 10 pages. For a real large scale grid with a 100 pages, the error is at most 1%. Should be barely noticeable. 
 
 # Ultimate Power!
 
@@ -292,13 +290,15 @@ Try it out, if you feel you can handle the ultimate power of a trillion rows. Th
 
 It actually works. You can scroll from item 1 all the way to item 999,999,999,999. 
 
-The same problems I saw with the small scale example are also here, now that I know where to look. Each page contains 20,000 items. That puts the end of the penultimate page at item 999,999,979,999. Scroll to it and you'll see that it appears at the bottom of the viewport instead of the top.
+The same problems I saw with the small scale example are also here, now that I know where to look. Each page contains 2000 items. That puts the end of the penultimate page at item 999,999,997,999. Scroll to it and you'll see that it appears at the bottom of the viewport instead of the top.
 
 There are so many pages that there's very little space from one to the next. Actually, there's 50 million pages, which means that there's 8 pages for every pixel in the container. The penultimate page is on top of the final page, right up against the bottom of the container. 
 
-Which leads to a new problem at the top end of the container. Scroll to item 20,000. Focus on the items and use the arrow keys to scroll up and down across the boundary between the first and second page. 
+Which leads to a new problem at the top end of the container. Scroll to item 2000. Focus on the items and use the arrow keys to scroll up and down across the boundary between the first and second page. 
 
-You get stuck. You can't scroll back up past item 19999. The second page is positioned on top of the first, right at the top of the container. The browser thinks you're trying to scroll up from the top of the container so prevents you from moving at all. 
+You get stuck. You can't scroll back up past item 1999. The second page is positioned on top of the first, right at the top of the container. The browser thinks you're trying to scroll up from the top of the container so prevents you from moving at all. 
+
+The pages are so close together that the same problems appear for small multiples of 2000 items. For example, you still get stuck scrolling back from 20,000 items. It's fine at 200,000 items. 
 
 There is some good news. Scroll to the middle of the list, items 500,000,000,000 and 499,999,999,999. You'll see that the scroll bar is very close to the center of it's range, with only a small jump as you move between the two items. Setting the scroll bar to the exact center of its range brings up item 500,020,000,966. An error of about 0.4%.
 
