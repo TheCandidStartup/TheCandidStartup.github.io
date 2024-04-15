@@ -27,7 +27,7 @@ I'm going to follow the heuristic in the TypeScript handbook to use interfaces w
 
 # Common Code
 
-Before copying `VirtualList.tsx` as my starting point for `VirtualGrid.tsx`, I need to take one final pass through. Any code that can be shared with `VirtualGrid.tsx` will be moved into a common `VirtualBase.ts` source file. Currently `VirtualList.tsx` contains three kinds of content:
+Before copying `VirtualList.tsx` as my starting point for `VirtualGrid.tsx`, I need to take one final pass through the code. Any code that can be shared with `VirtualGrid.tsx` will be moved into a common `VirtualBase.ts` source file. Currently `VirtualList.tsx` contains three kinds of content:
   * A bunch of TypeScript declarations that define the interface to `VirtualList`
   * Utility functions
   * The VirtualList function component itself which in turn consists of
