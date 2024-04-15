@@ -280,11 +280,11 @@ Once again the diagram explains what's going on. Item 49 and 50 are on different
 
 The effect is amplified by using only 10 pages. For a real large scale grid with a 100 pages, the error is at most 1%. Should be barely noticeable. 
 
-# Ultimate Power!
+# Unlimited Power!
 
 Talking of real large scale grids, it's time to go the other way. I've found bugs I might not have noticed by looking at a small scale example. Now let's see what we find by going super large. I reverted my hacked-in changes to `useVirtualScroll` and changed the sample app to include more rows. Lots more rows. I started at a million and kept making it bigger.
 
-Try it out, if you feel you can handle the ultimate power of a trillion rows. That's 1,000,000,000,000.
+Try it out, if you feel you can handle the power of a trillion rows. That's 1,000,000,000,000.
 
 {% include candid-iframe.html src="/assets/dist/modern-react-scroll-grid-8b/index.html" width="100%" height="fit-content" %}
 
