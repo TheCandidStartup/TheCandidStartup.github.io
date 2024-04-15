@@ -7,7 +7,7 @@ tags: frontend
 {% capture rvs4_url %}{% link _posts/2023-11-27-react-virtual-scroll-grid-4.md %}{% endcapture %}
 I started on this journey when I [couldn't find]({% link _posts/2023-12-04-react-virtual-scroll-grid-5.md %}) an existing grid control that supports millions of rows *and* columns. Now I'm finally ready to integrate [SlickGrid's paged scrolling system]({{ rvs4_url | append: "#slickgrid" }}). SlickGrid supports a virtually unlimited number of rows.
 
-I've structured my code base so that virtual scrolling in a single dimension is implemented in the `useVirtualScroll` custom hook. `VirtualList` uses one instance of `useVirtualScroll` for vertical scrolling. `VirtualGrid` uses two instances for vertical and horizontal scrolling. In theory, I can enhance `useVirtualScroll` to use paged scrolling and end up with a grid that supports virtually unlimited numbers of rows and columns. 
+I've [structured my code base]({% link _posts/2024-04-15-modern-react-virtual-scroll-grid-7.md %}) so that virtual scrolling in a single dimension is implemented in the `useVirtualScroll` custom hook. `VirtualList` uses one instance of `useVirtualScroll` for vertical scrolling. `VirtualGrid` uses two instances for vertical and horizontal scrolling. In theory, I can enhance `useVirtualScroll` to use paged scrolling and end up with a grid that supports virtually unlimited numbers of rows and columns. 
 
 # Paged Scrolling
 
@@ -171,9 +171,9 @@ There's not much left in `useVirtualScroll` once you split out the `doScrollTo` 
 
 The critical decision is whether paging is needed at all. If the total size of the grid is small enough there's no paging needed. We define the derivative props to use a single page spanning the container. Everything will behave as before.
 
-If the size is too large, we set up for paging. SlickGrid has some complicated code that tries to dynamically determine the size at which a container would break. Unless the browser is Firefox, where the dynamic code doesn't work, in which a hardcoded limit of six million pixels is used.
+If the size is too large, we set up for paging. SlickGrid has some complicated code that tries to dynamically determine the size at which a container would break. The dynamic code doesn't work with Firefox, in which case a hardcoded limit of six million pixels is used.
 
-I prefer the simplicity of using the same limit for all browsers. I don't want to chase after obscure bugs caused by subtle differences in behavior. A six million pixel container should be plenty. Each page is sixty thousand pixels so there are at least 100 pages. Even on the highest resolution monitor it will take a lot of scrolling before you get to a page boundary. 
+I prefer the simplicity of using the same limit for all browsers. I don't want to chase after obscure bugs caused by subtle differences in behavior. A six million pixel container should be plenty. Each page is sixty thousand pixels and there are at least 100 pages. Even on the highest resolution monitor it will take a lot of scrolling before you get to a page boundary. 
 
 The `scaleFactor` variable (called `cj` in the SlickGrid code) is used to calculate the rendering offset for each page.
 
@@ -203,7 +203,7 @@ Finally, we update the state and return the scroll offset that the calling compo
 
 ## onScroll
 
-Now we get to the complicated bit. We start with an early out if nothing has changed. As in `doScrollTo` we ensure the offset is valid (some browsers like to play games with animated scroll effects) and calculate the scroll direction. Note that `scrollOffset` is in container space rather than grid space. 
+Now we get to the complicated bit. We start with an early out if nothing has changed. As in `doScrollTo`, we ensure the offset is valid (some browsers like to play games with animated scroll effects) and calculate the scroll direction. Note that `scrollOffset` is in container space rather than grid space. 
 
 ```
   function onScroll(clientExtent: number, scrollExtent: number, scrollOffset: number) {
@@ -262,7 +262,7 @@ Give it a try. I wonder if you'll notice the same things I did. Note that I used
 
 It seems functional, if a little janky. I can drag the scroll bar from top to bottom and see the entire list. If you do it slowly enough you can see the scroll bar jumping around as you cross page boundaries. If you drag it quickly, activating the large scale scroll behavior, it behaves more naturally. However, it feels somewhat sticky as you get close to the bottom. You think you've got to the bottom and then find you need to keep pulling the scroll bar down.
 
-If you focus on the content and use the arrow keys you can step roughly an item at a time through the whole list. You can use "Scroll To Item" to jump to any item in the list. However, something weird happens for items 87, 88 and 89. Item 86 appears at the top of the viewport instead. However, if you focus on the item and then use the arrow keys to scroll manually, you can get those items to the top. 
+If you focus on the content and use the arrow keys you can step roughly an item at a time through the whole list. You can use "ScrollToItem" to jump to any item in the list. However, something weird happens for items 87, 88 and 89. Item 86 appears at the top of the viewport instead. However, if you focus on the item and then use the arrow keys to scroll manually, you can get those items to the top. 
 
 It took me a while to work out what the problem was. Have another look at the diagram showing how pages are laid out in container space.
 
@@ -270,7 +270,7 @@ It took me a while to work out what the problem was. Have another look at the di
 
 Items 87, 88 and 89 are the last items on the penultimate page (the red one in the diagram). Pages are spaced evenly from top to bottom of the container. The penultimate page ends up being placed 5 items up from the bottom of the container. As far as the browser is concerned, I'm trying to scroll beyond the valid range for the scroll bar and it clamps the scroll offset at item 86. 
 
-The rendering logic is to position items using the offset defined by the first rendered item's page. However, when a page boundary is in view, you end up using that offset for the top items on the next page. Ordinarily, that wouldn't be a problem. In this case, with the page being positioned so close to the bottom of the container, it means that the last items rendered are positioned beyond the end of the container. 
+There's another problem. The rendering logic is to position items using the offset defined by the first rendered item's page. However, when a page boundary is in view, you end up using that offset for the top items on the next page. Ordinarily, that wouldn't be a problem. In this case, with the page being positioned so close to the bottom of the container, it means that the last items rendered are positioned beyond the end of the container. 
 
 Chrome handles this by extending the size of the region being scrolled over (Safari and Firefox behave differently). That's why scrolling manually works. The valid scroll range is now bigger so you can scroll down, which extends the range again. That's why scrolling feels sticky close to the bottom. 
 
@@ -300,7 +300,7 @@ You get stuck. You can't scroll back up past item 1999. The second page is posit
 
 The pages are so close together that the same problems appear for small multiples of 2000 items. For example, you still get stuck scrolling back from 20,000 items. It's fine at 200,000 items. 
 
-There is some good news. Scroll to the middle of the list, items 500,000,000,000 and 499,999,999,999. You'll see that the scroll bar is very close to the center of it's range, with only a small jump as you move between the two items. Setting the scroll bar to the exact center of its range brings up item 500,020,000,966. An error of about 0.4%.
+There is some good news. Jump to the middle of the list, items 500,000,000,000 and 499,999,999,999. You'll see that the scroll bar is very close to the center of it's range, with only a small jump as you move between the two items. Setting the scroll bar to the exact center of its range brings up item 500,020,000,966. An error of about 0.4%.
 
 # Conclusion
 
