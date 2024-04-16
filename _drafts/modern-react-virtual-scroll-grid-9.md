@@ -24,7 +24,12 @@ Wise words
 
 {% include candid-iframe.html src="/assets/dist/modern-react-scroll-grid-9b/index.html" width="100%" height="fit-content" %}
 
-## Unlimited Power Grid
+## Trillion<sup>2</sup> Grid
+
+{% include candid-iframe.html src="/assets/dist/modern-react-scroll-grid-9c/index.html" width="100%" height="fit-content" %}
 
 # Unit Tests
 
+* `/* istanbul ignore else */`
+* Keeping `useVirtualScroll` logic only paid off - much easier to test
+* Very painful putting enough scaffolding in place to test VirtualGrid and VirtualList move of scroll bar with small scale scrolling
