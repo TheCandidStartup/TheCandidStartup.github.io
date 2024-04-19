@@ -89,7 +89,7 @@ The new implementation again has separate logic for the first page, last page an
   }
 ```
 
-This separation has the side effect of removing any dependency on viewport size. The unavailable part of the scroll bar range covered by the thumb is always within the last page, so we don't have to account for it in the logic for the interior pages. We just need to map an offset within `pageSize -> renderSize-pageSize` to an offset within `pageSize -> totalSize-pageSize`. We again use the trick of shifting everything up by a page so that the expression reduces to a simple scale factor.
+This separation has the side effect of removing any dependency on thumb size. The unavailable part of the scroll bar range covered by the thumb is always within the last page, so we don't have to account for it in the logic for the interior pages. We just need to map an offset within `pageSize -> renderSize-pageSize` to an offset within `pageSize -> totalSize-pageSize`. We again use the trick of shifting everything up by a page so that the expression reduces to a simple scale factor.
 
 # The Demo
 
@@ -137,13 +137,13 @@ I did get back to 100% test coverage, but I had to cheat. My `scrollTo` implemen
   }
 ```
 
-I'm accessing the outer div via a React ref. The ref is initially null and then gets initialized properly once the component has rendered. TypeScript quite rightly points out that `outerRef.current` has a type of `HTMLDivElement | null`. However, the `scrollTo` method is only accessible after the component has rendered so should never be null.
+I'm accessing the outer div via a React ref. The ref is initially null and then gets initialized properly once the component has rendered. TypeScript quite rightly points out that `outerRef.current` has a type of `HTMLDivElement | null`. However, the `scrollTo` method is only accessible after the component has rendered, so the ref should never be null when `scrollTo` is called.
 
 What should I do? I put in an explicit null check to keep Typescript happy and guard against any possible weird edge case. However, there's no way of writing a reasonable unit test that hits that case, so there goes my 100% coverage. 
 
 Alternatively, I could write `outer = outerRef.current as HTMLDivElement` to tell Typescript that it can never be null. Then I can get rid of the null check. However, am I really sure there's no lurking edge case that I'm unaware of? I don't want to write riskier code just to get 100% coverage.
 
-There is a third option. Istanbul let's you [add comments](https://github.com/istanbuljs/nyc#parsing-hints-ignoring-lines) to identify lines of code that it should ignore for coverage purposes. I can keep my belt and braces code without having to review the false positive every time I look at coverage. So, I added a `/* istanbul ignore else */` comment to ignore the else side of the if statement.
+There is a third option. Istanbul lets you [add comments](https://github.com/istanbuljs/nyc#parsing-hints-ignoring-lines) to identify lines of code that it should ignore for coverage purposes. I can keep my belt and braces code without having to review the false positive every time I look at coverage. So, I added a `/* istanbul ignore else */` comment to ignore the else side of the if statement.
 
 {% capture note %}
 The Vite documentation has a [warning](https://vitest.dev/guide/coverage.html#ignoring-code) that comments in TypeScript are stripped away by esbuild before Istanbul gets a chance to see them. This is another instance of out of date documentation. Vite can now use SWC for development builds which doesn't have this problem. 
