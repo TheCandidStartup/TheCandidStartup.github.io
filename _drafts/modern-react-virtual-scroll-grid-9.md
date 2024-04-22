@@ -4,7 +4,7 @@ title: >
 tags: frontend
 ---
 
-[Last time]({% link _drafts/modern-react-virtual-scroll-grid-8.md %}) we integrated SlickGrid's paged scrolling system and found that it came *really close* to working well. 
+[Last time]({% link _posts/2024-04-22-modern-react-virtual-scroll-grid-8.md %}) we integrated SlickGrid's paged scrolling system and found that it came *really close* to working well. 
 
 Close isn't good enough. Fortunately, I have to plan to fix it. 
 
