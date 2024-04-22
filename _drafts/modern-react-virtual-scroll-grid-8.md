@@ -5,7 +5,7 @@ tags: frontend
 ---
 
 {% capture rvs4_url %}{% link _posts/2023-11-27-react-virtual-scroll-grid-4.md %}{% endcapture %}
-I started on this journey when I [couldn't find]({% link _posts/2023-12-04-react-virtual-scroll-grid-5.md %}) an existing grid control that supports millions of rows *and* columns. Now I'm finally ready to integrate [SlickGrid's paged scrolling system]({{ rvs4_url | append: "#slickgrid" }}). SlickGrid supports a virtually unlimited number of rows.
+I started on this journey when I [couldn't find]({% link _posts/2023-12-04-react-virtual-scroll-grid-5.md %}) an existing grid control that supports millions of rows *and* columns. Now I'm finally ready to integrate [SlickGrid's paged scrolling system]({{ rvs4_url | append: "#slickgrid" }}). SlickGrid supports a virtually unlimited number of rows (but not columns).
 
 I've [structured my code base]({% link _posts/2024-04-15-modern-react-virtual-scroll-grid-7.md %}) so that virtual scrolling in a single dimension is implemented in the `useVirtualScroll` custom hook. `VirtualList` uses one instance of `useVirtualScroll` for vertical scrolling. `VirtualGrid` uses two instances for vertical and horizontal scrolling. In theory, I can enhance `useVirtualScroll` to use paged scrolling and end up with a grid that supports virtually unlimited numbers of rows and columns. 
 
@@ -167,7 +167,7 @@ export function useVirtualScroll(totalSize: number): VirtualScroll {
 }
 ```
 
-There's not much left in `useVirtualScroll` once you split out the `doScrollTo` and `onScroll` definitions. We setup some derivative props based on the `totalSize` input prop, declare state and return what's relevant to our caller. 
+There's not much left in `useVirtualScroll` once you split out the `doScrollTo` and `onScroll` definitions. We set up some derivative props based on the `totalSize` input prop, declare state and return what's relevant to our caller. 
 
 The critical decision is whether paging is needed at all. If the total size of the grid is small enough there's no paging needed. We define the derivative props to use a single page spanning the container. Everything will behave as before.
 
@@ -214,7 +214,11 @@ Now we get to the complicated bit. We start with an early out if nothing has cha
     let newOffset = Math.max(0, Math.min(scrollOffset, scrollExtent - clientExtent));
     const newScrollDirection = scrollState.scrollOffset <= newOffset 
       ? 'forward' : 'backward';
+```
 
+Next, we choose between two separate implementations depending on whether we're scrolling less than the viewport height or more. For small scale scrolling we convert the offset to grid space using the current page's `renderOffset` and then see whether we've crossed the boundary to a new page. If so, we convert back to container space using the new page's `renderOffset`, and make sure we return the updated offset to our caller so they can change the scroll bar position to match. The code is careful to ensure that only small scale scrolling to a new page returns a changed `scrollOffset`. 
+
+```
     let newPage, newRenderOffset;
     let retScrollOffset = scrollOffset;
     const scrollDist = Math.abs(newOffset - scrollState.scrollOffset);
@@ -226,6 +230,11 @@ Now we get to the complicated bit. We start with an early out if nothing has cha
         newOffset = scrollOffset + scrollState.renderOffset - newRenderOffset;
         retScrollOffset = newOffset;
       }
+```
+
+The other side of the branch implements the metaphorical page rolodex. It divides the valid range of the scroll bar into pages in container space and then sees which page the current `scrollOffset` selects.
+
+```
     } else {
       if (renderSize === clientExtent) {
         newPage = 0;
@@ -242,11 +251,7 @@ Now we get to the complicated bit. We start with an early out if nothing has cha
   }
 ```
 
-Next, we choose between two separate implementations depending on whether we're scrolling less than the viewport height or more. For small scale scrolling we convert the offset to grid space using the current page's `renderOffset` and then see whether we've crossed the boundary to a new page. If so, we convert back to container space using the new page's `renderOffset`, and make sure we return the updated offset to our caller so they can change the scroll bar position to match. The code is careful to ensure that only small scale scrolling to a new page returns a changed `scrollOffset`. 
-
-The other side of the branch implements the metaphorical page rolodex. It divides the valid range of the scroll bar into pages in container space and then sees which page the current `scrollOffset` selects.
-
-I spent a long time staring at this code, trying to work out whether it made sense. I even traced the code all the way back to the [commit](https://github.com/mleibman/SlickGrid/commit/33781134ba140827957aa5975279f2570cd74a69) which added paged scrolling to SlickGrid. The only additional color provide by the commit comment is "MASSIVE PITA!!!!!!!!". 
+I spent a long time staring at this code, trying to work out whether it made sense. I even traced the code all the way back to the [commit](https://github.com/mleibman/SlickGrid/commit/33781134ba140827957aa5975279f2570cd74a69) which added paged scrolling to SlickGrid. The only additional color provided by the commit comment is "MASSIVE PITA!!!!!!!!". 
 
 In the end I realized that it's using a scale factor that maps the largest valid `scrollTop` in container space to the equivalent offset in grid space. The point is to ensure that if you drag the scroll bar all the way to the end of its range, you end up choosing the last page and rendering the last items in the grid. If you're not careful, with very large grids, you might otherwise end up selecting a page a few before the end. 
 
@@ -254,7 +259,7 @@ In the end I realized that it's using a scale factor that maps the largest valid
 
 The code is integrated. I vaguely understand what it's trying to do. Now to find out if it works. I could have created a test app with a million rows and had a play. However, at that kind of scale it's hard to understand what's going on. Each page contains two thousand items. I'd be scrolling a long time before I reached a page boundary. It's not practical to scroll through the entire list in detail.
 
-Instead, I kept my existing 100 item test app and hacked my `useVirtualScroll` implementation to enable paging for containers larger than 1500, half the size of my grid, with a total of 10 pages. Each page is a little bigger than the height of the viewport. I can scroll through the entire list in detail, crossing page boundaries frequently. The fewer pages I have, the more noticeable the jump in scroll bar position during small scale scrolling.
+Instead, I kept my existing 100 item test app and hacked my `useVirtualScroll` implementation to enable paging for containers larger than 1500 pixels, half the size of my grid, with a total of 10 pages. Each page is a little bigger than the height of the viewport. I can scroll through the entire list in detail, crossing page boundaries frequently. The fewer pages I have, the more noticeable the jump in scroll bar position during small scale scrolling.
 
 Give it a try. I wonder if you'll notice the same things I did. Note that I used Chrome for my initial testing.
 
