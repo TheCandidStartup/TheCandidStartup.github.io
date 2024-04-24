@@ -50,6 +50,51 @@ Wise words
   * Fork files from existing repo into structure
   * Hoist common config and dependencies
 * TypeScript
-  * Project References vs Paths vs Internal Packages
+  * [Project References](https://moonrepo.dev/docs/guides/javascript/typescript-project-refs) vs [Path Aliases](https://medium.com/@NiGhTTraX/how-to-set-up-a-typescript-monorepo-with-lerna-c6acda7d4559) vs [Internal Packages](https://turbo.build/blog/you-might-not-need-typescript-project-references)
   * Project References too heavyweight: lots of redundant metadata to keep in sync with package.json, need to compile dependent modules before you can use IDE tooling, want to be able to use Vite transpile on demand across packages
-  * Internal packages seems hacky and needs 
+  * Internal packages only works for packages that you never intend to publish separately
+  * I'm vain enough to think that someone will want to use some of what I'm creating
+  * Paths seems like sweet spot for me
+  * Does need you to structure tsconfig so that you can have separate overall config for dev (paths defined) vs build (use module resolution)
+* Vite
+  * Split config between overall and per-project stuff
+  * Vite runtime is only for browser apps
+  * Dev experience for libraries is via Vitest unit tests and sample apps consuming library via Vite
+  * In theory Can use Vite to do production build of libraries, need to try that out
+* Converting react-virtual-scroll-grid into a monorepo
+  * First step is to convert existing repo into a monorepo with a single package and check everything still works
+  * Created a new repo with a new name - infinisheet - to be used by my entire spreadsheet project
+  * GigaSheet!
+  * Followed Github [instructions](https://docs.github.com/en/repositories/creating-and-managing-repositories/duplicating-a-repository) to mirror existing repository into new one
+  * Created `packages/react-virtual-scroll` subdir for my first package and used `git mv` to move everything from top level into package
+  * Now `npx lerna init` in root dir to configure as monorepo
+  * Doesn't do much: adds a `lerna.json` config file and root `package.json` which enables npm workspaces and adds lerna as a dev dependency.
+  * Also installs Lerna and all dependent packages, including those needed by my react-virtual-scroll workspace. Total of 946 packages using 300MB of disk space. 
+  * Now I understand comment in a blog from somebody who stopped using Lerna. Mostly due to uncertainty when maintainer changed a couple of years ago. Included throw away comment about how much smaller their package-lock.json file is now. Adding Lerna as a dev dependency has doubled the disk space used and added another 500 packages compared to my original `react-virtual-scroll-grid` repo. 
+  * All seems to work
+    * `npx lerna run build` at top level found and built my `react-virtual-scroll` workspace
+    * `npm run test --workspace=react-virtual-scroll` ran my unit tests from top level
+    * If I `cd` into the workspace I can run all my npm scripts as before, e.g. `npm run test`, `npm run build`, `npm run dev`
+  * Now need to prepare for multiple workspaces
+  * First put the typescript config setup in place with common config hoisted to top level, use of Paths to resolve source files across packages, and ability to build standalone packages that can be published
+  
+  ## Build standalone package
+
+  * Vite provides [library mode](https://vitejs.dev/guide/build.html#library-mode) for this purpose
+  * Not much detail on what all the options are for
+  * Need to add main.ts that will act as entry point and export everything defined by the package
+  * Uses `path` module which isn't in dev dependencies installed by Vite template
+  * It's a commonly used Node package (Vite itself is built on Node)
+  * Also need to install `@types/node` to resolve typescript errors for vite.config.ts
+  * Default is to build both esm and umd versions of the package
+  * UMD needs additional configuration. Decided to remove for now. I'm never going to use UMD or test that it works.
+  * Pared down build config to essentials needed for esm
+  * Build process spits out `dist/react-virtual-scroll.js` which ends with the expected exports. Good enough for now.
+
+  ## Typescript Path Aliases
+
+  * tsconfig.json and tsconfig.build.json at root and package level
+  * Config at root, files to include at package level
+  * IDE/tests vs prod build configuration
+  * tsc -p tsconfig.build.json in build script
+  
