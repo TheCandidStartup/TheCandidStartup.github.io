@@ -3,7 +3,7 @@ title: Bootstrapping a Lerna Monorepo
 tags: frontend spreadsheets
 ---
 
-So far, all the front-end development work I've done has been in the [repo](https://github.com/TheCandidStartup/react-virtual-scroll-grid) I created when [bootstrapping vite]({% link _posts/2023-10-23-bootstrapping-vite.md %}). It's starting to feel a little restrictive. 
+So far, all the front-end development work I've done has been in the [repo](https://github.com/TheCandidStartup/react-virtual-scroll-grid) I created when [bootstrapping Vite]({% link _posts/2023-10-23-bootstrapping-vite.md %}). It's starting to feel a little restrictive. 
 
 The repo is based on a template for a React app. I added my [virtual scrolling]({% link _posts/2024-01-29-modern-react-virtual-scroll-grid.md %}) components and now it's an uncomfortable mix of a React component library and a sample app. My [code coverage]({% link _posts/2024-03-18-vitest-code-coverage.md %}) metrics are distorted because it doesn't make sense to unit test a sample app. At some point the sample app will turn into a real [Spreadsheet]({% link _topics/spreadsheets.md %}) application, I'll want somewhere to run end to end tests, there'll be back-end components and more. 
 
@@ -25,7 +25,7 @@ Monorepos are a popular approach in the Javascript ecosystem. There's a [bewilde
 
 Monorepos used to be an exotic approach that depended on tooling that would work behind the back of whatever package manager you were using. Now all the major package managers (npm, yarn, pnpm) have their own first class support for [*workspaces*](https://docs.npmjs.com/cli/v10/using-npm/workspaces). Workspaces were first introduced by Yarn and then copied by the other package managers. 
 
-There's a two level structure. A top level `package.json` defines the workspaces used in the repo, and manages shared config and dependent packages. Each workspace is a subdirectory with it's own `package.json`.
+There's a two level structure. A top level `package.json` defines the workspaces used in the repo, and manages shared config and dependent packages. Each workspace is a subdirectory with its own `package.json`.
 
 Where possible, dependencies are shared between workspaces by *hoisting* them to the root level. Workspaces can be dependent on external packages or other workspaces. The package manager sets things up so that build tooling can resolve dependencies the same way regardless of which form they take. 
 
@@ -59,7 +59,7 @@ Finally, Lerna will publish packages to the npm repository for you. It compares 
 
 I'm going to create a new repo as the home for my monorepo, rather than trying to rebuild the existing repo in place. There's a few reasons. First, the monorepo has much wider scope, so needs a new name. I have lots of blog posts with links to the existing repo which I don't want to break. Second, this is all new to me and I'm likely to screw it up the first time I try it. Using a new repo means I can throw it away and start over if I get it wrong. 
 
-I'm going to use a structure that I've seen in other monorepos I've looked at. All the top level workspace stuff at the root of the hierarchy. A `packages` subdirectory containg a subdirectory for each publishable package. An `apps` subdirectory set up the same way for apps. 
+I'm going to use a structure that I've seen in other monorepos I've looked at. All the top level workspace stuff is at the root of the hierarchy. A `packages` subdirectory contains a subdirectory for each publishable package. An `apps` subdirectory is set up the same way for apps. 
 
 I'll populate that structure by cloning the content of the existing repo, moving everything related to the react components into `packages/react-virtual-scroll` and everything related to the sample app into `apps/virtual-scroll-samples`. Finally, I'll need to copy config files into both locations, adjust as needed, identify the common parts and hoist them up to the root. 
 
@@ -103,7 +103,7 @@ The overall structure uses `tsconfig.build.json` at the root level containing co
 
 Vite and Vitest are the other major parts of my tooling. Vitest shares Vite's configuration file and transformation pipeline so once Vite is properly configured, Vitest should be fine. 
 
-In [principle](https://betterprogramming.pub/lerna-monorepo-with-vite-and-storybook-e29e54559214) it's possible to split `vite.config.ts` between common config and per package setup. In practice it's fiddly. Vite configuration is a TypeScript source file which exports a call to the Vite function `defineConfig` with the desired config passed in as a `UserConfig` object literal. You need a base config which exports a wrapper around Vite's `defineConfig` which combines the package level `UserConfig` with the common config. 
+In [principle](https://betterprogramming.pub/lerna-monorepo-with-vite-and-storybook-e29e54559214), it's possible to split `vite.config.ts` between common config and per package setup. In practice it's fiddly. Vite configuration is a TypeScript source file which exports a call to the Vite function `defineConfig` with the desired config passed in as a `UserConfig` object literal. You need a base config which exports a wrapper around Vite's `defineConfig` which combines the package level `UserConfig` with the common config. 
 
 For now, I'll stick with independent `vite.config.ts` per package. I can revisit once I get everything working and have a better understanding of what's common and what's not. The Vite runtime is intended for use by browser based apps. The runtime development experience for libraries is via Vitest unit tests. I'll need to figure out whether apps and packages need separate configs. 
 
@@ -132,7 +132,7 @@ On to the fun stuff. Getting everything set up for multiple workspaces.
   
 ## Build Standalone Package
 
-I started by configuring `react-virtual-scroll` to build a library package rather than the sample app. Vite provides [library mode](https://vitejs.dev/guide/build.html#library-mode) for this purpose. Apparently, library mode has a simple and opinionated configuration for browser-oriented JavaScript framework libraries. There's not much detail on what all the options in the example code are for.
+I started by configuring `react-virtual-scroll` to build a library package rather than the sample app. Vite provides [library mode](https://vitejs.dev/guide/build.html#library-mode) for this purpose. According to the documentation, library mode has a simple and opinionated configuration for browser-oriented JavaScript framework libraries. There's not much detail on what all the options in the example code are for.
 
 ```
 export default defineConfig({
@@ -238,7 +238,7 @@ The compiler options are inherited by `tsconfig.json` at the root level, which a
 
 The `references` key was created by the Vite template when I bootstrapped my original repo. Bizarrely, it's a TypeScript project reference. As far as I can tell, it's a hack that allows the IDE to type check `vite.config.ts` correctly. Vite is a TypeScript application built on NodeJS. Your project's Vite config is a TypeScript source file which needs TypeScript compiler options appropriate for Node rather than a browser. 
 
-This pair of files is mirrored at the package level
+The use of paired `tsconfig.build.json` and `tsconfig.json` files continues at the package level. They extend the corresponding root file and specify which source files are in scope.
 
 ```
 {
@@ -259,15 +259,13 @@ All that's left is making sure that the production build uses the package's `tsc
 
 The TypeScript compiler is configured so that it only does type checking. The actual transpilation and bundling into a package is handled by Rollup invoked by `vite build`. It's easy enough to ensure that the TypeScript compiler uses the right configuration by passing it on the command line with `tsc -p tsconfig.build.json`.
 
-There isn't any obvious way of doing the same for `vite build`. I went trawling through the Rollup config options and worked out how I could pass a `tsconfig` of my choice through to the Rollup typescript plugin that handles transpilation. The build failed with a Rollup error pointing out that my compile options disable output. Which is when I realized. Rollup never used my `tsconfig.json`. It's set up for type checking, not code generation. 
+There isn't any obvious way of doing the same for `vite build`. I went trawling through the Rollup config options and worked out how I could pass a `tsconfig` of my choice through to the Rollup typescript plugin that handles transpilation. When I tried it, the build failed with a Rollup error pointing out that my compile options disable output. Which is when I realized that Rollup couldn't have used my `tsconfig.json`. It's set up for type checking, not code generation. 
 
 In the end I went trawling through the [Vite source code](https://github.com/vitejs/vite/blob/main/packages/vite/rollup.config.ts). Vite uses its own internal `tsconfig`, depending on what kind of package you want to generate. I didn't need to do anything else. 
 
 ## Separate Sample App
 
-I used `git mv` to put all the sample code for `react-virtual-scroll` into `app/virtual-scroll-samples`. I copied over and tweaked all the required configuration files. Does the IDE tooling work?
-
-No. Obviously I need to change all the imports in the sample app source code to reference `@candidstartup/react-virtual-scroll`. Now Visual Studio Code complains about missing exports from `dist/react-virtual-scroll.js`. It's picking up the built module rather than using the path aliases.
+I used `git mv` to put all the sample code for `react-virtual-scroll` into `app/virtual-scroll-samples`. I copied over and tweaked all the required configuration files. I also needed to change all the imports in the sample app source code to reference `@candidstartup/react-virtual-scroll`. Now Visual Studio Code complains about missing exports from `dist/react-virtual-scroll.js`. It's picking up the built module rather than using the path aliases.
 
 Which got me thinking. How does TypeScript know to load `main.ts` given an import from `@candidstartup/react-virtual-scroll` which is mapped to `packages/src/react-virtual-scroll`? Obviously it doesn't and ends up using module resolution instead. However, TypeScript has a [directory module resolution](https://www.typescriptlang.org/docs/handbook/modules/reference.html#directory-modules-index-file-resolution) feature which means it will automatically look for `index.ts` when asked to import from a directory. 
 
@@ -277,5 +275,7 @@ Once I renamed my entry point to be `index.ts` rather than `main.ts`, the IDE im
 
 I went back to the top level and ran `npx lerna run build` again. Lerna figured out the dependencies and first built `packages/react-virtual-scroll` and then tried to build `apps/virtual-scroll-samples`. It failed trying to import the built package due to a lack of type declarations. 
 
-I need to go back to the standalone package build and try again. I think I'm going to have to invest some time in figuring out what an npm package should ideally look like and then work out how best to built it. That will have to wait for next time. 
+Of course. The package output needs to include `dist/react-virtual.scroll.d.ts` as well as `dist/react-virtual-scroll.js`. There must be a Vite build flag to enable it. 
+
+There isn't. The more I read about the alternatives, the more unsure I am about what to do next. I think I'm going to have to invest some time in figuring out what an npm package should ideally look like and then work out how best to build it. That will have to wait for next time. 
 
