@@ -24,7 +24,7 @@ The solution is pretty simple. The first and last page need to be aligned with t
 
 This ensures that the interior pages are well away from the ends of the container. Each page is much bigger than the possible size of the viewport.
 
-Scrolling near the start and end of the scroll bar's range feels entirely normal as there's a 1:1 mapping between grid space and container space for the start and end pages. That does mean that the remaining pages are crammed into less of the scroll bar's range. However, page size is chosen so that 100 pages fit into the container. That means the remaining pages are still spread across 98% of the scroll bar's range. 
+Scrolling near the start and end of the scroll bar's range feels entirely normal as there's a 1:1 mapping between grid space and container space for the start and end pages. That does mean that the remaining pages are crammed into less of the scroll bar's range. However, page size is chosen so that 100 pages fit into the container. That means the remaining pages are spread across 98% of the scroll bar's range. 
 
 # The Implementation
 
@@ -125,7 +125,7 @@ As ever, once the fun stops, we need to make sure the new functionality is cover
 
 Keeping `useVirtualScroll` as logic only really paid off. It was very easy to test the logic at the custom hook level, including all the combinations of first page, last page, interior pages; small scale scrolling, large scale scrolling; forwards and backwards.
 
-I had one line of code to test at the component level. Making sure that a small scale scroll across the page boundary resulted in the scroll bar being moved backwards. Having to mock the browser's `scrollTo` method together with the resulting scroll events was really painful. This is a case where some form of browser based end to end testing would really have been beneficial. 
+I had one line of code to test at the component level. Making sure that a small scale scroll across the page boundary resulted in the scroll bar being moved backwards. Having to mock the browser's `scrollTo` method together with the resulting scroll events was really painful. This is a case where some form of browser based end to end testing would have been beneficial. 
 
 I did get back to 100% test coverage, but I had to cheat. My `scrollTo` implementation looks like this:
 
@@ -146,6 +146,6 @@ Alternatively, I could write `outer = outerRef.current as HTMLDivElement` to tel
 There is a third option. Istanbul lets you [add comments](https://github.com/istanbuljs/nyc#parsing-hints-ignoring-lines) to identify lines of code that it should ignore for coverage purposes. I can keep my belt and braces code without having to review the false positive every time I look at coverage. So, I added a `/* istanbul ignore else */` comment to ignore the else side of the if statement.
 
 {% capture note %}
-The Vite documentation has a [warning](https://vitest.dev/guide/coverage.html#ignoring-code) that comments in TypeScript are stripped away by esbuild before Istanbul gets a chance to see them. This is another instance of out of date documentation. Vite can now use SWC for development builds which doesn't have this problem. 
+The Vite documentation has a [warning](https://vitest.dev/guide/coverage.html#ignoring-code) that comments in TypeScript are stripped away by esbuild before Istanbul gets a chance to see them. This is another instance of out of date documentation. Vite can now use SWC for development builds, which doesn't have this problem. 
 {% endcapture %}
 {% include candid-note.html content=note %}
