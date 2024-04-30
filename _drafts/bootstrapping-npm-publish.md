@@ -3,13 +3,15 @@ title: Bootstrapping NPM Publish
 tags: frontend
 ---
 
- wise words
+wise words
 
- * Want to publish library packages for public use
- * Make it as easy as possible to find and consume packages
- * Ensure they have a good development experience
- * Support both TypeScript and vanilla JavaScript clients
- * ESM only - stop living in the past people
+* Want to publish library packages for public use
+* Make it as easy as possible to find and consume packages
+* Ensure they have a good development experience
+  * Type information available in IDE
+  * Debug through source code
+* Support both TypeScript and vanilla JavaScript clients
+* ESM only - stop living in the past people
 
 # Build Package
 
@@ -26,8 +28,8 @@ tags: frontend
 # Public Structure
 
 * Publish package using same structure as source repo
-* Generate *.js for each *.ts file
-* Generate a *.d.ts for each *.ts file
+* Generate *.js, *.js.map, *.d.ts for each *.ts file in dist folder
+* Inline source into source map for debugging
 
 Pros
 * Simple - all you need is the TypeScript compiler
@@ -41,10 +43,14 @@ Cons
 * Hard to make it work if you have other assets like CSS
 * Source code needs to use import in form "./Component.js" otherwise TypeScript compiler won't output fully compliant ESM
 
+Stats
+* react-virtual-scroll `dist` folder contains 31 files with 66KB of content using 147KB on disk, built in 1.48 seconds
+* Sample app code bundle is 149KB (including React), source map is 382KB, builds in 377ms
+
 # Abstracted Structure
 
 * Hide all the internal details by bundling everything up into index.js entry point and corresponding index.d.ts declarations
-* Include sourcemap for debuggability, have option of inlining original TypeScript code
+* Corresponding source map file with TypeScript source inlined for debugging
 * Depending on type of package may choose to minify (e.g. if intended to load directly into Node), or include full detail (if client expected to bundle themselves)
 
 Pros
@@ -65,6 +71,19 @@ Cons
 * First uses `rollup-plugin-typescript` to run TypeScript compiler (including generating dts for each source file) and bundle js and sourcemap output for each type of module you want to support
 * Second uses `rollup-plugin-dts` to load per source file dts from first pipeline and bundle into single dts output
 
+Stats
+* react-virtual-scroll `dist` folder contains 3 files with 60KB of content using 66KB on disk, built in 931ms
+* Sample app code bundle is 149KB, source map is 380KB, builds in 450ms
+
 # NPM Publish
 
 * Head over to npmjs.com
+
+# Test App
+
+* Hacked dev build to use package rather than read src directly. Confirmed that source maps picked up and functional for both approaches
+* Production build worked in both cases. Surprisingly, building using the bundled package was slightly slower.
+  * In both cases source maps from package aren't carried over into app source map (if you want to debug production build)
+  * Known limitation with Rollup when building the app
+  * rollup-plugin-sourcemaps fixes this. Or it would if it was still maintained. Doesn't work with Rollup 4.
+  * Found @gordonmleigh/rollup-plugin-sourcemaps which is a Rollup 4 compatible rewrite with same interface. Bleeding edge but worked for me. 
