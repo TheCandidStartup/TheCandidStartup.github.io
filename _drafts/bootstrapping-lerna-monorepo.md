@@ -65,7 +65,7 @@ I'll populate that structure by cloning the content of the existing repo, moving
 
 # What's in a name?
 
-Which means that before I can get started I have to come up with a name. Which is famously one of the [two hardest things](https://martinfowler.com/bliki/TwoHardThings.html) in computer science. 
+Which means that before I can get started I have to come up with a name for the new monorepo. Which is famously one of the [two hardest things](https://martinfowler.com/bliki/TwoHardThings.html) in computer science. 
 
 The monorepo will be home for everything related to my [Spreadsheet]({% link _topics/spreadsheets.md %}) project. So really, I need to come up with a name for that. I could just call it "Spreadsheet" but that's too generic. It may be my German heritage, but I tend to lean towards compound nouns when naming. No more than two words to keep it snappy. Which means some variation on "SomethingSheet". 
 
@@ -101,7 +101,7 @@ The overall structure uses `tsconfig.build.json` at the root level containing co
 
 # Vite
 
-Vite and Vitest are the other major parts of my tooling. Vitest shares Vite's configuration file and transformation pipeline so once Vite is properly configured, Vitest should be fine. 
+Vite and Vitest are the other major parts of my tooling. Vitest shares Vite's configuration file and transformation pipeline. Once Vite is properly configured, Vitest should be fine. 
 
 In [principle](https://betterprogramming.pub/lerna-monorepo-with-vite-and-storybook-e29e54559214), it's possible to split `vite.config.ts` between common config and per package setup. In practice it's fiddly. Vite configuration is a TypeScript source file which exports a call to the Vite function `defineConfig` with the desired config passed in as a `UserConfig` object literal. You need a base config which exports a wrapper around Vite's `defineConfig` which combines the package level `UserConfig` with the common config. 
 
@@ -113,15 +113,15 @@ One thing I will need to do is make sure that the Vite transformation pipeline c
 
 # Getting Started
 
-I started out by converting my existing repo into a monorepo with a single package and checking that everything still works. I created the `infinisheet` repo in Github and followed GitHub's [instructions](https://docs.github.com/en/repositories/creating-and-managing-repositories/duplicating-a-repository) to mirror the existing repo into it. 
+I started out by converting my existing repo into a monorepo with a single package and checking that everything still works. I created the `infinisheet` repo [in GitHub](https://github.com/TheCandidStartup/infinisheet) and followed GitHub's [instructions](https://docs.github.com/en/repositories/creating-and-managing-repositories/duplicating-a-repository) to mirror the existing repo into it. 
 
 I created a `packages/react-virtual-scroll` subdirectory for my first package and used `git mv` to move everything from the top level into the package `react-virtual-scroll` directory. Now the moment of truth. I ran `npx lerna init` in the root directory to configure it as a monorepo.
 
 It turned out to be an anticlimax. All that happens is that it adds a `lerna.json` config file and a root `package.json` which enables npm workspaces and adds Lerna as a dev dependency. It also installs Lerna together with all the dependencies needed by my react-virtual-scroll workspace. It ended up with a total of 946 packages using 300MB of disk space. 
 
-While researching Lerna I came across a [blog](https://dev.to/logto/why-we-stopped-using-lerna-for-monorepos-4i5i) from someone that stopped using it a couple of years ago. The trigger seemed to be uncertainty caused by the change in maintainer at that time. It wasn't enough to put me off. The blog included a throw away comment about how much smaller their package-lock.json file is after removing Lerna. Now I get it. Adding Lerna as a dev dependency has doubled the disk space used and added another 500 packages compared to my original `react-virtual-scroll-grid` repo.
+While researching Lerna I came across a [blog](https://dev.to/logto/why-we-stopped-using-lerna-for-monorepos-4i5i) from someone that stopped using it a couple of years ago. The trigger seemed to be uncertainty caused by the change in maintainer at that time. It wasn't enough to put me off. The blog included a throw away comment about how much smaller their package-lock.json file is after removing Lerna. 
 
-On the positive side, it all seems to work.
+Now I get it. Adding Lerna as a dev dependency has doubled the disk space used and added another 500 packages compared to my original `react-virtual-scroll-grid` repo. On the positive side, it all seems to work.
 * Running `npx lerna run build` at the top level found and built my `react-virtual-scroll` workspace
 * `npm run test --workspace=react-virtual-scroll` ran my unit tests
 * If I `cd` into the workspace I can run all my npm scripts as before, e.g. `npm run test`, `npm run build`, `npm run dev`
