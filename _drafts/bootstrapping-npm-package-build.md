@@ -49,7 +49,7 @@ Of course, you will need additional tooling. You need a bundler as well as the T
 
 The usual approach is to pick a bundler and keep adding plugins until you get it to work. It's not always obvious what's happening under the hood. If you're not careful you can end up parsing your TypeScript source three times. Once for type checking, once to transpile to JS, and once to generate type declarations.
 
-The [consensus](https://medium.com/codex/bundling-a-typescript-library-for-node-with-rollup-js-2c8add5e736f) [from](https://blog.logrocket.com/how-to-build-component-library-react-typescript/) [most](https://dev.to/siddharthvenkatesh/component-library-setup-with-react-typescript-and-rollup-onj) "how to guides" is to use Rollup as your bundler. It has direct integration with the TypeScript compiler (using the official plugin `rollup-plugin-typescript`) which fits nicely into the Rollup pipeline. The Vite documentation recommends that you use Rollup directly if Vite library mode doesn't work for you, so that's what I'm going to do. 
+The [consensus](https://medium.com/codex/bundling-a-typescript-library-for-node-with-rollup-js-2c8add5e736f) [from](https://blog.logrocket.com/how-to-build-component-library-react-typescript/) [most](https://dev.to/siddharthvenkatesh/component-library-setup-with-react-typescript-and-rollup-onj) "how to" guides is to use Rollup as your bundler. It has direct integration with the TypeScript compiler (using the official plugin `rollup-plugin-typescript`) which fits nicely into the Rollup pipeline. The Vite documentation recommends that you use Rollup directly if Vite library mode doesn't work for you, so that's what I'm going to do. 
 
 Unfortunately, the Rollup Typescript plugin won't bundle dts files. You need a separate plugin for that. There's lots of choices. The most mature (but no longer actively maintained) is `rollup-plugin-dts`. 
 
@@ -190,7 +190,7 @@ I validated the packages produced by using my sample app in two ways. First, I h
 
 The production build also worked in both cases. Reassuringly they resulted in nearly identical app bundles with 149KB of code and a 380KB source map (most of which is React). 
 
-I enabled source map generation for the sample app so that I could try debugging the production build. In both cases the source maps from the package weren't carried over into the app source map. Instead the generated source map referenced the JavaScript in the package.
+I enabled source map generation for the sample app so that I could try debugging the production build. In both cases the source maps from the package weren't carried over into the app source map. Instead, the generated source map referenced the JavaScript in the package.
 
 It turns out that this is a [known limitation](https://github.com/rollup/rollup/issues/4532) with  Rollup. The recommended fix is use the plugin `rollup-plugin-sourcemaps`. Unfortunately, the plugin is no longer maintained and doesn't work with  Rollup 4. I found [`@gordonmleigh/rollup-plugin-sourcemaps`](https://github.com/gordonmleigh/rollup-plugin-sourcemaps), which is a Rollup 4 compatible rewrite with the same interface.  It was only recently created but it works for me. The code is incredibly simple so maybe it will be added as an option to Rollup in future.
 
