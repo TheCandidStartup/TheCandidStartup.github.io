@@ -3,7 +3,7 @@ title: Bootstrapping NPM Package Build
 tags: frontend
 ---
 
-I have my monorepo [up and running](/_drafts/bootstrapping-lerna-monorepo.md) for local development. However, I still haven't figured out how to build usable library packages, or even what should be in them. 
+I have my monorepo [up and running]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}) for local development. However, I still haven't figured out how to build usable library packages, or even what should be in them. 
 
 {% include candid-image.html src="/assets/images/frontend/npm-package.png" alt="NPM Package" attrib="Cam Bass on [Medium](https://levelup.gitconnected.com/how-to-build-an-npm-package-4158347e7fbf)"%}
 

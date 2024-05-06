@@ -3,7 +3,7 @@ title: Bootstrapping NPM Publish
 tags: frontend
 ---
 
-I figured out [how to build]({% link _drafts/bootstrapping-npm-package-build.md %}) usable library packages. Now I just have to work out how to get them published. I want to make it as easy as possible for others to find and consume my packages. As with package build, I want the process to be lightweight and easy to maintain. With that in mind, [I chose Lerna]({% link _drafts/bootstrapping-lerna-monorepo.md %}) as my monorepo tool. Lerna has workflows that should help automate the process. 
+I figured out [how to build]({% link _drafts/bootstrapping-npm-package-build.md %}) usable library packages. Now I just have to work out how to get them published. I want to make it as easy as possible for others to find and consume my packages. As with package build, I want the process to be lightweight and easy to maintain. With that in mind, [I chose Lerna]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}) as my monorepo tool. Lerna has workflows that should help automate the process. 
 
 # Public Repositories
 
