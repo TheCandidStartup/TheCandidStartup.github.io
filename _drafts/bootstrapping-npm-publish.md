@@ -23,9 +23,7 @@ So, why would anyone publish to GitHub packages if it adds all this extra fricti
 
 You may have noticed in my [last]({% link _drafts/bootstrapping-npm-package-build.md %}) [two]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}) posts that the sample app imports the `react-virtual-scroll` package from `"@candidstartup/react-virtual-scroll"`. The "@candidstartup" part is an [npm scope](https://docs.npmjs.com/cli/v10/using-npm/scope).
 
-You can publish [unscoped](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages) or [scoped](https://docs.npmjs.com/creating-and-publishing-scoped-public-packages) packages. Scoped packages are the natural choice for anything new. 
-
-Scopes act as a namespace. I can use whatever name I like within a scope without worrying about clashing with other packages. For example, every conceivable name for a react library of virtual scrolling components is already taken at the global level, including "react-virtual-scroll". 
+You can publish [unscoped](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages) or [scoped](https://docs.npmjs.com/creating-and-publishing-scoped-public-packages) packages. Scoped packages are the natural choice for anything new. Scopes act as a namespace. I can use whatever name I like within a scope without worrying about clashing with other packages. Every conceivable name for a react library of virtual scrolling components is already taken at the global level, so I'd have to use a very contrived name if I was publishing an unscoped package.
 
 There's no extra config to consume scoped packages. Just include the scope in the name when importing or declaring a dependency. 
 
@@ -81,7 +79,9 @@ The types badge in the NPM UI requires the `types` property to be populated even
 
 # Conventional Commits
 
-More prep that I didn't know I needed. It's customary to maintain a `CHANGELOG.md` in your repo that describes what's changed in each release of your package. That's a pain to maintain. What if you didn't have to?
+More prep that I didn't know I needed. It's customary to maintain a `CHANGELOG.md` in your repo that describes what's changed in each release of your package. That's a pain to maintain. 
+
+What if you didn't have to?
 
 [Conventional Commits](https://www.conventionalcommits.org/) is a specification for adding additional structure to your commit messages. It dovetails with [Semantic Versioning](https://semver.org/) by describing the features, fixes and breaking changes made in commit messages.
 
@@ -220,9 +220,11 @@ lerna success published 1 package
 
 Annoyingly, if you have two factor authentication enabled, NPM requires you to enter the OTP code again when you publish. If that gets too annoying I can look at setting up an [automation token](https://github.blog/changelog/2020-10-02-npm-automation-tokens/) for fully automated publish.
 
-Back to [npmjs.com](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll). Success, I have a published package released to the world.
+Back to [npmjs.com](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll). 
 
 {% include candid-image.html src="/assets/images/frontend/npm-react-virtual-scroll.png" alt="react-virtual-scroll published on NPM" %}
+
+Success. I have a published package released to the world.
 
 # NPM Tools
 
@@ -252,7 +254,7 @@ The `react-window` library has lots of bare-bones [examples](https://react-windo
 
 There's no account needed. All you need is a self-contained [sample project](https://github.com/TheCandidStartup/infinisheet/tree/main/packages/react-virtual-scroll/sandboxes/trillion-square-grid) in GitHub. Embed the path in a [CodeSandbox URL](https://codesandbox.io/p/sandbox/github/TheCandidStartup/infinisheet/main/packages/react-virtual-scroll/sandboxes/trillion-square-grid?file=%2Findex.js) and CodeSandbox will download the entry point, install dependencies from NPM (including `@candidstartup/react-virtual-scroll`) and bring up an editor and the running sample.
 
-I was so impressed that I put together [Sandbox samples](https://github.com/TheCandidStartup/infinisheet/tree/main/packages/react-virtual-scroll/sandboxes) for `VirtualGrid` and `VirtualList`. Obviously, I wanted to be able to test them locally before committing and pushing to GitHub. That turned out to be more difficult than I thought. 
+I was so impressed that I put together [Sandbox samples](https://github.com/TheCandidStartup/infinisheet/tree/main/packages/react-virtual-scroll/sandboxes) for [`VirtualGrid`](https://codesandbox.io/p/sandbox/github/TheCandidStartup/infinisheet/main/packages/react-virtual-scroll/sandboxes/trillion-square-grid?file=%2Findex.js) and [`VirtualList`](https://codesandbox.io/p/sandbox/github/TheCandidStartup/infinisheet/main/packages/react-virtual-scroll/sandboxes/trillion-row-list?file=%2Findex.js). Obviously, I wanted to be able to test them locally before committing and pushing to GitHub. That turned out to be more difficult than I thought. 
 
 I could only get CodeSandbox to work when the entry point is a `.js` file. The sample includes JSX which CodeSandbox is happy with. Vite isn't. It requires any code that includes JSX to have a `.jsx` extension. I needed some `vite.config` magic from [Stack Overflow](https://stackoverflow.com/questions/74620427/how-to-configure-vite-to-allow-jsx-syntax-in-js-files) to force Vite to accept JSX in `.js` files.
 
