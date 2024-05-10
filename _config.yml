@@ -19,7 +19,7 @@ relative_links:
   enabled: false
   collections: true
 feed:
-  posts_limit: 20
+  posts_limit: 100
   excerpt_only: true
 paginate: 10
 paginate_path: "/blog/page:num/"
