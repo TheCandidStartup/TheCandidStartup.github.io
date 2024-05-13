@@ -1,6 +1,6 @@
 ---
 title: React Virtual Scroll Grid
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 {% capture vs_url %}{% link _posts/2023-10-09-paged-infinite-virtual-scrolling.md %}{% endcapture %}

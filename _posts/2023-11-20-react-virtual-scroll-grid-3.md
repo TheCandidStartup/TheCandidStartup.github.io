@@ -1,7 +1,7 @@
 ---
 title: >
     React Virtual Scroll Grid 3 : Binary Chop
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 {% capture rvs2_url %}{% link _posts/2023-11-13-react-virtual-scroll-grid-2.md %}{% endcapture %}

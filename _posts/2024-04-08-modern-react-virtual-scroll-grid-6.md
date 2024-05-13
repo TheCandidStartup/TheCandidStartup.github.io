@@ -1,7 +1,7 @@
 ---
 title: >
     Modern React Virtual Scroll Grid 6 : ScrollTo
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 {% capture rvs_url %}{% link _posts/2024-01-29-modern-react-virtual-scroll-grid.md %}{% endcapture %}

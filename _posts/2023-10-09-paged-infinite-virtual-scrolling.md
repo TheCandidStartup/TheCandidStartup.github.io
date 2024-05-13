@@ -1,6 +1,6 @@
 ---
 title: Paged Infinite Virtual Scrolling
-tags: frontend spreadsheets
+tags: frontend spreadsheets react-virtual-scroll
 ---
 
 I'm [working on a cloud spreadsheet]({% link _topics/spreadsheets.md %}) system. It will support spreadsheets with millions of rows and columns. Potentially far more data than will fit into client memory, particularly a web client. Which means I need a front end implementation that can handle that.

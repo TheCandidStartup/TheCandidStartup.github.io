@@ -1,7 +1,7 @@
 ---
 title: >
     React Virtual Scroll Grid 5 : What Next?
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 {% capture rvs4_url %}{% link _posts/2023-11-27-react-virtual-scroll-grid-4.md %}{% endcapture %}

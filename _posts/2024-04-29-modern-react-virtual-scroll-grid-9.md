@@ -1,7 +1,7 @@
 ---
 title: >
     Modern React Virtual Scroll Grid 9 : Fixing SlickGrid
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 [Last time]({% link _posts/2024-04-22-modern-react-virtual-scroll-grid-8.md %}) we integrated SlickGrid's paged scrolling system and found that it came *really close* to working well. 

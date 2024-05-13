@@ -1,7 +1,7 @@
 ---
 title: >
     Modern React Virtual Scroll Grid 8 : Unlimited Power!
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 {% capture rvs4_url %}{% link _posts/2023-11-27-react-virtual-scroll-grid-4.md %}{% endcapture %}

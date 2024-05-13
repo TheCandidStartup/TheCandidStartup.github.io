@@ -1,7 +1,7 @@
 ---
 title: >
     Modern React Virtual Scroll Grid 5 : Is Scrolling
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 Next up on my list of features to implement is a `useIsScrolling` custom hook. It should be a good test of hook composition as I want to use it in conjunction with the `useVirtualScroll` hook  I've [already implemented]({% link _posts/2024-02-05-modern-react-virtual-scroll-grid-2.md %}).  

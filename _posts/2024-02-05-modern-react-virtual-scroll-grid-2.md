@@ -1,7 +1,7 @@
 ---
 title: >
     Modern React Virtual Scroll Grid 2 : Basic Structure
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 I have a [plan]({% link _posts/2024-01-29-modern-react-virtual-scroll-grid.md %}), I just need to start executing. Where to start? As you may have realized by my ratio of "writing about coding" vs "actually coding", I have a tendency towards [analysis paralysis](https://en.wikipedia.org/wiki/Analysis_paralysis). The solution that works for me is to pick a small but meaningful subset of what I want to achieve, get it working with a minimum of fuss, then iterate from there to add functionality and clean up any shortcuts.

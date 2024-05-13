@@ -1,7 +1,7 @@
 ---
 title: >
     Modern React Virtual Scroll Grid 4 : JSX
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 [Last time]({% link _posts/2024-02-12-modern-react-virtual-scroll-grid-3.md %}) I implemented a scalable binding interface and demonstrated an implementation for variable sized items. I was seemingly poised to complete the basic functionality for my list control and move onto grids. Then I got distracted. 

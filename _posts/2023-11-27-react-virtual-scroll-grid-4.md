@@ -1,7 +1,7 @@
 ---
 title: >
     React Virtual Scroll Grid 4 : Big Grid
-tags: frontend spreadsheets
+tags: react-virtual-scroll spreadsheets
 ---
 
 After a long trip [down the rabbit hole]({% link _posts/2023-11-13-react-virtual-scroll-grid-2.md %}), I have [two working implementations]({% link _posts/2023-11-20-react-virtual-scroll-grid-3.md %}) of a React based virtual scrolling list. No flicker, no going blank while scrolling. 

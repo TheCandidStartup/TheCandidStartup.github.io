@@ -1,7 +1,7 @@
 ---
 title: >
     Modern React Virtual Scroll Grid 3 : Item Offset Mapping
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 [Last time]({% link _posts/2024-02-05-modern-react-virtual-scroll-grid-2.md %}), we created the basic structure for our scalable virtual scrolling controls built with modern React and TypeScript. The next job is to put a scalable data binding interface in place. We want the rendering costs for our controls to be proportional to the number of visible items, rather than the total number of items being scrolled over. We can't control how the data and metadata being displayed is retrieved and managed, but we can make sure that the interface we provide is as efficient as possible.

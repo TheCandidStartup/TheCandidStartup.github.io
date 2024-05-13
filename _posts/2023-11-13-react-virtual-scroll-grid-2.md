@@ -1,7 +1,7 @@
 ---
 title: >
     React Virtual Scroll Grid 2 : Down the Rabbit Hole
-tags: frontend
+tags: react-virtual-scroll
 ---
 
 [Last time]({% link _posts/2023-11-06-react-virtual-scroll-grid.md %}) I left you with a cliff hanger. Why is my simple virtualized scrolling list going blank if you scroll it too fast? I had some theories. Time to apply the scientific method and see which ones stand up.
