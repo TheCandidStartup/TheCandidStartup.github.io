@@ -277,5 +277,5 @@ I went back to the top level and ran `npx lerna run build` again. Lerna figured 
 
 Of course. The package output needs to include `dist/react-virtual.scroll.d.ts` as well as `dist/react-virtual-scroll.js`. There must be a Vite build flag to enable it. 
 
-There isn't. The more I read about the alternatives, the more unsure I am about what to do next. I think I'm going to have to invest some time in figuring out what an npm package should ideally look like and then work out how best to build it. That will have to wait for next time. 
+There isn't. The more I read about the alternatives, the more unsure I am about what to do next. I think I'm going to have to invest some time in figuring out what an npm package should ideally look like and then work out how best to build it. That will have to wait for [next time]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}). 
 

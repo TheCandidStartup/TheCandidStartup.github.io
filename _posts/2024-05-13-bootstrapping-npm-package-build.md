@@ -23,7 +23,7 @@ As far as I can tell, there are two main approaches to structuring a package. I 
 
 ## Transparent Package
 
-A transparent package uses the same structure as the source repo it was built from. In practice that means mirroring the source directory structure and generating a *.js, *.js.map and *.d.ts file for each TypeScript source file.
+A transparent package uses the same structure as the source repo it was built from. In practice that means mirroring the source directory structure and generating a *.js, *.js.map and *.d.ts file for each TypeScript source file. Some transparent packages go a step further and also include the original source files together with *.d.ts.map files that link each type declaration to the corresponding source code. 
 
 The main advantage of this approach is [simplicity](https://cmdcolin.github.io/posts/2022-05-27-youmaynotneedabundler). All you need is the TypeScript compiler. Set the appropriate compiler options and it will type check the project and spit out the required files. You do the minimal amount of processing and leave it up to your consumer to decide if they want to bundle or minify whatever they use your package in. 
 
@@ -41,7 +41,7 @@ Of course nobody does this. Most people write source code with extensionless imp
 
 ## Opaque Package
 
-An opaque package hides all the internal details by bundling everything up. Usually, into a single `index.js` code bundle with a corresponding `index.d.ts` and `index.js.map`. The bundling process can remove dead code and hide internal types. The code is usually not minified so that the package consumer's bundler has full scope to operate. 
+An opaque package hides all the internal details by bundling everything up. Usually, into a single `index.js` code bundle with a corresponding `index.d.ts` and `index.js.map`. The bundling process can remove dead code and hide internal types. The code is usually not minified so that the package consumer's bundler has full scope to operate. Source code can be embedded into the map file so that the package is completely self contained.
 
 The resulting package structure is as simple as it gets. It's usually easy to add in other assets, like CSS, which bundlers already support. There's only a single JavaScript file so there's no internal imports to worry about. The result is inherently pure-ESM. 
 
@@ -178,7 +178,7 @@ export default [
 ];
 ```
 
-The config file returns an array of configurations for the two pipelines that will be run. The output stage is setup to produce ESM modules. If I want to support other formats, I can add additional configs to the `output` array. The typescript plugin is configured to use my `tsconfig.build.json`. Fortunately, file resolution is relative to where Rollup is running not the config file location. 
+The config file returns an array of configurations for the two pipelines that will be run. The output stage is setup to produce ESM modules. If I want to support other formats, I can add additional configs to the `output` array. The typescript plugin is configured to use my per package `tsconfig.build.json`. Fortunately, file resolution is relative to where Rollup is running not the config file location. 
 
 The typescript plugin lets you override selected config properties. Here I'm overriding where declaration files will be generated to make it easier to feed them into the second pipeline and then clean them up when they're no longer needed.
 

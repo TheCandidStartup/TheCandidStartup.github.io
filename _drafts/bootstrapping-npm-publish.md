@@ -3,7 +3,7 @@ title: Bootstrapping NPM Publish
 tags: frontend
 ---
 
-I figured out [how to build]({% link _drafts/bootstrapping-npm-package-build.md %}) usable library packages. Now I just have to work out how to get them published. 
+I figured out [how to build]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}) usable library packages. Now I just have to work out how to get them published. 
 
 {% include candid-image.html src="/assets/images/frontend/npm-react-virtual-scroll-thumbnail.png" alt="react-virtual-scroll published on NPM" %}
 
@@ -21,7 +21,7 @@ So, why would anyone publish to GitHub packages if it adds all this extra fricti
 
 # NPM Scopes
 
-You may have noticed in my [last]({% link _drafts/bootstrapping-npm-package-build.md %}) [two]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}) posts that the sample app imports the `react-virtual-scroll` package from `"@candidstartup/react-virtual-scroll"`. The "@candidstartup" part is an [npm scope](https://docs.npmjs.com/cli/v10/using-npm/scope).
+You may have noticed in my [last]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}) [two]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}) posts that the sample app imports the `react-virtual-scroll` package from `"@candidstartup/react-virtual-scroll"`. The "@candidstartup" part is an [npm scope](https://docs.npmjs.com/cli/v10/using-npm/scope).
 
 You can publish [unscoped](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages) or [scoped](https://docs.npmjs.com/creating-and-publishing-scoped-public-packages) packages. Scoped packages are the natural choice for anything new. Scopes act as a namespace. I can use whatever name I like within a scope without worrying about clashing with other packages. Every conceivable name for a react library of virtual scrolling components is already taken at the global level, so I'd have to use a very contrived name if I was publishing an unscoped package.
 
