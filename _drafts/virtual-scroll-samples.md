@@ -18,6 +18,18 @@ Wise words
 * Bashing head against wall, eventually commented the other stuff out of the config file, magically worked
 * React plugin is using SWC rather than Rollup ...
 * Find equivalent [SWC options](https://github.com/vitejs/vite-plugin-react-swc?tab=readme-ov-file#parserconfig) (with very stern warning in plugin Docs not to abuse)
+
+```
+react({
+  parserConfig(id) {
+    if (id.endsWith(".js")) return { syntax: "ecmascript", jsx: true };
+    if (id.endsWith(".jsx")) return { syntax: "typescript", tsx: false };
+    if (id.endsWith(".ts")) return { syntax: "typescript", tsx: false };
+    if (id.endsWith(".tsx")) return { syntax: "typescript", tsx: true };
+  },
+});
+```
+
 * Success - at least at dev time
 * Try a production build but that fails, Rollup complaining
 * Nothing obvious in docs, fed up with trying to abuse system
@@ -26,3 +38,10 @@ Wise words
 * Maintainability not great
 * If I change Sandbox samples have two places to keep in sync. If painful I can create a sync to copy changes from source of truth ...
 * Whenever I add a new sample have to also add in root `index.html` and again in `vite.config.js` for the extra entry point
+* Copying Sandbox samples does mean that I can rationalize them. 
+  * Shared CSS across all samples. 
+  * index.html is identical but has to exist in each sample directory for Vite entry point. Minimal stub file, just copy when making new sample.
+* Horizontal scrolling feature
+  * Implementation
+  * Sample
+  * Unit Tests update
