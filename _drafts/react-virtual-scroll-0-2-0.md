@@ -1,0 +1,141 @@
+---
+title: >
+  React Virtual Scroll 0.2.0 : Horizontal List
+tags: react-virtual-scroll blog
+---
+
+{% capture mrvs2_url %}{% link _posts/2024-02-05-modern-react-virtual-scroll-grid-2.md %}{% endcapture %}
+Exciting news! React-Virtual-Scroll 0.2.0 is [out](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.2.0), including the [long anticipated]({{ mrvs2_url | append: "#coming-up" }}) `VirtualList` horizontal layout feature. 
+
+{% include candid-image.html src="/assets/images/react-virtual-scroll/horizontal-list.png" alt="VirtualList with horizontal layout" %}
+
+I'm sure releasing new versions of packages will soon become a chore. However, right now, it still feels fresh and exciting.
+
+[Last time]({% link _drafts/bootstrapping-npm-publish.md %}), I'd finally got all the tooling and processes in place and had published an initial release of `react-virtual-scroll`. How did my first routine development cycle go?
+
+# Tidying Up
+
+I did say that I would stop messing around with my development environment but I couldn't resist a bit of tidying up. I finally added a top level [README](https://github.com/TheCandidStartup/infinisheet/blob/main/README.md) for the infinisheet repo. After discovering [shields.io](https://shields.io/), I couldn't resist plastering both READMEs with badges.
+
+{% include candid-image.html src="/assets/images/react-virtual-scroll/tool-badges.png" alt="Tooling Badges from infinisheet README" %}
+
+The [examples](https://github.com/TheCandidStartup/infinisheet/tree/main/packages/react-virtual-scroll#virtuallist-example) in the `react-virtual-scroll` README are now teaser excerpts with links to the full sandbox source code and the running example on CodeSandbox.
+
+It's interesting what you see when you come to something with fresh eyes, looking at it as other people would. Until now I hadn't noticed that the copyright date in my [LICENSE](https://github.com/TheCandidStartup/infinisheet/blob/main/LICENSE) was two years out of date.
+
+# Splitting the "Front End" blog topic
+
+With my focus on front-end development over the last few months, the [Front End]({% link _topics/frontend.md %}) has become dominant with 25 posts and counting. I split the topic into two as the number of [React Virtual Scroll]({% link _topics/react-virtual-scroll.md %}) posts was starting to overwhelm the more general content.
+
+This also means that I can now [link](https://github.com/TheCandidStartup/infinisheet/blob/main/packages/react-virtual-scroll/README.md#more) the `react-virtual-scroll` README direct to all the React Virtual Scroll posts on the blog.
+
+# Multi-Page Sample App
+
+After [creating the infinisheet monorepo]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}), all my ad hoc sample code for manual testing ended up in `app/virtual-scroll-samples`. Previously, I would edit the sample to match whatever I wanted to test, then throw it away. I want to keep track of all the different samples so I can easily run through them rather than having to recreate them when needed.
+
+I saw a discussion in the Vite documentation on building a [Multi Page App](https://vitejs.dev/guide/build.html#multi-page-app). For development, it just works. Have a subdirectory for each sample with its own `index.html` and navigate to it in the browser. For production, it's a little more complex as you have to tell the bundler about each entry point.
+
+I wanted to include the Sandbox samples so that I didn't have to test them separately. I ended up going down a rathole by trying to reuse the source code as is. 
+
+Last time, I worked out how to use the Vite development server with the standalone Sandbox samples, using a `vite.config` file that forced Vite to load `.js` files as if they were JSX. All I had to do was move the Sandbox samples into `app/virtual-scroll-samples` and merge the `vite.config` magic with the existing app config. 
+
+It simply wouldn't work. Whenever I ran the app server it would complain about finding JSX in `index.js`.
+
+```
+export default defineConfig({
+  plugins: [
+    react(),
+    tsconfigPaths()
+  ],
+  build: {
+    sourcemap: true,
+    rollupOptions:  {
+      plugins: [sourcemaps()],
+    }
+  }
+  esbuild: {
+  include: /\.[jt]sx?$/,
+  exclude: [],
+  loader: 'jsx',
+},
+})
+```
+
+Finally, I resorted to binary chop debugging, and systematically commented out bits of the merged config to see if one of the other options was interfering. This resulted in another facepalm moment. That `react()` plugin actually enables use of the SWC transpiler during development, rather than esbuild. 
+
+I found the equivalent [SWC options](https://github.com/vitejs/vite-plugin-react-swc?tab=readme-ov-file#parserconfig). Including a very stern warning not to abuse this power to load JSX from `.js` files. I did it anyway. The syntax is wordier than esbuild but more understandable.
+
+```
+react({
+  parserConfig(id) {
+    if (id.endsWith(".js")) return { syntax: "ecmascript", jsx: true };
+    if (id.endsWith(".jsx")) return { syntax: "typescript", tsx: false };
+    if (id.endsWith(".ts")) return { syntax: "typescript", tsx: false };
+    if (id.endsWith(".tsx")) return { syntax: "typescript", tsx: true };
+  },
+});
+```
+
+This time it worked, at least during development. However, unlike the Sandbox samples, I also need production builds of the sample app. Of course it failed when I tried a production build because Vite uses Rollup for production builds. There wasn't anything obvious in the documentation and I was fed up with trying to abuse the system. 
+
+I had one last throw of the dice. Instead of moving the Sandbox samples, I could leave the source code where it was and create symbolic links to the files. In particular I could link `index.jsx` in the sample app to `index.js` in the Sandbox sample. Git [handles symbolic links correctly](https://mokacoding.com/blog/symliks-in-git/), as long as they're relative links to other files in the same repo. 
+
+Another failure. The transpilers resolve the symbolic link correctly, but then use the extension of the target file rather than that of the symbolic link. Back to errors about JSX in `index.js`. 
+
+I told you it was a rathole. In the end I gave up and just copied the files, renaming .js to .jsx. For now, I'll take the maintainability hit. If I change the Sandbox samples in future, I'll need to remember to update the equivalent sample here. If that's too painful, I can come up with a script to sync any changes over. 
+
+There is an upside. Copying the source code over means that I can rationalize the samples. Instead of having a CSS file in each sample, I can use common CSS across all of them. Creating a new sample is super simple. There's only two files - `index.html` and `index.tsx`. THe `index.html` file is a minimal stub that I shouldn't need to change. It's identical across all the samples but has to exist in each sample directory to act as Vite's entry point. 
+
+The one bit of redundant effort is updating the list of bundler entry points in `vite.config`.
+
+```
+  build: {
+    sourcemap: true,
+    rollupOptions:  {
+      plugins: [sourcemaps()],
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        "list-and-grid": resolve(__dirname, 'samples/list-and-grid/index.html'),
+        "trillion-row-list": resolve(__dirname, 'samples/trillion-row-list/index.html'),
+        "trillion-square-grid": resolve(__dirname, 'samples/trillion-square-grid/index.html'),
+        "horizontal-list": resolve(__dirname, 'samples/horizontal-list/index.html'),
+      },
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
+```
+
+The first time I did a production build I was disappointed that each sample was built as a standalone bundle with it's own embedded copy of React. Fortunately, it was easy to find how to share common code in the [Rollup documentation](https://rollupjs.org/configuration-options/#output-manualchunks). I copied their example which puts all dependencies in `node_modules` into a shared "vendor" chunk. Each sample ends up being a few KB in size with each importing the 142KB common vendor chunk. 
+
+
+# Horizontal Layout List
+
+## Implementation
+
+* Code changes
+* Unit Tests update
+* Sample
+
+## Try It!
+
+The horizontal list sample is embedded below or you can [explore the full set of samples](/assets/dist/react-virtual-scroll-0-2-0/index.html).
+
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-2-0/samples/horizontal-list/index.html" width="100%" height="fit-content" %}
+
+* Embedded horizontal list
+* Link to the complete set of samples for this release
+
+# Publishing
+
+* Final build, version and publish went really smoothly
+* Took a couple of minutes
+
+# Next Time
+
+* Let's see if I can be more productive and get two features done
