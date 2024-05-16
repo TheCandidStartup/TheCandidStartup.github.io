@@ -23,9 +23,9 @@ The [examples](https://github.com/TheCandidStartup/infinisheet/tree/main/package
 
 It's interesting what you see when you come to something with fresh eyes, looking at it as other people would. Until now I hadn't noticed that the copyright date in my [LICENSE](https://github.com/TheCandidStartup/infinisheet/blob/main/LICENSE) was two years out of date.
 
-# Splitting the "Front End" blog topic
+# Splitting "Front End"
 
-With my focus on front-end development over the last few months, the [Front End]({% link _topics/frontend.md %}) has become dominant with 25 posts and counting. I split the topic into two as the number of [React Virtual Scroll]({% link _topics/react-virtual-scroll.md %}) posts was starting to overwhelm the more general content.
+With my focus on front-end development over the last few months, the [Front End]({% link _topics/frontend.md %}) blog topic has become dominant with 25 posts and counting. I split the topic into two as the number of [React Virtual Scroll]({% link _topics/react-virtual-scroll.md %}) posts was starting to overwhelm the more general content.
 
 This also means that I can now [link](https://github.com/TheCandidStartup/infinisheet/blob/main/packages/react-virtual-scroll/README.md#more) the `react-virtual-scroll` README direct to all the React Virtual Scroll posts on the blog.
 
@@ -76,7 +76,7 @@ react({
 });
 ```
 
-This time it worked, at least during development. However, unlike the Sandbox samples, I also need production builds of the sample app. Of course it failed when I tried a production build because Vite uses Rollup for production builds. There wasn't anything obvious in the documentation and I was fed up with trying to abuse the system. 
+This time it worked, at least during development. However, unlike the Sandbox samples, I also need production builds of the sample app. Of course it failed when I tried it because Vite uses Rollup for production builds. There wasn't anything obvious in the documentation and I was getting fed up with trying to abuse the system. 
 
 I had one last throw of the dice. Instead of moving the Sandbox samples, I could leave the source code where it was and create symbolic links to the files. In particular I could link `index.jsx` in the sample app to `index.js` in the Sandbox sample. Git [handles symbolic links correctly](https://mokacoding.com/blog/symliks-in-git/), as long as they're relative links to other files in the same repo. 
 
@@ -98,7 +98,6 @@ The one bit of redundant effort is updating the list of bundler entry points in 
         "list-and-grid": resolve(__dirname, 'samples/list-and-grid/index.html'),
         "trillion-row-list": resolve(__dirname, 'samples/trillion-row-list/index.html'),
         "trillion-square-grid": resolve(__dirname, 'samples/trillion-square-grid/index.html'),
-        "horizontal-list": resolve(__dirname, 'samples/horizontal-list/index.html'),
       },
       output: {
         manualChunks: (id) => {
@@ -116,11 +115,91 @@ The first time I did a production build I was disappointed that each sample was 
 
 # Horizontal Layout List
 
+The new feature for this release is support for horizontal layout in `VirtualList`. This is exposed via a new `layout` prop with a choice of `vertical` (the default) or `horizontal` layout. Do you want virtual scrolling down your very long list, or do you want virtual scrolling across your very wide list?
+
 ## Implementation
 
-* Code changes
-* Unit Tests update
-* Sample
+All the logic for virtual scrolling in a single dimension is in the `useVirtualScroll` custom hook. All that `VirtualList` has to do is connect the hook to either the horizontal or vertical scrolling properties. Oh, and decide whether to render the list down or across. The changes I made turned out to be more verbose than I hoped.
+
+It started well enough. I needed to change a one-liner in the `scrollTo` proxy method to work with either layout. The simplest approach was to choose between two different versions based on the layout direction.
+
+```
+scrollTo(offset: number): void {
+  const outer = outerRef.current;
+  if (outer) {
+    if (isVertical)
+      outer.scrollTo(0, doScrollTo(offset, outer.clientHeight));
+    else
+      outer.scrollTo(doScrollTo(offset, outer.clientWidth), 0);
+  }
+}
+```
+
+The `OnScroll` event handler is four lines of layout dependent code. I tried to come up with ways of making the core logic layout independent but each approach resulted in more lines of code and more complexity than just having two separate versions again.
+
+```
+function onScroll(event: ScrollEvent) {
+  if (isVertical) {
+    const { clientHeight, scrollHeight, scrollTop, scrollLeft } = event.currentTarget;
+    const newScrollTop = onScrollExtent(clientHeight, scrollHeight, scrollTop);
+    if (newScrollTop != scrollTop && outerRef.current)
+      outerRef.current.scrollTo(scrollLeft, newScrollTop);
+  } else {
+    const { clientWidth, scrollWidth, scrollTop, scrollLeft } = event.currentTarget;
+    const newScrollLeft = onScrollExtent(clientWidth, scrollWidth, scrollLeft);
+    if (newScrollLeft != scrollLeft && outerRef.current)
+      outerRef.current.scrollTo(newScrollLeft, scrollTop);
+  }
+}
+```
+
+The rendering code is too long to maintain two separate versions. I ended up making heavy use of conditionals. 
+
+{% raw %}
+
+
+```
+<div onScroll={onScroll} ref={outerRef} style={{ position: "relative", height, width, overflow: "auto", willChange: "transform" }}>
+  <div style={{ height: isVertical ? renderSize : "100%", width: isVertical ? "100%" : renderSize }}>
+    {sizes.map((size, arrayIndex) => (
+      offset = nextOffset,
+      nextOffset += size,
+      index = startIndex + arrayIndex,
+      <ChildVar data={itemData} key={itemKey(index, itemData)} index={index}
+        isScrolling={useIsScrolling ? isScrolling : undefined}
+        style={{ 
+          position: "absolute", 
+          top: isVertical ? offset : undefined, 
+          left: isVertical ? undefined : offset,
+          height: isVertical ? size : "100%", 
+          width: isVertical ? "100%" : size, 
+        }}/>
+    ))}
+  </div>
+</div>
+```
+
+{% endraw %}
+
+I don't like either of the approaches I used. I keep thinking there must be a better way but I can't see it. Oh well, let's see if it works. 
+
+## Testing
+
+I was able to put a [sample](https://github.com/TheCandidStartup/infinisheet/blob/d0f2ac167752dbd781d79525897e13c66626db4a/apps/virtual-scroll-samples/samples/horizontal-list/index.tsx) together very quickly.
+
+```
+<VirtualList
+  ref={ref}
+  height={50}
+  itemCount={100}
+  itemOffsetMapping={mapping}
+  layout={'horizontal'}
+  width={600}>
+  {Row}
+</VirtualList>
+```
+
+[Unit](https://github.com/TheCandidStartup/infinisheet/blob/d0f2ac167752dbd781d79525897e13c66626db4a/packages/react-virtual-scroll/src/VirtualList.test.tsx#L134) [tests](https://github.com/TheCandidStartup/infinisheet/blob/d0f2ac167752dbd781d79525897e13c66626db4a/packages/react-virtual-scroll/src/VirtualList.test.tsx#L454) took longer to update. Unfortunately, there was lots of copy-and-paste involved. I did get back to 100% coverage though.
 
 ## Try It!
 
@@ -128,14 +207,11 @@ The horizontal list sample is embedded below or you can [explore the full set of
 
 {% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-2-0/samples/horizontal-list/index.html" width="100%" height="fit-content" %}
 
-* Embedded horizontal list
-* Link to the complete set of samples for this release
-
 # Publishing
 
-* Final build, version and publish went really smoothly
-* Took a couple of minutes
+Final build, version and publish went really smoothly. It took at most five minutes before I was admiring the latest release (together with its enticing new README) on [NPM](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.2.0). 
+
 
 # Next Time
 
-* Let's see if I can be more productive and get two features done
+Let's see if I can be even more productive and get two features into the next release.
