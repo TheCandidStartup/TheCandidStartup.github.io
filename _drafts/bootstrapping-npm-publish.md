@@ -17,7 +17,7 @@ Nothing is ever completely obvious. My project is hosted on GitHub. GitHub has i
 
 That's not how it works. [GitHub Packages](https://docs.github.com/en/packages) is an independent package registry. Using it requires [extra configuration](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#installing-a-package) in your package manager. Even worse, you need [extra configuration](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#installing-packages-from-other-organizations) in your package manager for each user or organization you want to consume packages from.
 
-So, why would anyone publish to GitHub packages if it adds all this extra friction for your users? The wisdom of the internet says that GitHub only makes sense for private packages. Enterprise users are used to all the additional crap that comes with working for a large enterprise. If you're a small business, GitHub has a free tier for private packages. NPM requires a monthly subscription.
+So, why would anyone publish to GitHub packages if it adds all this extra friction for your users? The wisdom of the internet says that GitHub only makes sense for private packages. Enterprise users are used to all the additional crap that comes with working for a large enterprise. If you're a small business, GitHub has a free tier for private packages, while NPM requires a monthly subscription.
 
 # NPM Scopes
 
@@ -218,7 +218,7 @@ Successfully published:
 lerna success published 1 package
 ```
 
-Annoyingly, if you have two factor authentication enabled, NPM requires you to enter the OTP code again when you publish. If that gets too annoying I can look at setting up an [automation token](https://github.blog/changelog/2020-10-02-npm-automation-tokens/) for fully automated publish.
+If you have two factor authentication enabled, NPM requires you to enter the OTP code again when you publish. If that gets too annoying I can look at setting up an [automation token](https://github.blog/changelog/2020-10-02-npm-automation-tokens/) for fully automated publish.
 
 Back to [npmjs.com](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll). 
 
