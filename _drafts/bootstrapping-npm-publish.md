@@ -15,9 +15,9 @@ The first step is deciding where to publish. [NPM](https://www.npmjs.com/) is th
 
 Nothing is ever completely obvious. My project is hosted on GitHub. GitHub has its own integrated package feature. What's more, NPM is owned by GitHub. Maybe I can publish via GitHub, using my existing credentials, and it will be accessible via NPM?
 
-That's not how it works. [GitHub Packages](https://docs.github.com/en/packages) is an independent package registry. Using it requires [extra configuration](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#installing-a-package) in your package manager. Even worse, you need [extra configuration](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#installing-packages-from-other-organizations) in your package manager for each user or organization you want to consume packages from.
+That's not how it works. [GitHub Packages](https://docs.github.com/en/packages) is an independent package registry. Using it requires [extra configuration](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#installing-a-package) in your package manager. Even worse, you need [additional configuration](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#installing-packages-from-other-organizations) in your package manager for each user or organization you want to consume packages from.
 
-So, why would anyone publish to GitHub packages if it adds all this extra friction for your users? The wisdom of the internet says that GitHub only makes sense for private packages. Enterprise users are used to all the additional crap that comes with working for a large enterprise. If you're a small business, GitHub has a free tier for private packages, while NPM requires a monthly subscription.
+Why would anyone publish to GitHub packages if it adds all this extra friction for your users? The wisdom of the internet says that GitHub only makes sense for private packages. Enterprise users are used to all the additional crap that comes with working for a large enterprise. If you're a small business, GitHub has a free tier for private packages, while NPM requires a monthly subscription.
 
 # NPM Scopes
 
@@ -73,19 +73,19 @@ Here's what I ended up adding
   "types": "./dist/index.d.ts"
 ```
 
-The repository properties are used to populate the link to GitHub. The `directory` property is there to support monorepo setups. Unfortunately, it doesn't get used by the NPM UI, so the repository link goes to the root of the repo. There's a separate "Homepage" link (which defaults to the same location as Repository) which I pointed to the package README using the `homepage` property. 
+The `repository` properties are used to populate the link to GitHub. The `directory` property is there to support monorepo setups. Unfortunately, it doesn't get used by the NPM UI, so the repository link goes to the root of the repo. There's a separate "Homepage" link (which defaults to the same location as `repository`) which I pointed to the package README using the `homepage` property. 
 
 The types badge in the NPM UI requires the `types` property to be populated even though TypeScript doesn't need it. 
 
 # Conventional Commits
 
-More prep that I didn't know I needed. It's customary to maintain a `CHANGELOG.md` in your repo that describes what's changed in each release of your package. That's a pain to maintain. 
+More prep that I didn't know I needed. It's customary to maintain a `CHANGELOG.md` in your repo that describes what changed in each release of your package. That's a pain to maintain. 
 
 What if you didn't have to?
 
 [Conventional Commits](https://www.conventionalcommits.org/) is a specification for adding additional structure to your commit messages. It dovetails with [Semantic Versioning](https://semver.org/) by describing the features, fixes and breaking changes made in commit messages.
 
-Each commit starts with a type, optional scope and a description. The body of the commit can be followed with optional footers that add more meaning. 
+Each commit starts with a type, optional scope and description. The body of the commit can be followed with optional footers that add more meaning. 
 
 ```
 <type>[optional scope]: <description>
@@ -103,7 +103,7 @@ The only defined footer is `BREAKING CHANGE` (`MAJOR` in semantic versioning). A
 
 # Versioning
 
-Before we can publish, we need to version our package. I [chose Lerna]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}) as my monorepo tool because it has workflows that automate versioning and publishing. It can use conventional commits to generate the new version number and update dependencies in `package.json` files to match. By default it will apply the same version number to all workspaces with changes in the monorepo.
+Before we can publish, we need to version our package. I [chose Lerna]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}) as my monorepo tool because it has workflows that automate versioning and publishing. It can use conventional commits to generate the new version number and update dependencies in `package.json` files to match. By default it will apply the same version number to all workspaces with changes.
 
 It will also generate and update `CHANGELOG.md` files. One at the root of the repo containing all changes, and one in each workspace listing just the changes that effect that workspace. The change log includes the descriptions from each `fix` and `feat` commit, tagged by scope. 
 
@@ -237,6 +237,8 @@ Once you have a package published, there are lots of tools out there to play wit
 ![NPM bundle size](https://img.shields.io/bundlephobia/minzip/@candidstartup/react-virtual-scroll)
 
 [Shields.io](https://shields.io/) generates those cool badges that people like to add to their READMEs, including ones dynamically populated with data from NPM. 
+
+I wonder how many more versions I'll publish before you read this. Check the badge for the latest version.
 
 ## Are the types wrong?
 

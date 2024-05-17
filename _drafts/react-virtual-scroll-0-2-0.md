@@ -61,7 +61,7 @@ export default defineConfig({
 })
 ```
 
-Finally, I resorted to binary chop debugging, and systematically commented out bits of the merged config to see if one of the other options was interfering. This resulted in another facepalm moment. That `react()` plugin actually enables use of the SWC transpiler during development, rather than esbuild. 
+Finally, I resorted to binary chop debugging, and systematically commented out bits of the merged config to see if one of the other options was interfering. This resulted in another facepalm moment. That `react()` plugin actually enables use of the SWC transpiler during development. Esbuild isn't used. 
 
 I found the equivalent [SWC options](https://github.com/vitejs/vite-plugin-react-swc?tab=readme-ov-file#parserconfig). Including a very stern warning not to abuse this power to load JSX from `.js` files. I did it anyway. The syntax is wordier than esbuild but more understandable.
 
@@ -76,15 +76,15 @@ react({
 });
 ```
 
-This time it worked, at least during development. However, unlike the Sandbox samples, I also need production builds of the sample app. Of course it failed when I tried it because Vite uses Rollup for production builds. There wasn't anything obvious in the documentation and I was getting fed up with trying to abuse the system. 
+This time it worked, at least during development. However, unlike the Sandbox samples, I also need production builds of the sample app. Of course it failed when I tried it because Vite uses Rollup for production builds. There weren't any obvious workarounds in the Rollup documentation and I was getting fed up with trying to abuse the system. 
 
 I had one last throw of the dice. Instead of moving the Sandbox samples, I could leave the source code where it was and create symbolic links to the files. In particular I could link `index.jsx` in the sample app to `index.js` in the Sandbox sample. Git [handles symbolic links correctly](https://mokacoding.com/blog/symliks-in-git/), as long as they're relative links to other files in the same repo. 
 
-Another failure. The transpilers resolve the symbolic link correctly, but then use the extension of the target file rather than that of the symbolic link. Back to errors about JSX in `index.js`. 
+Another failure. The transpilers resolve the symbolic link, but then use the extension of the target file rather than that of the symbolic link. Back to errors about JSX in `index.js`. 
 
 I told you it was a rathole. In the end I gave up and just copied the files, renaming .js to .jsx. For now, I'll take the maintainability hit. If I change the Sandbox samples in future, I'll need to remember to update the equivalent sample here. If that's too painful, I can come up with a script to sync any changes over. 
 
-There is an upside. Copying the source code over means that I can rationalize the samples. Instead of having a CSS file in each sample, I can use common CSS across all of them. Creating a new sample is super simple. There's only two files - `index.html` and `index.tsx`. THe `index.html` file is a minimal stub that I shouldn't need to change. It's identical across all the samples but has to exist in each sample directory to act as Vite's entry point. 
+There is an upside. Copying the source code over means that I can rationalize the samples. Instead of having a CSS file in each sample, I can use common CSS across all of them. Creating a new sample is super simple. There's only two files - `index.html` and `index.tsx`. The `index.html` file is a minimal stub that I shouldn't need to change. It's identical across all the samples but has to exist in each sample directory to act as Vite's entry point. 
 
 The one bit of redundant effort is updating the list of bundler entry points in `vite.config`.
 
@@ -110,7 +110,7 @@ The one bit of redundant effort is updating the list of bundler entry points in 
   }
 ```
 
-The first time I did a production build I was disappointed that each sample was built as a standalone bundle with it's own embedded copy of React. Fortunately, it was easy to find how to share common code in the [Rollup documentation](https://rollupjs.org/configuration-options/#output-manualchunks). I copied their example which puts all dependencies in `node_modules` into a shared "vendor" chunk. Each sample ends up being a few KB in size with each importing the 142KB common vendor chunk. 
+The first time I did a production build I was disappointed that each sample was built as a standalone bundle with it's own embedded copy of React. Fortunately, it was easy to find how to share common code in the [Rollup documentation](https://rollupjs.org/configuration-options/#output-manualchunks). I copied their example which puts all dependencies from `node_modules` into a shared "vendor" chunk. Each sample ends up being a few KB in size plus an import of the common 142KB vendor chunk. 
 
 
 # Horizontal Layout List
