@@ -33,7 +33,7 @@ Finally, scopes improve security. They reduce the risk of [npm substitution atta
 
 Before going any further I need to create an npm account and secure my "candidstartup" scope. Scopes follow the same naming rules as npm packages so no funny symbols or capital letters. Scopes are tied to npm organizations so I need to create one of those too.
 
-[Creating a user account](https://docs.npmjs.com/creating-a-new-npm-user-account) was simple enough. [Two-factor authentication](https://docs.npmjs.com/about-two-factor-authentication) was strongly recommended, so I turned that on. I already use Google Authenticator for other accounts and it's also supported by NPM. 
+[Creating a user account](https://docs.npmjs.com/creating-a-new-npm-user-account) was simple enough. [Two-factor authentication](https://docs.npmjs.com/about-two-factor-authentication) was strongly recommended, so I turned that on. I already use Google Authenticator for other accounts and it's supported by NPM. 
 
 Once you have a user account, you can [create an organization](https://docs.npmjs.com/creating-an-organization). The organization needs to have the same name as the scope you want to use. 
 
@@ -79,7 +79,7 @@ The types badge in the NPM UI requires the `types` property to be populated even
 
 # Conventional Commits
 
-More prep that I didn't know I needed. It's customary to maintain a `CHANGELOG.md` in your repo that describes what changed in each release of your package. That's a pain to maintain. 
+More prep that I didn't know I needed. It's customary to have a `CHANGELOG.md` in your repo that describes what changed in each release of your package. That's a pain to maintain. 
 
 What if you didn't have to?
 
