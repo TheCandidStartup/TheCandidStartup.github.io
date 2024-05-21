@@ -220,4 +220,4 @@ export default defineConfig({
 
 # Conclusion
 
-It took a while, but I think I've ended up in a good place. Now that I can build usable and maintainable library packages, all I need to figure out is how to publish them. Something for me to look at next time. 
+It took a while, but I think I've ended up in a good place. Now that I can build usable and maintainable library packages, all I need to figure out is how to publish them. Something for me to look at [next time]({% link _posts/2024-05-21-bootstrapping-npm-publish.md %}). 

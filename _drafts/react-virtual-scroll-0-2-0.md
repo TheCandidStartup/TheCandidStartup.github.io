@@ -11,7 +11,7 @@ Exciting news! React-Virtual-Scroll 0.2.0 is [out](https://www.npmjs.com/package
 
 I'm sure releasing new versions of packages will soon become a chore. However, right now, it still feels fresh and exciting.
 
-[Last time]({% link _drafts/bootstrapping-npm-publish.md %}), I'd finally got all the tooling and processes in place and had published an initial release of `react-virtual-scroll`. How did my first routine development cycle go?
+[Last time]({% link _posts/2024-05-21-bootstrapping-npm-publish.md %}), I'd finally got all the tooling and processes in place and had published an initial release of `react-virtual-scroll`. How did my first routine development cycle go?
 
 # Tidying Up
 
