@@ -262,4 +262,4 @@ I could only get CodeSandbox to work when the entry point is a `.js` file. The s
 
 # Next Time
 
-That's more than enough time messing around with tooling. I need to get some more `react-virtual-scroll` features implemented and have a real reason to push out another release.
+That's more than enough time messing around with tooling. I need to get [some more]({% link _posts/2024-05-27-react-virtual-scroll-0-2-0.md %}) `react-virtual-scroll` features implemented and have a real reason to push out another release.
