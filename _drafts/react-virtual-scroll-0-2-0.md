@@ -37,9 +37,7 @@ I saw a discussion in the Vite documentation on building a [Multi Page App](http
 
 I wanted to include the Sandbox samples so that I didn't have to test them separately. I ended up going down a rathole by trying to reuse the source code as is. 
 
-Last time, I worked out how to use the Vite development server with the standalone Sandbox samples, using a `vite.config` file that forced Vite to load `.js` files as if they were JSX. All I had to do was move the Sandbox samples into `app/virtual-scroll-samples` and merge the `vite.config` magic with the existing app config. 
-
-It simply wouldn't work. Whenever I ran the app server it would complain about finding JSX in `index.js`.
+Last time, I worked out how to use the Vite development server with the standalone Sandbox samples. I used a `vite.config` file that forced Vite to load `.js` files as if they were JSX. All I had to do was move the Sandbox samples into `app/virtual-scroll-samples` and merge the `vite.config` magic with the existing app config. 
 
 ```
 export default defineConfig({
@@ -60,6 +58,8 @@ export default defineConfig({
 },
 })
 ```
+
+It simply wouldn't work. Whenever I ran the app server it would complain about finding JSX in `index.js`.
 
 Finally, I resorted to binary chop debugging, and systematically commented out bits of the merged config to see if one of the other options was interfering. This resulted in another facepalm moment. That `react()` plugin actually enables use of the SWC transpiler during development. Esbuild isn't used. 
 
