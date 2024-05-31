@@ -9,7 +9,7 @@ The best way is to automate as much as possible. It's time to set up automated b
 
 # GitHub Actions
 
-[GitHub Actions](https://github.com/features/actions) is an automation system built into GitHub. It would be great if I didn't have to use a separate service for [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration). 
+[GitHub Actions](https://github.com/features/actions) is an automation system built into GitHub. Maybe it will be all I need. It would be great if I didn't have to use a separate service for [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration). 
 
 I had three initial questions that I wanted answers to. Is GitHub Actions general purpose enough to run my build and test? Would I have to change my approach? And, of course, what will it cost? 
 
@@ -25,7 +25,7 @@ You can use actions provided by GitHub, actions created by the GitHub community,
 
 I followed the [instructions](https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs#using-a-nodejs-starter-workflow) to create a new workflow from the Node.js template. You end up with a YAML file in `.github/workflows` in the root of your repo, which you can edit as required before committing. 
 
-The workflow lets you build and test on multiple versions of Node. I'm currently on Node 18 which is now in "Maintenance LTS". Node 20 is now the "Active LTS" version. Makes sense to test with both. I'm using Lerna to run build and tests so I also needed to change the npm commands for build and run.
+The workflow lets you build and test on multiple versions of Node. I'm currently on Node 18 which is now in "Maintenance LTS". Node 20 is the "Active LTS" version. Makes sense to test with both. I'm using Lerna so I'll need to change the commands for build and test.
 
 Here's the starter workflow after tweaking node versions and npm commands.
 
@@ -99,7 +99,7 @@ Naturally, my first thought was to stick another badge on the README to show the
 
 {% include candid-image.html src="/assets/images/github/workflow-badge.png" alt="GitHub Workflow Badge" %}
 
-Coverage results are available in the logs if you drill down far enough. It would be nice to surface the results with a "Coverage" badge. GitHub doesn't have anything beyond the overall workflow status. 
+Coverage results are available in the logs if you drill down far enough. It would be nice to surface the results with a "Coverage" badge. GitHub doesn't have built in support for anything beyond the overall workflow status. 
 
 [Shields.io](https://shields.io/badges) has support for dedicated Code Coverage services but nothing for extracting values from GitHub Actions logs. There are generic badges that can extract values from structured file formats like JSON, XML and YAML. I know that Vitest code coverage can [produce](https://vitest.dev/config/#coverage-reporter) summary JSON results files. Can I combine the two?
 
@@ -107,7 +107,7 @@ The first problem is getting the JSON file off the runner and somewhere that shi
 
 Which doesn't help. Artifacts are stored as compressed ZIP files, the JSON file can't be directly accessed. Artifacts are only accessible if you're logged into GitHub (even for public repos). No good for casual README browsers. Finally, there's no simple URL for accessing a named artifact from the latest run. You need to use the GitHub API to get the id of the latest run, then get the list of artifacts for that run and then you can grab the one you want.
 
-The only thing I can think of is to run a post-build script that copies the coverage files into the repo and commits them. There's a handy [`Git Auto Commit`](https://github.com/marketplace/actions/git-auto-commit) action that does most of the work for you. I did worry that might set off a recursive build loop. Fortunately, GitHub [prevents](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow) this. Commits performed by a workflow won't trigger further workflow runs. 
+The only thing I could think of is to run a post-build script that copies the coverage files into the repo and commits them. There's a handy [`Git Auto Commit`](https://github.com/marketplace/actions/git-auto-commit) action that does most of the work for you. I did worry that might set off a recursive build loop. Fortunately, GitHub [prevents](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow) this. Commits performed by a workflow won't trigger further workflow runs. 
 
 In the end it seems like far more trouble than it's worth. For now, I've linked the workflow status badge to the [workflow page](https://github.com/TheCandidStartup/infinisheet/actions/workflows/build.yml) in GitHub. From there it's another 3 clicks to open the latest workflow run, open one of the jobs and then open the `npm run lerna-test` step. 
 
