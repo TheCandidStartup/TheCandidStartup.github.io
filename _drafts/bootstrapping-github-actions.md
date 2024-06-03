@@ -65,7 +65,7 @@ jobs:
 
 The workflow is triggered by pushes or pull requests on the main branch. The build will run anytime I make a change. 
 
-There are two actions. The [`checkout`](https://github.com/marketplace/actions/checkout) action checks-out your repo on the runner so that the rest of the workflow can access it. The [`setup-node`](https://github.com/marketplace/actions/setup-node-js-environment) action make sure the required version of node is installed and includes functionality that can cache npm dependencies for future runs.
+There are two actions. The [`checkout`](https://github.com/marketplace/actions/checkout) action checks out your repo on the runner so that the rest of the workflow can access it. The [`setup-node`](https://github.com/marketplace/actions/setup-node-js-environment) action makes sure the required version of node is installed and includes functionality that can cache npm dependencies for future runs.
 
 After that, simply add the commands you want to run.
 
@@ -75,7 +75,7 @@ GitHub Actions pulls off the balancing act of being both incredibly simple and c
 
 # First Run
 
-I committed my tweaked workflow. Nothing seemed to happen. However, when I went back to the `Actions` tab in GitHub I saw this.
+I committed my tweaked workflow. Nothing happened. However, when I went back to the `Actions` tab in GitHub I saw this.
 
 {% include candid-image.html src="/assets/images/github/actions.png" alt="GitHub Actions tab" %}
 
@@ -91,7 +91,7 @@ There's two warnings about Node 16. Which is weird, because we didn't ask for a 
 
 {% include candid-image.html src="/assets/images/github/workflow-logs.png" alt="GitHub Workflow Job Logs" %}
 
-There's lots of detail now. We can browse and search all the output from our commands. The logs are presented in a super accessible way. First, divided into sections for each step of the job. Then, within each section preserving any color coding and auto-collapsing indented lines into sub-sections. 
+There's lots of detail now. We can browse and search all the output from our commands. The logs are presented in an accessible way. First, divided into sections for each step of the job. Then, within each section, preserving any color coding and auto-collapsing indented lines into sub-sections. 
 
 # Badges
 
