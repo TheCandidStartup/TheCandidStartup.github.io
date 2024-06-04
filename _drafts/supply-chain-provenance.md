@@ -27,3 +27,21 @@ audited 971 packages in 9s
 
 101 packages have verified attestations
 ```
+
+* Basic setup for automated publish https://httptoolkit.com/blog/automatic-npm-publish-gha/
+* Create NPM granular access token with read-write access to `@candidstartup` scope
+
+{% include candid-image.html src="/assets/images/github/npm-token-generated.png" alt="NPM Token Generated - Use it or lose it" %}
+
+* Copy token and store it as a secret for project's GitHub actions
+* Go to Settings -> Secrets -> Actions
+* Have a choice of per environment, per repository or per organization secrets
+* Environment secrets let you have separate secrets for production, staging and dev with different levels of access. More control than we need.
+* Organization secrets let you define a secret at the Organization level shared by multiple repos based on permission policies. Again, more control than we need.
+* Created a repository secret for `infinisheet`
+
+{% include candid-image.html src="/assets/images/github/repository-secret.png" alt="GitHub Repository Secret" %}
+
+* Make sure npm package settings are configured for publish via access token
+
+{% include candid-image.html src="/assets/images/github/npm-publishing-access.png" alt="NPM Package Publishing Access" %}
