@@ -77,6 +77,10 @@ With a normal list component you would add an `onScroll` event handler on the ou
 
 I need to provide my own `onScroll` that abstracts away the details of the paging system. However, I want it to behave like `OnScroll` on the underlying div. In particular, I want it to be invoked during scroll event processing. Then a subscriber can change state in other components to match, before the app is re-rendered. 
 
+## Implementation
+
+I added an `onScroll` callback to the `VirtualList` props. The callback for `VirtualGrid` will have different parameters so can't be in the shared props.
+
 ```
 export interface VirtualListProps extends VirtualBaseProps {
   ...
@@ -84,7 +88,7 @@ export interface VirtualListProps extends VirtualBaseProps {
 };
 ```
 
-The onScroll prop has two parameters. All you need in most cases is the offset being scrolled to in the overall list. The second parameter is the full `ScrollState` for more advanced use cases, like my functional test. The `ScrollState` includes the `scrollOffset` in container space, the `renderOffset` you need to add to get the offset in list space, the current page for paged scrolling and the current `scrollDirection`.
+The callback has two parameters. All you need in most cases is the offset being scrolled to in the overall list. The second parameter is the full `ScrollState` for more advanced use cases, like my functional test. The `ScrollState` includes the `scrollOffset` in container space, the `renderOffset` you need to add to get the offset in list space, the current page for paged scrolling and the current `scrollDirection`.
 
 ```
 export type ScrollDirection = "forward" | "backward";
