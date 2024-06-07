@@ -3,14 +3,34 @@ title: Supply Chain Provenance
 tags: frontend cloud-architecture
 ---
 
-wise words
+Many of us first became aware of the risks of a [supply-chain attack](https://en.wikipedia.org/wiki/Supply_chain_attack) with the [SolarWinds hack](https://en.wikipedia.org/wiki/2020_United_States_federal_government_data_breach#SolarWinds_exploit) of 2020. Attackers compromised the build system belonging to [SolarWinds](https://www.solarwinds.com/), the creator of popular network monitoring tool Orion. 
+
+Malware was installed on the build system. When it detected that an Orion build was in progress, it replaced one of the built DLLs with a clone containing a backdoor. Any SolarWinds customer that applied the Orion update was compromised in turn. Customers included high profile targets like the US Government, Microsoft, other software and hardware suppliers, together with many security firms.
+
+At the time, [many](https://thenewstack.io/solarwinds-the-worlds-biggest-security-failure-and-open-sources-better-answer/) [in](https://www.linkedin.com/pulse/open-source-solarwinds-hack-magnus-glantz/) the open source world claimed that this kind of attack was inherent to proprietary software. The transparency of open source software made it more secure. The open source principle of bringing [many eyeballs](http://www.catb.org/esr/writings/cathedral-bazaar/cathedral-bazaar/ar01s05.html?utm_source=the+new+stack) meant that more errors would be found and attacks prevented.
 
 {% include candid-image.html src="/assets/images/github/xkcd-dependency.png" alt="XKCD Cartoon - Open Source Dependencies" attrib="[xkcd](https://xkcd.com/2347/)" %}
 
-* xkcd cartoon
-* lzma supply chain attack
-  * Overview: https://www.sonatype.com/blog/cve-2024-3094-the-targeted-backdoor-supply-chain-attack-against-xz-and-liblzma
-  * Tech Details: https://gist.github.com/thesamesam/223949d5a074ebc3dce9ee78baad9e27
+Hopefully this year's [XZ supply chain attack](https://www.sonatype.com/blog/cve-2024-3094-the-targeted-backdoor-supply-chain-attack-against-xz-and-liblzma) will be a wake up call. [XZ Utils](https://github.com/tukaani-project/xz) is the perfect example of a foundational project thanklessly maintained by some random person for the last twenty years. In this case, that person is [Lasse Collin](https://github.com/Larhzu). Lasse Collin was subjected to a social engineering campaign aimed at getting him to take on another maintainer. As it happened, a newly active contributor called Jia Tan was willing to step up. 
+
+[Jia Tan doesn't exist](https://www.technewshub.co.uk/post/who-is-jia-tan-the-hacker-who-waited-3-years-to-plant-malware-that-has-shaken-the-cybersecurity-wor). 
+
+# XZ Utils
+
+XZ Utils is a lossless compression utility and associated library that has been adopted by most Linux distributions. Jia Tan [compromised](https://gist.github.com/thesamesam/223949d5a074ebc3dce9ee78baad9e27) XZ's liblzma library. On many systems, liblzma is a dependency of a dependency of the SSH secure login utility. When the compromised library is loaded into an SSH process, it hooks itself into SSH's authentication routines to enable a backdoor. 
+
+How did Jia Tan get past the scrutiny of so many eyeballs? Just like with SolarWinds, they compromised the build process. Only in this case, it was much easier. 
+
+Open source projects use a variety of tool stacks to build and make available releases of their software. The general principle is the same. The source code is retrieved from a public repository, it gets built and packaged up, then the package is posted in some form of public registry where potential consumers can find and download it. Often the maintainer will sign the package to ensure that it can't be tampered with later. 
+
+As a consumer you have to trust the project maintainer when they say that the package they posted to the public registry corresponds to the source code that the many eyeballs have reviewed. It's not practical to review compiled binary code. Even packages for scripting languages like JavaScript are unreadable once they've been minified and bundled. 
+
+All Jia Tan had to do was modify their local copy of the source code before building and releasing it. They took some care to avoid raising suspicions. They made sure the resulting package size was comparable to the original build. Even so, it's trivial compared with the SolarWinds attack.
+
+# Dependency Management
+
+# NPM Provenance
+
 
 * Blog introducing feature: https://github.blog/2023-04-19-introducing-npm-package-provenance/
 * sigstore: https://www.sigstore.dev/
@@ -28,6 +48,8 @@ wise words
 * npm client integration
   * npm audit signatures
   * No option to display list of packages without provenance
+
+# Adoption
 
 In Infinisheet repo
 ```
