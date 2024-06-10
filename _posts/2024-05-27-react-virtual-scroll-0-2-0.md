@@ -214,4 +214,4 @@ Final build, version and publish went really smoothly. It took at most five minu
 
 # Next Time
 
-Let's see if I can be even more productive and get two features into the next release.
+Let's see if I can be even more productive and get two features into the [next release]({% link _posts/2024-06-10-react-virtual-scroll-0-3-0.md %}).
