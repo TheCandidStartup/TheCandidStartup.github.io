@@ -25,33 +25,54 @@ Open source projects use a variety of tool stacks to build and make available re
 
 As a consumer you have to trust the project maintainer when they say that the package they posted to the public registry corresponds to the source code that the many eyeballs have reviewed. It's not practical to review compiled binary code. Even packages for scripting languages like JavaScript are unreadable once they've been minified and bundled. 
 
-All Jia Tan had to do was modify their local copy of the source code before building and releasing it. They took some care to avoid raising suspicions. They made sure the resulting package size was comparable to the original build. Even so, it's trivial compared with the SolarWinds attack.
+All Jia Tan had to do was modify their local copy of the source code before building and releasing it. They took some care to avoid raising suspicions. They made sure the resulting package size was comparable to the original build. They disguised the payload as a binary test file. The only file they modified compared to the original source code was the installation script. Even so, it's trivial compared with the SolarWinds attack.
 
 # Dependency Management
 
+Open source promotes sharing and reuse of software. That's a good thing. However, it does mean that all open source software relies on a huge stack of nested dependencies. I'm working on a modest [open source project]({% link _topics/react-virtual-scroll.md %}). It's a front end NPM package based on React. React is the only immediate runtime dependency. It uses a [standard]({% link _posts/2023-10-23-bootstrapping-vite.md %}) [set]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) of [tooling]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}). Altogether you need nearly 1000 dependencies to build and run. 
+
+You might be able to validate and trust the maintainers of your immediate dependencies. However, it's not practical to do the same for every dependency in the stack. You have to rely on the many eyeballs principle. Which has this gaping hole between what you can see in the source code repo and what ends up in the package you consume. 
+
+If you're sensibly paranoid, you'll stick to consuming source code. Forgo the convenience of package managers. However, if the secure option is too much effort, most people won't bother. A thousand dependencies? I'm sure it will be fine. 
+
+# Sigstore
+
+[Sigstore](https://www.sigstore.dev/) is an open source effort to improve supply chain security. It focuses on providing an easy, standardized way for maintainers to sign their packages so that consuming developers can easily verify that the packages they consume have not been tampered with since they were created. 
+
+Sigstore abstracts away the need for maintainers and developers to manage signing keys. Signatures are created using ephemeral signing keys associated with an OpenId Connect identity. Package consumers can verify package integrity and directly determine the publisher's identity, without having to work out how to obtain the correct public key. All signing events are recorded in a tamper-resistant public log so developers can audit signatures.
+
+Which sounds good but still seems like a lot of work for maintainers and developers. It also does nothing to address the gap between source code repo and signed package.
+
 # NPM Provenance
 
-
-* Blog introducing feature: https://github.blog/2023-04-19-introducing-npm-package-provenance/
-* sigstore: https://www.sigstore.dev/
-
-* npm registry integration
-  * Version check mark
-  * Provenance section at bottom of package page
-  * No filter to let you search just for packages with provenance
-  * No checkmark in search results
-
-{% include candid-image.html src="/assets/images/github/sigstore-npm-props.png" alt="NPM Package with Provenance Check Mark" %}
+Last year GitHub [announced a new provenance feature](https://github.blog/2023-04-19-introducing-npm-package-provenance/) for NPM packages using Sigstore. Packages can include a provenance statement that ties a built package to a specific source code repo and commit. The feature is integrated with GitHub actions. All you have to do is configure your GitHub actions workflow correctly by adding a couple of flags.
 
 {% include candid-image.html src="/assets/images/github/sigstore-npm-provenance.png" alt="NPM Package with Provenance statement" %}
 
-* npm client integration
-  * npm audit signatures
-  * No option to display list of packages without provenance
+Packages with provenance are identified as such on the [NPM registry](https://www.npmjs.com/) with links to the corresponding commit and build process. 
+
+Which sounds great. It makes it easy for maintainers to publish packages with provenance and really easy for developers to see whether a package has full source to consumed package integrity. However, don't we still have the problem of having to trust the maintainers of every dependency?
+
+Which is where the really clever bit comes in. The packages aren't signed by the maintainers. They're signed by a trusted CI/CD system. At time of writing the only trusted CI/CD systems are GitHub Actions and GitLab CI/CD. The package has to be built using using a cloud-hosted runner managed by the CI/CD system with a build workflow defined in the source code repo. 
+
+Consumers have full transparency of how the package was built. The many eyeballs principle works properly again. 
 
 # Adoption
 
-In Infinisheet repo
+It's now just over a year since the NPM provenance feature was released. Is it making a difference?
+
+## NPM Registry
+
+The integration into the NPM registry is pretty minimal. As well as the provenance statement visible only if you scroll right down to the bottom of the package page, there's a subtle check mark next to the package version.
+
+{% include candid-image.html src="/assets/images/github/sigstore-npm-props.png" alt="NPM Package with Provenance Check Mark" %}
+
+That's it. There's no integration into package search yet. You can't filter packages to only show those with provenance. You can't even see the provenance checkmark in the search results. You have to go to each package's page and check there.
+
+## NPM Client
+
+The NPM client also has some minimal support. There's a new `npm audit signatures` command which will tell you how many packages have provenance statements and whether any have been tampered with.
+
 ```
 % npm audit signatures
 audited 971 packages in 9s
@@ -61,186 +82,10 @@ audited 971 packages in 9s
 101 packages have verified attestations
 ```  
 
-A little more than 10% of packages I use have provenance. Still a long way to go. 
+However, there's no way to list which packages are missing provenance. In my own project, just over 10% of the packages I use have provenance. There's still a long way to go. 
 
-* Publishing
-  * More than convenience. If you build and [publish](https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages) from GitHub actions you can establish the [provenance](https://docs.npmjs.com/generating-provenance-statements) of the package. NPM will verifiably link the package to the commit and workflow that built it. This is a crucial step in improving supply chain security. 
-  * Can check if build was triggered by version commit and use that to decide whether to publish package
-* Versioning
-  * Can continue to run locally or setup a [manual workflow](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow) with form inputs that let you choose how new version should be generated
-  * Not worth it. Simpler and more flexible to continue versioning on my machine then use push of that commit to trigger publish.
+A little more than 10% of packages I use have provenance. There's still a long way to go. 
 
-In Infinisheet repo
-```
-% npm audit signatures
-audited 971 packages in 9s
+# Call to Arms
 
-971 packages have verified registry signatures
-
-101 packages have verified attestations
-```
-
-* Basic setup for automated publish https://httptoolkit.com/blog/automatic-npm-publish-gha/
-* Create NPM granular access token with read-write access to `@candidstartup` scope
-
-{% include candid-image.html src="/assets/images/github/npm-token-generated.png" alt="NPM Token Generated - Use it or lose it" %}
-
-* Copy token and store it as a secret for project's GitHub actions
-* Go to Settings -> Secrets -> Actions
-* Have a choice of per environment, per repository or per organization secrets
-* Environment secrets let you have separate secrets for production, staging and dev with different levels of access. More control than we need.
-* Organization secrets let you define a secret at the Organization level shared by multiple repos based on permission policies. Again, more control than we need.
-* Created a repository secret for `infinisheet`
-
-{% include candid-image.html src="/assets/images/github/repository-secret.png" alt="GitHub Repository Secret" %}
-
-* Make sure npm package settings are configured for publish via access token
-
-{% include candid-image.html src="/assets/images/github/npm-publishing-access.png" alt="NPM Package Publishing Access" %}
-
-# Publish Automation - Attempt 1
-
-* Ready to try publishing. First idea was to add an extra step to my existing Build CI workflow to run `npm run lerna-publish`. Used the [npm documentation](https://docs.npmjs.com/generating-provenance-statements) to include the npm auth token in the environment and to force provenance generation to be used. I'm using lerna to publish packages so can't pass a provenance flag through to the npm publish call. I don't want to publish every build, so I made the publish step conditional. It will only run on a push to main, only for one of the matrix builds and only if the triggering commit was created by `lerna version`.
-
-```
-- name: Publish to NPM on release
-  if: |
-      github.ref == 'refs/heads/main' &&
-      matrix.node-version == '20.X' &&
-      contains(github.event.head_commit.message, 'chore(release)')
-  env:
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
-      NPM_CONFIG_PROVENANCE: true
-  run: npm run lerna-publish
-```
-
-I created a new version for my `react-virtual-scroll` 0.3.0 release and waited to see what would happen. 
-
-{% include candid-image.html src="/assets/images/github/npm-publish-run-1.png" alt="Lerna Publish Fails" %}
-
-I've seen that error before. The same thing happened when I [first ran lerna publish]({% link _posts/2024-05-21-bootstrapping-npm-publish.md %}) on my machine without logging into npm first. Seems likely that my NPM automation token hasn't been picked up.
-
-It turns out that the way GitHub actions handles authentication with npm is a [little convoluted](https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry). You need to explicitly specify the NPM package registry URL in the `setup-node` action, even though its the default. This triggers `setup-node` to write a hardcoded `.npmrc` file to the runner which includes `_authToken=${NODE_AUTH_TOKEN}`. Finally, you need to make sure that `NODE_AUTH_TOKEN` is defined in the environment when you run the publish.
-
-My workflow was missing the `registry-url: 'https://registry.npmjs.org` line. All I needed to do was add it and rerun. 
-
-At this point I realized two things. First, I needed some way of rerunning a publish if something went wrong. Second, tagging publishing onto the end of the "Build CI" workflow meant that my CI build as a whole would fail if something went wrong when publishing. 
-
-# Publish Automation - Attempt 2
-
-I decided to use a separate workflow for publishing. I could configure it to support two triggers. It would be called from the end of the Build CI workflow if the conditions were met or you could trigger it manually. Here, the publishing step is a separate job that runs if all the build jobs have succeeded.
-
-```
-publish-if-neeeded:
-  needs: build
-  if: |
-      github.ref == 'refs/heads/main' &&
-      contains(github.event.head_commit.message, 'chore(release)')
-  uses: ./.github/workflows/npm-publish.yml
-```
-
-The publish workflow looks like this
-
-```
-name: NPM Publish
-
-on: [workflow_dispatch, workflow_call]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20.X
-          registry-url: https://registry.npmjs.org/
-      - run: npm ci
-      - run: npm run lerna-build
-      - run: npm run lerna-test
-      - run: npm run lerna-publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
-```
-
-As it's a separate workflow, potentially on a different runner, which might be triggered manually, it needs to include all the build steps as well as the publish. I can live with the duplication as it won't be run that often. 
-
-{% include candid-image.html src="/assets/images/github/npm-publish-workflow.png" alt="Publish Workflow can be manually triggered" %}
-
-Now I can rerun the publish and see if it gets any further.
-
-{% include candid-image.html src="/assets/images/github/npm-publish-run-2.png" alt="Lerna Publish Fails Again" %}
-
-That's a new error. Google came up with no results for `TLOG_CREATE_ENTRY_ERROR`. Searching GitHub found some hits in [sigstore-js](https://github.com/sigstore/sigstore-js) which is part of the [sigstore](https://www.sigstore.dev/) project used by npm to record provenance. It looks like the sigstore library throws that error if it can't communicate with the sigstore backend. 
-
-Which left me stuck. Lerna gives me no context for what might have triggered the error. I couldn't find any way to enable more verbose logging. So I decided to use `npm publish` directly to see if that would show me more information related to the error.
-
-```
-Run npm publish --workspaces --verbose --provenance --access public
-npm verb cli /opt/hostedtoolcache/node/20.13.1/x64/bin/node /opt/hostedtoolcache/node/20.13.1/x64/bin/npm                                        
-npm notice 
-npm notice Publishing to https://registry.npmjs.org/ with tag latest and public access
-npm notice publish Signed provenance statement with source and build information from GitHub Actions
-npm notice publish Provenance statement published to transparency log: https://search.sigstore.dev/?logIndex=99921087
-npm http fetch PUT 200 https://registry.npmjs.org/@candidstartup%2freact-virtual-scroll 2178ms
-+ @candidstartup/react-virtual-scroll@0.3.0
-```
-
-Annoyingly it worked first time. Either the error was something intermittent or somehow the way Lerna calls `npm publish` triggers the error. I was tempted to give up on `lerna publish` at this point. However, `npm publish` by itself isn't enough. It isn't idempotent. If you run publish again it will error because the package has already been published. That makes it painful to automate when working in a monorepo because only some packages may need publishing but `npm publish --workspaces` will try and publish all of them. Dealing with this is the value add that Lerna brings.
-
-I decided to try `lerna publish` again to see if the problem was an intermittent error with the sigstore backend. Of course as I had already published the `react-virtual-scroll` 0.3.0 package, Lerna refused to try publishing again no matter how I tried to force it. I need to create version 0.3.1 and trigger the publish via Build CI. 
-
-{% include candid-image.html src="/assets/images/github/npm-publish-run-3.png" alt="Lerna Publish Fails a Third Time" %}
-
-It failed again, but back to the authentication error. Which is really weird. On [further reading](https://docs.github.com/en/actions/using-workflows/reusing-workflows) it seems that workflow dispatch is more like a subroutine call than triggering an independent workflow. There's lots of complex language explaining which bits of content come from the calling workflow and which from the called workflow.
-
-I've also still got the problem where a publish failure results in failure of my Build CI workflow. 
-
-# Publish Automation - Attempt 3
-
-There's another way of chaining workflows. You can trigger a workflow to run when another workflow completes. With this approach I can pull all the publishing related stuff out of the Build CI workflow. I also switched to calling Lerna directly rather than via an npm script so that I could tweak the command line without having to edit another file.
-
-```
-name: NPM Publish
-
-on:
-  workflow_dispatch:
-  workflow_run:
-    workflows: [Build CI]
-    types: [completed]
-
-jobs:
-  build:
-    if: |
-        github.event_name == 'workflow_dispatch' ||
-        ( github.event.workflow_run.conclusion == 'success' &&
-          github.event.workflow_run.event.ref == 'refs/heads/main' &&
-          contains(github.event.workflow_run.event.head_commit.message, 'chore(release)'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.X
-          registry-url: https://registry.npmjs.org/
-      - run: npm ci
-      - run: npm run lerna-build
-      - run: npm run lerna-test
-      - run: npx lerna publish from-package --yes
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
-```
-
-For whatever reason, this time it worked. 
-
-{% include candid-image.html src="/assets/images/github/npm-publish-run-4.png" alt="Lerna Publish Success" %}
-
-# Result
+# Trusting GitHub
