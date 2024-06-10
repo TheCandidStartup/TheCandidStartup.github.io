@@ -79,7 +79,7 @@ I need to provide my own `onScroll` that abstracts away the details of the pagin
 
 ## Implementation
 
-I added an `onScroll` callback to the `VirtualList` props. The callback for `VirtualGrid` will have different parameters so can't be in the shared props.
+I added an `onScroll` callback to the `VirtualList` props. The callback for `VirtualGrid` will have different parameters so it can't be in the shared props.
 
 ```
 export interface VirtualListProps extends VirtualBaseProps {
@@ -166,4 +166,6 @@ export interface VirtualGridProps extends VirtualBaseProps {
 
 The rest of the changes are mechanical and straightforward now that we've got `VirtualList` working. Have a look at the [commit](https://github.com/TheCandidStartup/infinisheet/commit/6287d28281bcdfa9c04891c15602c505bf59a69a) if you're interested in the detail.
 
-All that's left is to publish a new package. I'm going to make some changes to how publishing works, which I'll tell you about next time.
+All that's left is to publish a [new package](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.3.0). The package page in NPM has some interesting changes. Can you see what's changed compared with [0.2.0](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.2.0)? 
+
+I'll tell you all about it next time.
