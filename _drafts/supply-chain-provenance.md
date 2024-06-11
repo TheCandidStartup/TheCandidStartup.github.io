@@ -29,15 +29,17 @@ All Jia Tan had to do was modify their local copy of the source code before buil
 
 # Dependency Management
 
-Open source promotes sharing and reuse of software. That's a good thing. However, it does mean that all open source software relies on a huge stack of nested dependencies. I'm working on a modest [open source project]({% link _topics/react-virtual-scroll.md %}). It's a front end NPM package based on React. React is the only immediate runtime dependency. It uses a [standard]({% link _posts/2023-10-23-bootstrapping-vite.md %}) [set]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) of [tooling]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}). Altogether you need nearly 1000 dependencies to build and run. 
+Open source promotes sharing and reuse of software. That's a good thing. However, it does mean that all open source software relies on a huge stack of nested dependencies. I'm working on a modest [open source project]({% link _topics/react-virtual-scroll.md %}). It's a front end NPM package based on React. React is the only immediate runtime dependency. It uses a [standard]({% link _posts/2023-10-23-bootstrapping-vite.md %}) [set]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) of [tooling]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}). 
 
-You might be able to validate and trust the maintainers of your immediate dependencies. However, it's not practical to do the same for every dependency in the stack. You have to rely on the many eyeballs principle. Which has this gaping hole between what you can see in the source code repo and what ends up in the package you consume. 
+Altogether, you need nearly 1000 dependencies to build and run. 
+
+You might be able to validate and trust the maintainers of your immediate dependencies. It's not practical to do the same for every dependency in the stack. You have to rely on the many eyeballs principle. Which has this gaping hole between what you can see in the source code repo and what ends up in the package you consume. 
 
 If you're sensibly paranoid, you'll stick to consuming source code. Forgo the convenience of package managers. However, if the secure option is too much effort, most people won't bother. A thousand dependencies? I'm sure it will be fine. 
 
 # Sigstore
 
-[Sigstore](https://www.sigstore.dev/) is an open source effort to improve supply chain security. It focuses on providing an easy, standardized way for maintainers to sign their packages so that consuming developers can easily verify that the packages they consume have not been tampered with since they were created. 
+[Sigstore](https://www.sigstore.dev/) is an open source effort to improve supply chain security. It focuses on providing an easy, standardized way for maintainers to sign their packages so that developers can easily verify that the packages they consume have not been tampered with since they were created. 
 
 Sigstore abstracts away the need for maintainers and developers to manage signing keys. Signatures are created using ephemeral signing keys associated with an OpenId Connect identity. Package consumers can verify package integrity and directly determine the publisher's identity, without having to work out how to obtain the correct public key. All signing events are recorded in a tamper-resistant public log so developers can audit signatures.
 
@@ -45,17 +47,17 @@ Which sounds good but still seems like a lot of work for maintainers and develop
 
 # NPM Provenance
 
-Last year GitHub [announced a new provenance feature](https://github.blog/2023-04-19-introducing-npm-package-provenance/) for NPM packages using Sigstore. Packages can include a provenance statement that ties a built package to a specific source code repo and commit. The feature is integrated with GitHub actions. All you have to do is configure your GitHub actions workflow correctly by adding a couple of flags.
+Last year GitHub [announced a new provenance feature](https://github.blog/2023-04-19-introducing-npm-package-provenance/) for NPM packages that uses sigstore. Packages can include a provenance statement that ties a built package to a specific source code repo and commit. The feature is integrated with GitHub actions. All you have to do is configure your GitHub actions workflow correctly by adding a couple of flags.
 
 {% include candid-image.html src="/assets/images/github/sigstore-npm-provenance.png" alt="NPM Package with Provenance statement" %}
 
 Packages with provenance are identified as such on the [NPM registry](https://www.npmjs.com/) with links to the corresponding commit and build process. 
 
-Which sounds great. It makes it easy for maintainers to publish packages with provenance and really easy for developers to see whether a package has full source to consumed package integrity. However, don't we still have the problem of having to trust the maintainers of every dependency?
+Which sounds great. It makes it easy for maintainers to publish packages with provenance and really easy for developers to see whether a package has full source-to-package integrity. However, don't we still have the problem of having to trust the maintainers of every dependency?
 
-Which is where the really clever bit comes in. The packages aren't signed by the maintainers. They're signed by a trusted CI/CD system. At time of writing the only trusted CI/CD systems are GitHub Actions and GitLab CI/CD. The package has to be built using using a cloud-hosted runner managed by the CI/CD system with a build workflow defined in the source code repo. 
+Which is where the really clever bit comes in. The packages aren't signed by the maintainers. They're signed by a trusted CI/CD system. At time of writing the only trusted CI/CD systems are GitHub Actions and GitLab CI/CD. The package has to be built using a cloud-hosted runner managed by the CI/CD system with a build workflow defined in the source code repo. 
 
-Consumers have full transparency of how the package was built. The many eyeballs principle works properly again. 
+Consumers have full transparency of how the package was built. The many eyeballs principle works properly again. Instead of navigating a thousand trust relationships there's only one. 
 
 # Adoption
 
@@ -82,10 +84,20 @@ audited 971 packages in 9s
 101 packages have verified attestations
 ```  
 
-However, there's no way to list which packages are missing provenance. In my own project, just over 10% of the packages I use have provenance. There's still a long way to go. 
-
-A little more than 10% of packages I use have provenance. There's still a long way to go. 
+However, there's no way to list which packages are missing provenance (aka "verified attestations" ). In my own project, just over 10% of the packages I use have provenance. There's still a long way to go. 
 
 # Call to Arms
 
+Provenance statements are a great idea. Providing provenance should become part of the minimum bar for publishing packages. If you maintain an open source NPM package, have you added provenance yet? 
+
+If you already use GitHub Actions or GitLab CI/CD you have no excuse. If you currently build locally, you may be surprised how [easy it is to get a build running on GitHub Actions]({% link _posts/2024-06-03-bootstrapping-github-actions.md %}). 
+
+Next time I'll show you what happened when I added provenance to my open source package. 
+
 # Trusting GitHub
+
+Given what happened with SolarWinds, how do you feel about an ecosystem where everything is dependent on GitHub? If a nation state attacker compromised the GitHub build system, they could do whatever they wanted. 
+
+In some sense it's too late. Git is overwhelmingly the most popular version control system and GitHub is the [most popular git hosting platform](https://survey.stackoverflow.co/2022#technology-version-control), with GitLab a long way behind in second place.
+
+If GitHub was compromised, we've already lost. 
