@@ -3,37 +3,62 @@ title: Bootstrapping NPM Provenance with GitHub Actions
 tags: frontend
 ---
 
-Wise words
+I'm putting my money where my mouth is. [NPM provenance statements are great]({% link _drafts/supply-chain-provenance.md %}) and everyone should publish packages that include them. Including me. 
 
-* Publishing
-  * More than convenience. If you build and [publish](https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages) from GitHub actions you can establish the [provenance](https://docs.npmjs.com/generating-provenance-statements) of the package. NPM will verifiably link the package to the commit and workflow that built it. This is a crucial step in improving supply chain security. 
-  * Can check if build was triggered by version commit and use that to decide whether to publish package
-* Versioning
-  * Can continue to run locally or setup a [manual workflow](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow) with form inputs that let you choose how new version should be generated
-  * Not worth it. Simpler and more flexible to continue versioning on my machine then use push of that commit to trigger publish.
+It took me longer to get up and running than I would have liked. Mostly down to my own stupidity. At least now that I've made the mistakes, you don't have to. 
 
+# TL;DR
 
-* Basic setup for automated publish https://httptoolkit.com/blog/automatic-npm-publish-gha/
-* Create NPM granular access token with read-write access to `@candidstartup` scope
+You need to add four additional lines compared with a standard build workflow
+
+{% include candid-image.html src="/assets/images/github/npm-provenance-workflow-tldr.png" alt="NPM Provenance Workflow TLDR" %}
+
+1. Give the workflow permission to create an identity token
+2. Explicitly specify the NPM registry you're publishing to (even if it's the default one)
+3. Add `NODE_AUTH_TOKEN` to the environment for your publish step with a value that retrieves your NPM automation token from GitHub's secrets
+4. Add `NPM_CONFIG_PROVENANCE` to the environment for your publish step with value `true`.
+
+# Versioning
+
+My [current manual release workflow]({% link _posts/2024-05-21-bootstrapping-npm-publish.md %}) has separate steps for creating a new version and publishing packages to npm. The versioning step updates version numbers in `package.json` files, updates `CHANGELOG.md` files and commits the changes. Once version numbers have been updated, I rebuild the packages and then run the lerna command to publish. 
+
+I can continue to run versioning locally or setup a [manual workflow](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow) with form inputs that let you choose how new versions should be generated.
+
+I decided that automating versioning isn't worth it. It's simpler and more flexible to continue versioning on my machine then use the push of that commit to trigger publish.
+
+# NPM Automation Token
+
+Before I start messing around with GitHub Actions workflows, I need to [create an NPM automation token](https://httptoolkit.com/blog/automatic-npm-publish-gha/) that I can use to give my workflow permission to publish to NPM. 
+
+I [followed the instructions](https://docs.npmjs.com/creating-and-viewing-access-tokens#creating-granular-access-tokens-on-the-website) to create a granular access token with read-write access to the `@candidstartup` scope.
 
 {% include candid-image.html src="/assets/images/github/npm-token-generated.png" alt="NPM Token Generated - Use it or lose it" %}
 
-* Copy token and store it as a secret for project's GitHub actions
-* Go to Settings -> Secrets -> Actions
-* Have a choice of per environment, per repository or per organization secrets
-* Environment secrets let you have separate secrets for production, staging and dev with different levels of access. More control than we need.
-* Organization secrets let you define a secret at the Organization level shared by multiple repos based on permission policies. Again, more control than we need.
-* Created a repository secret for `infinisheet`
+You get one chance to make a copy of the token value. If you mess up, delete the token and make a new one. I copied the value and stored it as a secret in GitHub actions. Go to `Settings -> Secrets -> Actions` in your repo. You have a choice of per environment, per repository or per organization secrets.
+
+Environment secrets let you have separate secrets for production, staging and dev with different levels of access. Which is more control than we need.
+
+Organization secrets let you define a secret at the Organization level shared by multiple repos based on permission policies. Again, more control than we need.
+
+For my purposes, repository secrets are just right.
 
 {% include candid-image.html src="/assets/images/github/repository-secret.png" alt="GitHub Repository Secret" %}
 
-* Make sure npm package settings are configured for publish via access token
+Finally, go back to NPM and make sure the settings for your package are configured to allow publishing via granular access token.
 
 {% include candid-image.html src="/assets/images/github/npm-publishing-access.png" alt="NPM Package Publishing Access" %}
 
-# Publish Automation - Attempt 1
+# Publish Automation
 
-* Ready to try publishing. First idea was to add an extra step to my existing Build CI workflow to run `npm run lerna-publish`. Used the [npm documentation](https://docs.npmjs.com/generating-provenance-statements) to include the npm auth token in the environment and to force provenance generation to be used. I'm using lerna to publish packages so can't pass a provenance flag through to the npm publish call. I don't want to publish every build, so I made the publish step conditional. It will only run on a push to main, only for one of the matrix builds and only if the triggering commit was created by `lerna version`.
+So far, straightforward enough. Now I just need to update my [Build CI workflow]({% link _posts/2024-06-03-bootstrapping-github-actions.md %}) to add publishing. Unfortunately, it took me three attempts to get something that I was happy with.
+
+## Attempt 1
+
+My first idea was to add an extra step to the existing Build CI workflow that would run `npm run lerna-publish`. I used the [npm documentation](https://docs.npmjs.com/generating-provenance-statements) to include the npm auth token in the environment and to force provenance generation to be used.
+
+I'm using lerna to publish packages so can't pass a provenance flag through to the npm publish call. I don't want to publish every build, so I made the publish step conditional. It will only run on a push to main, only for one of the matrix builds and only if the triggering commit was created by `lerna version`.
+
+{% raw %}
 
 ```
 - name: Publish to NPM on release
@@ -47,19 +72,21 @@ Wise words
   run: npm run lerna-publish
 ```
 
+{% endraw %}
+
 I created a new version for my `react-virtual-scroll` 0.3.0 release and waited to see what would happen. 
 
 {% include candid-image.html src="/assets/images/github/npm-publish-run-1.png" alt="Lerna Publish Fails" %}
 
-I've seen that error before. The same thing happened when I [first ran lerna publish]({% link _posts/2024-05-21-bootstrapping-npm-publish.md %}) on my machine without logging into npm first. Seems likely that my NPM automation token hasn't been picked up.
+I've seen that error before. The same thing happened when I [first ran lerna publish]({% link _posts/2024-05-21-bootstrapping-npm-publish.md %}) on my machine without logging into npm first. It seems likely that my NPM automation token hasn't been picked up.
 
-It turns out that the way GitHub actions handles authentication with npm is a [little convoluted](https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry). You need to explicitly specify the NPM package registry URL in the `setup-node` action, even though its the default. This triggers `setup-node` to write a hardcoded `.npmrc` file to the runner which includes `_authToken=${NODE_AUTH_TOKEN}`. Finally, you need to make sure that `NODE_AUTH_TOKEN` is defined in the environment when you run the publish.
+It turns out that the way GitHub actions handles authentication with npm is a [little convoluted](https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry). You need to explicitly specify the NPM package registry URL in the `setup-node` action, even though it's the default. This triggers `setup-node` to write a hardcoded `.npmrc` file to the runner which includes `_authToken=${NODE_AUTH_TOKEN}`. Finally, you need to make sure that `NODE_AUTH_TOKEN` is defined in the environment when you run the publish.
 
 My workflow was missing the `registry-url: 'https://registry.npmjs.org` line. All I needed to do was add it and rerun. 
 
 At this point I realized two things. First, I needed some way of rerunning a publish if something went wrong. Second, tagging publishing onto the end of the "Build CI" workflow meant that my CI build as a whole would fail if something went wrong when publishing. 
 
-# Publish Automation - Attempt 2
+## Attempt 2
 
 I decided to use a separate workflow for publishing. I could configure it to support two triggers. It would be called from the end of the Build CI workflow if the conditions were met or you could trigger it manually. Here, the publishing step is a separate job that runs if all the build jobs have succeeded.
 
@@ -72,7 +99,9 @@ publish-if-neeeded:
   uses: ./.github/workflows/npm-publish.yml
 ```
 
-The publish workflow looks like this
+Pulling publishing out as a separate workflow also made me realize that I'd forgotten to include the `id-token` permissions needed for publishing with provenance. Here's the complete workflow. 
+
+{% raw %}
 
 ```
 name: NPM Publish
@@ -100,6 +129,8 @@ jobs:
           NPM_CONFIG_PROVENANCE: true
 ```
 
+{% endraw %}
+
 As it's a separate workflow, potentially on a different runner, which might be triggered manually, it needs to include all the build steps as well as the publish. I can live with the duplication as it won't be run that often. 
 
 {% include candid-image.html src="/assets/images/github/npm-publish-workflow.png" alt="Publish Workflow can be manually triggered" %}
@@ -123,19 +154,25 @@ npm http fetch PUT 200 https://registry.npmjs.org/@candidstartup%2freact-virtual
 + @candidstartup/react-virtual-scroll@0.3.0
 ```
 
-Annoyingly it worked first time. Either the error was something intermittent or somehow the way Lerna calls `npm publish` triggers the error. I was tempted to give up on `lerna publish` at this point. However, `npm publish` by itself isn't enough. It isn't idempotent. If you run publish again it will error because the package has already been published. That makes it painful to automate when working in a monorepo because only some packages may need publishing but `npm publish --workspaces` will try and publish all of them. Dealing with this is the value add that Lerna brings.
+Annoyingly it worked first time. Either the error was something intermittent or somehow the way Lerna calls `npm publish` triggers the error. I was tempted to give up on `lerna publish` at this point. However, `npm publish` by itself isn't enough. It isn't idempotent. 
 
-I decided to try `lerna publish` again to see if the problem was an intermittent error with the sigstore backend. Of course as I had already published the `react-virtual-scroll` 0.3.0 package, Lerna refused to try publishing again no matter how I tried to force it. I need to create version 0.3.1 and trigger the publish via Build CI. 
+If you run publish again it will error because the package has already been published. That makes it painful to automate when working in a monorepo because only some packages may need publishing but `npm publish --workspaces` will try and publish all of them. Dealing with this is the value add that Lerna brings.
+
+I decided to try `lerna publish` again to see if the problem was an intermittent error with the sigstore backend. Of course as I had already published the `react-virtual-scroll` 0.3.0 package, Lerna refused to try publishing again no matter how I tried to force it. I needed to create version 0.3.1 and trigger the publish via Build CI. 
 
 {% include candid-image.html src="/assets/images/github/npm-publish-run-3.png" alt="Lerna Publish Fails a Third Time" %}
 
-It failed again, but back to the authentication error. Which is really weird. On [further reading](https://docs.github.com/en/actions/using-workflows/reusing-workflows) it seems that workflow dispatch is more like a subroutine call than triggering an independent workflow. There's lots of complex language explaining which bits of content come from the calling workflow and which from the called workflow.
+It failed again, but back to the authentication error. Which is really weird. 
+
+On [further reading](https://docs.github.com/en/actions/using-workflows/reusing-workflows) it seems that workflow dispatch is more like a subroutine call than triggering an independent workflow. There's lots of complex language explaining which bits of content come from the calling workflow and which from the called workflow. Maybe the resulting frankenstein combination has messed something up. 
 
 I've also still got the problem where a publish failure results in failure of my Build CI workflow. 
 
-# Publish Automation - Attempt 3
+## Attempt 3
 
-There's another way of chaining workflows. You can trigger a workflow to run when another workflow completes. With this approach I can pull all the publishing related stuff out of the Build CI workflow. I also switched to calling Lerna directly rather than via an npm script so that I could tweak the command line without having to edit another file.
+There's another way of chaining workflows. You can use completion of one workflow as the trigger condition for another. The first workflow doesn't need to know anything about the triggered workflow. 
+
+ With this approach I can pull all the publishing related code out of the Build CI workflow. In fact, I just reverted it back to the way it was originally. Now all the conditional logic for triggering a publish is part of the publish workflow. The conditions are at the job level, so GitHub Actions can decide whether to skip the job without having to spin up a runner first. 
 
 ```
 name: NPM Publish
@@ -172,8 +209,22 @@ jobs:
           NPM_CONFIG_PROVENANCE: true
 ```
 
+I also switched to calling Lerna directly, rather than via an npm script, so that I could tweak the command line without having to edit another file.
+
 For whatever reason, this time it worked. 
 
 {% include candid-image.html src="/assets/images/github/npm-publish-run-4.png" alt="Lerna Publish Success" %}
 
-# Result
+# Conclusion
+
+In the end, it was easy. Most of my problems came from trying to do three things at once. As well as enabling provenance statements, I was also figuring out where to fit publishing into my existing workflow and how to setup GitHub actions to authenticate with NPM. 
+
+{% include candid-image.html src="/assets/images/github/npm-provenance-workflow-tldr.png" alt="NPM Provenance Workflow TLDR" %}
+
+After all that it came down to adding four lines to a basic build workflow that runs your existing build scripts. Two lines to handle authentication with NPM, and two lines to enable provenance.
+
+Here's the proof. Now you can [consume](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.3.1) with confidence. 
+
+{% include candid-image.html src="/assets/images/github/infinisheet-npm-provenance.png" alt="Infinisheet NPM Providence Statement" %}
+
+
