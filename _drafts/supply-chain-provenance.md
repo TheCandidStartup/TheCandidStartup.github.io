@@ -100,4 +100,4 @@ Given what happened with SolarWinds, how do you feel about an ecosystem where ev
 
 In some sense it's too late. Git is overwhelmingly the most popular version control system and GitHub is the [most popular git hosting platform](https://survey.stackoverflow.co/2022#technology-version-control), with GitLab a long way behind in second place.
 
-If GitHub was compromised, we've already lost. 
+If GitHub is compromised, we've already lost. 

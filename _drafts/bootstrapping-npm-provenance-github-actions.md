@@ -3,7 +3,7 @@ title: Bootstrapping NPM Provenance with GitHub Actions
 tags: frontend
 ---
 
-I'm putting my money where my mouth is. [NPM provenance statements are great]({% link _drafts/supply-chain-provenance.md %}) and everyone should publish packages that include them. Including me. 
+I'm putting my money where my mouth is. [NPM provenance statements are great]({% link _drafts/supply-chain-provenance.md %}). Everyone should publish packages with a provenance statement. Including me. 
 
 It took me longer to get up and running than I would have liked. Mostly down to my own stupidity. At least now that I've made the mistakes, you don't have to. 
 
@@ -22,7 +22,7 @@ You need to add four additional lines compared with a standard build workflow
 
 My [current manual release workflow]({% link _posts/2024-05-21-bootstrapping-npm-publish.md %}) has separate steps for creating a new version and publishing packages to npm. The versioning step updates version numbers in `package.json` files, updates `CHANGELOG.md` files and commits the changes. Once version numbers have been updated, I rebuild the packages and then run the lerna command to publish. 
 
-I can continue to run versioning locally or setup a [manual workflow](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow) with form inputs that let you choose how new versions should be generated.
+I can continue to run versioning locally or set up a GitHub [manual workflow](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow) with form inputs that let you choose how new versions should be generated.
 
 I decided that automating versioning isn't worth it. It's simpler and more flexible to continue versioning on my machine then use the push of that commit to trigger publish.
 
@@ -74,7 +74,7 @@ I'm using lerna to publish packages so can't pass a provenance flag through to t
 
 {% endraw %}
 
-I created a new version for my `react-virtual-scroll` 0.3.0 release and waited to see what would happen. 
+I created a new version for my [`react-virtual-scroll` 0.3.0 release]({% link _posts/2024-06-10-react-virtual-scroll-0-3-0.md %}) and waited to see what would happen. 
 
 {% include candid-image.html src="/assets/images/github/npm-publish-run-1.png" alt="Lerna Publish Fails" %}
 
@@ -139,7 +139,7 @@ Now I can rerun the publish and see if it gets any further.
 
 {% include candid-image.html src="/assets/images/github/npm-publish-run-2.png" alt="Lerna Publish Fails Again" %}
 
-That's a new error. Google came up with no results for `TLOG_CREATE_ENTRY_ERROR`. Searching GitHub found some hits in [sigstore-js](https://github.com/sigstore/sigstore-js) which is part of the [sigstore](https://www.sigstore.dev/) project used by npm to record provenance. It looks like the sigstore library throws that error if it can't communicate with the sigstore backend. 
+That's a new error. Google came up with no results for `TLOG_CREATE_ENTRY_ERROR`. Searching GitHub found some hits in [sigstore-js](https://github.com/sigstore/sigstore-js), which is part of the [sigstore](https://www.sigstore.dev/) project used by npm to record provenance. It looks like the sigstore library throws that error if it can't communicate with the sigstore backend. 
 
 Which left me stuck. Lerna gives me no context for what might have triggered the error. I couldn't find any way to enable more verbose logging. So I decided to use `npm publish` directly to see if that would show me more information related to the error.
 
