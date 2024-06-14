@@ -24,7 +24,7 @@ My [current manual release workflow]({% link _posts/2024-05-21-bootstrapping-npm
 
 I can continue to run versioning locally or set up a GitHub [manual workflow](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow) with form inputs that let you choose how new versions should be generated.
 
-I decided that automating versioning isn't worth it. It's simpler and more flexible to continue versioning on my machine then use the push of that commit to trigger publish.
+I decided that running versioning as a manual GitHub workflow isn't worth it. It's simpler and more flexible to continue versioning on my machine then use the push of that commit to trigger publish.
 
 # NPM Automation Token
 
@@ -88,7 +88,7 @@ At this point I realized two things. First, I needed some way of rerunning a pub
 
 ## Attempt 2
 
-I decided to use a separate workflow for publishing. I could configure it to support two triggers. It would be called from the end of the Build CI workflow if the conditions were met or you could trigger it manually. Here, the publishing step is a separate job that runs if all the build jobs have succeeded.
+I decided to use a separate workflow for publishing. I could configure it to support two triggers. It would be called from the end of the Build CI workflow if the conditions were met or you could trigger it manually. I structured the publishing step as a separate job that runs if both the build jobs have succeeded.
 
 ```
 publish-if-neeeded:
