@@ -29,7 +29,7 @@ All Jia Tan had to do was modify their local copy of the source code before buil
 
 # Dependency Management
 
-Open source promotes sharing and reuse of software. That's a good thing. However, it does mean that all open source software relies on a huge stack of nested dependencies. I'm working on a modest [open source project]({% link _topics/react-virtual-scroll.md %}). It's a front end NPM package based on React. React is the only immediate runtime dependency. It uses a [standard]({% link _posts/2023-10-23-bootstrapping-vite.md %}) [set]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) of [tooling]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}). 
+Open source promotes sharing and reuse of software. That's a good thing. However, it does mean that all open source software relies on a huge stack of nested dependencies. I'm working on a modest [open source project]({% link _topics/react-virtual-scroll.md %}). It's a front-end [NPM package](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll) based on [React](https://react.dev/). React is the only immediate runtime dependency. My project uses a [standard]({% link _posts/2023-10-23-bootstrapping-vite.md %}) [set]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) of [tooling]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}). 
 
 Altogether, you need nearly 1000 dependencies to build and run. 
 
@@ -55,7 +55,7 @@ Packages with provenance are identified as such on the [NPM registry](https://ww
 
 Which sounds great. It makes it easy for maintainers to publish packages with provenance and really easy for developers to see whether a package has full source-to-package integrity. However, don't we still have the problem of having to trust the maintainers of every dependency?
 
-Which is where the really clever bit comes in. The packages aren't signed by the maintainers. They're signed by a trusted CI/CD system. At time of writing the only trusted CI/CD systems are GitHub Actions and GitLab CI/CD. The package has to be built using a cloud-hosted runner managed by the CI/CD system with a build workflow defined in the source code repo. 
+Which is where the really clever bit comes in. The packages aren't signed by the maintainers. They're signed by a trusted CI/CD system. At time of writing the only trusted CI/CD systems are GitHub Actions and GitLab CI/CD. The package has to be built using a cloud-hosted runner managed by the CI/CD system, with a build workflow defined in the source code repo. 
 
 Consumers have full transparency of how the package was built. The many eyeballs principle works properly again. Instead of navigating a thousand trust relationships there's only one. 
 
