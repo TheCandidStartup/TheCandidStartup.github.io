@@ -168,4 +168,4 @@ The rest of the changes are mechanical and straightforward now that we've got `V
 
 All that's left is to publish a [new package](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.3.0). The package page in NPM has some interesting changes. Can you see what's changed compared with [0.2.0](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.2.0)? 
 
-I'll tell you all about it next time.
+I'll tell you all about it [next time]({% link _posts/2024-06-17-supply-chain-provenance.md %}).

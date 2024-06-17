@@ -3,7 +3,7 @@ title: Bootstrapping NPM Provenance with GitHub Actions
 tags: frontend
 ---
 
-I'm putting my money where my mouth is. [NPM provenance statements are great]({% link _drafts/supply-chain-provenance.md %}). Everyone should publish packages with a provenance statement. Including me. 
+I'm putting my money where my mouth is. [NPM provenance statements are great]({% link _posts/2024-06-17-supply-chain-provenance.md %}). Everyone should publish packages with a provenance statement. Including me. 
 
 It took me longer to get up and running than I would have liked. Mostly down to my own stupidity. At least now that I've made the mistakes, you don't have to. 
 
