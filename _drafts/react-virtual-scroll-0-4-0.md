@@ -4,16 +4,68 @@ title: >
 tags: react-virtual-scroll
 ---
 
-wise  words
+My `VirtualList` and `VirtualGrid` components use the same approach as [React-Window](https://github.com/bvaughn/react-window). A lean and mean implementation that focuses just on virtualization. This is not [SlickGrid](https://slickgrid.net/). The idea is that you can use customization to build whatever higher level functionality you need on top.
+
+Unfortunately, the current implementation is rather lacking in customization features. It's time to fix that. 
 
 # Component Structure
 
-* Outer div -> inner div -> virtualized children
-* Only customization is via component you pass in as template for each child
+`VirtualList` and `VirtualGrid` use the same structure as most other virtualized scrollable components. There are three levels. 
 
-# Outer Div Class Name
+At the top there's an outer container element. It provides a viewport onto the collection of items displayed in the component. 
 
-# Outer Component
+The outer container scrolls over a much larger inner child container element. The inner container is sized so that it can accommodate all the items in the collection. 
+
+Finally, all the visible items (and some just out of view) are added as children of the inner container. 
+
+{% include candid-image.html src="/assets/images/react-virtual-scroll/component-structure.svg" alt="Component Structure" %}
+
+The items are rendered using instances of a child component passed in by the caller. The item sizes are specified by an instance of the `ItemOffsetMapping` interface. Currently, these make up the only form of customization available. The items can be whatever you want but you have no control over the inner and outer container elements. 
+
+```
+const Row = ({ index, style }) => (
+  <div className={"row"} style={style}>
+    { ("Item " + index }
+  </div>
+);
+
+const mapping = useVariableSizeItemOffsetMapping(30, [50]);
+
+...
+
+<VirtualList
+  height={240}
+  itemCount={1000000000000}
+  itemOffsetMapping={mapping}
+  width={600}>
+  {Row}
+</VirtualList>
+```
+
+# Class Names
+
+The first change I'm making is to allow users to specify a `className` for the container elements. That allows you to target each element in a style sheet. 
+
+```
+<VirtualList
+  ...
+  className={'outerContainer'}
+  innerClassName={'innerContainer'}>
+  {Row}
+</VirtualList>
+```
+
+Most of the time you'll want to style the outer container and let the inner container and items inherit from it. It makes sense to think of this as the `className` for the component as a whole. Use `innerClassName` for the rarer cases where you need to explicitly target the inner component. 
+
+I added a `className` to all my samples with a style that makes the edges of the list and grid components easy to see.
+
+```
+.outerContainer {
+  border: 1px solid #d9dddd;
+}
+```
+
+# Custom Container Components
 
 * Examples of use
 * Implementation
@@ -65,11 +117,11 @@ No complaints from TypeScript. Which is understandable. We haven't mentioned a r
 
 At least there is a runtime error if the component you pass in can't accept a ref. 
 
-{% include candid-image.html src="/assets/images/frontend/react-runtime-ref-error.png" alt="NPM Provenance Workflow TLDR" %}
+{% include candid-image.html src="/assets/images/frontend/react-runtime-ref-error.png" alt="React Runtime Ref Error" %}
 
 Even if you could enforce use of an Outer component with the correct interface, you still need to rely on documentation that covers what is expected of the implementation. 
 
-# Inner Component
+# Implementation
 
 * Examples of use
 * Implementation
