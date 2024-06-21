@@ -88,7 +88,7 @@ At this point I realized two things. First, I needed some way of rerunning a pub
 
 ## Attempt 2
 
-I decided to use a separate workflow for publishing. I could configure it to support two triggers. It would be called from the end of the Build CI workflow if the conditions were met or you could trigger it manually. I structured the publishing step as a separate job that runs if both the build jobs have succeeded.
+I decided to use a separate workflow for publishing. I could configure it to support two triggers. It would be called from the end of the Build CI workflow if the conditions were met or you could trigger it manually. I restructured the Build CI publishing step as a separate job that runs if both the build jobs have succeeded.
 
 ```
 publish-if-neeeded:
@@ -156,7 +156,7 @@ npm http fetch PUT 200 https://registry.npmjs.org/@candidstartup%2freact-virtual
 
 Annoyingly it worked first time. Either the error was something intermittent or somehow the way Lerna calls `npm publish` triggers the error. I was tempted to give up on `lerna publish` at this point. However, `npm publish` by itself isn't enough. It isn't idempotent. 
 
-If you run publish again it will error because the package has already been published. That makes it painful to automate when working in a monorepo because only some packages may need publishing but `npm publish --workspaces` will try and publish all of them. Dealing with this is the value add that Lerna brings.
+If you run publish again it will error because the package has already been published. That makes it painful to automate when working in a monorepo. Typically only some of the packages will have changes that need publishing. However,  `npm publish --workspaces` will try and publish all of them. Dealing with this is the value add that Lerna brings.
 
 I decided to try `lerna publish` again to see if the problem was an intermittent error with the sigstore backend. Of course as I had already published the `react-virtual-scroll` 0.3.0 package, Lerna refused to try publishing again no matter how I tried to force it. I needed to create version 0.3.1 and trigger the publish via Build CI. 
 
@@ -164,7 +164,7 @@ I decided to try `lerna publish` again to see if the problem was an intermittent
 
 It failed again, but back to the authentication error. Which is really weird. 
 
-On [further reading](https://docs.github.com/en/actions/using-workflows/reusing-workflows) it seems that workflow dispatch is more like a subroutine call than triggering an independent workflow. There's lots of complex language explaining which bits of content come from the calling workflow and which from the called workflow. Maybe the resulting frankenstein combination has messed something up. 
+On [further reading](https://docs.github.com/en/actions/using-workflows/reusing-workflows) it seems that workflow dispatch is more like a subroutine call than triggering an independent workflow. There's lots of complex language explaining which bits of context come from the calling workflow and which from the called workflow. Maybe the resulting frankenstein combination has messed something up. 
 
 I've also still got the problem where a publish failure results in failure of my Build CI workflow. 
 
@@ -173,6 +173,8 @@ I've also still got the problem where a publish failure results in failure of my
 There's another way of chaining workflows. You can use completion of one workflow as the trigger condition for another. The first workflow doesn't need to know anything about the triggered workflow. 
 
  With this approach I can pull all the publishing related code out of the Build CI workflow. In fact, I just reverted it back to the way it was originally. Now all the conditional logic for triggering a publish is part of the publish workflow. The conditions are at the job level, so GitHub Actions can decide whether to skip the job without having to spin up a runner first. 
+
+{% raw %}
 
 ```
 name: NPM Publish
@@ -208,6 +210,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 ```
+
+{% endraw %}
 
 I also switched to calling Lerna directly, rather than via an npm script, so that I could tweak the command line without having to edit another file.
 
