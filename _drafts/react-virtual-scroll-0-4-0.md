@@ -67,63 +67,167 @@ I added a `className` to all my samples with a style that makes the edges of the
 
 # Custom Container Components
 
-* Examples of use
-* Implementation
-* Typing frustration
-  * Can't specify type that must accept a ref due to JSX/support for legacy types
-  * Do get runtime error if you pass simple function component and VirtualList tries to pass a ref to it
-  * Also seems to lose type of ref - can specify `forwardRef` to wrong HTML type and it passes type and runtime checks
-  * Only solution seems to be to use a rewritten implementation of `forwardRef` that drops legacy component support. Can make that choice at app level, not in a library.
+The container elements in my current implementation are simply `divs` in the rendered JSX that I pass a few properties to, including the new `className` properties. 
 
-Updated `VirtualList` interface so that client can optionally [pass in their own outer component type](https://www.totaltypescript.com/pass-component-as-prop-react). We define a type that represents the basic properties that `VirtualList` applies to the built in `div`. Can use that with `React.ComponentType` to declare a type for a React user defined component that accepts the required props. 
+{% raw %}
 
 ```
-export interface VirtualListOuterProps {
+<div className={className} onScroll={onScroll} ref={outerRef} 
+    style={{ position: "relative", height, width, overflow: "auto", willChange: "transform" }}>
+  <div className={innerClassName} style={{ height: isVertical ? renderSize : "100%", width: isVertical ? "100%" : renderSize }}>
+  ...
+  </div>
+</div>
+```
+
+{% endraw %}
+
+I could think of the sort of customizations people might want to make and add special case props that change the rendered JSX. Which sounds like a tedious game of whack-a-mole. Luckily, there's a much simpler and more flexible way of enabling container customization. Once again, I'm grateful to `react-window` for the idea. 
+
+## Interface
+
+All I need to do is provide a couple of optional props that allow the client to [pass in their own custom components](https://www.totaltypescript.com/pass-component-as-prop-react) to use as the outer and inner containers.
+
+```
+export interface VirtualListProps extends VirtualBaseProps {
+  ...
+  outerComponent?: VirtualOuterComponent;
+  innerComponent?: VirtualInnerComponent;
+};
+```
+
+## Typing
+
+The custom components have to meet some basic requirements. They both need to render a `div` and pass `className`, `children` and `style` to it. The outer component also needs an `onScroll` property and to bind a `ref` to the div. 
+
+How should I declare the types for `VirtualOuterComponent` and `VirtualInnerComponent`? 
+
+It should be easy. I've done it before when declaring a type for the item component. We define a type that represents the basic properties that need to be passed to the `div`. Then wrap that with `React.ComponentType` to declare a type for a React user defined component that accepts the required props. 
+
+```
+export interface VirtualInnerProps {
+  className: string | undefined;
+  children: React.ReactNode;
+  style: React.CSSProperties;
+}
+export type VirtualInnerComponent = React.ComponentType<VirtualInnerProps>;
+
+export interface VirtualOuterProps {
   className: string | undefined;
   children: React.ReactNode;
   style: React.CSSProperties;
   onScroll: (event: ScrollEvent) => void;
 }
-type VirtualListOuterComponent = React.ComponentType<VirtualListOuterProps>;
-
-export interface VirtualListProps extends VirtualBaseProps {
-  ...
-  outerComponent?: VirtualListOuterComponent;
-};
+export type VirtualOuterComponent = React.ComponentType<VirtualOuterProps>;
 ```
 
-Need an Outer component implementation that accepts className, style, onScroll, children and ref properties. An implementation with default behavior just needs to forward them all on to div. 
-
-The `ref` property isn't included in `VirtualListOuterProps` because refs are a special case. Core React handles binding refs to elements. The minimal implementation of an customer outer component looks like this. 
+The `ref` property isn't included in `VirtualOuterProps` because refs are a special case. Core React handles binding refs to elements. The minimal implementation of a custom outer component looks like this. 
 
 ```
-const Outer = React.forwardRef<HTMLDivElement, VirtualListOuterProps >(({className, style, onScroll, children}, ref) => (
+const Outer = React.forwardRef<HTMLDivElement, VirtualOuterProps >(({className, style, onScroll, children}, ref) => (
   <div className={className} ref={ref} style={style} onScroll={onScroll}>
     {children}
   </div>
 )
 ```
 
-You would expect that the TypeScript type system ensures callers pass in an outer component type with the correct interface. What happens if you forget to add the `fowardRef` wrapper?
+You can simplify this further for any props that are just being passed through, using JavaScript spread syntax. There's an additional benefit that your code will continue to work correctly if I add more props in future.
 
 ```
-const Outer = ({className, style, onScroll, children}: VirtualListOuterProps ) => (
-<div className={className} style={style} onScroll={onScroll}>
-  {children}
-</div>)
+const Outer = React.forwardRef<HTMLDivElement, VirtualOuterProps >(({...rest}, ref) => (
+  <div ref={ref} {...rest} />
+)
 ```
 
-No complaints from TypeScript. Which is understandable. We haven't mentioned a ref property in `VirtualListOuterProps` and `React.ComponentType<VirtualListOuterProps>` covers all components that accept the basic props, whether they support refs or not. I went down a rabbit hole trying increasingly exotic type signatures for `VirtualListOuterComponent`. Nothing worked. Either it made no difference or it would prevent any implementation from working. In the end I had to give up. The wisdom of the internet suggests that it [can't be done](https://stackoverflow.com/questions/71917496/requiring-a-child-that-accepts-a-ref-attribute-in-react-typescript). 
+As you might expect, you get TypeScript errors if you try to pass in a component that doesn't accept the required properties. However, what happens if you forget the `forwardRef` nonsense? 
 
-At least there is a runtime error if the component you pass in can't accept a ref. 
+Nothing. No complaints from TypeScript. Which is understandable. We haven't mentioned a ref property in `VirtualOuterProps` and `React.ComponentType<VirtualOuterProps>` covers all components that accept the basic props, whether they support refs or not. 
+
+I went down a rabbit hole trying increasingly exotic type signatures for `VirtualOuterComponent`. Nothing worked. Either it made no difference or it would prevent any implementation from working. In the end I had to give up. The wisdom of the internet suggests that it [can't be done](https://stackoverflow.com/questions/71917496/requiring-a-child-that-accepts-a-ref-attribute-in-react-typescript). 
+
+There is a silver lining. At least there's a runtime error if the component you pass in can't accept a ref. 
 
 {% include candid-image.html src="/assets/images/frontend/react-runtime-ref-error.png" alt="React Runtime Ref Error" %}
 
+## Implementation
+
+After all that messing around with types, the implementation in `VirtualList` and `VirtualGrid` turned out to be trivial.
+
+{% raw %}
+
+```
+const Outer = props.outerComponent || 'div';
+const Inner = props.innerComponent || 'div';
+
+...
+
+<Outer className={className} onScroll={onScroll} ref={outerRef} 
+    style={{ position: "relative", height, width, overflow: "auto", willChange: "transform" }}>
+  <Inner className={innerClassName} style={{ height: isVertical ? renderSize : "100%", width: isVertical ? "100%" : renderSize }}>
+  ...
+  </Inner>
+</Outer>
+```
+
+{% endraw %}
+
+# Examples
+
+I added a couple of new samples to showcase the customization possibilities. 
+
+## Padding
+
+I started by copying a [simple sample](https://github.com/bvaughn/react-window?tab=readme-ov-file#can-i-add-padding-to-the-top-and-bottom-of-a-list) from `react-window` that adds some padding to the top and bottom of a list.
+
+{% raw %}
+
+```
+const PADDING_SIZE = 10;
+
+const Row = ({ index, style }: { index: number, style: React.CSSProperties }) => (
+  <div 
+    style={{
+      ...style,
+      top: style.top as number + PADDING_SIZE
+    }}>
+    { "Item " + index }
+  </div>
+);
+
+const Inner = React.forwardRef<HTMLDivElement, VirtualInnerProps >(({style, ...rest}, ref) => (
+  <div 
+    ref={ref} 
+    style={{
+      ...style,
+      height: style.height as number + PADDING_SIZE * 2
+    }} 
+    {...rest}
+  />
+))
+
+...
+
+<VirtualList
+  ...
+  className={'outerContainer'}
+  innerComponent={Inner}>
+  {Row}
+</VirtualList>
+```
+
+A custom inner component increases the size of the inner container to allow for the padding. Each item is shifted down by the padding amount. 
+
+I wouldn't choose this implementation myself but it shows the flexibility you have. Try it for yourself.
+
+* Embedded sample
+
+{% endraw %}
+
+## Spreadsheet
+
+# Conclusion
+
 Even if you could enforce use of an Outer component with the correct interface, you still need to rely on documentation that covers what is expected of the implementation. 
 
-# Implementation
-
-* Examples of use
-* Implementation
 
 
