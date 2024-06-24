@@ -5,11 +5,11 @@ tags: frontend
 
 I'm putting my money where my mouth is. [NPM provenance statements are great]({% link _posts/2024-06-17-supply-chain-provenance.md %}). Everyone should publish packages with a provenance statement. Including me. 
 
-It took me longer to get up and running than I would have liked. Mostly down to my own stupidity. At least now that I've made the mistakes, you don't have to. 
+I [already have]({% link _posts/2024-06-03-bootstrapping-github-actions.md %}) a GitHub Actions Build CI workflow, so it should have been easy. It took me longer to get up and running than I would have liked. Mostly down to my own stupidity. At least now that I've made the mistakes, you don't have to. 
 
 # TL;DR
 
-You need to add four additional lines compared with a standard build workflow
+You need to add four additional lines to a standard GitHub Actions build workflow.
 
 {% include candid-image.html src="/assets/images/github/npm-provenance-workflow-tldr.png" alt="NPM Provenance Workflow TLDR" %}
 
@@ -82,7 +82,7 @@ I've seen that error before. The same thing happened when I [first ran lerna pub
 
 It turns out that the way GitHub actions handles authentication with npm is a [little convoluted](https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry). You need to explicitly specify the NPM package registry URL in the `setup-node` action, even though it's the default. This triggers `setup-node` to write a hardcoded `.npmrc` file to the runner which includes `_authToken=${NODE_AUTH_TOKEN}`. Finally, you need to make sure that `NODE_AUTH_TOKEN` is defined in the environment when you run the publish.
 
-My workflow was missing the `registry-url: 'https://registry.npmjs.org` line. All I needed to do was add it and rerun. 
+My workflow was missing the `registry-url: https://registry.npmjs.org` line. All I needed to do was add it and rerun. 
 
 At this point I realized two things. First, I needed some way of rerunning a publish if something went wrong. Second, tagging publishing onto the end of the "Build CI" workflow meant that my CI build as a whole would fail if something went wrong when publishing. 
 
@@ -141,7 +141,7 @@ Now I can rerun the publish and see if it gets any further.
 
 That's a new error. Google came up with no results for `TLOG_CREATE_ENTRY_ERROR`. Searching GitHub found some hits in [sigstore-js](https://github.com/sigstore/sigstore-js), which is part of the [sigstore](https://www.sigstore.dev/) project used by npm to record provenance. It looks like the sigstore library throws that error if it can't communicate with the sigstore backend. 
 
-Which left me stuck. Lerna gives me no context for what might have triggered the error. I couldn't find any way to enable more verbose logging. So I decided to use `npm publish` directly to see if that would show me more information related to the error.
+Which left me stuck. Lerna gives me no context for what might have triggered the error. I couldn't find any way to enable more verbose logging. I decided to use `npm publish` directly to see if that would show me more information related to the error.
 
 ```
 Run npm publish --workspaces --verbose --provenance --access public
