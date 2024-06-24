@@ -6,7 +6,9 @@ tags: react-virtual-scroll
 
 My `VirtualList` and `VirtualGrid` components use the same approach as [React-Window](https://github.com/bvaughn/react-window). A lean and mean implementation that focuses just on virtualization. This is not [SlickGrid](https://slickgrid.net/). The idea is that you can use customization to build whatever higher level functionality you need on top.
 
-Unfortunately, the current implementation is rather lacking in customization features. It's time to fix that. 
+{% include candid-image.html src="/assets/images/react-virtual-scroll/customized-grid.png" alt="Customized Grid" %}
+
+Which is handy, because the whole point of building these controls is so that I can build a spreadsheet frontend with them. Unfortunately, the current implementation is rather lacking in customization features. Let's fix that and see if there's a path towards something more like a spreadsheet.
 
 # Component Structure
 
@@ -20,7 +22,7 @@ Finally, all the visible items (and some just out of view) are added as children
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/component-structure.svg" alt="Component Structure" %}
 
-The items are rendered using instances of a child component passed in by the caller. The item sizes are specified by an instance of the `ItemOffsetMapping` interface. Currently, these make up the only form of customization available. The items can be whatever you want but you have no control over the inner and outer container elements. 
+The items are rendered using instances of a child component passed in by the caller. The item sizes are specified by an instance of the [`ItemOffsetMapping` interface]({% link _posts/2024-02-12-modern-react-virtual-scroll-grid-3.md %}). Currently, these make up the only form of customization available. The items can be whatever you want but you have no control over the inner and outer container elements. 
 
 ```
 const Row = ({ index, style }) => (
@@ -173,7 +175,7 @@ const Inner = props.innerComponent || 'div';
 
 # Examples
 
-I added a couple of new samples to showcase the customization possibilities. 
+I added a couple of new samples to showcase the customization possibilities. You can find them embedded below or you can [explore the full set of samples](/assets/dist/react-virtual-scroll-0-4-0/index.html).
 
 ## Padding
 
@@ -215,15 +217,69 @@ const Inner = React.forwardRef<HTMLDivElement, VirtualInnerProps >(({style, ...r
 </VirtualList>
 ```
 
+{% endraw %}
+
 A custom inner component increases the size of the inner container to allow for the padding. Each item is shifted down by the padding amount. 
 
 I wouldn't choose this implementation myself but it shows the flexibility you have. Try it for yourself.
 
-* Embedded sample
-
-{% endraw %}
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-4-0/samples/padding/index.html" width="100%" height="fit-content" %}
 
 ## Spreadsheet
+
+Let's try something a little more challenging. A spreadsheet has fixed row and column headers that are always visible. There's a `react-window` [sample](https://github.com/bvaughn/react-window?tab=readme-ov-file#does-this-library-support-sticky-items) that shows how to implement "sticky" rows. It uses a custom inner component that always renders the sticky rows and uses `position: sticky` and `z-index` styles to ensure that the rows are always visible and always in the same place.
+
+I decided to try a different approach. If you look at a real spreadsheet, like Google Sheets, you'll see that the scrollbars only cover the extent of the main grid. 
+
+{% include candid-image.html src="/assets/images/frontend/google-sheets.png" alt="Google Sheets Grid" %}
+
+I can achieve that and have much more flexibility by using separate controls for the headers. A quick and dirty way of doing that is to use my `VirtualList` controls. I can use the `onScroll` callback I implemented [last time]({% link _posts/2024-06-10-react-virtual-scroll-0-3-0.md %}) to scroll the headers to match the main grid. All I need to do is hide the scrollbars on the header controls. 
+
+The `overflow: hidden` style will do the trick. I can override most styles by specifying a `className` prop and adding the corresponding entries to my sample app's style sheet. However, styles that are critical to the virtual scrolling implementation are defined inline. To override them I'll need a custom outer component.
+
+```
+const Outer = React.forwardRef<HTMLDivElement, VirtualOuterProps >(({style, ...rest}, ref) => (
+  <div ref={ref} style={{ ...style, overflow: "hidden"}} {...rest}/>
+))
+```
+
+Then I can wire up my three components like this.
+
+```
+const columnRef = React.createRef<VirtualListProxy>();
+const rowRef = React.createRef<VirtualListProxy>();
+
+function onScroll(rowOffsetValue: number, columnOffsetValue: number) {
+  columnRef.current?.scrollTo(columnOffsetValue);
+  rowRef.current?.scrollTo(rowOffsetValue);
+}
+
+...
+
+<VirtualList
+  ...
+  ref={columnRef}
+  outerComponent={Outer}>
+  {Col}
+</VirtualList>
+
+<VirtualList
+  ...
+  ref={rowRef}
+  outerComponent={Outer}>
+  {Row}
+</VirtualList>
+
+<VirtualGrid
+  ...
+  onScroll={onScroll}>
+  {Cell}
+</VirtualGrid>
+```
+
+Try it!
+
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-4-0/samples/spreadsheet/index.html" width="100%" height="fit-content" %}
 
 # Conclusion
 
