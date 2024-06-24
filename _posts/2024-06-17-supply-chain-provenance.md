@@ -92,7 +92,7 @@ Provenance statements are a great idea. Providing provenance should become part 
 
 If you already use GitHub Actions or GitLab CI/CD you have no excuse. If you currently build locally, you may be surprised how [easy it is to get a build running on GitHub Actions]({% link _posts/2024-06-03-bootstrapping-github-actions.md %}). 
 
-Next time I'll show you what happened when I added provenance to my open source package. 
+[Next time]({% link _posts/2024-06-24-bootstrapping-npm-provenance-github-actions.md %}) I'll show you what happened when I added provenance to my open source package. 
 
 # Trusting GitHub
 
