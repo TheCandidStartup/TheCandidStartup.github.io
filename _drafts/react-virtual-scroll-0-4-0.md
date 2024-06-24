@@ -1,14 +1,14 @@
 ---
 title: >
   React Virtual Scroll 0.4.0 : Customization
-tags: react-virtual-scroll
+tags: react-virtual-scroll spreadsheets
 ---
 
 My `VirtualList` and `VirtualGrid` components use the same approach as [React-Window](https://github.com/bvaughn/react-window). A lean and mean implementation that focuses just on virtualization. This is not [SlickGrid](https://slickgrid.net/). The idea is that you can use customization to build whatever higher level functionality you need on top.
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/customized-grid.png" alt="Customized Grid" %}
 
-Which is handy, because the whole point of building these controls is so that I can build a spreadsheet frontend with them. Unfortunately, the current implementation is rather lacking in customization features. Let's fix that and see if there's a path towards something more like a spreadsheet.
+Which is handy, because the whole point of building these controls is so that I can [build a spreadsheet frontend]({% link _posts/2023-10-09-paged-infinite-virtual-scrolling.md %}) with them. Unfortunately, the current implementation is rather lacking in customization features. Let's fix that and see if there's a path towards something more like a spreadsheet.
 
 # Component Structure
 
@@ -221,7 +221,7 @@ const Inner = React.forwardRef<HTMLDivElement, VirtualInnerProps >(({style, ...r
 
 A custom inner component increases the size of the inner container to allow for the padding. Each item is shifted down by the padding amount. 
 
-I wouldn't choose this implementation myself but it shows the flexibility you have. Try it for yourself.
+I wouldn't choose [this implementation](https://github.com/TheCandidStartup/infinisheet/blob/main/apps/virtual-scroll-samples/samples/padding/index.tsx) myself but it shows the flexibility you have. Try it for yourself.
 
 {% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-4-0/samples/padding/index.html" width="100%" height="fit-content" %}
 
@@ -229,7 +229,7 @@ I wouldn't choose this implementation myself but it shows the flexibility you ha
 
 Let's try something a little more challenging. A spreadsheet has fixed row and column headers that are always visible. There's a `react-window` [sample](https://github.com/bvaughn/react-window?tab=readme-ov-file#does-this-library-support-sticky-items) that shows how to implement "sticky" rows. It uses a custom inner component that always renders the sticky rows and uses `position: sticky` and `z-index` styles to ensure that the rows are always visible and always in the same place.
 
-I decided to try a different approach. If you look at a real spreadsheet, like Google Sheets, you'll see that the scrollbars only cover the extent of the main grid. 
+I decided to try a [different approach](https://github.com/TheCandidStartup/infinisheet/tree/main/apps/virtual-scroll-samples/samples/spreadsheet/index.tsx). If you look at a real spreadsheet, like Google Sheets, you'll see that the scrollbars only cover the extent of the main grid. 
 
 {% include candid-image.html src="/assets/images/frontend/google-sheets.png" alt="Google Sheets Grid" %}
 
@@ -237,11 +237,15 @@ I can achieve that and have much more flexibility by using separate controls for
 
 The `overflow: hidden` style will do the trick. I can override most styles by specifying a `className` prop and adding the corresponding entries to my sample app's style sheet. However, styles that are critical to the virtual scrolling implementation are defined inline. To override them I'll need a custom outer component.
 
+{% raw %}
+
 ```
 const Outer = React.forwardRef<HTMLDivElement, VirtualOuterProps >(({style, ...rest}, ref) => (
   <div ref={ref} style={{ ...style, overflow: "hidden"}} {...rest}/>
 ))
 ```
+
+{% endraw %}
 
 Then I can wire up my three components like this.
 
@@ -283,7 +287,13 @@ Try it!
 
 # Conclusion
 
-Even if you could enforce use of an Outer component with the correct interface, you still need to rely on documentation that covers what is expected of the implementation. 
+All that's left is to [update my unit tests](https://github.com/TheCandidStartup/infinisheet/commit/a60cad486dcb4f51ce5b5bc442dd9b7e2f35c248) (sorry TDD lovers) and push out a [new release](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.4.0).
+
+Today I learned the limits of static typing as a substitute for documentation and runtime errors. Even if you could enforce use of an Outer component with the correct interface, you still need to rely on documentation that covers what is expected of the implementation. Which reminds me that I don't have any formal documentation. Something to look at next time. 
+
+On the plus side, all the initial functionality I planned to include in `react-virtual-scroll` is now complete. I can transition over to starting work on my spreadsheet frontend and updating `react-virtual-scroll` when I find issues. 
+
+
 
 
 
