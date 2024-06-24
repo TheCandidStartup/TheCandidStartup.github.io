@@ -190,8 +190,9 @@ jobs:
     if: |
         github.event_name == 'workflow_dispatch' ||
         ( github.event.workflow_run.conclusion == 'success' &&
-          github.event.workflow_run.event.ref == 'refs/heads/main' &&
-          contains(github.event.workflow_run.event.head_commit.message, 'chore(release)'))
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          contains(github.event.workflow_run.head_commit.message, 'chore(release)'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
