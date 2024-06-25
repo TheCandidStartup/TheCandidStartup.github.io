@@ -100,7 +100,7 @@ export interface VirtualListProps extends VirtualBaseProps {
 
 ## Typing
 
-The custom components have to meet some basic requirements. They both need to render a `div` and pass `className`, `children` and `style` to it. The outer component also needs an `onScroll` property and to bind a `ref` to the div. 
+The custom components have to meet some basic requirements. They both need to render a `div` and pass `className`, `children` and `style` to it. The outer component also needs an `onScroll` property and to forward a `ref` to the `div`. 
 
 How should I declare the types for `VirtualOuterComponent` and `VirtualInnerComponent`? 
 
