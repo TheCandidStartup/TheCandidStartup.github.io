@@ -31,10 +31,18 @@ wise words
 * The whole TSDoc comment is formatted and displayed
   * @link tags are supported for common cases
     * Type within the module turns into a clickable "Go to Definition" (where module is same source file)
-    * Need to check what happens with production bundled build. All type declarations in same file, so should be picked up
+    * Works across all items in a production bundled build. All type declarations in same `.d.ts` file.
     * URL turns into a link to external website
-  * I couldn't get link to a react type to work (e.g. `react#ref`)
+  * If link can't be resolved, the link text is used so don't lose any information
+  * I couldn't get link to a react type to work (e.g. `react#ref`) or using explicit module syntax (e.g. `@candidstartup/react-virtual-scroll#VirtualGrid`)
   * Code samples in \` and \`\`\` tags are nicely formatted with syntax highlighting
   * All other tags come through explicitly
   * Tags that you would expect to see enumerated have a `-` inserted between the tag and the rest of the comment
 
+# Lessons
+
+* Adding documentation makes code much more verbose
+* Lots of duplication if I want to provide most useful information immediately accessible via Intellisense
+* Going to have to rely on developer going an extra layer deeper and using "Go to Definition" or at least clicking on link.
+* Put lengthy information in most core location (once), e.g. examples of usage
+* Make extensive use of links to signpost where people should look next.
