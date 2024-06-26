@@ -250,8 +250,8 @@ const Outer = React.forwardRef<HTMLDivElement, VirtualOuterProps >(({style, ...r
 Then I can wire up my three components like this.
 
 ```
-const columnRef = React.createRef<VirtualListProxy>();
-const rowRef = React.createRef<VirtualListProxy>();
+const columnRef = React.useRef<VirtualListProxy>(null);
+const rowRef = React.useRef<VirtualListProxy>(null);
 
 function onScroll(rowOffsetValue: number, columnOffsetValue: number) {
   columnRef.current?.scrollTo(columnOffsetValue);
