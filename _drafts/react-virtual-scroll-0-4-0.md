@@ -104,7 +104,7 @@ The custom components have to meet some basic requirements. They both need to re
 
 How should I declare the types for `VirtualOuterComponent` and `VirtualInnerComponent`? 
 
-It should be easy. I've done it before when declaring a type for the item component. We define a type that represents the basic properties that need to be passed to the `div`. Then wrap that with `React.ComponentType` to declare a type for a React user defined component that accepts the required props. 
+It should be easy. I've done it before when declaring a type for the child item component. We define a type that represents the basic properties that need to be passed to the `div`. Then wrap that with `React.ComponentType` to declare a type for a React user defined component that accepts the required props. 
 
 ```
 export interface VirtualInnerProps {
