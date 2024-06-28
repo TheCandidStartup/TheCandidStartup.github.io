@@ -82,3 +82,190 @@ How did my first attempt at writing TSDoc comments go? Not too bad.
 # Build Workflows
 
 * Added linting to Build CI and Publish workflows to make sure I keep up with linting
+
+# Monorepo Setup
+
+* Want to setup my ESLint configuration so that as much as possible is shared
+* Reading the [ESLint Docs](https://eslint.org/docs/latest/use/configure/configuration-files) confirms that I certainly can split the configuration across multiple config files. It also reveals the the ESLint configuration format is being changed. ESLint 8, which is the version I'm on, supports both the [old](https://eslint.org/docs/latest/use/configure/configuration-files-deprecated) `.eslintrc.cjs` format and the new "flat" `eslint.config.js` format. In ESLint 9 the old format has already been deprecated. It makes sense to switch to the new format before doing any major surgery.
+* 
+
+# Upgrading
+
+* Noticed that my `typescript-eslint` is a major version behind. Breaking change is requiring more recent versions of dependencies, all of which I'm already on. The other change for 7.0 is full support for flat config files. So makes sense to update that first.
+* Updated and reran linting (with existing old style config). Worked fine. 
+
+* Now convert config files for `react-virtual-scroll` and `virtual-scroll-samples`
+* There's a migration tool suitable for simple config files (no JavaScript functions). I think mine qualify
+
+```
+module.exports = {
+  root: true,
+  env: { browser: true, es2020: true },
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react-hooks/recommended',
+  ],
+  ignorePatterns: ['dist', '.eslintrc.cjs'],
+  parser: '@typescript-eslint/parser',
+  plugins: ['react-refresh'],
+  rules: {
+    'react-refresh/only-export-components': 'off'
+  },
+}
+```
+
+Let's give it a whirl.
+
+```
+npx @eslint/migrate-config .eslintrc.cjs 
+Need to install the following packages:
+@eslint/migrate-config@1.1.1
+Ok to proceed? (y) y
+
+Migrating .eslintrc.cjs
+
+WARNING: This tool does not yet work great for .eslintrc.(js|cjs|mjs) files.
+It will convert the evaluated output of our config file, not the source code.
+Please review the output carefully to ensure it is correct.
+
+
+Wrote new config to ./eslint.config.mjs
+
+You will need to install the following packages to use the new config:
+- @eslint/compat
+- globals
+- @eslint/js
+- @eslint/eslintrc
+```
+
+Why all those extra packages and why do I need to install them as explicit dependencies? Wonder what the converted config looks like.
+
+```
+import { fixupConfigRules } from "@eslint/compat";
+import reactRefresh from "eslint-plugin-react-refresh";
+import tsdoc from "eslint-plugin-tsdoc";
+import globals from "globals";
+import tsParser from "@typescript-eslint/parser";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import js from "@eslint/js";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const compat = new FlatCompat({
+    baseDirectory: __dirname,
+    recommendedConfig: js.configs.recommended,
+    allConfig: js.configs.all
+});
+
+export default [{
+    ignores: ["**/dist", "**/.eslintrc.cjs"],
+}, ...fixupConfigRules(compat.extends(
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react-hooks/recommended",
+)), {
+    plugins: {
+        "react-refresh": reactRefresh,
+        tsdoc,
+    },
+
+    languageOptions: {
+        globals: {
+            ...globals.browser,
+        },
+
+        parser: tsParser,
+    },
+
+    rules: {
+        "react-refresh/only-export-components": ["warn", {
+            allowConstantExport: true,
+        }],
+
+        "@typescript-eslint/no-unused-vars": ["error", {
+            argsIgnorePattern: "^_",
+            varsIgnorePattern: "^_",
+        }],
+
+        "tsdoc/syntax": "error",
+        "react-hooks/exhaustive-deps": "error",
+    },
+}];
+```
+
+Which is an unholy mess compared with the original. Maybe the extra dependencies are already installed. I wonder what will happen if I just run lint.
+
+```
+npm run lint
+
+> @candidstartup/react-virtual-scroll@0.4.0 lint
+> eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+
+Invalid option '--ext' - perhaps you meant '-c'?
+You're using eslint.config.js, some command line flags are no longer available. Please see https://eslint.org/docs/latest/use/command-line-interface for details.
+```
+
+* I [need to move](https://eslint.org/docs/latest/use/configure/migration-guide#--ext) the list of file types to lint from the command line to the config file. 
+* This time it runs. It seems to work but for some reason is also running against JavaScript files like my old `.eslintrc.cjs` and the content of my unit test coverage report. Despite only asking for TypeScript files. Maybe the converted config is pulling in some defaults that include JavaScript?
+* The ESLint documentation [says](https://eslint.org/docs/latest/use/configure/configuration-files#specifying-files-and-ignores) that JavaScript files are included by default unless you explicitly ignore them. Another change in behavior with the new config system?
+* I added file patterns for JavaScript to the ignore field in the converted config. Didn't make any difference. 
+* The new format is called "flat" because you return a flat array of configs. Each config object is evaluated independently to see if it should apply to a file. If multiple configs apply they are [merged together](https://eslint.org/docs/latest/use/configure/configuration-files#cascading-configuration-objects). The "recommended" config that follows must be overriding my ignore somehow. 
+* There's a special case if you want to [globally ignore](https://eslint.org/docs/latest/use/configure/configuration-files#globally-ignoring-files-with-ignores) something. Put the ignore field in a config of it's own without any other keys. 
+* That worked. I think its working now.
+* Do I really need all that crap in the generated config? 
+* Most of the crap is pulled in by use of `FlatCompat`. This is a utility that [translates](https://eslint.org/docs/latest/use/configure/migration-guide#using-eslintrc-configs-in-flat-config) the old eslintrc format into flat config format. It's only needed if you have shared config files you haven't translated yet, or plugins that provide recommended configs that don't support flat config format yet. 
+* It looks like the migration tool is being cautious and running everything through `FlatCompat`. I'm pretty sure ESLint's own recommended set supports FlatConfig, as should `typescript-eslint` with the latest version. 
+* Looks like lots of people are working through this. I found a much [cleaner looking config](https://github.com/facebook/react/issues/28313#issuecomment-2180984628) that uses most of the same plugins I do. Using that, together with the [typescript-eslint documentation](https://typescript-eslint.io/getting-started), I came up with this.
+
+```
+import globals from "globals";
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
+import reactRecommended from "eslint-plugin-react/configs/recommended.js";
+import eslintPluginReactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from "eslint-plugin-react-refresh";
+import tsdoc from "eslint-plugin-tsdoc";
+
+import { fixupPluginRules } from '@eslint/compat';
+
+export default tseslint.config(
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  reactRecommended,
+  { files: ["**/*.ts", "**/*.tsx"] },
+  { ignores: ["**/dist", "**/*.js", "**/*.mjs", "**/*.cjs"] },
+  {
+    languageOptions: {
+      globals: { ...globals.browser }
+    },
+    plugins: {
+      "react-hooks": fixupPluginRules(eslintPluginReactHooks),
+      "react-refresh": reactRefresh,
+      tsdoc,
+    },
+    rules: {
+      "react-refresh/only-export-components": ["warn", {
+          allowConstantExport: true,
+      }],
+
+      "@typescript-eslint/no-unused-vars": ["error", {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+      }],
+
+      "tsdoc/syntax": "error",
+      "react-hooks/exhaustive-deps": "error",
+    } 
+  }
+);
+```
+
+* For some reason the Vite template didn't include `eslint-plugin-react` so I added that too.
+* Doesn't look any cleaner than the old format. Points to note.
+  * tseslint.config [wrapper function](https://typescript-eslint.io/packages/typescript-eslint#config) is only there to add typing support when editing the config file
+  * Some plugins have entry points that return recommended config objects that can be added to the flat list of configs
+  * Others need you to write your own config - usually just needs you to declare the plugin, maybe with some simple parameters
+  * Very easy to screw up and get incomprehensible stack traces when it all blows up at runtime when the config is executed
