@@ -269,3 +269,21 @@ export default tseslint.config(
   * Some plugins have entry points that return recommended config objects that can be added to the flat list of configs
   * Others need you to write your own config - usually just needs you to declare the plugin, maybe with some simple parameters
   * Very easy to screw up and get incomprehensible stack traces when it all blows up at runtime when the config is executed
+* I converted the config for virtual-scroll-samples using the same approach. Almost identical except that I had to turn a couple of rules off so that each sample can be minimal.
+* All that was left was to move the common parts of the config into a top level file. Each package has a stub config that imports the top level file and adds any per-package config. Here's what the `virtual-scroll-samples` config looks like.
+
+```
+import configs from "../../eslint.config.mjs";
+import tseslint from "typescript-eslint";
+
+export default tseslint.config(
+  ...configs,
+  {
+    rules: {
+      'react-refresh/only-export-components': 'off',
+      'react/no-deprecated': 'off',
+      'react/display-name': 'off',
+    } 
+  }
+);
+```
