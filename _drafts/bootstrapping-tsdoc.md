@@ -3,10 +3,33 @@ title: Bootstrapping TSDoc Based Documentation
 tags: frontend
 ---
 
-wise words
+[Last time]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) I left you with the realization that documentation is a good thing and that I should probably write some. We all know that ["nobody reads documentation"](https://dl.acm.org/doi/pdf/10.1145/105783.105788), so my main focus is on writing documentation that sneaks up on you and jumps out just as you need it.
 
-* Used to adding structured comments that can be used to generate documentation
-* Have seen them appearing in Intellisense for React core
+I'm talking about [IntelliSense](https://code.visualstudio.com/docs/editor/intellisense) of course. Or ["Code Completion"](https://en.wikipedia.org/wiki/Code_completion), if you prefer a more generic, non-Microsoft term. 
+
+I'm familiar with the process of adding structured comments to code that can be used to generate documentation. I've seen such comments appear in Visual Studio Code IntelliSense while writing code that interacts with React core types. 
+
+{% include candid-image.html src="/assets/images/intellisense/react-imperative-handle.png" alt="React Imperative Handle IntelliSense" %}
+
+There's no magic here. No additional tools needed. No additional compilation step. If you use "Go to Definition" you find this.
+
+```
+/**
+  * `useImperativeHandle` customizes the instance value that is exposed to parent components when using
+  * `ref`. As always, imperative code using refs should be avoided in most cases.
+  *
+  * `useImperativeHandle` should be used with `React.forwardRef`.
+  *
+  * @version 16.8.0
+  * @see {@link https://react.dev/reference/react/useImperativeHandle}
+  */
+function useImperativeHandle<T, R extends T>(ref: Ref<T> | undefined, init: () => R, deps?: DependencyList): void;
+```
+
+VS Code has copied the comment on the definition into the IntelliSense prompt. There is a little bit more going on. The `{@link URL}` markup has been turned into a clickable hyperlink. Which raises the question, what other tricks does VS Code have given the right markup?
+
+# TSDoc
+
 * First thought is to find a spec
 * https://tsdoc.org/
 * Strange mix of well supported and not
