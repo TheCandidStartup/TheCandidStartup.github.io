@@ -3,27 +3,72 @@ title: Bootstrapping ESLint
 tags: frontend
 ---
 
-wise words
+I've [added some TSDoc based comments]({% link _drafts/bootstrapping-tsdoc.md %}) to my [open source project]({% link _topics/react-virtual-scroll.md %}). TSDoc has an [ESLint plugin](https://www.npmjs.com/package/eslint-plugin-tsdoc) that checks for syntax errors in your TSDoc comments. I'd like to try it out, which means getting ESLint off the ground first.
 
-* Already setup by Vite
-* Just never got round to running it before
-* 50 or so errors in current code
+{% include candid-image.html src="/assets/images/intellisense/eslint-logo.png" alt="ESLint Logo" %}
+
+[ESLint](https://eslint.org/) is a static analyzer that looks for problems in your JavaScript based code. It has a pluggable architecture with a rich [ecosystem of plugins](https://github.com/dustinspecker/awesome-eslint).
+
+# Getting Started
+
+Getting it working was easier than I thought. It was installed and setup when I [bootstrapped Vite]({% link _posts/2023-10-23-bootstrapping-vite.md %}). I just hadn't noticed it before. I wonder what I'll see the first time I run it. 
 
 ```
-✖ 57 problems (55 errors, 2 warnings)
+  57 problems (55 errors, 2 warnings)
   27 errors and 0 warnings potentially fixable with the `--fix` option.
 ```
 
-* Some potentially significant: 
-  * `react-hooks/exhaustive-deps`: Another missing entry from a React hook dependency array
-  * `no-prototype-builtins`: Assuming that `thing.hasOwnProperty()` will end up calling `Object.prototype.hasOwnProperty`. In unit test utility that mocks property on arbitrary objects. Objects can shadow prototype. Best to explicitly call method you're after with `Object.prototype.hasOwnProperty.call()`. 
-  * `react-refresh/only-export-components`: Code is structured in a way which disables HMR for certain changes during development.
-* Some better style:
-  * `@typescript-eslint/no-explicit-any`: Prefer explicit type or unknown to any
-  * `no-var`: Should use `let` or `const` for new code
-* Some pointless: 
-  * `no-extra-semi`: "Unnecessary semicolon".
-  * `@typescript-eslint/no-unused-vars`: Reported for variables starting with "_" which is the TypeScript convention for intentionally unused variables.
+Whoops. I wonder what horrors I have lurking in my code base. Altogether there were seven different types of problem found. 
+
+## react-hooks/exhaustive-deps
+
+This comes from a React Hooks plugin that Vite set up for me. It's identified a missing entry from a React hook dependency array. This is a really easy mistake to make and one that has [bitten me]({% link _posts/2024-06-10-react-virtual-scroll-0-3-0.md %}) before. 
+
+This is a real problem that by itself makes ESLint worth using. 
+
+## no-prototype-builtins
+
+I have a unit testing utility that allows me to mock properties on arbitrary objects, even if they haven't been defined yet. ESLint has identified a subtle but real problem. I call `hasOwnProperty` on the object I'm mocking to see if the property has been defined. I'm assuming that this will end up calling the builtin `Object.prototype.hasOwnProperty`. However, that's not always the case. For example, if the object defines its own `hasOwnProperty()` method.
+
+The best practice is to call `Object.prototype.hasOwnProperty` directly. 
+
+## react-refresh/only-export-components
+
+This is from another plugin that Vite set up for me. It identifies code structured in such a way that Hot Module Reload (HMR) won't work for changes in that code. The main driver for Vite is development experience and near instant reloads, so it makes sense that they install a plugin like this.
+
+In my case, the problem was with unit test setup code that does some fancy wrapping and re-exporting. There's no need for fast
+refresh of React components in unit tests so I used an eslint comment to disable the warning for that file. 
+
+```
+/* eslint-disable react-refresh/only-export-components */
+```
+
+## @typescript-eslint/no-explicit-any
+
+Another plugin installed by Vite. TypeScript developers frequently use the `any` type as a crutch to get code working quickly. In almost all cases that means you lose the full benefit of using TypeScript. You should use an explicit type if known, or `unknown` if not. 
+
+I had lots of instances of this error that were indeed easy to fix by using an explicit type or `unknown` as appropriate. 
+
+## no-var
+
+The `let` and `const` keywords were [added to JavaScript in 2015](https://hacks.mozilla.org/2015/07/es6-in-depth-let-and-const/) to fix the problems with `var`. Nobody should be using `var` for new code. However, copy and pasting from example code meant that I did. 
+
+I had lots of these but thankfully this rule comes with auto-fix support. Run ESLint again with the `--fix` flag and your code is changed for you. In my case it correctly fixed all but one instance. The last instance was more complex. I'd declared the same variable twice which `var` allows but `let` doesn't. It was an easy manual fix to remove the second declaration. 
+
+## no-extra-semi
+
+In JavaScript [some statements](https://eslint.org/docs/latest/rules/no-extra-semi) need to end with a semicolon and some don't. I come from a C++ background so I think statements look incomplete without a semicolon. 
+
+This seems like a pointless rule to me. What harm does it do to add semicolons that aren't strictly required? 
+
+This is another rule with auto-fix support. All the extra semicolons were removed when I used `--fix` to sort out my use of `var`.
+
+## @typescript-eslint/no-unused-vars
+
+If the `no-extra-semi` rule seems pointless, this one feels positively perverse. The TypeScript compiler will warn you about unused variables and parameters. If the variable is intentionally unused, you can tell the compiler to stop complaining about it by prefixing it with a "_". 
+
+This rule also checks for unused variables but intentionally still complains if the variable starts with "_". 
+
 
 * Running the fix option successfully removed all the unnecessary semicolons and changed most of the `vars`. The remaining two were for the same variable in the same block of code. Easy to change the first to `let` and the second to a simple assignment. 
 * Easy to [configure](https://github.com/typescript-eslint/typescript-eslint/issues/8464) the `no-unused-vars` rule to ignore unused vars that follow the TypeScript convention

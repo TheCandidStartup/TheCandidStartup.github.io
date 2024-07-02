@@ -1,9 +1,11 @@
 ---
-title: Bootstrapping TSDoc Based Documentation
+title: Bootstrapping TSDoc
 tags: frontend
 ---
 
 [Last time]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) I left you with the realization that documentation is a good thing and that I should probably write some. We all know that ["nobody reads documentation"](https://dl.acm.org/doi/pdf/10.1145/105783.105788), so my main focus is on writing documentation that sneaks up on you and jumps out just as you need it.
+
+{% include candid-image.html src="/assets/images/intellisense/tsdoc-logo.png" alt="TSDoc Logo" %}
 
 I'm talking about [IntelliSense](https://code.visualstudio.com/docs/editor/intellisense) of course. Or ["Code Completion"](https://en.wikipedia.org/wiki/Code_completion), if you prefer a more generic, non-Microsoft term. 
 
