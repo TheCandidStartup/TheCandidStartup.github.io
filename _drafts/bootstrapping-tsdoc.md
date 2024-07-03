@@ -102,11 +102,11 @@ TSDoc has a useful [@inheritDoc](https://tsdoc.org/pages/tags/inheritdoc/) tag f
 
 {% include candid-image.html src="/assets/images/intellisense/inherit-doc.png" alt="VS Code does nothing with @inheritDoc tags" %}
 
-Which doesn't work. VS Code does nothing with `@inheritDoc` tags. I went down the rathole of trying to find documentation on which tags VS Code supports. I found nothing. As far as I can tell by experiment, only @link and [Markdown](https://commonmark.org/) formatting have any additional effects. 
+Which doesn't work. VS Code does nothing with `@inheritDoc` tags. I went down the rathole of trying to find documentation on which tags VS Code supports. I found nothing. As far as I can tell by experiment, only `@link` and [Markdown](https://commonmark.org/) formatting have any additional effects. 
 
 # @link
 
-Links are conceptually simple. A [@link](https://tsdoc.org/pages/tags/link/) tag can point to a URL or to an API item. Links can optionally include custom link text: `{@link Button | the Button class}`. You refer to API items using a "declaration reference". Yes, the same declaration references that have no documentation, and two different syntaxes. 
+Links are conceptually simple. A [`@link`](https://tsdoc.org/pages/tags/link/) tag can point to a URL or to an API item. Links can optionally include custom link text: `{@link Button | the Button class}`. You refer to API items using a "declaration reference". Yes, the same declaration references that have no documentation, and two different syntaxes. 
 
 Fortunately, there's no need to understand how to write complex declaration references as only the simplest forms work in VS Code. 
 * Types within the same module, e.g. `{@link VirtualOuterProps}`
