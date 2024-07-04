@@ -69,7 +69,7 @@ If the `no-extra-semi` rule seems pointless, this one feels positively perverse.
 
 This rule also checks for unused variables but still complains if the variable starts with "_". Apparently this is [on purpose](https://github.com/typescript-eslint/typescript-eslint/issues/8464) because the authors didn't like the approach used by the TypeScript compiler. Thankfully it's easy to configure the rule to ignore unused vars that follow the TypeScript convention.
 
-```
+```js
   rules: {
     '@typescript-eslint/no-unused-vars': [
       'error',
@@ -90,7 +90,7 @@ added 7 packages, and audited 983 packages in 3s
 
 I followed the instructions to configure `.eslintrc.cjs`. You need to add the plugin and for some reason explicitly say that you want TSDoc syntax errors to be reported.
 
-```
+```js
   plugins: [..., 'eslint-plugin-tsdoc'],
   rules: {
     ...,
@@ -123,7 +123,7 @@ I noticed that my installation of `typescript-eslint` is a major version behind.
 
 Time to convert the config files. ESLint includes a [migration tool](https://eslint.org/docs/latest/use/configure/migration-guide) suitable for simple config files (no JavaScript functions). I think mine qualify.
 
-```
+```js
 module.exports = {
   root: true,
   env: { browser: true, es2020: true },
@@ -175,7 +175,7 @@ You will need to install the following packages to use the new config:
 
 Why all those extra packages and why do I need to install them as explicit dependencies? I wonder what the converted config looks like.
 
-```
+```js
 import { fixupConfigRules } from "@eslint/compat";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tsdoc from "eslint-plugin-tsdoc";
@@ -246,7 +246,7 @@ You're using eslint.config.js, some command line flags are no longer available. 
 
 I [need to move](https://eslint.org/docs/latest/use/configure/migration-guide#--ext) the list of file types to lint from the command line to the config file. 
 
-```
+```js
 {
   files: ["**/*.ts", "**/*.tsx"],
   ignores: ["**/dist", "**/.eslintrc.cjs"]
@@ -261,7 +261,7 @@ The new format is called "flat" because you return a flat array of configs. Each
 
 It turns out there's a special case if you want to [globally ignore](https://eslint.org/docs/latest/use/configure/configuration-files#globally-ignoring-files-with-ignores) something. Put the ignore field in a config of its own without any other keys. Which is where I went wrong. I put the `files` key in the same config as `ignores`. Once I moved them to a separate config object, everything worked as expected.
 
-```
+```js
 { files: ["**/*.ts", "**/*.tsx"] },
 { ignores: ["**/dist", "**/*.js", "**/*.mjs", "**/*.cjs"] },
 ...
@@ -275,7 +275,7 @@ It looks like the migration tool is being cautious and running everything throug
 
 It looks like lots of people are working through this. I found a much [cleaner looking config](https://github.com/facebook/react/issues/28313#issuecomment-2180984628) that uses most of the same plugins I do. Using that, together with the [typescript-eslint documentation](https://typescript-eslint.io/getting-started), I came up with this.
 
-```
+```js
 import globals from "globals";
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
@@ -332,7 +332,7 @@ I finally got it working. After that it was easy to convert the config for my sa
 
 All that was left was to move the common parts of the config into a top level file. Each package has a stub config that imports the top level file and adds any per-package config. Here's what the `virtual-scroll-samples` config looks like.
 
-```
+```js
 import configs from "../../eslint.config.mjs";
 import tseslint from "typescript-eslint";
 

@@ -15,7 +15,7 @@ I'm familiar with the process of adding structured comments to code that can be 
 
 There's no magic here. No additional tools needed. No additional compilation step. If you use "Go to Definition" you find this.
 
-```
+```ts
 /**
   * `useImperativeHandle` customizes the instance value that is exposed to parent components when using
   * `ref`. As always, imperative code using refs should be avoided in most cases.
@@ -56,7 +56,7 @@ Clearly, there was a burst of collaborative energy which resulted in the creatio
 
 I want to make it easy for users of my `react-virtual-scroll` package to understand how to write a custom "outer component". I'm going to try adding some TSDoc comments for my `VirtualOuterComponent` type. Then see if I can get VS Code to prompt me with how to write a custom outer component when trying to assign to the `outerComponent` prop of `VirtualList`. 
 
-```
+```tsx
 <VirtualList
   className={'spreadsheetRowHeader'}
   outerComponent=???
@@ -66,7 +66,7 @@ If you try this process yourself, you may get frustrated. Most of the time Intel
 
 Anyway, after looking at the pages for the [@link](https://tsdoc.org/pages/tags/link/) and [@example](https://tsdoc.org/pages/tags/example/) tags I came up with this helpful documentation. 
 
-```
+```ts
 /**
  * Type of outer container in a virtual scrolling component
  *
