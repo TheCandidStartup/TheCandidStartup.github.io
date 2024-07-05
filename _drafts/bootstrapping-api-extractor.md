@@ -102,3 +102,53 @@ Both of these are real problems caused by typos in my TSDoc comments.
 added 4 packages, and audited 1019 packages in 3s
 ```
 
+* Need to configure API extractor to also output a "docModel" `.api.json` file. By default it gets put into a `temp` subdir.
+* API Documenter reads the docModel file and generates Markdown API documentation
+* You can then run the Markdown files through whatever publishing pipeline you like. 
+  * Upload to a GitHub repo and use the GitHub integrated markdown viewer
+  * Upload to GitHub and publish as a static website using GitHub pages
+  * Use a custom GitHub actions workflow to generate the Markdown, transform and publish
+
+* By default api-documenter will try to read from an `input` subdir and write to `markdown` output dir. 
+
+```
+npx api-documenter markdown -i temp
+
+api-documenter 7.25.4  - https://api-extractor.com/
+
+Reading react-virtual-scroll.api.json
+
+Deleting old output from ./markdown
+Writing @candidstartup/react-virtual-scroll package
+```
+
+* Now I need to publish the markdown to see if the output is any good. I have a quick and dirty way that I've used before. I copy the markdown into my local repo for this blog and let my local Jekyll publishing environment handle the rest. It didn't come out as I expected.
+
+{% include candid-image.html src="/assets/images/github/api-documenter-candid-github-pages.png" alt="Published docs using Candid Startup theme" %}
+
+* The publishing pipeline is meant to convert relative markdown links like `[ScrollState](./scrollstate.md)` to html, renaming `.md` to `.html` in the process.
+* Most of the links are left as markdown. Those that are converted to html still have the `.md` extension and take you to the markdown source. Then there's lots of random garbled markup visible in the output.
+* I initially thought the problem must be with my local Jekyll setup. I changed a few likely looking configuration options. Updated to the latest version. Still broken.
+* To rule out my local environment I temporarily checked the markdown files in to GitHub.
+* They look fine in GitHub's Markdown viewer. Links are converted and functional. No visible garbled markup.
+
+{% include candid-image.html src="/assets/images/github/api-documenter-github-markdown.png" alt="Published docs in GitHub Markdown viewer" %}
+
+* However once published to the blob via GitHub pages I get the same garbled mess that I see locally.
+* Next thought was there must be something wrong with my hacked together Candid Startup Jekyll theme.
+* I uploaded the markdown again to a separate repo and setup GitHub Pages publishing using the in built defaults
+
+{% include candid-image.html src="/assets/images/github/api-documenter-default-github-pages.png" alt="Published docs using GitHub defaults" %}
+
+* This time the extensions have all been converted from `.md` to `.html`. However, most of the links are left in Markdown format and the garbled markdown is still there. 
+* Finally, I started to wonder about the quality of the API Documenter output. The Markdown output includes html tables with markdown content in each cell.
+
+```html
+<tbody><tr><td>
+
+[ScrollState](./react-virtual-scroll.scrollstate.md)
+
+</td><td>
+```
+
+* Does that really work? No it doesn't. Turns out that this was introduced in API Documenter v7.24 a couple of months ago. Prior to that the output used Markdown tables. This has [broken](https://github.com/microsoft/rushstack/issues/4586) lots of Markdown publishers and the change is likely to be rolled back. 
