@@ -152,3 +152,6 @@ Writing @candidstartup/react-virtual-scroll package
 ```
 
 * Does that really work? No it doesn't. Turns out that this was introduced in API Documenter v7.24 a couple of months ago. Prior to that the output used Markdown tables. This has [broken](https://github.com/microsoft/rushstack/issues/4586) lots of Markdown publishers and the change is likely to be rolled back. 
+* I downgraded to v7.23.38 and regenerated the Markdown. As expected all the tables use Markdown syntax throughout.
+* Ran through local Jekyll publishing and all the links are converted to html, no garbled markup. Suffixes are still `.md` however.
+* Back to checking my Jekyll setup. Facepalm moment. I'd forgotten that I tried using relative links between blog posts when I was setting things up. That doesn't work. I'd left things with relative links disabled.  Relative links is part of the default Github Pages setup. Once I removed the leftovers from my experiments it worked correctly. 
