@@ -95,3 +95,10 @@ Both of these are real problems caused by typos in my TSDoc comments.
 * Will need to rework my build pipeline so that API Extractor runs on output of tsc before Rollup generates final bundle
 * Could use API Extractor to produce bundled `index.d.ts` rather than Rollup dts plugin
 * Before doing that, let's look at API Documenter and see if it's worth doing
+
+```
+% npm install -D @microsoft/api-documenter
+
+added 4 packages, and audited 1019 packages in 3s
+```
+
