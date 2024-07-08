@@ -165,3 +165,14 @@ Writing @candidstartup/react-virtual-scroll package
 
 * At this point I gave up. API extractor does three things. One of them is useful, one doesn't work and one I have another solution for. I'll tidy things up and add the API report to the build process. I think I'll need to look elsewhere for documentation generation. Luckily, there are other options to look at.
 * If I'd known in advance I wouldn't have bothered with API Extractor. It's a heavyweight solution for a glorified lint plugin. 
+
+* API extractor uses the same config file system as the  TypeScript compiler. You can put all the common config in one file and pull it into an identical stub config in each package. Like the TypeScript compiler, paths are relative to the config file they're defined in. However, API Extractor has a nice trick to avoid duplication. You can define a `projectFolder` variable in the per-package stub. 
+
+```json
+{
+  "extends": "../api-extractor-base.json",
+  "projectFolder": "."
+}
+```
+
+You can then use `<projectFolder>` as the base for paths defined in the common config. For example, the path to the main entry point for each package is `<projectFolder>/dist/index.d.ts`. 
