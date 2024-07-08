@@ -154,4 +154,14 @@ Writing @candidstartup/react-virtual-scroll package
 * Does that really work? No it doesn't. Turns out that this was introduced in API Documenter v7.24 a couple of months ago. Prior to that the output used Markdown tables. This has [broken](https://github.com/microsoft/rushstack/issues/4586) lots of Markdown publishers and the change is likely to be rolled back. 
 * I downgraded to v7.23.38 and regenerated the Markdown. As expected all the tables use Markdown syntax throughout.
 * Ran through local Jekyll publishing and all the links are converted to html, no garbled markup. Suffixes are still `.md` however.
-* Back to checking my Jekyll setup. Facepalm moment. I'd forgotten that I tried using relative links between blog posts when I was setting things up. That doesn't work. I'd left things with relative links disabled.  Relative links is part of the default Github Pages setup. Once I removed the leftovers from my experiments it worked correctly. 
+* Back to checking my Jekyll setup. Facepalm moment. I'd forgotten that I tried using relative links between blog posts when I was setting things up. That doesn't work. I'd left things with relative links disabled.  Relative links is part of the default Github Pages setup. Once I removed the leftovers from my experiments the links worked correctly. 
+* Unfortunately, there's still some broken formatting. Comments with multiple paragraphs result in Markdown with explicit html paragraph tags. Put that in a Markdown table and GitHub Pages can't handle it. 
+
+```md
+|  [VirtualList](./react-virtual-scroll.virtuallist.md) | <p>Virtual Scrolling List</p><p>Accepts props defined by [VirtualListProps](./react-virtual-scroll.virtuallistprops.md)<!-- -->. Refs are forwarded to [VirtualListProxy](./react-virtual-scroll.virtuallistproxy.md)<!-- -->. You must pass a single instance of [VirtualListItem](./react-virtual-scroll.virtuallistitem.md) as a child.</p> |
+```
+
+{% include candid-image.html src="/assets/images/github/api-documenter-para-tags-github-pages.png" alt="Published docs with paragraph tags in GitHub Pages" %}
+
+* At this point I gave up. API extractor does three things. One of them is useful, one doesn't work and one I have another solution for. I'll tidy things up and add the API report to the build process. I think I'll need to look elsewhere for documentation generation. Luckily, there are other options to look at.
+* If I'd known in advance I wouldn't have bothered with API Extractor. It's a heavyweight solution for a glorified lint plugin. 
