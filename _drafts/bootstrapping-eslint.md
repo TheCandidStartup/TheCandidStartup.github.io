@@ -3,7 +3,7 @@ title: Bootstrapping ESLint
 tags: frontend
 ---
 
-I've [added some TSDoc based comments]({% link _drafts/bootstrapping-tsdoc.md %}) to my [open source project]({% link _topics/react-virtual-scroll.md %}). TSDoc has an [ESLint plugin](https://www.npmjs.com/package/eslint-plugin-tsdoc) that checks for syntax errors in your TSDoc comments. I'd like to try it out, which means getting ESLint off the ground first.
+I've [added some TSDoc based comments]({% link _posts/2024-07-08-bootstrapping-tsdoc.md %}) to my [open source project]({% link _topics/react-virtual-scroll.md %}). TSDoc has an [ESLint plugin](https://www.npmjs.com/package/eslint-plugin-tsdoc) that checks for syntax errors in your TSDoc comments. I'd like to try it out, which means getting ESLint off the ground first.
 
 {% include candid-image.html src="/assets/images/intellisense/eslint-logo.png" alt="ESLint Logo" %}
 
