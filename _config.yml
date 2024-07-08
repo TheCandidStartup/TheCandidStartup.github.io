@@ -16,7 +16,7 @@ utterances:
   label: "blog comment"
   theme: github-light
 relative_links:
-  enabled: false
+  enabled: true
   collections: true
 feed:
   posts_limit: 100
