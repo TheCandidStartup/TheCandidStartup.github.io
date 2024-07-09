@@ -109,13 +109,13 @@ How did my first attempt at writing TSDoc comments go? Not too bad. Four instanc
 
 # Build Workflows
 
-I added linting to my GitHub Actions "Build CI" and "Publish" workflows. I want to make sure I keep up with linting. Nothing more to say.
+I added linting to my GitHub Actions "Build CI" and "Publish" workflows. I want to make sure I keep up with linting.
 
 # Monorepo Setup
 
-I want to setup my ESLint configuration so that as much as possible is shared between the packages in my monorepo. Reading the [ESLint Docs](https://eslint.org/docs/latest/use/configure/configuration-files) confirms that I certainly can split the configuration across multiple config files. It also reveals the the ESLint configuration format is being changed. ESLint 8, which is the version I'm on, supports both the [old](https://eslint.org/docs/latest/use/configure/configuration-files-deprecated) `.eslintrc.cjs` format and the new "flat" `eslint.config.js` format. In ESLint 9 the old format has already been deprecated. It makes sense to switch to the new format before doing any major surgery.
+I want to setup my ESLint configuration so that as much as possible is shared between the packages in my monorepo. Reading the [ESLint Docs](https://eslint.org/docs/latest/use/configure/configuration-files) confirms that I can split the configuration across multiple config files. It also reveals the the ESLint configuration format is being changed. ESLint 8, which is the version I'm on, supports both the [old](https://eslint.org/docs/latest/use/configure/configuration-files-deprecated) `.eslintrc.cjs` format and the new "flat" `eslint.config.js` format. In ESLint 9 the old format has already been deprecated. It makes sense to switch to the new format before doing any major surgery.
 
-# Upgrading
+## Upgrading
 
 I noticed that my installation of `typescript-eslint` is a major version behind. The breaking change is requiring more recent versions of dependencies, all of which I'm already on. The other change for 7.0 is full support for flat config files. I updated and reran linting (with the existing old style config). Worked fine. 
 
@@ -271,7 +271,7 @@ It turns out there's a special case if you want to [globally ignore](https://esl
 
 Do I really need all that crap in the generated config? Most of it is pulled in by use of `FlatCompat`. This is a utility that [translates](https://eslint.org/docs/latest/use/configure/migration-guide#using-eslintrc-configs-in-flat-config) the old eslintrc format into flat config format. It's only needed if you have shared config files you haven't translated yet, or plugins that provide recommended configs that don't support flat config format yet. 
 
-It looks like the migration tool is being cautious and running everything through `FlatCompat`. I'm pretty sure ESLint's own recommended set supports FlatConfig, as should `typescript-eslint` with the latest version. 
+It looks like the migration tool is being cautious and running everything through `FlatCompat`. I'm pretty sure ESLint's own recommended set supports flat config, as should `typescript-eslint` with the latest version. 
 
 It looks like lots of people are working through this. I found a much [cleaner looking config](https://github.com/facebook/react/issues/28313#issuecomment-2180984628) that uses most of the same plugins I do. Using that, together with the [typescript-eslint documentation](https://typescript-eslint.io/getting-started), I came up with this.
 
@@ -316,7 +316,7 @@ export default tseslint.config(
 );
 ```
 
-For some reason, the Vite template I originally used to setup ESLint didn't include `eslint-plugin-react`, so I added that too. The final result looks much better than the migration tool output but it doesn't seem better than the old format to me.
+For some reason, the Vite template I originally used to setup ESLint didn't include `eslint-plugin-react`, so I added that too. The final result looks much better than the migration tool output. However, I'm not convinced it's an improvement on the old format. 
 
 The exported configs are wrapped in a call to [`tseslint.config`](https://typescript-eslint.io/packages/typescript-eslint#config). It does nothing apart from returning the configs passed in. It's there so that `typescript-eslint` can provide IntelliSense typing support when editing the configs.
 
