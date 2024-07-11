@@ -96,7 +96,7 @@ Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescrip
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": ["packages/*"],
   "entryPointStrategy": "packages",
-    "packageOptions": {
+  "packageOptions": {
     "entryPoints": ["src/index.ts"]
   },
 }
@@ -115,7 +115,7 @@ Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescrip
   "name": "InfiniSheet",
   "entryPoints": ["packages/*"],
   "entryPointStrategy": "packages",
-    "packageOptions": {
+  "packageOptions": {
     "entryPoints": ["src/index.ts"]
   },
 }
@@ -128,3 +128,80 @@ Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescrip
 
 * Much better. Now I get an explicit top level page for the monorepo as a whole that picks up the `name` option. The navigation hierarchy highlighting works properly and makes it clear that there are two separate pages.
 * Interestingly, the package page concatenates the `@packageDocumentation` TSDoc comment and the package README. Will need to think about what I want to do here.
+
+# Tweaking the Output
+
+* Lots of config options
+* Disabled inclusion of package README.md. Lots of stuff not relevant to API docs. Will rely on package documentation.
+* Most important API items (`VirtualGrid`, `VirtualList`) are listed last in index and navigation bar. They're React components not obscure functions. 
+* Can use custom `@group` tag to define your own groups in the index. Mark `VirtualList` and `VirtualGrid` as Components rather than Functions. 
+* API Extractor reports invalid tag when I use them. Need a `tsdoc.json` configuration file to [tell TSDoc parser about custom tags](https://api-extractor.com/pages/configs/tsdoc_json/).
+* TypeDoc comes with a `tsdoc.json` file which declares all it's custom tags. However, annoyingly, you also need a separate declaration to say which tags you're using to shut the warning up.
+
+```json
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+  "extends": ["@microsoft/api-extractor/extends/tsdoc-base.json", "typedoc/tsdoc.json"],
+  "supportForTags": {
+    "@group": true
+  }
+}
+```
+
+* Put this in my packages directory and then need another stub config file in each package folder
+
+```json
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+  "extends": ["../tsdoc.json"]
+}
+```
+
+* Can explicitly specify how groups are ordered, putting Components first in the index. However, doesn't effect order in Navigation side bar.
+* Unless configure navigation so that groups become an extra nesting layer in the hierarchy ...
+* Lots of trial and error to work out which options have to go in `packageOptions` and which at top level
+* `groupOrder` and `kindSortOrder` need to be in `packageOptions`, but `navigation` has to be at top level.
+* Can add additional clickable links to the navigation side bar and top bar to tie output into your site's navigation hierarchy
+
+```json
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "InfiniSheet",
+  "entryPoints": ["packages/*"],
+  "entryPointStrategy": "packages",
+  "packageOptions": {
+    "entryPoints": ["src/index.ts"],
+    "groupOrder": [ "Components", "Hooks" ],
+    "kindSortOrder": [
+      "Function",
+      ...
+    ],
+    "readme": "none"
+  },
+  "navigation": {
+    "includeGroups": true
+  },
+  "out": "temp",
+  "navigationLinks": {
+    "Posts": "https://thecandidstartup.org/blog/",
+    "Topics": "https://thecandidstartup.org/topic-index.html",
+    "About": "https://thecandidstartup.org/about.html",
+    "Contact": "https://thecandidstartup.org/contact.html",
+    "Now": "https://thecandidstartup.org/now.html",
+  },
+  "sidebarLinks": {
+    "The Candid Startup": "https://thecandidstartup.org"
+  },
+  "highlightLanguages": [
+    ...
+    "jsx"
+  ]
+}
+```
+
+* Can see logically how it will fit in with the rest of this site
+
+{% include candid-image.html src="/assets/images/frontend/typedoc-customized.png" alt="TypeDoc package page with customized content" %}
+
+* html output so can't use my Jekyll templates directly. However, TypeDoc does allow you to add a custom stylesheet so I'll be able to tweak the default look to align with the rest of the site. 
+* Before spending hours tweaking the stylesheet I need to make sure I can publish to GitHub pages
