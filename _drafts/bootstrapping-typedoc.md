@@ -3,13 +3,21 @@ title: Bootstrapping TypeDoc
 tags: frontend
 ---
 
-wise words
+[Last time]({% link _drafts/bootstrapping-api-extractor.md %}) I gave up on using [API Extractor](https://api-extractor.com/pages/setup/generating_docs/) to generate API Reference Documentation. API Extractor creates Markdown with embedded html tags as an intermediate format. It simply wasn't compatible with GitHub Pages hosted sites. 
+
+Time to try one of the alternatives.
+
+{% include candid-image.html src="/assets/images/frontend/typedoc-logo.png" alt="TypeDoc Logo" %}
 
 # TypeDoc
 
+TypeDoc is an independent open source project. Like API Extractor it generates API reference documentation for TypeScript projects. Unlike API Extractor, it operates directly on the TypeScript source code and outputs html for a fully functional static website. No need to insert it carefully into your build pipeline. No worries about finding a compatible Markdown publishing pipeline. 
+
+TypeDoc is [highly configurable](https://typedoc.org/options/) and supports an ecosystem of [plugins](https://typedoc.org/guides/plugins/) and [themes](https://typedoc.org/guides/themes/).
+
 # Installation
 
-* https://typedoc.org/guides/installation/
+[Installation](https://typedoc.org/guides/installation/) is straightforward. Reassuringly, and unlike API Extractor, it already formally supports the latest TypeScript 5.5.
 
 ```
 % npm install typedoc -D
@@ -17,7 +25,7 @@ wise words
 added 12 packages, and audited 1027 packages in 3s
 ```
 
-* Not as heavyweight as API extractor
+It appears to be less heavyweight than API Extractor. Let's check that it installed OK. 
 
 ```
 % npx typedoc --version
@@ -26,45 +34,49 @@ TypeDoc 0.26.4
 Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescript/lib
 ```
 
-* Another good sign. Using installed TypeScript rather than bundling its own out of date version.
+Another good sign. It uses the installed TypeScript rather than bundling its own out of date copy.
 
 # First Run
 
 ```
 % npx typedoc --out temp src/index.ts 
 
-[warning] Code block with language jsx will not be highlighted in comment for @candidstartup/react-virtual-scroll as it was not included in the highlightLanguages option
+[warning] Code block with language jsx will not be highlighted in comment
+  for @candidstartup/react-virtual-scroll as it was not included in the 
+  highlightLanguages option
 [info] Documentation generated at ./temp
 [warning] Found 0 errors and 1 warnings
 ```
 
-* Helpful error message. Except I don't have any jsx tagged code blocks in my TSDoc comments
-* Let's have a look at what was generated
+That's an unusually helpful error message. Explains what the problem is and points you towards a solution. Except I don't have any jsx tagged code blocks in my TSDoc comments.
+
+Let's have a look at what was generated.
 
 {% include candid-image.html src="/assets/images/frontend/typedoc-index-defaults.png" alt="Published docs home page using TypeDoc defaults" %}
 
-* Nice touch. It's pulled my `README.md` in as the default top level home page
-* Which explains the jsx warning. My README does include a couple of jsx code examples.
-* Where did my package documentation go? Took me a while to work out the navigation structure.
-* There are two top level pages both identified as "@candidstartup/react-virtual-scroll".
-* There's a navigation tree on the left. It looks like we have the root page selected. We don't. If you click on the highlighted page you get.
+It's pulled my `README.md` in as the default top level home page. Which explains the jsx warning. My README does include a couple of jsx code examples.
+
+Where did my package documentation go? It took me a while to work out the navigation structure. There are two top level pages both identified as "@candidstartup/react-virtual-scroll". 
+
+There's a navigation tree on the left. It looks like we have the root page selected. We don't. If you click on the highlighted page you get this.
 
 {% include candid-image.html src="/assets/images/frontend/typedoc-package-page.png" alt="Package Page using TypeDoc defaults" %}
 
-* There's my package documentation and the sort of generated categorized contents page I was expecting to see.
-* You have to click the link in the top left corner to get back to the home page. 
-* Everything is functional. No broken links or garbled markup.
-* Compared with API Extractor, there's much less detail on the content page. No type signatures or descriptions.
+There's my package documentation and the sort of generated categorized contents page I was expecting to see. You have to click the link in the top left corner to get back to the home page. 
+
+On the plus side, everything is functional. No broken links or garbled markup. However, compared with API Extractor, there's much less detail on the content page. No type signatures or descriptions.
+
+Let's see what an API item looks like. 
 
 {% include candid-image.html src="/assets/images/frontend/typedoc-item-page.png" alt="Item Page using TypeDoc defaults" %}
 
-* All my document comments are there once you look at individual items
-* Everything is nicely cross-linked
-* There's a generated type hierarchy
-* Inherited properties are included so you can see everything on one page
-* A really nice touch is auto-generated links to the corresponding source code in GitHub.
+Looking good. All my TSDoc comments are there. Everything is nicely cross-linked. There's a generated type hierarchy. Inherited properties are included so you can see everything on one page. A really nice touch is auto-generated links to the corresponding source code in GitHub.
 
 # Monorepo Setup
+
+TypeDoc has dedicated support for monorepos. You can configure it to generation documentation for each package and merge the results into a combined set of documentation. 
+
+I created a top level `typedoc.jsonc` configuration file. 
 
 ```json
 {
@@ -73,6 +85,8 @@ Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescrip
   "entryPointStrategy": "packages"
 }
 ```
+
+Then ran TypeDoc again at the top level. 
 
 ```
 % npx typedoc
@@ -87,9 +101,11 @@ Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescrip
 23    * [virtual-scroll-samples](./apps/virtual-scroll-samples): Test app for react-virtual-scroll package
 ```
 
-* Behavior for packages mode is effectively to run typedoc recursively in each package, then merge all the results together. I don't have a config file per package, so can't find `src/index.ts` entry point. 
-* The other warnings are because my repo README includes links to other Markdown files in the repo. These turn into links to GitHub in the generated docs.
-* All ready to add yet another stub config file when I noticed a comment in the [TypeDoc Monorepo Example](https://github.com/Gerrit0/typedoc-packages-example) about a new `packageOptions` setting. Hot off the presses in the latest v0.26 release. So new it hasn't made it into the documentation yet. The idea is that you put whatever per-package config setting you need under here rather than duplicating in each package.
+The behavior in packages mode is effectively to run TypeDoc recursively in each package. I don't have a config file per package, so it can't find the `src/index.ts` entry point inside my `react-virtual-scroll` package. 
+
+The other warnings are because my repo README includes links to other Markdown files in the repo. These turn into links to GitHub in the generated docs. I'll deal with that later. 
+
+I was ready to add yet another stub config file to each package when I noticed a comment in the [TypeDoc Monorepo Example](https://github.com/Gerrit0/typedoc-packages-example) about a new `packageOptions` setting. Hot off the presses in the latest v0.26 release. So new it hasn't made it into the documentation yet. The idea is that you put whatever per-package config setting you need under here rather than duplicating in each package.
 
 ```json
 {
@@ -102,12 +118,13 @@ Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescrip
 }
 ```
 
-* This time it worked. However, the output wasn't quite what I expected. Here's what the top level homepage looks like now. 
+This time it worked. However, the output wasn't quite what I expected. Here's what the top level homepage looks like now. 
 
 {% include candid-image.html src="/assets/images/frontend/typedoc-packages-home.png" alt="Home page in packages mode with a single package" %}
 
-* It's showing my repo README rather than the package repo. However, it's using the name of the first package rather than the name of the monorepo.
-* There's a `name` config option to set the name explicitly rather than let TypeDoc work it out. 
+It's pulled in my repo README rather than the package repo. However, it's using the name of the first package rather than the name of the monorepo.
+
+There's a `name` config option to set the name explicitly rather than let TypeDoc work it out. Maybe that will work.
 
 ```json
 {
@@ -121,24 +138,61 @@ Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescrip
 }
 ```
 
-* Makes no difference. My monorepo is unusual in that so far it consists of a single package. Maybe there's a TypeDoc bug when "merging" documentation for a single package.
-* I created a stub for a second package and ran it again.
-* Initially just created new directory and copied files in by hand. Must initialize new workspace in npm so `package-lock.json` contains the correct entries: `npm init -w packages/react-spreadsheet`.
+Makes no difference. My monorepo is unusual in that so far it consists of a single package. Maybe there's a TypeDoc bug when "merging" documentation for a single package. Let's test that theory by creating a stub for a second package.
+
+{% capture note %}
+Reminder to self. Make sure you initialize the new workspace using `npm init -w packages/react-spreadsheet` rather than just creating a new directory and copying a few files in. If you don't, your Build CI workflow will fail because `package-lock.json` is missing entries for the new package. 
+{% endcapture %}
+{% include candid-note.html content=note %}
+
+After running TypeDoc again I got this.
 
 {% include candid-image.html src="/assets/images/frontend/typedoc-two-packages-home.png" alt="Home page in packages mode with two packages" %}
 
-* Much better. Now I get an explicit top level page for the monorepo as a whole that picks up the `name` option. The navigation hierarchy highlighting works properly and makes it clear that there are two separate pages.
-* Interestingly, the package page concatenates the `@packageDocumentation` TSDoc comment and the package README. Will need to think about what I want to do here.
-* Cross-package links work using [TSDoc declaration references](https://tsdoc.org/pages/spec/overview/). Thankfully, TypeDoc has an understandable [description of the syntax](https://typedoc.org/guides/declaration-references/). Interestingly, it's different from the [examples](https://tsdoc.org/pages/tags/link/) in the TypeDoc documentation. Maybe the TSDoc examples were still using "old" syntax? Whatever, at least it's clearly explained and actually works. 
+Much better. Now I have an explicit top level page for the monorepo as a whole that picks up the `name` option. The navigation hierarchy highlighting works properly and makes it clear that there are two separate pages.
 
-# Tweaking the Output
+Interestingly, the package page concatenates the `@packageDocumentation` TSDoc comment and the package README. Will need to think about what I want to do here.
 
-* Lots of config options
-* Disabled inclusion of package README.md. Lots of stuff not relevant to API docs. Will rely on package documentation.
-* Most important API items (`VirtualGrid`, `VirtualList`) are listed last in index and navigation bar. They're React components not obscure functions. 
-* Can use custom `@group` tag to define your own groups in the index. Mark `VirtualList` and `VirtualGrid` as Components rather than Functions. 
-* API Extractor reports invalid tag when I use them. Need a `tsdoc.json` configuration file to [tell TSDoc parser about custom tags](https://api-extractor.com/pages/configs/tsdoc_json/).
-* TypeDoc comes with a `tsdoc.json` file which declares all it's custom tags. However, annoyingly, you also need a separate declaration to say which tags you're using to shut the warning up.
+# Cross-Package Links
+
+Now that I have two packages, I can test cross-package links. Links between packages use [TSDoc declaration references](https://tsdoc.org/pages/spec/overview/). Thankfully, TypeDoc has an understandable [description of the syntax](https://typedoc.org/guides/declaration-references/). 
+
+```ts
+/**
+ * Placeholder Stub Package Documentation
+ *
+ * Link to {@link @candidstartup/react-virtual-scroll!VirtualList | VirtualList}
+ * in {@link @candidstartup/react-virtual-scroll!}
+ * @packageDocumentation
+ */
+ ```
+
+Worryingly, the syntax TypeDoc uses is different from the [examples](https://tsdoc.org/pages/tags/link/) in the TSDoc documentation. TypeDoc uses `!` as a module/component separator, while TSDoc uses `#`. Maybe the TSDoc examples are still using the ["old" syntax](https://tsdoc.org/pages/spec/overview/)? Whatever, at least it's clearly explained and actually works when I try it. 
+
+Except when I rebuild the project I get failures in the TSDoc ESLint plugin. 
+
+```
+4:19   warning  tsdoc-reference-missing-hash: The declaration reference appears to contain a package name or import path, but it is missing the "#" delimiter  tsdoc/syntax
+5:14   warning  tsdoc-reference-missing-hash: The declaration reference appears to contain a package name or import path, but it is missing the "#" delimiter  tsdoc/syntax
+```
+
+Even more annoyingly, the entire plugin appears as a single rule so I can't disable just the declaration reference checks. For now, I disabled the plugin.
+
+The build gets further but then fails with the same error in API Extractor. It turns out that it's not just the TSDoc spec and examples that are out of date. The TSDoc parser is also still using the "old" declaration reference syntax. There's been [no progress](https://github.com/microsoft/tsdoc/issues/202) since 2019.
+
+I can't blame TypeDoc. They're [trying to do the right thing](https://github.com/TypeStrong/typedoc/issues/2621) by using the "new" syntax.
+
+At least API Extractor lets me disable individual warnings. It's clear that the TSDoc ESLint plugin and API Extractor are running the same checks using the same code. I may as well uninstall the ESLint plugin.
+
+# Custom Tags
+
+The most important API items (`VirtualGrid`, `VirtualList`) are listed last in the TypeDoc index and navigation bar. They're React components not obscure functions. They should be called out separately. 
+
+TypeDoc supports a custom [`@group`](https://typedoc.org/tags/group/) tag to define your own groups in the index. I marked `VirtualList` and `VirtualGrid` with `@group Components`.
+
+Of course, API Extractor reports an invalid tag error when I use them. I need to create a `tsdoc.json` configuration file to [tell the TSDoc parser about custom tags](https://api-extractor.com/pages/configs/tsdoc_json/).
+
+TypeDoc comes with a `tsdoc.json` file which declares all its custom tags. However, annoyingly, you also need a separate declaration to say which tags you're using to shut the warning up.
 
 ```json
 {
@@ -150,7 +204,7 @@ Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescrip
 }
 ```
 
-* Put this in my packages directory and then need another stub config file in each package folder
+I can put that in my packages directory and then use a stub config file in each per-package directory.
 
 ```json
 {
@@ -159,11 +213,17 @@ Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescrip
 }
 ```
 
-* Can explicitly specify how groups are ordered, putting Components first in the index. However, doesn't effect order in Navigation side bar.
-* Unless configure navigation so that groups become an extra nesting layer in the hierarchy ...
-* Lots of trial and error to work out which options have to go in `packageOptions` and which at top level
-* `groupOrder` and `kindSortOrder` need to be in `packageOptions`, but `navigation` has to be at top level.
-* Can add additional clickable links to the navigation side bar and top bar to tie output into your site's navigation hierarchy
+# Tweaking the Output
+
+There are *lots* of configuration options to play with. Naturally, I tried a few out. 
+
+I disabled inclusion of the package `README.md`. There's lots of stuff in there that isn't relevant to API docs. I'll rely on the package documentation TSDoc comment. 
+
+You can explicitly specify how groups are ordered. I put "Components" first in the index. However, that doesn't effect the order of API items in the navigation side bar. Unless you configure the side bar so that groups appear as an additional layer of containers in the hierarchy. 
+
+It took lots of trial and error to work out which options have to go in `packageOptions` and which at the top level. For example, `groupOrder` and `kindSortOrder` need to be in `packageOptions`, while `navigation` has to be at the top level.
+
+You can also add additional clickable links to the navigation side bar and top bar to tie the documentation into your site's navigation hierarchy.
 
 ```json
 {
@@ -201,96 +261,13 @@ Using TypeScript 5.5.2 from /Users/tim/GitHub/infinisheet/node_modules/typescrip
 }
 ```
 
-* Can see logically how it will fit in with the rest of this site
+I think I can see how the generated documentation could fit in with the rest of [The Candid Startup]({{ '/' | absolute_url }}).
 
 {% include candid-image.html src="/assets/images/frontend/typedoc-customized.png" alt="TypeDoc package page with customized content" %}
 
-* html output so can't use my Jekyll templates directly. However, TypeDoc does allow you to add a custom stylesheet so I'll be able to tweak the default look to align with the rest of the site. 
-* Before spending hours tweaking the stylesheet I need to make sure I can publish to GitHub pages
+TypeDoc generates html so I can't use my Jekyll templates directly. However, TypeDoc does allow you to add a custom stylesheet so I'll be able to tweak the default look to align with the rest of the site. 
 
-# Publishing
+# Conclusion
 
-* Should be able to publish the classic way by checking the generated HTML into GitHub, then using the standard GitHub pages setup to publish. The output even includes a `.nojekyll` file so GitHub knows to use use the html as is rather than running it through Jekyll. 
-* Want to avoid having to check in generated documentation. Extra manual step and clutters up repo.
-* GitHub Pages uses GitHub Actions to publish. You can write your own publishing workflow using the same building blocks that GitHub Pages uses.
-  * [upload-pages-artifact](https://github.com/actions/upload-pages-artifact): Creates an artifact ZIP of the directory you want to publish
-  * [deploy-pages](https://github.com/actions/deploy-pages): Deploys an artifact ZIP to GitHub Pages
-* I copied my NPM Publish workflow and modified it to come up with this.
+TypeDoc looks like a winner. I'll need to investigate how to integrate it into my GitHub Pages based publishing pipeline. There will also need to be some tweaks to the site's information architecture. Which I'll be sure to tell you about next time. 
 
-```
-name: Docs
-
-on:
-  workflow_dispatch:
-  workflow_run:
-    workflows: [Build CI]
-    types: [completed]
-
-jobs:
-  build:
-    if: |
-        github.event_name == 'workflow_dispatch' ||
-        ( github.event.workflow_run.conclusion == 'success' &&
-          github.event.workflow_run.event == 'push' &&
-          github.event.workflow_run.head_branch == 'main' &&
-          contains(github.event.workflow_run.head_commit.message, 'chore(release)'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.X
-          registry-url: https://registry.npmjs.org/
-      - run: npm ci
-      - run: npx typedoc
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: "temp/"
-
-  publish:
-    needs: build
-    permissions:
-      pages: write      # to deploy to Pages
-      id-token: write   # to verify the deployment originates from an appropriate source
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-```
-
-* The `deploy-pages` documentation recommends running it in a separate job, so I did. With the requirement to upload the content as an artifact, there's nothing stopping you running the two stages as separate jobs. I can see how this might be more reliable?
-
-* Triggered a run manually. Build went find. Publish resulted in this.
-
-```
-Run actions/deploy-pages@v4
-Fetching artifact metadata for "github-pages" in this workflow run
-Found 1 artifact(s)
-Creating Pages deployment with payload:
-{
-	"artifact_id": 1694669341,
-	"pages_build_version": "2908bdcfcfd9eab618209be2108bc5059da34a9e",
-	"oidc_token": "***"
-}
-Error: Creating Pages deployment failed
-Error: HttpError: Not Found
-    at /home/runner/work/_actions/actions/deploy-pages/v4/node_modules/@octokit/request/dist-node/index.js:124:1
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at createPagesDeployment (/home/runner/work/_actions/actions/deploy-pages/v4/src/internal/api-client.js:125:1)
-    at Deployment.create (/home/runner/work/_actions/actions/deploy-pages/v4/src/internal/deployment.js:74:1)
-    at main (/home/runner/work/_actions/actions/deploy-pages/v4/src/index.js:30:1)
-Error: Error: Failed to create deployment (status: 404) with build version 2908bdcfcfd9eab618209be2108bc5059da34a9e. Request ID 2BC1:22C3E:4BBB537:8CCB6B2:66910182 Ensure GitHub Pages has been enabled: https://github.com/TheCandidStartup/infinisheet/settings/pages
-```
-
-* I'm so glad there was a meaningful error message at the end. Doh. Remember to enable GitHub Pages before trying to deploy it. Pick "GitHub Actions" as the source.
-
-{% include candid-image.html src="/assets/images/github/pages-action-source.png" alt="GitHub Pages Settings configured to use GitHub Actions" %}
-
-* When you first enable "GitHub Actions" as the source you will be encouraged to configure a workflow from a template. Ignore this if, like me, you've already created your own workflow. There's no extra step needed to connect GitHub pages to a specific workflow. Once enabled, any workflow can publish. Once a workflow has published, the UI changes to show the details seen here.
-* When you have a pages site at the organization level with a custom domain, any project sites automatically use the same custom domain. Which is how I ended up with the Docs published to [https://thecandidstartup.org/infinisheet](https://thecandidstartup.org/infinisheet).
