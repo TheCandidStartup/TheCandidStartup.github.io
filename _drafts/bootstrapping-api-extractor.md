@@ -89,13 +89,13 @@ export function useFixedSizeItemOffsetMapping(itemSize: number): FixedSizeItemOf
 
 # Refactoring Exports
 
-I've been subconsciously following a policy of explicitly exporting the top level symbols that a user would directly import but not dependent symbols. Up to this point everything has worked. Api Extractor is suggesting that every dependency needs to be explicitly exported.
+I've been subconsciously following a policy of explicitly exporting the top level symbols that a user would directly import but not dependent symbols. Up to this point everything has worked. API Extractor is suggesting that every dependency needs to be explicitly exported.
 
 After some research, I think API Extractor is right. What I'm currently doing works for simple cases. IntelliSense help isn't limited by exports. You can use the value of a property of unexported type. There are circumstances where the compiler can infer types.
 
-It won't work if the user writes code that accesses type explicitly. For example, extending a type. Or declaring a variable of that type.
+It won't work if the user writes code that accesses unexported types explicitly. For example, extending a type. Or declaring a variable of that type.
 
-The correct thing is to export every type that is part of the public surface area of the API. So, I went back through and made sure everything referenced by the public API is explicitly exported. To make life simpler, I divided the source components within my module into public components and internal components. I export every type in a public component. Most internal components have no types publicaly exported. There are a couple of special cases where public components use a type from an internal component. In those cases I explicitly export just that type. 
+The correct thing is to export every type that is part of the public surface area of the API. So, I went back through and made sure everything referenced by the public API is explicitly exported. To make life simpler, I divided the source components within my module into "public" components and "internal" components. I export every type in a public component. Most internal components have no types publicly exported. There are a couple of special cases where public components use a type from an internal component. In those cases I explicitly export just that type. 
 
 I needed a little bit of refactoring to keep things maintainable. The `VirtualBase.ts` component contains functionality shared by `VirtualList.tsx` and `VirtualGrid.tsx`. Most of it is public apart from one bit of common implementation. I moved that into a new internal `VirtualCommon.ts` component. 
 
@@ -153,9 +153,9 @@ Before I do any of that I need to check what the generated documentation is like
 
 # API Documenter
 
-API Extractor relies on a companion tool, [API Documenter](https://api-extractor.com/pages/setup/generating_docs/), to generate documentation. API Extractor outputs a "document model" JSON file for each package. API Documenter reads the document model and outputs a Markdown representation of the documentation. For monorepos, API Documenter can read multiple document models and generate combined documentation including cross-reference links. 
+API Extractor relies on a companion tool, [API Documenter](https://api-extractor.com/pages/setup/generating_docs/), to generate documentation. API Extractor outputs a "document model" JSON file for each package. API Documenter reads the document model and outputs a Markdown representation of the documentation. For monorepos, API Documenter can read multiple document models and generate combined documentation including cross-package links. 
 
-You then take the generated Markdown files and do whatever you want with them. You could upload them to GitHub and use the GitHub integrated Markdown viewer, publish them through GitHub Pages or push them through a custom static website publishing pipeline. 
+You then take the generated Markdown files and do whatever you want with them. You could upload them to GitHub and use the GitHub integrated Markdown viewer, publish them through GitHub Pages, or push them through a custom static website publishing pipeline. 
 
 # Installation and First Run
 
@@ -196,8 +196,7 @@ To rule out my local environment I temporarily checked the Markdown files in to 
 
 However, once they're published to the blog via GitHub Pages I get the same garbled mess that I see locally.
 
-
-My next thought was there must be something wrong with my hacked together Candid Startup Jekyll theme. I uploaded the Markdown again to a separate repo and setup GitHub Pages publishing using the in built defaults.
+My next thought was that there must be something wrong with my hacked together Candid Startup Jekyll theme. I uploaded the Markdown again to a separate repo and setup GitHub Pages publishing using the defaults.
 
 {% include candid-image.html src="/assets/images/github/api-documenter-default-github-pages.png" alt="Published docs using GitHub defaults" %}
 
@@ -237,7 +236,7 @@ At this point I gave up. Generating Markdown as an intermediate format is a nice
 
 I am getting some value from the API Report functionality, so I decided to leave API Extractor in place for that. I just need to tidy things up first. 
 
-API extractor uses the same config file system as the TypeScript compiler. You can put all the common config in one file and pull it into a stub config in each package. Like the TypeScript compiler, paths are relative to the config file they're defined in. However, API Extractor has a nice trick to avoid duplication. You can define a `projectFolder` variable in the per-package stub. 
+API extractor uses the same config file system as the TypeScript compiler. You can put all the common config in one file and reference it in a stub config in each package. Like the TypeScript compiler, paths are relative to the config file they're defined in. However, API Extractor has a nice trick to avoid duplication. You can define a `projectFolder` variable in the per-package stub. 
 
 ```json
 {
