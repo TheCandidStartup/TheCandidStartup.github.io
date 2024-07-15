@@ -18,7 +18,7 @@ Getting it working was easier than I thought. It was installed and setup when I 
   27 errors and 0 warnings potentially fixable with the `--fix` option.
 ```
 
-Whoops. I wonder what horrors I have lurking in my code base. Altogether there were seven different types of problem found. 
+Whoops. I wonder what horrors I have lurking in my code base? Altogether there were seven different types of problem found. 
 
 ## react-hooks/exhaustive-deps
 
@@ -45,7 +45,7 @@ refresh of React components in unit tests so I used an eslint comment to disable
 
 ## @typescript-eslint/no-explicit-any
 
-Another plugin installed by Vite. TypeScript developers frequently use the `any` type as a crutch to get code working quickly. In almost all cases that means you lose the full benefit of using TypeScript. You should use an explicit type if known, or `unknown` if not. 
+TypeScript developers frequently use the `any` type as a crutch to get code working quickly. In almost all cases that means you lose the full benefit of using TypeScript. You should use an explicit type if known, or `unknown` if not. 
 
 I had lots of instances of this error that were indeed easy to fix by using an explicit type or `unknown` as appropriate. 
 
@@ -67,7 +67,7 @@ This is another rule with auto-fix support. All the extra semicolons were remove
 
 If the `no-extra-semi` rule seems pointless, this one feels positively perverse. The TypeScript compiler will warn you about unused variables and parameters. If the variable is intentionally unused, you can tell the compiler to stop complaining about it by prefixing it with a "_". 
 
-This rule also checks for unused variables but still complains if the variable starts with "_". Apparently this is [on purpose](https://github.com/typescript-eslint/typescript-eslint/issues/8464) because the authors didn't like the approach used by the TypeScript compiler. Thankfully it's easy to configure the rule to ignore unused vars that follow the TypeScript convention.
+This rule also checks for unused variables but still complains if the variable starts with "_". Apparently, this is [on purpose](https://github.com/typescript-eslint/typescript-eslint/issues/8464) because the authors didn't like the approach used by the TypeScript compiler. Thankfully it's easy to configure the rule to ignore unused vars that follow the TypeScript convention.
 
 ```js
   rules: {
@@ -257,7 +257,7 @@ This time it runs. It seems to work but for some reason is also running against 
 
 The ESLint documentation [says](https://eslint.org/docs/latest/use/configure/configuration-files#specifying-files-and-ignores) that JavaScript files are included by default unless you explicitly ignore them. I added file patterns for JavaScript to the ignore field in the converted config. It didn't make any difference. 
 
-The new format is called "flat" because you return a flat array of configs. Each config object is evaluated independently to see if it should apply to a file. If multiple configs apply they are [merged together](https://eslint.org/docs/latest/use/configure/configuration-files#cascading-configuration-objects). The "recommended" config that follows must be overriding my ignore somehow. 
+The new format is called "flat" because you return a flat array of configs. Each config object is evaluated independently to see if it should apply to a file. If multiple configs apply they are [merged together](https://eslint.org/docs/latest/use/configure/configuration-files#cascading-configuration-objects). 
 
 It turns out there's a special case if you want to [globally ignore](https://eslint.org/docs/latest/use/configure/configuration-files#globally-ignoring-files-with-ignores) something. Put the ignore field in a config of its own without any other keys. Which is where I went wrong. I put the `files` key in the same config as `ignores`. Once I moved them to a separate config object, everything worked as expected.
 
@@ -271,7 +271,7 @@ It turns out there's a special case if you want to [globally ignore](https://esl
 
 Do I really need all that crap in the generated config? Most of it is pulled in by use of `FlatCompat`. This is a utility that [translates](https://eslint.org/docs/latest/use/configure/migration-guide#using-eslintrc-configs-in-flat-config) the old eslintrc format into flat config format. It's only needed if you have shared config files you haven't translated yet, or plugins that provide recommended configs that don't support flat config format yet. 
 
-It looks like the migration tool is being cautious and running everything through `FlatCompat`. I'm pretty sure ESLint's own recommended set supports flat config, as should `typescript-eslint` with the latest version. 
+The migration tool is being cautious and running everything through `FlatCompat`. I'm pretty sure ESLint's own recommended set supports flat config, as should `typescript-eslint` with the latest version. 
 
 It looks like lots of people are working through this. I found a much [cleaner looking config](https://github.com/facebook/react/issues/28313#issuecomment-2180984628) that uses most of the same plugins I do. Using that, together with the [typescript-eslint documentation](https://typescript-eslint.io/getting-started), I came up with this.
 
