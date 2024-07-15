@@ -11,7 +11,7 @@ Time to try one of the alternatives.
 
 # TypeDoc
 
-TypeDoc is an independent open source project. Like API Extractor it generates API reference documentation for TypeScript projects. Unlike API Extractor, it operates directly on the TypeScript source code and outputs html for a fully functional static website. No need to insert it carefully into your build pipeline. No worries about finding a compatible Markdown publishing pipeline. 
+TypeDoc is an independent open source project. Like API Extractor, it generates API reference documentation for TypeScript projects. Unlike API Extractor, it operates directly on the TypeScript source code and outputs html for a fully functional static website. No need to insert it carefully into your build pipeline. No worries about finding a compatible Markdown publishing pipeline. 
 
 TypeDoc is [highly configurable](https://typedoc.org/options/) and supports an ecosystem of [plugins](https://typedoc.org/guides/plugins/) and [themes](https://typedoc.org/guides/themes/).
 
@@ -103,7 +103,7 @@ Then ran TypeDoc again at the top level.
 
 The behavior in packages mode is effectively to run TypeDoc recursively in each package. I don't have a config file per package, so it can't find the `src/index.ts` entry point inside my `react-virtual-scroll` package. 
 
-The other warnings are because my repo README includes links to other Markdown files in the repo. These turn into links to GitHub in the generated docs. I'll deal with that later. 
+The other warnings are because my repo README includes relative links to folders in the repo. These turn into links to GitHub in the generated docs. I'll deal with that later. 
 
 I was ready to add yet another stub config file to each package when I noticed a comment in the [TypeDoc Monorepo Example](https://github.com/Gerrit0/typedoc-packages-example) about a new `packageOptions` setting. Hot off the presses in the latest v0.26 release. So new it hasn't made it into the documentation yet. The idea is that you put whatever per-package config setting you need under here rather than duplicating in each package.
 
@@ -122,7 +122,7 @@ This time it worked. However, the output wasn't quite what I expected. Here's wh
 
 {% include candid-image.html src="/assets/images/frontend/typedoc-packages-home.png" alt="Home page in packages mode with a single package" %}
 
-It's pulled in my repo README rather than the package repo. However, it's using the name of the first package rather than the name of the monorepo.
+It's pulled in my monorepo README rather than the package README. However, it's using the name of the first package rather than the name of the monorepo.
 
 There's a `name` config option to set the name explicitly rather than let TypeDoc work it out. Maybe that will work.
 
@@ -151,7 +151,7 @@ After running TypeDoc again I got this.
 
 Much better. Now I have an explicit top level page for the monorepo as a whole that picks up the `name` option. The navigation hierarchy highlighting works properly and makes it clear that there are two separate pages.
 
-Interestingly, the package page concatenates the `@packageDocumentation` TSDoc comment and the package README. Will need to think about what I want to do here.
+Interestingly, the package page concatenates the `@packageDocumentation` TSDoc comment and the package README. I'll need to think about what I want to do here.
 
 # Cross-Package Links
 
@@ -186,13 +186,13 @@ At least API Extractor lets me disable individual warnings. It's clear that the 
 
 # Custom Tags
 
-The most important API items (`VirtualGrid`, `VirtualList`) are listed last in the TypeDoc index and navigation bar. They're React components not obscure functions. They should be called out separately. 
+The most important API items (`VirtualGrid`, `VirtualList`) are listed last in the TypeDoc index and navigation bar. They're React components not random functions. They should be called out separately. 
 
 TypeDoc supports a custom [`@group`](https://typedoc.org/tags/group/) tag to define your own groups in the index. I marked `VirtualList` and `VirtualGrid` with `@group Components`.
 
-Of course, API Extractor reports an invalid tag error when I use them. I need to create a `tsdoc.json` configuration file to [tell the TSDoc parser about custom tags](https://api-extractor.com/pages/configs/tsdoc_json/).
+Of course, API Extractor reports an invalid tag error when I build the project. I need to create a `tsdoc.json` configuration file to [tell the TSDoc parser about custom tags](https://api-extractor.com/pages/configs/tsdoc_json/).
 
-TypeDoc comes with a `tsdoc.json` file which declares all its custom tags. However, annoyingly, you also need a separate declaration to say which tags you're using to shut the warning up.
+TypeDoc comes with a `tsdoc.json` file which declares all its custom tags. However, you also need a separate declaration to say which tags you're using to shut the warning up.
 
 ```json
 {
