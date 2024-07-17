@@ -1,5 +1,5 @@
 ---
-title: Publishing API Documentation
+title: Integrating API Documentation
 tags: blog
 ---
 
@@ -91,3 +91,65 @@ Error: Error: Failed to create deployment (status: 404) with build version 2908b
 
 * When you first enable "GitHub Actions" as the source you will be encouraged to configure a workflow from a template. Ignore this if, like me, you've already created your own workflow. There's no extra step needed to connect GitHub pages to a specific workflow. Once enabled, any workflow can publish. Once a workflow has published, the UI changes to show the details seen here.
 * When you have a pages site at the organization level with a custom domain, any project sites automatically use the same custom domain. Which is how I ended up with the Docs published to [https://thecandidstartup.org/infinisheet](https://thecandidstartup.org/infinisheet).
+
+# Site Organization
+
+## Adjusting TypeDoc Generated Content
+
+* Replaced repo `README.md` with dedicated `typedoc-assets/root.md`. Let's me fix warnings because of GitHub specific links in the README. Plus tailoring content to reference documentation home page for a monorepo.
+* Added custom.css to adjust tailoring to fit in with The Candid Startup.
+  * First idea was to restyle the whole thing to common style
+  * Really difficult to match given differences in structure
+  * TypeDoc supports dynamic choice of dark or light theme which is impossible to accomodate without a complete rebuild of blog theme.
+* In the end made minimal changes. 
+  * Only global change is to use same font as rest of site
+  * Focused on styling of top toolbar
+  * Even though I *know* that Posts, Topics, etc. links are same as on blog, it doesn't feel that way. 
+  * Made toolbar the same size and used same text and background color.
+  * Haven't tried to exactly match the positioning of text. Very different layout scheme. One column with wide margins vs three columns.
+  * Frustrating enough just trying to get vertical alignment similar.
+  * Any changes in blog style will need to be reproduced in custom stylesheet. Another reason to keep changes minimal.
+  * Making sure I keep track of where values came from.
+  * Just enough that it feels part of the same nav structure while reinforcing that this is a separate area with different rules.
+  * Can only match background color for light theme. Fortunately CS green works with dark theme too.
+
+```css
+body { 
+  /* From jekyll-theme-cayman-blog.scss */
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; 
+  font-size: 16px; 
+}
+
+:root {
+  /* From blog.scss - $background-color */
+  --light-color-background-secondary: #fdfdfd;
+}
+
+.tsd-page-toolbar a {
+    /* From blog.scss - $section-headings-color */
+  color: #159957;
+}
+
+.tsd-page-toolbar {
+  /* From blog/_layout.scss - .site-header{  min-height: $spacing-unit * 1.865; } 
+   *      blog.scss - $spacing-unit: 30px
+   */
+  height: 55.95px;
+}
+
+.tsd-page-toolbar .tsd-toolbar-contents {
+  /* Only way I could find to center links in enlarged title bar. The toolbar
+   * content is given a height of 2.5rem in the TypeDoc stylesheet.
+   */
+  padding-top: calc((55.95px - 2.5rem)/2);
+}
+```
+
+## TypeDoc Extras Plugin
+
+* Custom Title
+* Favicon
+* More Footer Stuff
+
+## Adding Projects to the Organizational Structure
+
