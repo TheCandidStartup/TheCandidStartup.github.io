@@ -179,8 +179,20 @@ Used to change title string displayed on left side of header to match the rest o
 
 The rest of the plugin is focused on adding more information to the footer. I added the TypeDoc version (why not?). The other options add additional lines to the footer, increasing the size, which then breaks the layout. Main content is too big which results in a scroll bar being added to the page. Same thing happens with base TypeDoc option that adds arbitrary text to the footer. 
 
-Not useful enough to lose page space to the footer. Certainly not worth fiddling with the custom stylesheet again.
+Not useful enough to lose page space to the footer. Certainly not worth fiddling with the custom stylesheet again
 
+## TypeDoc Coverage Plugin
+
+```
+% npm install -D typedoc-plugin-coverage
+
+added 1 package, and audited 1030 packages in 1s
+```
+
+* Slightly annoying that referencing the badge triggers a warning because target is copied into the output directory by the plugin after links are validated. 
+* Badge doesn't resize so I can't use "Docs Coverage" or similar as label. Short strings like "Docs" look weird too. In the end stuck with the default "Document" as it neatly fits the badge.
+* Got to love a badge to drive behavior. Initial badge showed coverage at 52%. So naturally I immediately had to get to 100%.
+* Can use `typedoc --logLevel Verbose | grep "not considered"` to list all API items that are considered undocumented. Also lists each item that it does consider documented, hence the `grep`.
 
 ## Adding Projects to the Organizational Structure
 
