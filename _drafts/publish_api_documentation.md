@@ -143,6 +143,14 @@ body {
    */
   padding-top: calc((55.95px - 2.5rem)/2);
 }
+
+.container-main {
+  /* Copied from TypeDoc style.css and adjusted to account for larger header
+   * min-height = viewportHeight - HeaderHeight - FooterHeight - Margin
+   * Changed HeaderHeight from 41px to 57px (base height + 1 for the border)
+   */
+  min-height: calc(100vh - 57px - 56px - 4rem);
+}
 ```
 
 ## TypeDoc Extras Plugin
@@ -150,6 +158,29 @@ body {
 * Custom Title
 * Favicon
 * More Footer Stuff
+
+```
+npm install --save-dev typedoc-plugin-extras
+
+added 1 package, and audited 1029 packages in 2s
+```
+
+Used to change title string displayed on left side of header to match the rest of the site. Also lets me add the CS favicon.
+
+```json
+{
+  "plugin": [ "typedoc-plugin-extras" ],
+  "customTitle": "The Candid Startup",
+  "favicon": "./typedoc-assets/favicon.ico",
+  "titleLink": "https://thecandidstartup.org",
+  "footerTypedocVersion": true
+}
+```
+
+The rest of the plugin is focused on adding more information to the footer. I added the TypeDoc version (why not?). The other options add additional lines to the footer, increasing the size, which then breaks the layout. Main content is too big which results in a scroll bar being added to the page. Same thing happens with base TypeDoc option that adds arbitrary text to the footer. 
+
+Not useful enough to lose page space to the footer. Certainly not worth fiddling with the custom stylesheet again.
+
 
 ## Adding Projects to the Organizational Structure
 
