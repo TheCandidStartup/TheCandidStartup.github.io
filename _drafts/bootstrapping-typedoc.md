@@ -48,13 +48,13 @@ Another good sign. It uses the installed TypeScript rather than bundling its own
 [warning] Found 0 errors and 1 warnings
 ```
 
-That's an unusually helpful error message. Explains what the problem is and points you towards a solution. Except I don't have any jsx tagged code blocks in my TSDoc comments.
+That's an unusually helpful error message. It explains what the problem is and points you towards a solution. Except I don't have any jsx tagged code blocks in my TSDoc comments.
 
 Let's have a look at what was generated.
 
 {% include candid-image.html src="/assets/images/frontend/typedoc-index-defaults.png" alt="Published docs home page using TypeDoc defaults" %}
 
-It's pulled my `README.md` in as the default top level home page. Which explains the jsx warning. My README does include a couple of jsx code examples.
+It's pulled in my `README.md` as the default top level home page. Which explains the jsx warning. My README does include a couple of jsx code examples.
 
 Where did my package documentation go? It took me a while to work out the navigation structure. There are two top level pages both identified as "@candidstartup/react-virtual-scroll". 
 
@@ -138,7 +138,7 @@ There's a `name` config option to set the name explicitly rather than let TypeDo
 }
 ```
 
-Makes no difference. My monorepo is unusual in that so far it consists of a single package. Maybe there's a TypeDoc bug when "merging" documentation for a single package. Let's test that theory by creating a stub for a second package.
+Makes no difference. My monorepo is unusual in that so far it consists of a single package. Maybe there's a TypeDoc bug when "merging" documentation for a single package. Let's test that theory by creating a stub for a second package. I'm going to need a `react-spreadsheet` package [soon]({% link _posts/2024-07-29-infinisheet-architecture.md %}), so let's create that.
 
 {% capture note %}
 Reminder to self. Make sure you initialize the new workspace using `npm init -w packages/react-spreadsheet` rather than just creating a new directory and copying a few files in. If you don't, your Build CI workflow will fail because `package-lock.json` is missing entries for the new package. 
