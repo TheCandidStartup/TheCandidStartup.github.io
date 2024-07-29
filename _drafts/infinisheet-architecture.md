@@ -15,6 +15,14 @@ The packages are color coded for your convenience. Grey packages represent inter
 
 There are a couple of representative arrows that show which implementation packages implement which interfaces. Most are omitted for simplicity. It should be obvious. Each implementation package name ends in the name of the interface it's implementing.
 
+# Stack
+
+For now, I'm going to continue using a TypeScript stack. I've been impressed with how productive the experience is. At the same time, the guard rails provided by the type system keep me from making stupid mistakes. 
+
+This is a full stack project. Using the same language for frontend and backend will let me share code across both contexts. For the backend I expect to use a NodeJS runtime. 
+
+In future, if everything works out functionally, I could see myself rewriting performance critical, compute intensive parts of the backend in Rust. 
+
 # Interfaces
 
 This project involves the same core code running in many different contexts. To support that I define interfaces that are used to abstract away differences in implementation in each context.
@@ -27,15 +35,15 @@ The highest level interface is `spreadsheet-data`. This abstracts away the detai
 
 # Spreadsheet Data
 
-There are two implementations of `spreadsheet-data`. As its name suggest, `simple-spreadsheet-data` is the simplest possible implementation. Think of it as a JavaScript map used to represent a sparse two dimensional array. The data is stored entirely in memory, using the most naive representation possible. Ideal for simple samples, unit tests and debugging. 
+There are two implementations of `spreadsheet-data`. As its name suggests, `simple-spreadsheet-data` is the simplest possible implementation. Think of it as a JavaScript map used to represent a sparse two dimensional array. The data is stored entirely in memory, using the most naive representation possible. Ideal for simple samples, unit tests and debugging. 
 
-The core of InfiniSheet is the `event-sourced-spreadsheet-data` package. This implements persistent, large scale data storage using an event sourcing approach. It implements `spreadsheet-data` and in turn depends on the `blob-store`, `event-log` and `workers` interfaces. 
+The core of InfiniSheet is the `event-sourced-spreadsheet-data` package. This provides persistent, large scale data storage using an event sourcing approach. It implements `spreadsheet-data` and in turn depends on the `blob-store`, `event-log` and `workers` interfaces. 
 
 Each InfiniSheet app combines `event-sourced-spreadsheet-data` with appropriate implementations of `blob-store`, `event-log` and `workers`. This approach also makes it easy to unit test `event-sourced-spreadsheet-data` by using mock implementations of `blob-store`, `event-log` and `workers`.
 
 # React Spreadsheet
 
-The frontend apps all use `react-spreadsheet` for their main UI. This package contains a React component built on `react-virtual-scroll` that implements the classic Spreadsheet UI we all know and love. The component retrieves the data needed to render the spreadsheet on demand using the `spreadsheet-data` interface.
+The frontend apps all use `react-spreadsheet` for their main UI. This package contains a React component built on `react-virtual-scroll` that implements the classic Spreadsheet UI we all know and love. The component retrieves the data needed to render the spreadsheet on demand, using the `spreadsheet-data` interface.
 
 A simple sample app, `spreadsheet-sample`, can be implemented by combining `react-spreadsheet` and `simple-spreadsheet-data`. 
 
@@ -49,7 +57,7 @@ In production mode the source of truth is a remote server. The client downloads 
 
 # InfiniSheet Desktop
 
-`infinisheet-desktop` is a standalone desktop app using an [Electron](https://www.electronjs.org/) wrapper. It uses OS level implementations for `blob-store` (file based) and `event-log` ([SQLite](https://www.npmjs.com/package/sqlite3) based), and a `workers` implementation based on Electron's dedicated [utility process](https://www.electronjs.org/docs/latest/api/utility-process) APIs.
+`Infinisheet-desktop` is a standalone desktop app using an [Electron](https://www.electronjs.org/) wrapper. It uses OS level implementations for `blob-store` (file based) and `event-log` ([SQLite](https://www.npmjs.com/package/sqlite3) based), and a `workers` implementation based on Electron's dedicated [utility process](https://www.electronjs.org/docs/latest/api/utility-process) APIs.
 
 # NodeJS InfiniSheet Server
 
@@ -57,7 +65,7 @@ In production mode the source of truth is a remote server. The client downloads 
 
 # AWS Infinisheet Server
 
-`Aws-infinisheet-server` is a production backend built on [serverless AWS services]({% link _posts/2022-12-05-serverless-or-not.md %}). The `blob-store` uses [S3](https://aws.amazon.com/s3/), `event-log` is build on [DynamoDB](https://aws.amazon.com/dynamodb/) and `workers` orchestration is handled by [Lambda](https://docs.aws.amazon.com/lambda/).
+`Aws-infinisheet-server` is a production backend built on [serverless AWS services]({% link _posts/2022-12-05-serverless-or-not.md %}). The `blob-store` uses [S3](https://aws.amazon.com/s3/), `event-log` is built on [DynamoDB](https://aws.amazon.com/dynamodb/) and `workers` orchestration is handled by [Lambda](https://docs.aws.amazon.com/lambda/).
 
 # Next Steps
 
