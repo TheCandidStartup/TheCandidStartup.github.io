@@ -1,6 +1,6 @@
 ---
 title: Integrating API Documentation
-tags: blog
+tags: blog infinisheet
 ---
 
 wise words
@@ -14,7 +14,7 @@ wise words
   * [deploy-pages](https://github.com/actions/deploy-pages): Deploys an artifact ZIP to GitHub Pages
 * I copied my NPM Publish workflow and modified it to come up with this.
 
-```
+```yaml
 name: Docs
 
 on:
@@ -196,3 +196,73 @@ added 1 package, and audited 1030 packages in 1s
 
 ## Adding Projects to the Organizational Structure
 
+* Initial idea was to add "Projects" as a new top level concept. Then create an "Infinisheet" project page which I can use as a landing page to link to GitHub, Documentation, etc.
+* Would be nice to include a list of a few key blogs related to the project
+* Which meant I needed some way of tagging the blogs by project
+* At which point I realized that I was reinventing "Topics" for the subset of topics that relate to a project
+* Decided to start by adding an "InfiniSheet" topic and adding whatever I needed to make it into a landing page
+* Tried a few ways of doing it but nothing seemed quite right. Including links in the topic description is too wordy. Hard to pick the links out and hard to understand the navigation structure. 
+* Tried adding a special section with a table of links. Looked too contrived.
+* Then I realized. I have a dedicated area for navigation controls in the page header that topics don't use. 
+
+## Topic Navigation
+
+* Fortunately, I've structured the blog to make it easy to add custom navigation controls. Each type of page has a layout. You can add custom front matter that specifies additional content to include in the page header. This is used by the "post" layout to include previous and next post buttons, together with buttons for each topic the post was tagged with.
+
+I updated the "topic" layout to pull in its own custom navigation controls. 
+
+```yaml
+---
+layout: default
+include_header: topic-nav.html
+---
+```
+
+The navigation controls use custom front matter in each topic to add buttons for parent and related topics, together with buttons for common external links like GitHub, NPM and Documentation. 
+
+{% raw %}
+
+```html
+<div class="candid-header-nav">
+{% if page.up %}
+  {% assign topic-page = site.topics | where: "topic", page.up | first %}
+  <a class="candid-header-link" href="{{ topic-page.url | absolute_url }}">&uArr; {{ topic-page.title | escape }}</a>
+{% endif %}
+{% if page.github %}
+  <a class="candid-header-link candid-header-external" href="{{ page.github }}">GitHub</a>
+{% endif %}
+{% if page.npm %}
+  <a class="candid-header-link candid-header-external" href="{{ page.npm }}">NPM</a>
+{% endif %}
+{% if page.docs %}
+  <a class="candid-header-link candid-header-external" href="{{ page.docs | absolute_url }}">Documentation</a>
+{% endif %}
+{% for tag in page.also %}
+  {% assign topic-page = site.topics | where: "topic", tag | first %}
+  {% if topic-page %}
+    <a class="candid-header-link" href="{{ topic-page.url | absolute_url }}" title="{{ topic-page.title }}">{{ topic-page.title | escape }}</a>
+  {% endif %}
+{% endfor %}
+</div>
+```
+
+{% endraw %}
+
+Here's the front matter for the [InfiniSheet]({% link _topics/infinisheet.md %}) topic.
+
+```yaml
+---
+layout: topic
+title: InfiniSheet
+topic: infinisheet
+tagline: All about the "infinisheet" monorepo
+up: spreadsheets
+github: https://github.com/TheCandidStartup/infinisheet
+docs: /infinisheet
+also: [react-virtual-scroll]
+---
+```
+
+And here's what the resulting page header looks like
+
+{% include candid-image.html src="/assets/images/infinisheet/infinisheet-topic.png" alt="InfiniSheet topic navgiation" %}
