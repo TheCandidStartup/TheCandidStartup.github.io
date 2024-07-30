@@ -1,6 +1,6 @@
 ---
 title: InfiniSheet Architecture
-tags: cloud-architecture frontend
+tags: cloud-architecture frontend infinisheet
 ---
 
 I've been working on my [spreadsheet project]({% link _topics/spreadsheets.md %}) for many months now. I started with [very high level thinking]({% link _posts/2023-02-27-brainstorming-and-benchmarking.md %}) and paper explorations of possible [data structures]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) and [algorithms]({% link _posts/2023-07-03-spreadsheet-merge-import.md %}). Then I went to the other end of the scale and built a [React virtual scrolling]({% link _topics/react-virtual-scroll.md %}) package that you could use to build the frontend for a large spreadsheet. 

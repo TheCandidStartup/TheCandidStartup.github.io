@@ -1,0 +1,21 @@
+<div class="candid-header-nav">
+{% if page.up %}
+  {% assign topic-page = site.topics | where: "topic", page.up | first %}
+  <a class="candid-header-link" href="{{ topic-page.url | absolute_url }}">&uArr; {{ topic-page.title | escape }}</a>
+{% endif %}
+{% if page.github %}
+  <a class="candid-header-link candid-header-external" href="{{ page.github }}">GitHub</a>
+{% endif %}
+{% if page.npm %}
+  <a class="candid-header-link candid-header-external" href="{{ page.npm }}">NPM</a>
+{% endif %}
+{% if page.docs %}
+  <a class="candid-header-link candid-header-external" href="{{ page.docs | absolute_url }}">Documentation</a>
+{% endif %}
+{% for tag in page.also %}
+  {% assign topic-page = site.topics | where: "topic", tag | first %}
+  {% if topic-page %}
+    <a class="candid-header-link" href="{{ topic-page.url | absolute_url }}" title="{{ topic-page.title }}">{{ topic-page.title | escape }}</a>
+  {% endif %}
+{% endfor %}
+</div>

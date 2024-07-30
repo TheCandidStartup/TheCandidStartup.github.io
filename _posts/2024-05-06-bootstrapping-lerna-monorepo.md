@@ -1,6 +1,6 @@
 ---
 title: Bootstrapping a Lerna Monorepo
-tags: frontend spreadsheets
+tags: frontend infinisheet
 ---
 
 So far, all the front-end development work I've done has been in the [repo](https://github.com/TheCandidStartup/react-virtual-scroll-grid) I created when [bootstrapping Vite]({% link _posts/2023-10-23-bootstrapping-vite.md %}). It's starting to feel a little restrictive. 

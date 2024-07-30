@@ -89,6 +89,11 @@
     }
 }
 
+.candid-header-external {
+    opacity: 0.9;
+    font-weight: bold;
+}
+
 .candid-header-link:hover, .candid-header-link:focus { 
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
