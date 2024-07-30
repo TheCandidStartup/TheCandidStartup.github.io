@@ -1,13 +1,12 @@
 ---
 title: Bootstrapping TypeDoc
 tags: frontend
+thumbnail: /assets/images/frontend/typedoc-logo.png
 ---
 
 [Last time]({% link _posts/2024-07-19-bootstrapping-api-extractor.md %}) I gave up on using [API Extractor](https://api-extractor.com/pages/setup/generating_docs/) to generate API Reference Documentation. API Extractor creates Markdown with embedded html tags as an intermediate format. It simply wasn't compatible with GitHub Pages hosted sites. 
 
 Time to try one of the alternatives.
-
-{% include candid-image.html src="/assets/images/frontend/typedoc-logo.png" alt="TypeDoc Logo" %}
 
 # TypeDoc
 
