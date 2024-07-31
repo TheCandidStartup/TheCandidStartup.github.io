@@ -190,6 +190,16 @@ added 1 package, and audited 1030 packages in 1s
 ```
 
 * Slightly annoying that referencing the badge triggers a warning because target is copied into the output directory by the plugin after links are validated. 
+
+```
+./typedoc-assets/root.md:1:27 - [warning] The relative path ./coverage.svg is not a file and will not be copied to the output directory
+
+1    [![Documentation Coverage](./coverage.svg)](https://www.npmjs.com/package/typedoc-plugin-coverage)
+
+[info] Documentation generated at ./temp
+[warning] Found 0 errors and 1 warnings
+```
+
 * Badge doesn't resize so I can't use "Docs Coverage" or similar as label. Short strings like "Docs" look weird too. In the end stuck with the default "Document" as it neatly fits the badge.
 * Got to love a badge to drive behavior. Initial badge showed coverage at 52%. So naturally I immediately had to get to 100%.
 * Can use `typedoc --logLevel Verbose | grep "not considered"` to list all API items that are considered undocumented. Also lists each item that it does consider documented, hence the `grep`.
@@ -266,3 +276,6 @@ also: [react-virtual-scroll]
 And here's what the resulting page header looks like
 
 {% include candid-image.html src="/assets/images/infinisheet/infinisheet-topic.png" alt="InfiniSheet topic navgiation" %}
+
+## Projects Page
+
