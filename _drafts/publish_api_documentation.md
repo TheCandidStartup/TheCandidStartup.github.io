@@ -4,16 +4,17 @@ tags: blog infinisheet
 thumbnail: /assets/images/infinisheet/blog-projects.png
 ---
 
-wise words
+[Last time]({% link _drafts/bootstrapping-typedoc.md %}) we got good results when we tried out [TypeDoc](https://typedoc.org/) for API reference documentation generation. I left you with a cliff hanger. How do we integrate TypeDoc into my [GitHub Pages](https://pages.github.com/) based publishing pipeline? And how should we surface API documentation on the blog focused [Candid Startup]({{ '/' | absolute_url }}) site?
 
 # Publishing
 
-* Should be able to publish the classic way by checking the generated HTML into GitHub, then using the standard GitHub pages setup to publish. The output even includes a `.nojekyll` file so GitHub knows to use use the html as is rather than running it through Jekyll. 
-* Want to avoid having to check in generated documentation. Extra manual step and clutters up repo.
-* GitHub Pages uses GitHub Actions to publish. You can write your own publishing workflow using the same building blocks that GitHub Pages uses.
-  * [upload-pages-artifact](https://github.com/actions/upload-pages-artifact): Creates an artifact ZIP of the directory you want to publish
-  * [deploy-pages](https://github.com/actions/deploy-pages): Deploys an artifact ZIP to GitHub Pages
-* I copied my NPM Publish workflow and modified it to come up with this.
+The classic way of publishing is to check the generated HTML into GitHub, then use the standard GitHub pages setup to deploy the site. The TypeDoc output even includes a `.nojekyll` file so GitHub knows to use the html as is, rather than running it through Jekyll. 
+
+I want to avoid having to check in the generated documentation. It's an extra manual step and clutters up the repo.
+
+GitHub Pages uses GitHub Actions to publish. You can write your own publishing workflow using the same building blocks that GitHub Pages uses. Once you've generated your content, use the [upload-pages-artifact](https://github.com/actions/upload-pages-artifact) action to create an artifact ZIP of the directory you want to publish. Then follow up with [deploy-pages](https://github.com/actions/deploy-pages) to deploy an artifact ZIP.
+
+I copied my NPM Publish workflow and modified it to come up with this.
 
 ```yaml
 name: Docs
@@ -62,9 +63,9 @@ jobs:
         uses: actions/deploy-pages@v4
 ```
 
-* The `deploy-pages` documentation recommends running it in a separate job, so I did. With the requirement to upload the content as an artifact, there's nothing stopping you running the two stages as separate jobs. I can see how this might be more reliable?
+The `deploy-pages` documentation recommends running it in a separate job, so I did. With the requirement to upload the content as an artifact, there's nothing stopping you running the two stages as separate jobs. Presumably GitHub thinks doing it this way is more reliable or better for load balancing or something. 
 
-* Triggered a run manually. Build went find. Publish resulted in this.
+I triggered a run manually. The build job completed successfully. Publish resulted in this.
 
 ```
 Run actions/deploy-pages@v4
@@ -83,36 +84,34 @@ Error: HttpError: Not Found
     at createPagesDeployment (/home/runner/work/_actions/actions/deploy-pages/v4/src/internal/api-client.js:125:1)
     at Deployment.create (/home/runner/work/_actions/actions/deploy-pages/v4/src/internal/deployment.js:74:1)
     at main (/home/runner/work/_actions/actions/deploy-pages/v4/src/index.js:30:1)
-Error: Error: Failed to create deployment (status: 404) with build version 2908bdcfcfd9eab618209be2108bc5059da34a9e. Request ID 2BC1:22C3E:4BBB537:8CCB6B2:66910182 Ensure GitHub Pages has been enabled: https://github.com/TheCandidStartup/infinisheet/settings/pages
+Error: Error: Failed to create deployment (status: 404) with build version 2908bdcfcfd9eab618209be2108bc5059da34a9e. 
+Request ID 2BC1:22C3E:4BBB537:8CCB6B2:66910182 
+Ensure GitHub Pages has been enabled: https://github.com/TheCandidStartup/infinisheet/settings/pages
 ```
 
-* I'm so glad there was a meaningful error message at the end. Doh. Remember to enable GitHub Pages before trying to deploy it. Pick "GitHub Actions" as the source.
+I'm so glad there was a meaningful error message at the end of all that. Doh. Remember to enable GitHub Pages before trying to deploy to it. Pick "GitHub Actions" as the source.
 
 {% include candid-image.html src="/assets/images/github/pages-action-source.png" alt="GitHub Pages Settings configured to use GitHub Actions" %}
 
-* When you first enable "GitHub Actions" as the source you will be encouraged to configure a workflow from a template. Ignore this if, like me, you've already created your own workflow. There's no extra step needed to connect GitHub pages to a specific workflow. Once enabled, any workflow can publish. Once a workflow has published, the UI changes to show the details seen here.
-* When you have a pages site at the organization level with a custom domain, any project sites automatically use the same custom domain. Which is how I ended up with the Docs published to [https://thecandidstartup.org/infinisheet](https://thecandidstartup.org/infinisheet).
+When you first enable "GitHub Actions" as the source you will be encouraged to configure a workflow from a template. Ignore this if, like me, you've already created your own workflow. There's no extra step needed to connect GitHub pages to a specific workflow. Once enabled, any workflow can publish. Once a workflow has published, the UI changes to show the details seen here.
 
-# Site Organization
+When you have a pages site at the organization level with a custom domain, any project sites automatically use the same custom domain. Which is how I ended up with the documentation published to [https://thecandidstartup.org/infinisheet](https://thecandidstartup.org/infinisheet). This all seems to be hardcoded so I'll need to be careful to make sure my repo names don't conflict with content on the blog.
 
-## Adjusting TypeDoc Generated Content
+# Adjusting TypeDoc Generated Content
 
-* Replaced repo `README.md` with dedicated `typedoc-assets/root.md`. Let's me fix warnings because of GitHub specific links in the README. Plus tailoring content to reference documentation home page for a monorepo.
-* Added custom.css to adjust tailoring to fit in with The Candid Startup.
-  * First idea was to restyle the whole thing to common style
-  * Really difficult to match given differences in structure
-  * TypeDoc supports dynamic choice of dark or light theme which is impossible to accomodate without a complete rebuild of blog theme.
-* In the end made minimal changes. 
-  * Only global change is to use same font as rest of site
-  * Focused on styling of top toolbar
-  * Even though I *know* that Posts, Topics, etc. links are same as on blog, it doesn't feel that way. 
-  * Made toolbar the same size and used same text and background color.
-  * Haven't tried to exactly match the positioning of text. Very different layout scheme. One column with wide margins vs three columns.
-  * Frustrating enough just trying to get vertical alignment similar.
-  * Any changes in blog style will need to be reproduced in custom stylesheet. Another reason to keep changes minimal.
-  * Making sure I keep track of where values came from.
-  * Just enough that it feels part of the same nav structure while reinforcing that this is a separate area with different rules.
-  * Can only match background color for light theme. Fortunately CS green works with dark theme too.
+I replaced the default use of the repo `README.md` with a dedicated `typedoc-assets/root.md` file. That lets me fix broken links caused by GitHub specific links in the README. It also means I can tailor the content for a reference documentation home page for a monorepo.
+
+Next I added `custom.css` to adjust the documentation's styling to fit in with the Candid Startup theme. The initial idea was to restyle the whole thing to match exactly. However, it's really difficult to execute given the differences in document structure. To make it even harder, TypeDoc supports a dynamic choice of dark or light theme which is impossible to accommodate without a complete rebuild of the blog theme.
+
+In the end I made minimal changes. The only global change is to use the same font as the rest of the site. Beyond that, I focused on styling of the top menu bar. The idea is to do just enough so that the documentation feels part of the same navigation structure, while reinforcing that this is a separate area with different rules.
+
+Even though I *know* that Posts, Topics, etc. links are the same as on the blog, it doesn't feel that way. I made the documentation menu bar the same size and used the same text and background color. I could only match the background color for the light theme. Fortunately, text in Candid Startup green works with the dark theme too.
+
+{% include candid-image.html src="/assets/images/infinisheet/candid-style-docs-header.png" alt="Candid Startup style documentation header" %}
+
+I haven't tried to exactly match the positioning of text. The structures are too different. The blog uses a single column with wide margins while the documentation has a three column layout. It was frustrating enough just trying to get vertical alignment similar. 
+
+Any future changes in blog style will need to be reproduced in the custom stylesheet. Another reason to keep changes minimal. I've made sure to keep track of where values came from.
 
 ```css
 body { 
@@ -154,11 +153,9 @@ body {
 }
 ```
 
-## TypeDoc Extras Plugin
+# TypeDoc Extras Plugin
 
-* Custom Title
-* Favicon
-* More Footer Stuff
+I installed the [TypeDoc extras plugin](https://github.com/Drarig29/typedoc-plugin-extras) which gives me some more customization options. 
 
 ```
 npm install --save-dev typedoc-plugin-extras
@@ -166,7 +163,7 @@ npm install --save-dev typedoc-plugin-extras
 added 1 package, and audited 1029 packages in 2s
 ```
 
-Used to change title string displayed on left side of header to match the rest of the site. Also lets me add the CS favicon.
+I used it to change the title string displayed on the left side of the menu bar to match the rest of the site, and to add the Candid Startup favicon.
 
 ```json
 {
@@ -178,11 +175,13 @@ Used to change title string displayed on left side of header to match the rest o
 }
 ```
 
-The rest of the plugin is focused on adding more information to the footer. I added the TypeDoc version (why not?). The other options add additional lines to the footer, increasing the size, which then breaks the layout. Main content is too big which results in a scroll bar being added to the page. Same thing happens with base TypeDoc option that adds arbitrary text to the footer. 
+The rest of the plugin is focused on adding more information to the footer. I added the TypeDoc version (why not?). The other options add additional lines to the footer, increasing the size, which then breaks the layout. It makes the main content too big, which results in a scroll bar being added to the page. The same thing happens with the existing TypeDoc option that adds arbitrary text to the footer. 
 
-Not useful enough to lose page space to the footer. Certainly not worth fiddling with the custom stylesheet again
+The extra information isn't useful enough to lose page space to the footer. It's certainly not worth fiddling with the custom stylesheet again.
 
-## TypeDoc Coverage Plugin
+# TypeDoc Coverage Plugin
+
+I couldn't resist adding one more plugin.
 
 ```
 % npm install -D typedoc-plugin-coverage
@@ -190,7 +189,9 @@ Not useful enough to lose page space to the footer. Certainly not worth fiddling
 added 1 package, and audited 1030 packages in 1s
 ```
 
-* Slightly annoying that referencing the badge triggers a warning because target is copied into the output directory by the plugin after links are validated. 
+The [coverage plugin](https://github.com/Gerrit0/typedoc-plugin-coverage) generates a badge that reports the percentage of your API's surface area that's documented. It's functional but has a couple of rough edges. 
+
+It's annoying that referencing the badge triggers a TypeDoc warning when building because the badge is copied into the output directory by the plugin *after* links are validated. 
 
 ```
 ./typedoc-assets/root.md:1:27 - [warning] The relative path ./coverage.svg is not a file and will not be copied to the output directory
@@ -201,11 +202,15 @@ added 1 package, and audited 1030 packages in 1s
 [warning] Found 0 errors and 1 warnings
 ```
 
-* Badge doesn't resize so I can't use "Docs Coverage" or similar as label. Short strings like "Docs" look weird too. In the end stuck with the default "Document" as it neatly fits the badge.
-* Got to love a badge to drive behavior. Initial badge showed coverage at 52%. So naturally I immediately had to get to 100%.
-* Can use `typedoc --logLevel Verbose | grep "not considered"` to list all API items that are considered undocumented. Also lists each item that it does consider documented, hence the `grep`.
+The badge doesn't resize so I can't use "Docs Coverage" or similar as a label. Short strings like "Docs" look weird too. In the end I stuck with the default "Document" as it neatly fits the badge.
 
-## Adding Projects to the Organizational Structure
+![Documentation Coverage](/assets/images/infinisheet/infinisheet-document-coverage-badge.svg)
+
+You've got to love the ability of a badge to drive behavior. The initial badge showed coverage at 52%. So naturally I immediately had to get to 100%.
+
+Top tip. You can use `typedoc --logLevel Verbose | grep "not considered"` to list all API items that are considered undocumented. Knock out some documentation, rinse and repeat. 
+
+# Adding Projects to the Organizational Structure
 
 * Initial idea was to add "Projects" as a new top level concept. Then create an "Infinisheet" project page which I can use as a landing page to link to GitHub, Documentation, etc.
 * Would be nice to include a list of a few key blogs related to the project
@@ -216,7 +221,7 @@ added 1 package, and audited 1030 packages in 1s
 * Tried adding a special section with a table of links. Looked too contrived.
 * Then I realized. I have a dedicated area for navigation controls in the page header that topics don't use. 
 
-## Topic Navigation
+# Topic Navigation
 
 * Fortunately, I've structured the blog to make it easy to add custom navigation controls. Each type of page has a layout. You can add custom front matter that specifies additional content to include in the page header. This is used by the "post" layout to include previous and next post buttons, together with buttons for each topic the post was tagged with.
 
@@ -278,12 +283,14 @@ And here's what the resulting page header looks like
 
 {% include candid-image.html src="/assets/images/infinisheet/infinisheet-topic.png" alt="InfiniSheet topic navgiation" %}
 
-## Projects Page
+# Projects Page
 
 I still want to have a dedicated "Projects" page to make it easy to find the topics that correspond to actual projects. That turned out to be easy to do. I copied the "Topics" page and filtered the list of topics to include just those with links to GitHub, NPM or Documentation. I also added clickable badges for each of those links in the same way I do for blog posts. 
 
 I made a little more room in the menu by retiring the [Now]({% link now.md %}) page. Now was a standard page included with the [Cayman blog theme](https://github.com/lorepirri/cayman-blog). I never made much use of it. I post a blog every week, so you're not left wondering what I'm up to. 
 
 {% include candid-image.html src="/assets/images/infinisheet/blog-projects.png" alt="Projects List" %}
+
+# Conclusion
 
 I'm happy with the way it's turned out. 
