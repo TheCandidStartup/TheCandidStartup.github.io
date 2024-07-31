@@ -5,9 +5,9 @@ title: Now
 tagline: What I'm doing now
 permalink: /now.html
 ref: now
-date: 2024-05-13
+date: 2024-07-31
 ---
 
-Split the [Front End]({% link _topics/frontend.md %}) topic into two as the number of [React Virtual Scroll]({% link _topics/react-virtual-scroll.md %}) posts is starting to overwhelm the more general content.
+I post a blog every week. Go [read that]({{ '/blog/' | absolute_url }}) if you want to know what I've been up to.
 
 [Go to the Home Page]({{ '/' | absolute_url }})

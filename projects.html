@@ -1,0 +1,31 @@
+---
+layout: page
+title: Projects
+tagline: Enough talk, show me something real
+ref: projects
+---
+
+<ul class="post-list">
+{% for topic in site.topics %}
+{% if topic.github or topic.npm or topic.docs %}
+<li>
+    {% if topic.github %}
+      <a class="candid-topic-tag" href="{{ topic.github }}" title="GitHub">GitHub</a>
+    {% endif %}
+    {% if topic.npm %}
+      <a class="candid-topic-tag" href="{{ topic.npm }}" title="NPM">NPM</a>
+    {% endif %}
+    {% if topic.docs %}
+      <a class="candid-topic-tag" href="{{ topic.docs }}" title="Documentation">Documentation</a>
+    {% endif %}
+
+    <a class="candid-topic-link" href="{{ topic.url | absolute_url }}" title="{{ topic.title }}">{{ topic.title | escape }}</a>
+
+    <div class="candid-topic-meta">{{ topic.tagline }}</div>
+
+    {{ topic.excerpt | markdownify  }}
+
+</li>
+{% endif %}
+{% endfor %}
+</ul>
