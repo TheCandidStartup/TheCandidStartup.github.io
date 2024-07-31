@@ -1,6 +1,7 @@
 ---
 title: Integrating API Documentation
 tags: blog infinisheet
+thumbnail: /assets/images/infinisheet/blog-projects.png
 ---
 
 wise words
@@ -279,3 +280,10 @@ And here's what the resulting page header looks like
 
 ## Projects Page
 
+I still want to have a dedicated "Projects" page to make it easy to find the topics that correspond to actual projects. That turned out to be easy to do. I copied the "Topics" page and filtered the list of topics to include just those with links to GitHub, NPM or Documentation. I also added clickable badges for each of those links in the same way I do for blog posts. 
+
+I made a little more room in the menu by retiring the [Now]({% link now.md %}) page. Now was a standard page included with the [Cayman blog theme](https://github.com/lorepirri/cayman-blog). I never made much use of it. I post a blog every week, so you're not left wondering what I'm up to. 
+
+{% include candid-image.html src="/assets/images/infinisheet/blog-projects.png" alt="Projects List" %}
+
+I'm happy with the way it's turned out. 
