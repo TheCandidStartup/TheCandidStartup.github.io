@@ -102,9 +102,9 @@ Then ran TypeDoc again at the top level.
 
 The behavior in packages mode is effectively to run TypeDoc recursively in each package. I don't have a config file per package, so it can't find the `src/index.ts` entry point inside my `react-virtual-scroll` package. 
 
-The other warnings are because my repo README includes relative links to folders in the repo. These turn into links to GitHub in the generated docs. I'll deal with that later. 
+The other warnings are because my repo README includes relative links to folders in the repo. These turn into links to GitHub in the generated docs. I'll deal with them later. 
 
-I was ready to add yet another stub config file to each package when I noticed a comment in the [TypeDoc Monorepo Example](https://github.com/Gerrit0/typedoc-packages-example) about a new `packageOptions` setting. Hot off the presses in the latest v0.26 release. So new it hasn't made it into the documentation yet. The idea is that you put whatever per-package config setting you need under here rather than duplicating in each package.
+I was ready to add yet another stub config file to each package when I noticed a comment in the [TypeDoc monorepo example](https://github.com/Gerrit0/typedoc-packages-example) about a new `packageOptions` setting. Hot off the presses in the latest v0.26 release. So new it hasn't made it into the documentation yet. The idea is that you put whatever per-package config setting you need under `packageOptions` rather than duplicating in each package.
 
 ```json
 {
@@ -166,7 +166,7 @@ Now that I have two packages, I can test cross-package links. Links between pack
  */
  ```
 
-Worryingly, the syntax TypeDoc uses is different from the [examples](https://tsdoc.org/pages/tags/link/) in the TSDoc documentation. TypeDoc uses `!` as a module/component separator, while TSDoc uses `#`. Maybe the TSDoc examples are still using the ["old" syntax](https://tsdoc.org/pages/spec/overview/)? Whatever, at least it's clearly explained and actually works when I try it. 
+Worryingly, the syntax TypeDoc uses is different from the [examples](https://tsdoc.org/pages/tags/link/) in the TSDoc documentation. TypeDoc uses `!` as a module/component separator, while TSDoc uses `#`. Maybe the TSDoc examples are still using the ["old" syntax](https://tsdoc.org/pages/spec/overview/)? Whatever, at least TypeDoc's syntax is clearly explained and actually works when I try it. 
 
 Except when I rebuild the project I get failures in the TSDoc ESLint plugin. 
 
@@ -181,7 +181,7 @@ The build gets further but then fails with the same error in API Extractor. It t
 
 I can't blame TypeDoc. They're [trying to do the right thing](https://github.com/TypeStrong/typedoc/issues/2621) by using the "new" syntax.
 
-At least API Extractor lets me disable individual warnings. It's clear that the TSDoc ESLint plugin and API Extractor are running the same checks using the same code. I may as well uninstall the ESLint plugin.
+At least API Extractor lets me disable individual warnings. I disabled the `tsdoc-reference-missing-hash` warning which allowed the build to succeed. It's clear that the TSDoc ESLint plugin and API Extractor are running the same checks using the same code. I uninstalled the ESLint plugin.
 
 # Custom Tags
 
@@ -189,7 +189,7 @@ The most important API items (`VirtualGrid`, `VirtualList`) are listed last in t
 
 TypeDoc supports a custom [`@group`](https://typedoc.org/tags/group/) tag to define your own groups in the index. I marked `VirtualList` and `VirtualGrid` with `@group Components`.
 
-Of course, API Extractor reports an invalid tag error when I build the project. I need to create a `tsdoc.json` configuration file to [tell the TSDoc parser about custom tags](https://api-extractor.com/pages/configs/tsdoc_json/).
+Of course, API Extractor reports an invalid tag error when I build the project. I needed to create a `tsdoc.json` configuration file to [tell the TSDoc parser about custom tags](https://api-extractor.com/pages/configs/tsdoc_json/).
 
 TypeDoc comes with a `tsdoc.json` file which declares all its custom tags. However, you also need a separate declaration to say which tags you're using to shut the warning up.
 
