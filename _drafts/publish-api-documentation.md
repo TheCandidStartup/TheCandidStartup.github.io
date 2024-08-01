@@ -101,7 +101,7 @@ When you have a pages site at the organization level with a custom domain, any p
 
 I replaced the default use of the repo `README.md` with a dedicated `typedoc-assets/root.md` file. That lets me fix broken links caused by GitHub specific links in the README. It also means I can tailor the content for a reference documentation home page for a monorepo.
 
-Next I added `custom.css` to adjust the documentation's styling to fit in with the Candid Startup theme. The initial idea was to restyle the whole thing to match exactly. However, it's really difficult to execute given the differences in document structure. To make it even harder, TypeDoc supports a dynamic choice of dark or light theme which is impossible to accommodate without a complete rebuild of the blog theme.
+Next, I added `custom.css` to adjust the documentation's styling to fit in with the Candid Startup theme. The initial idea was to restyle the whole thing to match exactly. However, it's really difficult to execute given the differences in document structure. To make it even harder, TypeDoc supports a dynamic choice of dark or light theme which is impossible to accommodate without a complete rebuild of the blog theme.
 
 In the end I made minimal changes. The only global change is to use the same font as the rest of the site. Beyond that, I focused on styling of the top menu bar. The idea is to do just enough so that the documentation feels part of the same navigation structure, while reinforcing that this is a separate area with different rules.
 
@@ -191,7 +191,7 @@ added 1 package, and audited 1030 packages in 1s
 
 The [coverage plugin](https://github.com/Gerrit0/typedoc-plugin-coverage) generates a badge that reports the percentage of your API's surface area that's documented. It's functional but has a couple of rough edges. 
 
-It's annoying that referencing the badge triggers a TypeDoc warning when building because the badge is copied into the output directory by the plugin *after* links are validated. 
+It's annoying that referencing the badge in my documentation home page triggers a TypeDoc warning when building. The badge is copied into the output directory by the plugin *after* links are validated. 
 
 ```
 ./typedoc-assets/root.md:1:27 - [warning] The relative path ./coverage.svg is not a file and will not be copied to the output directory
@@ -208,22 +208,26 @@ The badge doesn't resize so I can't use "Docs Coverage" or similar as a label. S
 
 You've got to love the ability of a badge to drive behavior. The initial badge showed coverage at 52%. So naturally I immediately had to get to 100%.
 
+{% capture note-content %}
 Top tip. You can use `typedoc --logLevel Verbose | grep "not considered"` to list all API items that are considered undocumented. Knock out some documentation, rinse and repeat. 
+{% endcapture %}
+{% include candid-note.html content=note-content %}
 
-# Adding Projects to the Organizational Structure
+# Adding Documentation to the Blog Org Structure
 
-* Initial idea was to add "Projects" as a new top level concept. Then create an "Infinisheet" project page which I can use as a landing page to link to GitHub, Documentation, etc.
-* Would be nice to include a list of a few key blogs related to the project
-* Which meant I needed some way of tagging the blogs by project
-* At which point I realized that I was reinventing "Topics" for the subset of topics that relate to a project
-* Decided to start by adding an "InfiniSheet" topic and adding whatever I needed to make it into a landing page
-* Tried a few ways of doing it but nothing seemed quite right. Including links in the topic description is too wordy. Hard to pick the links out and hard to understand the navigation structure. 
-* Tried adding a special section with a table of links. Looked too contrived.
-* Then I realized. I have a dedicated area for navigation controls in the page header that topics don't use. 
+My first thought was to add "Projects" as a new top level concept. Then create an "Infinisheet" project page which I can use as a landing page to link to GitHub, Documentation, etc. It would be nice to include a list of a few key blogs related to the project. Which means I need a way of tagging blogs by project.
+
+At this point I realized that I was reinventing "Topics" for the subset of topics that relate to a project. I decided to start by adding an "InfiniSheet" topic and creating whatever content I needed to turn it into a landing page.
+
+I tried a few ways of doing it but nothing seemed quite right. Including links in the topic description is too wordy. It's hard to pick the links out and hard to understand the navigation structure.
+
+Then I tried adding a special section with a table of links. That looked too contrived.
+
+Finally, it dawned on me. I have a dedicated area for navigation controls in the page header that topics don't use. 
 
 # Topic Navigation
 
-* Fortunately, I've structured the blog to make it easy to add custom navigation controls. Each type of page has a layout. You can add custom front matter that specifies additional content to include in the page header. This is used by the "post" layout to include previous and next post buttons, together with buttons for each topic the post was tagged with.
+Fortunately, I've structured the blog to make it easy to add custom navigation controls. Each type of page has a layout. You can add custom front matter that specifies additional content to include in the page header. This is used by the "post" layout to include previous and next post buttons, together with buttons for each topic the post was tagged with.
 
 I updated the "topic" layout to pull in its own custom navigation controls. 
 
@@ -253,7 +257,8 @@ The navigation controls use custom front matter in each topic to add buttons for
 {% if page.docs %}
   <a class="candid-header-link candid-header-external" href="{{ page.docs | absolute_url }}">Documentation</a>
 {% endif %}
-{% for tag in page.also %}
+{% assign tags = page.also | split: " " %}
+{% for tag in tags %}
   {% assign topic-page = site.topics | where: "topic", tag | first %}
   {% if topic-page %}
     <a class="candid-header-link" href="{{ topic-page.url | absolute_url }}" title="{{ topic-page.title }}">{{ topic-page.title | escape }}</a>
@@ -275,11 +280,11 @@ tagline: All about the "infinisheet" monorepo
 up: spreadsheets
 github: https://github.com/TheCandidStartup/infinisheet
 docs: /infinisheet
-also: [react-virtual-scroll]
+also: react-virtual-scroll
 ---
 ```
 
-And here's what the resulting page header looks like
+And here's what the resulting page header looks like.
 
 {% include candid-image.html src="/assets/images/infinisheet/infinisheet-topic.png" alt="InfiniSheet topic navgiation" %}
 
@@ -287,10 +292,12 @@ And here's what the resulting page header looks like
 
 I still want to have a dedicated "Projects" page to make it easy to find the topics that correspond to actual projects. That turned out to be easy to do. I copied the "Topics" page and filtered the list of topics to include just those with links to GitHub, NPM or Documentation. I also added clickable badges for each of those links in the same way I do for blog posts. 
 
-I made a little more room in the menu by retiring the [Now]({% link now.md %}) page. Now was a standard page included with the [Cayman blog theme](https://github.com/lorepirri/cayman-blog). I never made much use of it. I post a blog every week, so you're not left wondering what I'm up to. 
+I made a little more room in the menu by retiring the [Now]({% link now.md %}) page. *Now* was a standard page included with the [Cayman blog theme](https://github.com/lorepirri/cayman-blog). I never made much use of it. I post a blog every week, so you're not left wondering what I'm up to. 
 
 {% include candid-image.html src="/assets/images/infinisheet/blog-projects.png" alt="Projects List" %}
 
 # Conclusion
 
-I'm happy with the way it's turned out. 
+That all went pretty smoothly. It was fun to hack on the blog again. Every time I do it, I'm surprised by how easy it is to work with. 
+
+I'm happy with the way it's turned out. I particularly like the way the Projects page has its own character, even though it's automatically generated from topic metadata.
