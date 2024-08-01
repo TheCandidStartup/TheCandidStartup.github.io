@@ -3,7 +3,7 @@ layout: topic
 title: Spreadsheets
 topic: spreadsheets
 tagline: Building a better spreadsheet
-also: [infinisheet]
+also: infinisheet
 ---
 
 My journey building a cloud based, open source, serverless, customer deployed, scalable spreadsheet. 

@@ -13,7 +13,8 @@
 {% if page.docs %}
   <a class="candid-header-link candid-header-external" href="{{ page.docs | absolute_url }}">Documentation</a>
 {% endif %}
-{% for tag in page.also %}
+{% assign tags = page.also | split: " " %}
+{% for tag in tags %}
   {% assign topic-page = site.topics | where: "topic", tag | first %}
   {% if topic-page %}
     <a class="candid-header-link" href="{{ topic-page.url | absolute_url }}" title="{{ topic-page.title }}">{{ topic-page.title | escape }}</a>
