@@ -4,7 +4,7 @@ tags: blog infinisheet
 thumbnail: /assets/images/infinisheet/blog-projects.png
 ---
 
-[Last time]({% link _drafts/bootstrapping-typedoc.md %}) we got good results when we tried out [TypeDoc](https://typedoc.org/) for API reference documentation generation. I left you with a cliff hanger. How do we integrate TypeDoc into my [GitHub Pages](https://pages.github.com/) based publishing pipeline? And how should we surface API documentation on the blog focused [Candid Startup]({{ '/' | absolute_url }}) site?
+[Last time]({% link _posts/2024-08-05-bootstrapping-typedoc.md %}) we got good results when we tried out [TypeDoc](https://typedoc.org/) for API reference documentation generation. I left you with a cliff hanger. How do we integrate TypeDoc into my [GitHub Pages](https://pages.github.com/) based publishing pipeline? And how should we surface API documentation on the blog focused [Candid Startup]({{ '/' | absolute_url }}) site?
 
 # Publishing
 
