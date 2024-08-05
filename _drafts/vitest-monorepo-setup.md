@@ -3,20 +3,90 @@ title: Vitest Monorepo Setup
 tags: frontend
 ---
 
-wise words
-
-* Have a stub react-spreadsheet package and a spreadsheet sample in react-virtual-scroll. Let's combine the two to start off a real react-spreadsheet package.
-* Before I could get started I noticed a new warning from VS Code
+I was about to get started turning my stub `react-spreadsheet` package into a real one, when I noticed a new Vitest related warning from VS Code. 
 
 {% include candid-image.html src="/assets/images/react-spreadsheet/vitest-workspace-warning.png" alt="Vitest Workspace Warning" %}
 
-* Which reminded me that I haven't done anything to better structure my `vite.config.ts` file for a monorepo. I have an independent config for each app and package with no attempt to share common settings.
-* App and package configs are very different. So far, I only have one app so lets focus on package configs for now.
-* Most of the package config consists of vitest settings so would be great if I can hoist them to the workspace level.
-* vitest supports an explicit workspace level config for monorepo setups
-* As far as I can tell from vite documentation and the wisdom of the internet, vite doesn't have any equivalent
-* Concentrate on sharing the vitest settings as the rest of the config file is pretty much a stub anyway
-* Simplest workspace file just tells vitest where to look for each project
+# Vite Config Files
+
+Which reminded me that I haven't done anything to better structure my `vite.config.ts` file for a monorepo. Vitest is built on Vite and conveniently uses the same config file. I currently have an independent config for each app and package with no attempt to share common settings.
+
+App and package configs are very different. My `virtual-scroll-samples` app config is mainly concerned with producing a production build of the app. There are no Vitest settings.
+
+```ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
+import tsconfigPaths from 'vite-tsconfig-paths'
+import sourcemaps from '@gordonmleigh/rollup-plugin-sourcemaps'
+import { resolve } from 'path'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    tsconfigPaths()
+  ],
+  build: {
+    sourcemap: true,
+    rollupOptions:  {
+      plugins: [sourcemaps()],
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        "list-and-grid": resolve(__dirname, 'samples/list-and-grid/index.html'),
+        "trillion-row-list": resolve(__dirname, 'samples/trillion-row-list/index.html'),
+        "trillion-square-grid": resolve(__dirname, 'samples/trillion-square-grid/index.html'),
+        "horizontal-list": resolve(__dirname, 'samples/horizontal-list/index.html'),
+        "paging-functional-test": resolve(__dirname, 'samples/paging-functional-test/index.html'),
+        "spreadsheet": resolve(__dirname, 'samples/spreadsheet/index.html'),
+        "padding": resolve(__dirname, 'samples/padding/index.html'),
+      },
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
+})
+```
+
+In contrast, my `react-virtual-scroll` package config is mostly made up of Vitest settings.
+
+```ts
+import { defineConfig } from 'vite'
+import { configDefaults } from 'vitest/config'
+import react from '@vitejs/plugin-react-swc'
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true,
+    includeSource: ['src/**/*.{js,ts}'], 
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+    coverage: {
+      provider: 'istanbul',
+      include: ['src/**'],
+      exclude: ['src/test/**'],
+    },
+    fakeTimers: {
+      toFake: [...(configDefaults.fakeTimers.toFake ?? []), 'performance'],
+    },
+  },
+  define: { 
+    'import.meta.vitest': 'undefined', 
+  },
+})
+```
+
+I copied the `react-virtual-scroll` config when I created the `react-spreadsheet` stub package. It would be great if I can hoist all the common settings up to the workspace level. Searching for [Vitest Workspace](https://vitest.dev/guide/workspace.html) takes me straight to the documentation. 
+
+Vitest supports an explicit workspace level config for monorepo setups. As far as I can tell, there's [no equivalent](https://vitejs.dev/guide/features.html) for Vite. I'm going to concentrate on sharing the Vitest settings as the rest of the config file is pretty much a stub anyway.
+
+# Workspace Config
+
+You enable Vitest's workspace mode by creating a `vite.workspace.ts` file in your workspace's root directory. The simplest workspace config just tells Vitest where to look for each project.
 
 ```ts
 import { defineWorkspace } from 'vitest/config'
@@ -26,12 +96,20 @@ export default defineWorkspace([
 ])
 ```
 
-* I assumed that you could put common config into the workspace file and then run vitest per package as normal
-* Wrong. If you run vitest in the package dir it runs as normal, ignoring the workspace file.
-* The workspace file is only used if you run vitest at the root. It then checks each package directory for a vite or vitest config file, loads the tests and executes them.
-* You can put config into the workspace file but it behaves just like a per-package config. This isn't shared config, just an alternative place to define test projects. Not sure why you'd want to do this. Seems less maintainable to me. 
-* Coverage is a special case. The documentation explains that some settings, like coverage, apply globally at the workspace level. Fine, I'll move those settings into the workspace file. Wrong again. The configs in the workspace file are per-package config, not workspace level config! You have to put your coverage options into a separate `vitest.config.ts` file in the root directory. This isn't documented but is covered in a [Q&A discussion](https://github.com/vitest-dev/vitest/discussions/3852).
-* Annoyingly, coverage at the workspace level ignores the definition of packages in the workspace file. You have to explicitly specify what to include.
+I assumed that you could put common config into the workspace file and then run Vitest per package as normal. I was wrong on both counts.
+
+If you run Vitest in the package directory it runs as before, ignoring the workspace file. The workspace file is only used if you run Vitest in the root directory. It then checks each package directory for a Vite or Vitest config file, loads all the tests and executes them together.
+
+You can put config into the workspace file but it behaves just like a per-package config file. This isn't shared config, just an alternative place to define test projects. I'm not sure why you'd want to do this. It's much easier to maintain package specific settings in a dedicated file in each package directory.
+
+# Global Settings
+
+It gets more confusing. The documentation explains that some settings, [like coverage](https://vitest.dev/guide/workspace.html#coverage), apply globally at the workspace level. Fine, I'll move those settings into the workspace file. 
+
+Wrong again. The configs in the workspace file are per-package config, not workspace level config! You have to put your coverage options into a separate `vitest.config.ts` file in the root directory. This isn't documented but is covered in a [Q&A discussion](https://github.com/vitest-dev/vitest/discussions/3852).
+
+
+Annoyingly, coverage at the workspace level ignores the definition of packages in the workspace file. You have to explicitly specify what to include.
 
 ```ts
 export default defineConfig({
@@ -45,10 +123,21 @@ export default defineConfig({
 })
 ```
 
-* At this point I've done enough to fix the VS Code warning. The vitest plugin uses the workspaces file to load tests from all packages. I can run all the tests, run tests for a selected package or individually. Seems to work fine.
-* I can also run coverage for the entire workspace in one go. Will need some real packages to see whether this is quicker than running coverage for each package as I do now. Both ways work, so that's nice. 
-* The workspace documentation has a separate section on sharing config. You need to put your shared config in a separate file and then import and use the `mergeConfig` utility to combine with per-package config. Interestingly, this seems to be generic. It should work with vite config too.
-* I was expecting another misunderstanding on my part, but it worked as expected. I was able to move almost everything into a shared vitest.config.ts
+# Taking Stock
+
+At this point I've done enough to fix the VS Code warning. The Vitest plugin uses the workspace file to load tests from all packages. I can run all the tests, run tests for a selected package or individually. Seems to work fine.
+
+{% include candid-image.html src="/assets/images/vscode/vitest-testing-palette.png" alt="Vitest in VS Code Testing Palette" %}
+
+I can also run coverage for the entire workspace in one go. I'll need multiple real packages to see whether this is quicker than running coverage for each package as I do now. Both ways work, so that's nice. 
+
+{% include candid-image.html src="/assets/images/vscode/vitest-workspace-coverage.png" alt="Vitest Workspace Coverage" %}
+
+# Shared Config
+
+The workspace documentation has a separate section on [sharing config](https://vitest.dev/guide/workspace.html#configuration). You need to put your shared config in a separate file and then import and use the `mergeConfig` utility to combine with your per-package config. Interestingly, `mergeConfig` seems to be generic. It appears to work with Vite settings too.
+
+I was expecting another misunderstanding on my part, but it worked as expected. I was able to move almost everything into a shared `vitest.config.ts`. I've left the old coverage settings in place so that I can still run per package coverage.
 
 ```ts
 import { defineConfig } from 'vite'
@@ -75,7 +164,7 @@ export default defineConfig({
 })
 ```
 
-I could then pull it into a per-package stub. I left the React plugin in my per package config as I'll have a mix of React and vanilla TypeScript packages. If needed, I can have a whole cascade of common configs for different scenarios.
+I could then pull the shared config into a per-package stub. I left the React plugin in my per package config as I'll have a mix of React and vanilla TypeScript packages. If needed, I can have a whole cascade of common configs for different scenarios.
 
 ```ts
 import { defineConfig } from 'vite'
@@ -90,3 +179,7 @@ export default mergeConfig(
   })
 )
 ```
+
+# Conclusion
+
+That was more confusing than it needed to be, but I seem to have ended up in a reasonable place. The VS Code warning has gone, I have a system for managing shared Vite and Vitest settings, and I have the option of running unit tests and coverage either per package or for the entire workspace at once.
