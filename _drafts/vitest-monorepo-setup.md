@@ -1,6 +1,6 @@
 ---
-title: Introducing React Spreadsheet
-tags: react-spreadsheet frontend
+title: Vitest Monorepo Setup
+tags: frontend
 ---
 
 wise words
