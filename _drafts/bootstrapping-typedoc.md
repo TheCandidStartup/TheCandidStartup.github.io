@@ -73,7 +73,7 @@ Looking good. All my TSDoc comments are there. Everything is nicely cross-linked
 
 # Monorepo Setup
 
-TypeDoc has dedicated support for monorepos. You can configure it to generation documentation for each package and merge the results into a combined set of documentation. 
+TypeDoc has dedicated support for monorepos. You can configure it to generate documentation for each package and merge the results into a combined set of documentation. 
 
 I created a top level `typedoc.jsonc` configuration file. 
 
@@ -137,7 +137,9 @@ There's a `name` config option to set the name explicitly rather than let TypeDo
 }
 ```
 
-Makes no difference. My monorepo is unusual in that so far it consists of a single package. Maybe there's a TypeDoc bug when "merging" documentation for a single package. Let's test that theory by creating a stub for a second package. I'm going to need a `react-spreadsheet` package [soon]({% link _posts/2024-07-29-infinisheet-architecture.md %}), so let's create that.
+Makes no difference. 
+
+My monorepo is unusual in that so far it consists of a single package. Maybe there's a TypeDoc bug when "merging" documentation for a single package. Let's test that theory by creating a stub for a second package. I'm going to need a `react-spreadsheet` package [soon]({% link _posts/2024-07-29-infinisheet-architecture.md %}), so let's create that.
 
 {% capture note %}
 Reminder to self. Make sure you initialize the new workspace using `npm init -w packages/react-spreadsheet` rather than just creating a new directory and copying a few files in. If you don't, your Build CI workflow will fail because `package-lock.json` is missing entries for the new package. 
@@ -155,6 +157,8 @@ Interestingly, the package page concatenates the `@packageDocumentation` TSDoc c
 # Cross-Package Links
 
 Now that I have two packages, I can test cross-package links. Links between packages use [TSDoc declaration references](https://tsdoc.org/pages/spec/overview/). Thankfully, TypeDoc has an understandable [description of the syntax](https://typedoc.org/guides/declaration-references/). 
+
+Here's my test case.
 
 ```ts
 /**
