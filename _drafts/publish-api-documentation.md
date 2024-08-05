@@ -89,17 +89,21 @@ Request ID 2BC1:22C3E:4BBB537:8CCB6B2:66910182
 Ensure GitHub Pages has been enabled: https://github.com/TheCandidStartup/infinisheet/settings/pages
 ```
 
-I'm so glad there was a meaningful error message at the end of all that. Doh. Remember to enable GitHub Pages before trying to deploy to it. Pick "GitHub Actions" as the source.
+I'm so glad there was a meaningful error message at the end of all that. Doh. 
 
-{% include candid-image.html src="/assets/images/github/pages-action-source.png" alt="GitHub Pages Settings configured to use GitHub Actions" %}
+Remember to enable GitHub Pages before trying to deploy to it. Pick "GitHub Actions" as the source.
+
+{% include candid-image.html src="/assets/images/github/pages-initial-action-source.png" alt="GitHub Pages Settings configured to use GitHub Actions" %}
 
 When you first enable "GitHub Actions" as the source you will be encouraged to configure a workflow from a template. Ignore this if, like me, you've already created your own workflow. There's no extra step needed to connect GitHub pages to a specific workflow. Once enabled, any workflow can publish. Once a workflow has published, the UI changes to show the details seen here.
+
+{% include candid-image.html src="/assets/images/github/pages-action-source.png" alt="GitHub Pages Settings after first GitHub Actions deploy" %}
 
 When you have a pages site at the organization level with a custom domain, any project sites automatically use the same custom domain. Which is how I ended up with the documentation published to [https://thecandidstartup.org/infinisheet](https://thecandidstartup.org/infinisheet). This all seems to be hardcoded so I'll need to be careful to make sure my repo names don't conflict with content on the blog.
 
 # Adjusting TypeDoc Generated Content
 
-I replaced the default use of the repo `README.md` with a dedicated `typedoc-assets/root.md` file. That lets me fix broken links caused by GitHub specific links in the README. It also means I can tailor the content for a reference documentation home page for a monorepo.
+I replaced the default use of the repo `README.md` with a dedicated `typedoc-assets/root.md` file. That lets me fix broken links caused by GitHub specific links in the README. It also means I can tailor the content for a reference documentation home page.
 
 Next, I added `custom.css` to adjust the documentation's styling to fit in with the Candid Startup theme. The initial idea was to restyle the whole thing to match exactly. However, it's really difficult to execute given the differences in document structure. To make it even harder, TypeDoc supports a dynamic choice of dark or light theme which is impossible to accommodate without a complete rebuild of the blog theme.
 
@@ -217,7 +221,7 @@ Top tip. You can use `typedoc --logLevel Verbose | grep "not considered"` to lis
 
 My first thought was to add "Projects" as a new top level concept. Then create an "Infinisheet" project page which I can use as a landing page to link to GitHub, Documentation, etc. It would be nice to include a list of a few key blogs related to the project. Which means I need a way of tagging blogs by project.
 
-At this point I realized that I was reinventing "Topics" for the subset of topics that relate to a project. I decided to start by adding an "InfiniSheet" topic and creating whatever content I needed to turn it into a landing page.
+At this point I realized that I was reinventing "Topics" for the subset of topics that relate to a project. Instead, I decided to start by adding an "InfiniSheet" topic and creating whatever content I needed to turn it into a landing page.
 
 I tried a few ways of doing it but nothing seemed quite right. Including links in the topic description is too wordy. It's hard to pick the links out and hard to understand the navigation structure.
 
