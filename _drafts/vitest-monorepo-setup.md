@@ -133,7 +133,27 @@ I can also run coverage for the entire workspace in one go. I'll need multiple r
 
 {% include candid-image.html src="/assets/images/vscode/vitest-workspace-coverage.png" alt="Vitest Workspace Coverage" %}
 
-# Shared Config
+# Shared Testing Code
+
+My existing `react-virtual-scroll` package has three files of common testing code in `src/test`.
+* `setup.ts`: a Vitest setup file that automatically makes Jest DOM assertions available for use in each test
+* `wrapper.tsx`: a wrapper around `@testing-library/react` that I copied from an official Vitest example
+* `utils.ts`: my own set of utility functions
+
+Moving them out from under `react-virtual-scroll/src` means updating all the `import` statements that reference them *and* updating the TypeScript `tsconfig.json` to include them in the set of files processed by the compiler. 
+
+My first thought was to add them to my root `tsconfig.json` which the per-package `tsconfig.json` extends. Unfortunately, that doesn't work because any property in the per-package config overrides that in the root, [even if it's an array property](https://miyoon.medium.com/array-parameters-in-tsconfig-json-are-always-overwritten-11c80bb514e1). Arrays aren't merged.
+
+I had to add `test` to the include array in each per-package stub config.
+
+```
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src", "../../shared/test"]
+}
+```
+
+# Shared Vite Config
 
 The workspace documentation has a separate section on [sharing config](https://vitest.dev/guide/workspace.html#configuration). You need to put your shared config in a separate file and then import and use the `mergeConfig` utility to combine with your per-package config. Interestingly, `mergeConfig` seems to be generic. It appears to work with Vite settings too.
 
@@ -148,7 +168,7 @@ export default defineConfig({
     globals: true,
     includeSource: ['src/**/*.{js,ts}'], 
     environment: 'jsdom',
-    setupFiles: '../../shared/vitest-setup.jsdom.ts',
+    setupFiles: '../../shared/test/setup-jsdom.ts',
     coverage: {
       provider: 'istanbul',
       include: ['src/**'],
