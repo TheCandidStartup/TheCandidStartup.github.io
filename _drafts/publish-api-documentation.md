@@ -89,9 +89,9 @@ Request ID 2BC1:22C3E:4BBB537:8CCB6B2:66910182
 Ensure GitHub Pages has been enabled: https://github.com/TheCandidStartup/infinisheet/settings/pages
 ```
 
-I'm so glad there was a meaningful error message at the end of all that. Doh. 
+I'm so glad there was a meaningful error message at the end of all that. 
 
-Remember to enable GitHub Pages before trying to deploy to it. Pick "GitHub Actions" as the source.
+Doh. Remember to enable GitHub Pages before trying to deploy to it. Pick "GitHub Actions" as the source.
 
 {% include candid-image.html src="/assets/images/github/pages-initial-action-source.png" alt="GitHub Pages Settings configured to use GitHub Actions" %}
 
@@ -109,7 +109,7 @@ Next, I added `custom.css` to adjust the documentation's styling to fit in with 
 
 In the end I made minimal changes. The only global change is to use the same font as the rest of the site. Beyond that, I focused on styling of the top menu bar. The idea is to do just enough so that the documentation feels part of the same navigation structure, while reinforcing that this is a separate area with different rules.
 
-Even though I *know* that Posts, Topics, etc. links are the same as on the blog, it doesn't feel that way. I made the documentation menu bar the same size and used the same text and background color. I could only match the background color for the light theme. Fortunately, text in Candid Startup green works with the dark theme too.
+Even though I *know* that Posts, Topics, etc. links are the same as on the blog, it didn't feel that way. I made the documentation menu bar the same size and used the same text and background color. I could only match the background color for the light theme. Fortunately, text in Candid Startup green works with the dark theme too.
 
 {% include candid-image.html src="/assets/images/infinisheet/candid-style-docs-header.png" alt="Candid Startup style documentation header" %}
 
