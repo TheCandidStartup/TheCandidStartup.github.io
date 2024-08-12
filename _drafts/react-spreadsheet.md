@@ -6,21 +6,6 @@ tags: react-spreadsheet
 wise words
 
 * Have a stub react-spreadsheet package and a spreadsheet sample in react-virtual-scroll. Let's combine the two to start off a real react-spreadsheet package.
-* Need to think about CSS. More complex than simple `react-virtual-scroll` components with more hard lifting done by CSS.
-* For `react-virtual-scroll` just copied what `react-window` did.
-* Time for some research into best practices.
-
-# CSS Modules
-
-* All CSS entities exist within the same global scope. Makes it hard for components to have their own local stylesheets
-* https://github.com/css-modules/css-modules
-* Convention for declaring module specific CSS which is then compiled and bundled
-* Compilation process renames module scope stylenames to include a hash that makes them unique
-* More tooling to setup
-* Vite supports CSS modules but there seem to be a lot of issues with [ongoing work](https://github.com/vitejs/vite/pull/16018) to rebuild the implementation
-* Seems to be a general theme with CSS module implementations of problems caused by CSS fragments being [included in the wrong order](https://github.com/vitejs/vite/pull/16018)
-* The imminent release of React 19 includes a [new feature](https://react.dev/blog/2024/04/25/react-19#support-for-stylesheets) aimed at stylesheet management for components
-* Landscape is complex and in flux. Also over the top for my needs
 
 # Minimal Styling
 
