@@ -44,8 +44,11 @@ From [MDN CSS Documentation](https://developer.mozilla.org/en-US/docs/Web/CSS/Sp
 * Use of layers (explicit or by convention)
 * Works for building a site but how do you enforce your conventions on third party components?
 
+# Atomic CSS
+
 # CSS Modules
 
+* 2015
 * All CSS entities exist within the same global scope. Makes it hard for components to have their own local stylesheets
 * https://github.com/css-modules/css-modules
 * Convention for declaring module specific CSS which is then compiled and bundled
@@ -64,10 +67,22 @@ From [MDN CSS Documentation](https://developer.mozilla.org/en-US/docs/Web/CSS/Sp
 * Still relies on convention of writing class name based selectors
 * Hard to do BEM style mixins or any other way of overriding style in app level CSS file. Class names are dynamically generated. Most [common solution](https://github.com/react-toolbox/react-toolbox?tab=readme-ov-file#customizing-components) is to apply your own class name to the component rather than the one that the CSS module wants you to use. Or apply both the CSS module class name and your own override class name. Of course you have to make sure that your override rules have the same or higher specificity than the module ones ...
 
-# My Approach
+# CSS in JS
+
+# React 19
+
+# Principles
 
 * First rule of components - don't mess with global state. Apps owns global state, it makes decisions.
-* Want app to be free to decide how it manages stylesheets
+* MUST Want app to be free to decide how it manages stylesheets
+* MUST Nothing placed in global scope unless app opts in
+* SHOULD provide default styling so component is useful out of the box
+* SHOULD allow individual props in default style to be overridden
+* SHOULD allow default style to be removed or replaced completely
+
+# My Approach
+
 * Define a theme prop which consumer can use to pass in mapping which assigns list of class names to each element in component
 * Demo app has stylesheet which you can copy and reuse if you want
-* Use CSS module to include in app for optional use??
+* Include CSS in package for optional use??
+* Can you provide CSS in such a way that you can import it in boring old global way or by wrapping it in a CSS module?
