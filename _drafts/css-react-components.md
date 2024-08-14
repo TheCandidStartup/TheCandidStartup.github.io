@@ -13,24 +13,62 @@ Styling for a component that provides a complete spreadsheet frontend will be mo
 
 # Inline Styles
 
+The simplest approach would be to use inline styles for everything. Then I, as component author, have complete control over styling my component without any risk of those styles interfering with other components or the rest of the app. 
+
+Unfortunately, there are many downsides. Inline styles have higher precedence than any normal stylesheet rules. That makes it difficult for the component's consumer to adjust the styling to their needs.
+
+The component author ends up with verbose, cluttered JSX which makes it harder to understand and maintain. Styles are tied to individual elements making it hard to share common styles across a family of components. 
+
+Finally, extensive use of inline styles tends to lead to lower performance, particularly in React apps. The entire style has to go through the React rendering and reconciliation process. This is particularly wasteful for static styles that the browser could otherwise pre-process and cache.
+
+A good rule of thumb is to only use inline styles for structural properties that are dynamically updated, usually in response to React props changing.
+
 # Cascading Style Sheets
 
-https://developer.mozilla.org/en-US/docs/Web/CSS/Cascade
+{% include candid-image.html src="/assets/images/frontend/css3-logo.png" alt="CSS 3 Logo" attrib="Creative Commons, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/deed.en), via Wikimedia Commons" %}
 
-* Layers
-* Scope
-* Inline vs CSS
+If I'm going to be writing CSS I should start by understanding more about it. Of course I know the basics. CSS lets you write rules that apply styles to HTML. Styles are defined using sets of property:value pairs. Each rule starts with a *selector* which via some weird and mysterious syntax somehow decides which HTML elements the rule's properties will be applied to. 
+
+I have a vague understanding of how selectors work, gleaned from copy/paste/hack of existing stylesheets. Time to get more scientific.
+
+# Cascade
+
+Let's start with the [cascade](https://developer.mozilla.org/en-US/docs/Web/CSS/Cascade). Style Sheet seems clear enough, but what is "Cascading" all about?
+
+The cascade decides which property value the browser will apply to an HTML element if it's targeted by more than one rule. The first step is to order the rules based on origin. 
+
+Rules from style sheets are lower priority than inline styles. Properties tagged with `!important` are higher priority than anything else. Rules can optionally be imported into named *layers*. Layers have a priority defined by the order in which they were declared.
+
+| Order (low to high) | Origin | Importance |
+|---------------------|--------|------------|
+| 1 | First layer | normal |
+| 2 | Second layer | normal |
+| 3 | Last layer | normal |
+| 4 | All unlayered styes | normal |
+| 5 | Inline styles | normal |
+| 6 | All unlayered styles | `!important` |
+| 7 | Last layer | `!important` |
+| 8 | Second layer | `!important` |
+| 9 | First layer | `!important` |
+| 10 | Inline style | `!important` |
+
+Just to make things more fun, the layer order is reversed when tagged with `!important`. There's a new `@scope` feature in CSS which adds an additional level of complexity. I'm going to ignore it for now as it's not yet been universally adopted. 
 
 # Specificity
 
-From [MDN CSS Documentation](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity#the_where_exception).
+What happens if you have multiple rules from the same origin targeting an element? The next step is to rank the rules by [specificity](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity). A rule that targets an id is higher priority than one that targets a class name which is higher priority than one that targets a type of HTML element. 
+
+Selectors can be arbitrarily complex, using expressions that involve multiple ids, class names and types. To determine the overall specificity you need to count the number of selector components in each [category](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity#selector_weight_categories) resulting in a three-column value in the form ID-CLASS-TYPE. For, example a simple selector like `.myClass` has a specificity of 0-1-0. You compare specificities by comparing column values from left to right. For example, 1-0-0 has higher priority than 0-2-3 which has a higher priority than 0-2-0. 
+
+There are lots of [exceptions](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity#the_is_not_has_and_css_nesting_exceptions) and [special cases](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity#the_where_exception) on top of the basic rules. As you can imagine, it's easy to end up in a mess where you want to override a style but the most natural selector ends up with a specificity that's too low. 
+
+The natural temptation is to make the situation worse by implementing whatever quick fix you can. You might start throwing `!important` around as a one off trump card. Which is fine until everyone starts doing it. Alternatively, you could make your selectors more complex to increase their score. If you ever see `.myClass.myClass.myClass.myClass` as a selector in a stylesheet, you now know why. 
+
+The [`:where` operator](https://developer.mozilla.org/en-US/docs/Web/CSS/:where) allows you to artificially lower the specificity of a selector. Which gives rise to this gem from the [MDN CSS Documentation](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity#the_where_exception).
 
 > It enables making CSS selectors very specific in what element is targeted without any increase to specificity
 
-* Important
-* Duplicate selector in frantic war of overrides
-* Rules directly targeted at elements always take precedence over styles inherited from parents, regardless of specificity 
-* Order of declaration if rules have same specificity
+If after all that, rules have the same specificity, the order of declaration is used to decide. Rules declared later override ones declared earlier. Finally, rules that directly target an element always take priority over properties inherited from a parent, regardless of specificity.  
 
 # CSS Conventions
 
