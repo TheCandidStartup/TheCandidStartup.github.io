@@ -153,24 +153,176 @@ From a consumer's point of view, components that use CSS Modules can be a black 
 
 # CSS in JS
 
+[CSS in JS](https://levelup.gitconnected.com/a-brief-history-of-css-in-js-how-we-got-here-and-where-were-going-ea6261c19f04) addresses the same problems as CSS Modules but takes a radically different approach. The basic idea is simple. Include whatever CSS your component needs directly in your component's JavaScript using the JavaScript [tagged template literal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) feature. A JavaScript utility library can do the heavy lifting of parsing the embedded CSS and using the DOM to dynamically add the CSS to the current document's `head` section. 
+
+The utility library removes the need for CSS Modules custom tooling. It can generate unique class names and trivially return them to JavaScript. No magic needed, just JavaScript. Because it's just JavaScript, it can do much more. CSS-in-JS libraries like [Styled Components](https://styled-components.com/docs/basics) and [Emotion](https://emotion.sh/docs/introduction) directly integrate with React, inject only the CSS needed for the current page, and provide mechanisms for CSS composition, theming and customization. 
+
+Styled Components uses an API that creates React wrapper components with styling attached. 
+
+```tsx
+import React from 'react';
+import styled from 'styled-components'
+
+const Wrapper = styled div`
+  padding: 4em;
+`
+
+const Title = styled h1`
+  font-size: 1.5em;
+  text-align: center;
+`
+
+function Component() {
+  return (
+    <Wrapper>
+      <Title>Hello, world!</Title>
+    </Wrapper>
+  );
+}
+```
+
+The `styled` function passes a `className` prop for the generated CSS to the HTML element or React component that it's wrapping. It can be used with any component that accepts `className`. Emotion supports the same API, as well as allowing elements and components to be styled directly. Both libraries allow CSS to be declared using string literals or [JavaScript objects](https://emotion.sh/docs/object-styles).
+
+```tsx
+import React from 'react';
+import { css } from '@emotion/react'
+
+function Component() {
+  return (
+    <div css={{
+        padding: '4em'
+    }}>
+      <h1 css={{
+        fontSize: '1.5em',
+        textAlign: 'center'
+      }}>Hello, world!</h1>
+    </div>
+  );
+}
+```
+
+As with Atomic CSS, there's an ecosystem around each CSS-in-JS library. Building on Styled Components means that any app using your component needs to add a dependency on Styled Components. In principle you could use a set of components build on different CSS in JS and CSS Modules implementations but in practice you'll keep it simple and pick one ecosystem.
+
+These solutions try to workaround the global nature of CSS but in the end they all end up manipulating global state in the DOM. As we've seen, order of declaration is critical. It's safest to ensure there's only one gatekeeper messing around with you app's CSS.
+
 # React 19
 
-* The imminent release of React 19 includes a [new feature](https://react.dev/blog/2024/04/25/react-19#support-for-stylesheets) aimed at stylesheet management for components
-* Landscape is complex and in flux. Also over the top for my needs
+So far, React itself has steered clear of CSS management. That's about to change with the [imminent release of React 19](https://react.dev/blog/2024/04/25/react-19#support-for-stylesheets). React now supports references to stylesheets from React components, with a precedence system that inserts CSS into the DOM in a deterministic order. 
+
+So far, I haven't seen any reaction to this in the CSS Modules and CSS in JS worlds. The description of the feature suggests that React intends to become the single gatekeeper that manages your app's CSS.
+
+> Style libraries and style integrations with bundlers can also adopt this new capability so even if you don’t directly render your own stylesheets, you can still benefit as your tools are upgraded to use this feature.
+
+# Conclusion
+
+When I started looking at CSS and React Components I assumed there would be a standard approach that everyone used. All I needed to do was find some best practice guidelines to follow. 
+
+Instead, I found a fractured landscape with multiple competing approaches. There's no clear winner. The arrival of React 19 is likely to stir the pot further.
 
 # Principles
 
-* First rule of components - don't mess with global state. Apps owns global state, it makes decisions.
-* MUST Want app to be free to decide how it manages stylesheets
-* MUST Nothing placed in global scope unless app opts in
-* SHOULD provide default styling so component is useful out of the box
-* SHOULD allow individual props in default style to be overridden
-* SHOULD allow default style to be removed or replaced completely
+One of the most important lessons I learnt over the course of my career is that only the app can mess with global state. Global state is, well, global. Individual components, libraries and packages can only modify global state under the control of the app. The app owns global state, it makes the decisions. 
+
+CSS is inherently global, which means the app has to be in charge. Which leads me to the following principles.
+* The app MUST be free to decide how it wants to manage stylesheets.
+* A component MUST NOT place anything in CSS global scope unless the app explicitly opts in
+* A component SHOULD provide default styling so that it's useful out of the box
+* A component SHOULD allow individual props in the default styling to be overridden
+* A component SHOULD allow the default style to be removed or replaced completely
 
 # My Approach
 
-* Define a theme prop which consumer can use to pass in mapping which assigns list of class names to each element in component
-* BEM style mixins
-* Demo app has stylesheet which you can copy and reuse if you want
-* Include CSS in package for optional use??
-* Can you provide CSS in such a way that you can import it in boring old global way or by wrapping it in a CSS module?
+I don't want to tie myself to any particular system for managing CSS. Whatever I pick will narrow down potential adopters to those apps that have made the same choice. Fortunately, I don't have to. 
+
+My components will support a `theme` prop. A `theme` is an object that maps from the component's local class names to whatever class names the app would like to use. I got the idea from looking at [React Toolbox](https://github.com/react-toolbox/react-toolbox?tab=readme-ov-file#customizing-components), an early CSS Modules based toolkit. 
+
+```tsx
+import React from 'react';
+
+function Component(props) {
+  { theme } = props.theme;
+  return (
+    <div className={theme.component}>
+      <h1 className={theme.title}>Hello, world!</h1>
+    </div>
+  );
+}
+```
+
+It doesn't matter whether the app directly manages it's own stylesheet using a CSS convention, relies on Atomic CSS, CSS Modules or CSS in JS. They all depend on the app being able to control the class names used by components. 
+
+```tsx
+// App uses BEM convention
+import Component from 'component';
+
+const theme={
+  component: "component",
+  title: "component__title"
+}
+
+function App() {
+  return (
+    <Component theme={theme}></Component>
+  )
+}
+```
+
+```tsx
+// App uses Atomic CSS
+import Component from 'component';
+
+const theme={
+  component: "p-6 max-w-sm mx-auto bg-white rounded-xl flex items-center space-x-4",
+  title: "text-xl font-medium text-black"
+}
+
+function App() {
+  return (
+    <Component theme={theme}></Component>
+  )
+}
+```
+
+```tsx
+// App uses CSS Modules
+import Component from 'component';
+import theme from './Component.module.css';
+
+function App() {
+  return (
+    <Component theme={theme}></Component>
+  )
+}
+```
+
+```tsx
+// App uses CSS in JS
+import Component from 'component';
+import { css } from '@emotion/css'
+
+const theme={
+  component: css`
+    padding: 4em;
+  `,
+  title: css`
+    font-size: 1.5em;
+    text-align: center;
+  `
+}
+
+function App() {
+  return (
+    <Component theme={theme}></Component>
+  )
+}
+```
+
+My components will also support a `className` prop for simple use cases where the app only needs to apply to a style to the root element of the component. This also makes them compatible with the CSS in JS `styled` API. 
+
+If you provide both `className` and `theme` the class names for the root element will be concatenated. This makes it easy to implement [BEM style mixes](https://en.bem.info/methodology/block-modification/#placing-a-block-inside-another-block) where you want to override component styles depending on the context where the component is used. 
+
+Each component will have a default theme and a matching CSS style sheet using the [BEM](https://getbem.com/) convention. BEM uses a component specific prefix for each class name which reduces the chance of collisions. It's up to the app to decide whether they want to use the default as is, use it and override parts of it or replace it completely. I'm also going to experiment with supplying the default in the form of a `module.css` file. Again, it's entirely up to the app to decide which, if any, of the supplied CSS files it uses. 
+
+# Next Time
+
+Next time, I'll let you know how the grand plan worked out when I try to implement it for `react-spreadsheet`. 
