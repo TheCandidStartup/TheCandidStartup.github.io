@@ -183,6 +183,8 @@ function Component() {
 
 The `styled` function passes a `className` prop for the generated CSS to the HTML element or React component that it's wrapping. It can be used with any component that accepts `className`. Emotion supports the same API, as well as allowing elements and components to be styled directly. Both libraries allow CSS to be declared using string literals or [JavaScript objects](https://emotion.sh/docs/object-styles).
 
+{% raw %}
+
 ```tsx
 import React from 'react';
 import { css } from '@emotion/react'
@@ -200,6 +202,8 @@ function Component() {
   );
 }
 ```
+
+{% endraw %}
 
 As with Atomic CSS, there's an ecosystem around each CSS-in-JS library. Building on Styled Components means that any app using your component needs to add a dependency on Styled Components. In principle you could use a set of components build on different CSS in JS and CSS Modules implementations but in practice you'll keep it simple and pick one ecosystem.
 
