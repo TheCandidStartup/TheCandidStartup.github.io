@@ -80,7 +80,7 @@ export default defineConfig({
 })
 ```
 
-I copied the `react-virtual-scroll` config when I created the `react-spreadsheet` stub package. It would be great if I can hoist all the common settings up to the workspace level. Searching for [Vitest Workspace](https://vitest.dev/guide/workspace.html) takes me straight to the documentation. 
+I copied the `react-virtual-scroll` config when I created the `react-spreadsheet` stub package. It would be great if I can hoist all the common settings up to the workspace level. Searching for "Vitest Workspace" took me straight to the [documentation](https://vitest.dev/guide/workspace.html). 
 
 Vitest supports an explicit workspace level config for monorepo setups. As far as I can tell, there's [no equivalent](https://vitejs.dev/guide/features.html) for Vite. I'm going to concentrate on sharing the Vitest settings as the rest of the config file is pretty much a stub anyway.
 
@@ -98,7 +98,7 @@ export default defineWorkspace([
 
 I assumed that you could put common config into the workspace file and then run Vitest per package as normal. I was wrong on both counts.
 
-If you run Vitest in the package directory it runs as before, ignoring the workspace file. The workspace file is only used if you run Vitest in the root directory. It then checks each package directory for a Vite or Vitest config file, loads all the tests and executes them together.
+If you run Vitest in the package directory it runs as before, ignoring the workspace file. The workspace file is only used if you run Vitest in the root directory. It then checks each package directory for a Vite or Vitest config file, loads all the tests from all the packages and executes them together.
 
 You can put config into the workspace file but it behaves just like a per-package config file. This isn't shared config, just an alternative place to define test projects. I'm not sure why you'd want to do this. It's much easier to maintain package specific settings in a dedicated file in each package directory.
 
@@ -155,7 +155,7 @@ I had to add `test` to the include array in each per-package stub config.
 
 # Shared Vite Config
 
-The workspace documentation has a separate section on [sharing config](https://vitest.dev/guide/workspace.html#configuration). You need to put your shared config in a separate file and then import and use the `mergeConfig` utility to combine with your per-package config. Interestingly, `mergeConfig` seems to be generic. It appears to work with Vite settings too.
+The workspace documentation has a separate section on [sharing config](https://vitest.dev/guide/workspace.html#configuration). You need to put your shared config in a separate file and then import it and use the `mergeConfig` utility to combine with your per-package config. Interestingly, `mergeConfig` seems to be generic. It appears to work with Vite settings too.
 
 I was expecting another misunderstanding on my part, but it worked as expected. I was able to move almost everything into a shared `vitest.config.ts`. I've left the old coverage settings in place so that I can still run per package coverage.
 
