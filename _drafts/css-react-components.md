@@ -72,7 +72,7 @@ If after all that, rules have the same specificity, the order of declaration is 
 
 # CSS Conventions
 
-Everything in CSS lives in the same global scope. That includes layers, class names and rules. CSS conventions like [BEM](https://getbem.com/), [OOCSS](https://en.wikipedia.org/wiki/OOCSS), [SUIT](https://suitcss.github.io/) and [SMACSS](https://smacss.com/) were created to allow multiple developers to operate in the same space while avoiding conflicts. 
+Everything in CSS lives in the same global scope. That includes layers, class names and rules. CSS conventions like [BEM](https://getbem.com/), [OOCSS](https://en.wikipedia.org/wiki/OOCSS), [CUBE](https://cube.fyi/), [SUIT](https://suitcss.github.io/) and [SMACSS](https://smacss.com/) were created to allow multiple developers to operate in the same space while avoiding conflicts. 
 
 Most conventions use the same underlying principles. They impose some structure by separating styles into different sets. The number of sets and their definitions vary from convention to convention but might include
 * Base: Defaults that apply to all elements
