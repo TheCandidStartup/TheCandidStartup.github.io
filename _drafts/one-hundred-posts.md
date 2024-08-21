@@ -71,10 +71,10 @@ I put a little bit of effort in at the end of April, trying to improve the numbe
 
 Let's have a look at which pages Google rates.
 
-| Page | Impressions | Position | Clicks | Top Queries |
+| Page | Impressions | Position | Clicks | Query Keywords |
 |-|-|-|-|
-| [Making sense of British keyboard layouts on the Mac]({% link _posts/2022-10-07-mac-british-keyboards.md %}) | 129996 | 21 | 1282 | "uk keyboard layout", "mac keyboard layout", "british keyboard", "mac uk keyboard", "backslash on uk keyboard" + 1000 more
-| [Vitest Code Coverage]({% link _posts/2024-03-18-vitest-code-coverage.md %}) | 39618 | 9 | 1075 | "vitest coverage", "v8 vs istanbul", "vitest exclude from coverage" + 340 more
+| [Making sense of British keyboard layouts on the Mac]({% link _posts/2022-10-07-mac-british-keyboards.md %}) | 129996 | 21 (**5**) | 1282 | **keyboard**(94%), **mac**(57%), **layout**(53%), **uk**(37%), british(13%), apple(6%), english(3%), backslash(3%), *karabiner*, *hidutil*, *applause*, *autodesk*
+| [Vitest Code Coverage]({% link _posts/2024-03-18-vitest-code-coverage.md %}) | 39618 | 9 (**3**) | 1075 | **vitest**(89%), **coverage**(87%), **v8**(26%), **istanbul**(13%), **vs**(6%), vite(3%)
 | [Navisworks File Formats]({% link _posts/2023-10-30-navisworks-file-formats.md %}) | 15605 | 11 | 140 | "navisworks file formats", "nwd file type", "difference between nwd and nwf", "navisworks jetstream" + 170 more
 | [Bootstrapping Vitest]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) | 8421 | 18 | 96 | "vitest no test files found", "window is not defined vitest", "re-optimizing dependencies because vite config has changed", "vitest jsdom", "vitest globals" + 300 more
 | [A Trip Down The Graphics Pipeline]({% link _posts/2023-03-13-trip-graphics-pipeline.md %}) | 6714 | 22 | 123 | "a trip through the graphics pipeline", "graphics pipeline", "gpu pipeline", "gpu driven rendering", "graphics pipeline stages" + 83 more
@@ -86,6 +86,8 @@ Let's have a look at which pages Google rates.
 | [AWS re:invent 2022]({% link _posts/2022-12-12-aws-reinvent-2022.md %}) | 2097 | 40 | 13 | "reinvent 4k run", "aws event driven architecture", "aws reinvent 2022", "aws replay 2022", + 59 more |
 | [The Candid Startup]({{ '/' | absolute_url }}) | 1826 | 22 | 83 | "candid startup", "thecandid", "the candid" + 41 more
 
+* Data with known query is a subset. For keyboards 80K impressions (342 clicks) have query data out of 130K impressions (1282 clicks) total. Proportion lower for less popular pages. 
+* Average position for "candid startup" query is 2. 
 * Search for "candid startup" in Google Chrome signed into my Google account the top 5 results are me
 * Same search in Chrome Incognito mode and I get the top 2 results
 * All above the "People also ask" box
@@ -95,6 +97,38 @@ Let's have a look at which pages Google rates.
 {% include candid-image.html src="/assets/images/blog-analytics-august-2024/google-search-performance-box.png" alt="When Google spots you're testing searches" %}
 
 Google knows when I'm googling myself
+
+* `(((keyboard|layout)\s*){2})+`
+* `(((uk|british|english|mac|apple|keyboard|layout|hidutil|backslash|karabiner|autodesk|applause)\s*){1})+`
+* uk 186 29.6K 352
+* british 75 10.7K
+* english 10 2.69K
+* mac 306 45.6K 1000+
+* apple 32 5.22K 193
+* keyboard 338 74.9K 1000+
+* layout 250 42.6K 452
+* hidutil 0 46 4
+* backslash 0 2.16K 113
+* karabiner 1 844 84
+* autodesk 0 32 2
+* applause 0 54 7
+
+* **keyboard**(94%), **mac**(57%), **layout**(53%), **uk**(37%), british(13%), apple(6%), english(3%), backslash(3%), *karabiner*, *hidutil*, *applause*, *autodesk*
+
+* vitest 40.3k, 18.1K with query data
+* v8 192 4.7k 39 26%
+* istanbul 174 2.41k 36 13%
+* vitest 198 16.2K 245 89%
+* coverage 239 15.8K 141 87%
+* vs 162 1.02K 20 6%
+* vite 15 524 18 3%
+* **vitest**(89%), **coverage**(87%), **v8**(26%), istanbul(13%), vs(6%), vite(3%)
+
+
+* vitest coverage 8
+* vitest coverage v8 5
+* vitest coverage v8 vs istanbul 3
+
 
 # LinkedIn
 
