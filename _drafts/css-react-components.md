@@ -27,7 +27,7 @@ A good rule of thumb is to only use inline styles for structural properties that
 
 {% include candid-image.html src="/assets/images/frontend/css3-logo.png" alt="CSS 3 Logo" attrib="Creative Commons, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/deed.en), via Wikimedia Commons" %}
 
-If I'm going to be writing CSS I should start by understanding more about it. Of course I know the basics. CSS lets you write rules that apply styles to HTML. Styles are defined using sets of property:value pairs. Each rule starts with a *selector* which via some weird and mysterious syntax somehow decides which HTML elements the rule's properties will be applied to. 
+If I'm going to be writing CSS I should start by understanding more about it. Of course I know the basics. CSS lets you write rules that apply styles to HTML. Styles are defined using sets of `property:value` pairs. Each rule starts with a *selector* which via some weird and mysterious syntax somehow decides which HTML elements the rule's properties will be applied to. 
 
 I have a vague understanding of how selectors work, gleaned from copy/paste/hack of existing stylesheets. Time to get more scientific.
 
@@ -52,7 +52,7 @@ Rules from style sheets are lower priority than inline styles. Properties tagged
 | 9 | First layer | `!important` |
 | 10 | Inline style | `!important` |
 
-Just to make things more fun, the layer order is reversed when tagged with `!important`. There's a new `@scope` feature in CSS which adds an additional level of complexity. I'm going to ignore it for now as it's not yet been universally adopted. 
+Just to make things more fun, the layer order is reversed when tagged with `!important`. There's also a new `@scope` feature in CSS which adds an additional level of complexity. I'm going to ignore it for now as it's not yet been universally adopted. 
 
 # Specificity
 
@@ -74,7 +74,7 @@ If after all that, rules have the same specificity, the order of declaration is 
 
 Everything in CSS lives in the same global scope. That includes layers, class names and rules. CSS conventions like [BEM](https://getbem.com/), [OOCSS](https://en.wikipedia.org/wiki/OOCSS), [CUBE](https://cube.fyi/), [SUIT](https://suitcss.github.io/) and [SMACSS](https://smacss.com/) were created to allow multiple developers to operate in the same space while avoiding conflicts. 
 
-Most conventions use the same underlying principles. They impose some structure by separating styles into different sets. The number of sets and their definitions vary from convention to convention but might include
+Most conventions use the same underlying principles. They impose some structure by separating rules into different sets. The number of sets and their definitions vary from convention to convention but might include
 * Base: Defaults that apply to all elements
 * Page: Defaults that apply to all elements on a specific page
 * Layout: Overall layout including grids, columns and spacing
@@ -88,7 +88,7 @@ As these are simply conventions without any required tooling, they're easy to ad
 
 # Atomic CSS
 
-The conventions we've looked at so far have all been variations on traditional [semantic CSS](https://adamwathan.me/css-utility-classes-and-separation-of-concerns/). You give your HTML elements "meaningful" class names which have nothing to do with styling. Styling is a separate concern that CSS deals with. Your write CSS rules that depend on the structure and class names used in the HTML. The HTML is independent of the styling. You can change style without having to touch the HTML.
+The conventions we've looked at so far have all been variations on traditional [semantic CSS](https://adamwathan.me/css-utility-classes-and-separation-of-concerns/). You give your HTML elements "meaningful" class names which have nothing to do with styling. Styling is a separate concern that CSS deals with. You write CSS rules that depend on the structure and class names used in the HTML. The HTML is independent of the styling. You can change style without having to touch the HTML.
 
 ```html
 <div class="chat-notification">
@@ -102,7 +102,7 @@ The conventions we've looked at so far have all been variations on traditional [
 </div>
 ```
 
-[Atomic CSS](https://css-tricks.com/growing-popularity-atomic-css/), also known as [functional CSS](https://github.com/tachyons-css/tachyons) or [utility CSS](https://tailwindcss.com/docs/utility-first), turns everything on its head. You have a fixed stylesheet that contains a set of immutable atomic rules. You style the HTML by applying the appropriate combination of atom class names. Now, the HTML depends on the CSS, while the CSS is independent of the HTML. 
+[Atomic CSS](https://css-tricks.com/growing-popularity-atomic-css/), also known as [functional CSS](https://github.com/tachyons-css/tachyons) or [utility CSS](https://tailwindcss.com/docs/utility-first), turns everything on its head. You have a fixed stylesheet that contains a set of immutable atomic rules, each targeting a unique class name. You style the HTML by applying the appropriate combination of atom class names. Now, the HTML depends on the CSS, while the CSS is independent of the HTML. 
 
 ```html
 <div class="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4">
@@ -147,7 +147,9 @@ The `import styles` statement returns the ICSS dictionary as a JavaScript object
 
 There are still ways to shoot yourself in the foot. You need to make sure all selectors in your module CSS are class based to avoid leaking effects into the global scope. You still need to use a sensible convention to manage the CSS for each module. 
 
-CSS Modules aren't part of the CSS spec. They're a convention that a lot of tooling has agreed to support. If you use CSS Modules when writing components then you require that your consumers use compatible tooling. Some random googling throws up lots of issues caused by incomplete tooling or slightly different interpretations of the spec. For example, I use Vite. Vite supports CSS modules but there seem to be a lot of issues with [ongoing work](https://github.com/vitejs/vite/pull/16018) to rebuild the implementation. There seems to be a general theme across CSS module implementations of problems caused by CSS fragments being [included in the wrong order](https://github.com/vitejs/vite/pull/16018).
+CSS Modules aren't part of the CSS spec. They're a convention that a lot of tooling has agreed to support. If you use CSS Modules when writing components then you require that your consumers use compatible tooling. Some random googling throws up lots of issues caused by incomplete tooling or slightly different interpretations of the spec. 
+
+For example, I use Vite. Vite supports CSS modules but there seem to be a lot of issues with [ongoing work](https://github.com/vitejs/vite/pull/16018) to rebuild the implementation. There seems to be a general theme across CSS module implementations of problems caused by CSS fragments being [included in the wrong order](https://github.com/vitejs/vite/pull/16018).
 
 From a consumer's point of view, components that use CSS Modules can be a black box when it comes to styling. The built in styles are hard to override. You can't simply add rules to the app's stylesheet because the class names are dynamically generated. The most [common solution](https://github.com/react-toolbox/react-toolbox?tab=readme-ov-file#customizing-components) is to apply your own class name to the component rather than the one that the CSS module wants you to use. Or apply both the CSS module class name and your own override class name. Then you also have to make sure that your override rules have the same or higher specificity than the module's rules.
 
@@ -155,7 +157,7 @@ From a consumer's point of view, components that use CSS Modules can be a black 
 
 [CSS in JS](https://levelup.gitconnected.com/a-brief-history-of-css-in-js-how-we-got-here-and-where-were-going-ea6261c19f04) addresses the same problems as CSS Modules but takes a radically different approach. The basic idea is simple. Include whatever CSS your component needs directly in your component's JavaScript using the JavaScript [tagged template literal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) feature. A JavaScript utility library can do the heavy lifting of parsing the embedded CSS and using the DOM to dynamically add the CSS to the current document's `head` section. 
 
-The utility library removes the need for CSS Modules custom tooling. It can generate unique class names and trivially return them to JavaScript. No magic needed, just JavaScript. Because it's just JavaScript, it can do much more. CSS-in-JS libraries like [Styled Components](https://styled-components.com/docs/basics) and [Emotion](https://emotion.sh/docs/introduction) directly integrate with React, inject only the CSS needed for the current page, and provide mechanisms for CSS composition, theming and customization. 
+The utility library removes the need for CSS Modules' custom tooling. It can generate unique class names and trivially return them to JavaScript. No magic needed, just JavaScript. Because it's just JavaScript, it can do much more. CSS-in-JS libraries like [Styled Components](https://styled-components.com/docs/basics) and [Emotion](https://emotion.sh/docs/introduction) directly integrate with React, inject only the CSS needed for the current page, and provide mechanisms for CSS composition, theming and customization. 
 
 Styled Components uses an API that creates React wrapper components with styling attached. 
 
@@ -205,15 +207,15 @@ function Component() {
 
 {% endraw %}
 
-As with Atomic CSS, there's an ecosystem around each CSS-in-JS library. Building on Styled Components means that any app using your component needs to add a dependency on Styled Components. In principle you could use a set of components build on different CSS in JS and CSS Modules implementations but in practice you'll keep it simple and pick one ecosystem.
+As with Atomic CSS, there's an ecosystem around each CSS-in-JS library. Building on Styled Components means that any app using your component needs to add a dependency on Styled Components. In principle you could use a set of components built on different CSS-in-JS and CSS Modules implementations but in practice you'll keep it simple and pick one ecosystem.
 
-These solutions try to workaround the global nature of CSS but in the end they all end up manipulating global state in the DOM. As we've seen, order of declaration is critical. It's safest to ensure there's only one gatekeeper messing around with you app's CSS.
+These solutions try to work around the global nature of CSS but in the end they all end up manipulating global state in the DOM. As we've seen, order of declaration is critical. It's safest to ensure there's only one gatekeeper messing around with you app's CSS.
 
 # React 19
 
 So far, React itself has steered clear of CSS management. That's about to change with the [imminent release of React 19](https://react.dev/blog/2024/04/25/react-19#support-for-stylesheets). React now supports references to stylesheets from React components, with a precedence system that inserts CSS into the DOM in a deterministic order. 
 
-So far, I haven't seen any reaction to this in the CSS Modules and CSS in JS worlds. The description of the feature suggests that React intends to become the single gatekeeper that manages your app's CSS.
+So far, I haven't seen any reaction to this in the CSS Modules and CSS-in-JS worlds. The description of the feature suggests that React intends to become the single gatekeeper that manages your app's CSS.
 
 > Style libraries and style integrations with bundlers can also adopt this new capability so even if you don’t directly render your own stylesheets, you can still benefit as your tools are upgraded to use this feature.
 
@@ -321,12 +323,12 @@ function App() {
 }
 ```
 
-My components will also support a `className` prop for simple use cases where the app only needs to apply to a style to the root element of the component. This also makes them compatible with the CSS in JS `styled` API. 
+My components will also support a `className` prop for simple use cases where the app only needs to apply a style to the root element of the component. This also makes them compatible with the CSS in JS `styled` API. 
 
-If you provide both `className` and `theme` the class names for the root element will be concatenated. This makes it easy to implement [BEM style mixes](https://en.bem.info/methodology/block-modification/#placing-a-block-inside-another-block) where you want to override component styles depending on the context where the component is used. 
+If you provide both `className` and `theme`, the class names for the root element will be concatenated. This makes it easy to implement [BEM style mixes](https://en.bem.info/methodology/block-modification/#placing-a-block-inside-another-block) where you want to override component styles depending on the context where the component is used. 
 
 Each component will have a default theme and a matching CSS style sheet using the [BEM](https://getbem.com/) convention. BEM uses a component specific prefix for each class name which reduces the chance of collisions. It's up to the app to decide whether they want to use the default as is, use it and override parts of it or replace it completely. I'm also going to experiment with supplying the default in the form of a `module.css` file. Again, it's entirely up to the app to decide which, if any, of the supplied CSS files it uses. 
 
 # Next Time
 
-Next time, I'll let you know how the grand plan worked out when I try to implement it for `react-spreadsheet`. 
+Next time, I'll let you know how the grand plan works out when I try to implement it for `react-spreadsheet`. 
