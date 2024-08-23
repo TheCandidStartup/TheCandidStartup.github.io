@@ -1,5 +1,5 @@
 ---
-title: CSS and React Components
+title: Styling React Components with CSS
 tags: frontend
 ---
 
