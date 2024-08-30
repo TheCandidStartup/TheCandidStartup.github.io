@@ -11,13 +11,15 @@ Clearly I'm slowing down. I fiddle around with open source projects and blog abo
 
 In the early days I was curious about the machinery of running a blog. As I've grown more familiar with it, I've lost interest in seeing which post gets marginally more views than another. I haven't really looked at the analytics since last year. 
 
-I get the occasional email from Google when I hit a new milestone in search performance. Which does give me a little dopamine buzz. Other than that I've been [heads down coding]({% link _topics/react-virtual-scroll.md %}). 
+I get the occasional email from Google when I hit a new milestone in search performance. Which does give me a little dopamine buzz. Other than that, I've been [heads down coding]({% link _topics/react-virtual-scroll.md %}). 
 
 {% include candid-image.html src="/assets/images/blog-analytics-august-2024/google-search-impact.png" alt="Google Search Impact - 700 clicks in 28 days" %}
 
 # Engage
 
-Before we get into the graphs and top ten lists, a quick request from me. If you find my posts via LinkedIn or Twitter: react if you have a reaction, reply if you feel more than one of the pre-packaged emotions. 
+Before we get into the graphs and top ten lists, a quick request from me. If you find my posts via LinkedIn or Twitter: 
+* React, if you have a reaction
+* Reply, if you're feeling more than one of the pre-packaged emotions 
 
 If you have a GitHub account, you can leave a comment directly on the blog post itself. 
 
@@ -25,7 +27,7 @@ I get an even bigger dopamine buzz than automated emails from Google when I see 
 
 # Analytics
 
-All analytics are from the last 12 months. At time of capture, that's 19th August 2023 - 19th August 2024. Where relevant I've compared against the previous 12 months, which covers the complete lifetime of the blog. 
+All analytics are from the last 12 months. At time of capture, that's 19th August 2023 - 19th August 2024. Where relevant, I've compared against the previous 12 months, which covers the complete lifetime of the blog. 
 
 # Users
 
@@ -71,7 +73,7 @@ Wow. Compared to last year, I'm getting six times as many impressions and clicks
 
 I put a little bit of effort in at the end of April, trying to improve the number of pages being indexed. I requested a new crawl of the site through the [Google Search Console](https://search.google.com/search-console/about) a couple of times. I use my RSS feed as the sitemap for Google Search. I noticed that it only included the most recent 20 posts.  I increased it to 100 posts and resubmitted it. Maybe there was an effect or maybe it's just another change in Google's algorithm.
 
-Let's have a look at the 10 pages with the highest number of impressions. Just for fun, I've also added in [The Candid Startup]({{ '/' | absolute_url }}) home page. 
+Let's have a look at the 10 pages with the highest number of impressions. Just for fun, I've also included [The Candid Startup]({{ '/' | absolute_url }}) home page. 
 
 An impression is counted each time a link to that page appears in Google Search's results. I also capture the average position within the results and, in bold, the highest position achieved for that page with the right query. You can then see how many times people clicked through to visit the page. 
 
@@ -110,7 +112,7 @@ My number one post. More impressions than all the rest of my content put togethe
 
 ### Vitest Code Coverage
 
-My other blockbuster post. It has a third of the impressions but almost as many clicks, demonstrating how important it is to get a high position in the results. The subject matter is technical but clearly there are lots of people out there who want someone to tell them whether to use Istanbul or v8 when setting up code coverage in Vitest. 
+My other blockbuster post. It has a third of the impressions but almost as many clicks, demonstrating how important it is to get a high position in the results. The subject matter is technical but clearly there are lots of people out there who want someone to tell them whether to use Istanbul or v8 when setting up code coverage in Vitest.
 
 ### Navisworks File Formats
 
@@ -129,7 +131,7 @@ The post does quote the most queried error exactly and explains what it means. S
 
 ### A Trip Down The Graphics Pipeline
 
-There's a famous computer graphics book by Jim Blinn called [A Trip Down the Graphics Pipeline](https://www.amazon.co.uk/Jim-Blinns-Corner-Graphics-Pipeline/dp/1558603875) which I was riffing on with the title of this post. Others have done the same. For example, there's a great series of posts from 2011 called [A trip through the Graphics Pipeline](https://fgiesen.wordpress.com/2011/07/09/a-trip-through-the-graphics-pipeline-2011-index/).
+There's a famous computer graphics book by Jim Blinn called [A Trip Down the Graphics Pipeline](https://www.amazon.co.uk/Jim-Blinns-Corner-Graphics-Pipeline/dp/1558603875), which I was riffing on with the title of this post. Others have done the same. For example, there's a great series of posts from 2011 called [A trip through the Graphics Pipeline](https://fgiesen.wordpress.com/2011/07/09/a-trip-through-the-graphics-pipeline-2011-index/).
 
 There's the usual random combination of keyword queries but the top two by a long way are "a trip down the graphics pipeline" and "a trip through the graphics pipeline". 
 
@@ -143,7 +145,7 @@ Another case of mistaken identity. I'm using the term "bootstrapping" with the s
 
 Last year this was my most searched for post. This year it's getting half the number of impressions but with a much higher results position resulting in the same number of clicks.
 
-In most cases, the query that gives the highest position in the results is the one that includes all the most popular keywords. Here, adding "tag" drops the position down by 20 places. That's despite the content including extensive coverage of both topics.
+For most pages, the query that gives the highest position in the results is the one that includes all the most popular keywords. Here, adding "tag" drops the position down by 20 places. That's despite the content including extensive coverage of both topics.
 
 ### From Navisworks to Nanite
 
@@ -163,7 +165,7 @@ There's something about this post that breaks Google's algorithm. Google Search 
 
 ###  The Candid Startup
 
-My average position gets pulled down by the surprising number of queries for "candid" that return a result for my blog a long way down. Every other combination of keywords has an above the fold result. I hit the jackpot with "the candid startup", the top 10 results all being links to the blog, my [GitHub organization](https://github.com/TheCandidStartup), my [LinkedIn profile](https://uk.linkedin.com/in/tim-wiegand-uk) or [twitter](https://twitter.com/ThCandidStartup/status/1708772703266595324).
+My average position gets pulled down by the surprising number of queries for "candid" that return a result for my blog a long way down. Every other combination of keywords has an above the fold result. I hit the jackpot with "the candid startup", the top 10 results all being links to the blog, my [GitHub organization](https://github.com/TheCandidStartup), my [LinkedIn profile](https://uk.linkedin.com/in/tim-wiegand-uk) or [Twitter](https://twitter.com/ThCandidStartup/status/1708772703266595324) (currently known as X).
 
 # LinkedIn
 
