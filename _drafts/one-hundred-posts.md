@@ -18,8 +18,8 @@ I get the occasional email from Google when I hit a new milestone in search perf
 # Engage
 
 Before we get into the graphs and top ten lists, a quick request from me. If you find my posts via LinkedIn or Twitter: 
-* React, if you have a reaction
-* Reply, if you're feeling more than one of the pre-packaged emotions 
+* **React**, if you have a reaction
+* **Reply**, if you're feeling more than one of the pre-packaged reactions
 
 If you have a GitHub account, you can leave a comment directly on the blog post itself. 
 
@@ -39,7 +39,7 @@ Last year I was starting to see a shift in source of traffic towards Google Sear
 
 It's strange that all users appear to be new users. Maybe Google Analytics is having trouble with tracking users, perhaps due to privacy preserving browsers. Alternatively, with the big increase in traffic via search, maybe most users are now one time visitors. 
 
-The huge spike at the beginning of last year is my never to be exceeded, "viral on LinkedIn", [Seven Reasons why I REALLY left Autodesk]({% link _posts/2022-10-18-leaving-autodesk.md %}) post. After that things have been fairly flat until April of this year. Since then, numbers have steadily climbed to over 200 a week. 
+The huge spike at the beginning of last year is my never to be exceeded, "viral on LinkedIn", [Seven Reasons why I REALLY left Autodesk]({% link _posts/2022-10-18-leaving-autodesk.md %}) post. After that things had been fairly flat until April of this year. Since then, unique users have steadily climbed to over 200 a week. 
 
 Finally, Google Analytics has a new feature. The two circles on the graph represent anomalies where there were 150% week over week increases in visitors. These weeks correspond to posting my [One Year Anniversary]({% link _posts/2023-09-11-one-year-anniversary.md %}) and [Legal Jeopardy]({% link _posts/2023-12-18-legal-jeopardy.md %}) posts. We'll see where they rank when we look at the post analytics later. 
 
@@ -102,7 +102,7 @@ I show the percentage of impressions queried using each keyword. Keywords in bol
 
 Google Search Console doesn't capture the query used for every impression. For these pages the proportion of impressions with query data varies between 15% (From Navisworks to Nanite) and 80% (Modern SaaS Architecture). No idea why it varies so much. I'm assuming the captured queries are representative. 
 
-While pulling the data together, I did occasional spot checks by running a query myself. I quickly realized I needed to use incognito mode when I found this near the top of the search results for "mac keyboard layout". Google knows when I'm googling myself.
+While pulling the data together, I did occasional spot checks by running a query myself. I quickly realized I need to use incognito mode. I found this near the top of the search results for "mac keyboard layout". Google knows when I'm googling myself.
 
 {% include candid-image.html src="/assets/images/blog-analytics-august-2024/google-search-performance-box.png" alt="When Google spots you're testing searches" %}
 
