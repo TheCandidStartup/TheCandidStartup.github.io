@@ -37,7 +37,7 @@ I took my sample code and copied it into `VirtualSpreadsheet.tsx`. The first ste
 ```ts
 export interface VirtualSpreadsheetProps {
   className?: string,
-  theme?: VirtualSpreadsheetTheme | Record<string, string>,
+  theme?: VirtualSpreadsheetTheme | Record<string,string>,
 
   height: number,
   width: number,
@@ -50,7 +50,7 @@ export interface VirtualSpreadsheetProps {
 }
 ```
 
-The required props are component `width` and `height`, along with `minRowCount` and `minColumnCount`, the minimum number of rows and columns to display. 
+The required props are component `width` and `height`, along with `minRowCount` and `minColumnCount`, the minimum number of rows and columns to display. Here's a minimal example of using the component.
 
 ```tsx
 <VirtualSpreadsheet
@@ -69,7 +69,7 @@ Finally, we get to styling. The `className` prop does exactly what you'd expect 
 
 A `theme` is an abstraction that separates styling and class names from the component itself. The [idea]({% link _posts/2024-08-26-css-react-components.md %}) is to leave the app consuming the component to decide how it wants to manage its style sheets. Rather than hard coding the class names applied to each element within the component, we look them up in the theme object. 
 
-Internally, I use a [BEM](https://getbem.com/) style naming system for components and elements. These names are the properties of the theme, with the corresponding values being the actual class names used. 
+Internally, I use a [BEM](https://getbem.com/) style naming system for components and elements. These names are the properties of the theme, with the corresponding values being the actual class names used. I had to put the theme related code into a separate source file, `VirtualSpreadsheetTheme.ts`, in order for `VirtualSpreadsheet` to support [Vite HMR](https://vitejs.dev/guide/features#hot-module-replacement).
 
 ```ts
 export interface VirtualSpreadsheetTheme {
@@ -89,7 +89,7 @@ I use a variation of [React style](https://en.bem.info/methodology/naming-conven
 
 # Default Theme and CSS
 
-The component comes with a default theme and corresponding `VirtualSpreadsheet.css` file. 
+I include a default theme and corresponding `VirtualSpreadsheet.css` file. No obligation to use either. Consumers can use their own CSS and theme.
 
 ```ts
 export const VirtualSpreadsheetDefaultTheme: VirtualSpreadsheetTheme = {
@@ -121,35 +121,142 @@ Not much CSS yet but enough to get the idea of how it works.
 }
 ```
 
-What if you don't want my crappy CSS corrupting your global namespace? I've also provided `VirtualSpreadsheet.module.css` if your tooling supports CSS modules. If neither of those work, you can provide your own theme, referencing your own CSS.
+# CSS Modules
 
-# Implementation
+What if you don't want my crappy CSS corrupting your global namespace? I've also provided `VirtualSpreadsheet.module.css` if your tooling supports CSS modules. The implementation is surprisingly simple.
 
-* Had to split theme type and default declaration into separate source file for Vite fast reload
-* Need to explicitly declare css files as exports so they can be resolved via module import
-* Need to include in files so they get copied into package
-* On import side need declaration file to tell TypeScript compiler how CSS module imports work
-* Ended up giving client choice of using explicit type for theme (e.g. if handwriting) or more generic `Record<string, string>` if importing from CSS module
-* In theory could use a plugin to auto-generate the declaration file with the exact types used by the CSS module. However, seems like more trouble than it's worth for my purposes. Point of my approach is to leave it up to app to decide what they want to do. 
+```css
+/* Wrapper that exposes global stylesheet as a CSS module */
+@import './VirtualSpreadsheet.css'
+```
 
-# Alternatives
+You may be wondering why I've typed `theme` in `VirtualSpreadsheetProps` as `VirtualSpreadsheetTheme | Record<string,string>`. Surely you want typing to be as explicit as possible? 
 
-* Avoid use of `-` as  isn't valid JavaScript. Would have to write 
-* Tried to make theme props more developer friendly but has lots of problems
-  *  Would need two different stylesheets
-    * VirtualSpreadsheet.css with BEM global class names
-    * VirtualSpreadsheet.module.css with local class names for use with CSS Modules
-  * Theme props aren't the same as class names in global style sheet
-  * Need a special prop name for component's own class name
-  * Doesn't extend to multiple components sharing a common theme
+The `VirtualSpreadsheetTheme` type works perfectly if you're writing your own theme by hand. Declare a theme object with that type and TypeScript tells you if you've messed up any of the properties.
+
+The problem comes when using CSS Modules. The CSS Modules tooling automatically generates a JavaScript object with a key for each class name in the module. All you know is that you're getting an object with string keys and values, a `Record<string,string>` type.
+
+TypeScript doesn't have out of the box support for CSS Modules. The simplest solution is for the consuming app to include a `cssmodule.d.ts` source file. This tells TypeScript that importing any `*.module.css` file will return a `Record<string,string>` type.
+
+```ts
+declare module '*.module.css' {
+  const content: Record<string,string>;
+  export default content;
+}
+```
+
+Some CSS Modules tooling can be extended to generate a `.d.ts` file with an explicit type for each CSS module. However, if the CSS file targets a subset of classes (like my default CSS), the resulting type won't be compatible with `VirtualSpreadsheetTheme`. I also don't want to restrict the choice of CSS Modules tooling that app consumers have to use. The simplest solution is to accept either `VirtualSpreadsheetTheme` or `Record<string,string>`.
+
+# Build
+
+I needed some config changes to get the package to build as I wanted. I have two CSS files to include in the package. However, I don't want them to be bundled during the build process. They should be included as is, so that package consumers can choose which one to consume or just use them as a reference when writing their own CSS. 
+
+The required magic involves changes to two properties in `package.json`. The CSS files have to be added to the `files` key so that they're included in the package. They also need to be added to the `exports` key so that consuming apps can import them from the package.
+
+```json
+{
+  "files": [
+    "dist",
+    "src/VirtualSpreadsheet.css",
+    "src/VirtualSpreadsheet.module.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./VirtualSpreadsheet.css": "./src/VirtualSpreadsheet.css",
+    "./VirtualSpreadsheet.module.css": "./src/VirtualSpreadsheet.module.css"
+  }
+}
+```
+
+# Alternative Theme
+
+What was your initial reaction when you saw the `VirtualSpreadsheetTheme` type? My first thought was how ugly and verbose the property names are.
+
+I tried an alternative with more JavaScript friendly property names.
+
+```ts
+{
+  name: string,
+  formula: string,
+  grid: string,
+  columnHeader: string,
+  column: string,
+  rowHeader: string,
+  row: string,
+  cell: string
+}
+```
+
+Doesn't that look better? However, there are lots of problems. First, my `VirtualSpreadsheet.module.css` would need to contain classes with the same names as the properties. That means I can't reuse `VirtualSpreadsheet.css` to implement it. I'll need to maintain two separate CSS files, or write custom tooling to transform one into the other.
+
+In the example above I left out the class name for the component as a whole. There's no obvious simple choice. I guess you just pick something like `className` or `root`. 
+
+The real kicker comes if you add more components to the package. You probably want to be able to defined a common theme usable by all components. Now you need to distinguish between classes for each component. The natural solution is to include the component name as a prefix, at which point you're pretty much back to where we started.
+
+Eventually, I came to like the ugly and verbose theme property names. They look just like what they are: names that correspond to class names in a CSS file.
 
 # Unit Tests
 
+I added some basic tests to `VirtualSpreadsheet.test.tsx`. Just enough to satisfy myself that the theming mechanism was working and to be able to enable Vitest runs in the build.
+
+```tsx
+  render(
+    <VirtualSpreadsheet
+      className={"Testy"}
+      theme={VirtualSpreadsheetDefaultTheme}
+      height={240}
+      minRowCount={100}
+      minColumnCount={26}
+      width={600}>
+    </VirtualSpreadsheet>
+  )
+  const spreadsheet = document.querySelector("div div");
+  expect(spreadsheet).toHaveProperty("className", "Testy VirtualSpreadsheet");
+```
+
+Notice how specifying both a `className` and a `theme` results in two classes being assigned to the component's root element.
+
 # Sample App
 
-* Sample that demonstrates both ways
-* Using the global stylesheet
-* Using CSS module
+The final step was to create a `spreadsheet-sample` app. I verified that both global CSS and CSS Modules imports worked.
+
+```tsx
+import { VirtualSpreadsheet, VirtualSpreadsheetDefaultTheme as theme } from '@candidstartup/react-spreadsheet';
+import '@candidstartup/react-spreadsheet/VirtualSpreadsheet.css';
+
+export function App() {
+  return (
+    <VirtualSpreadsheet
+    ...
+    theme={theme}>
+  </VirtualSpreadsheet>
+  )
+}
+```
+
+```tsx
+import { VirtualSpreadsheet } from '@candidstartup/react-spreadsheet';
+import theme from '@candidstartup/react-spreadsheet/VirtualSpreadsheet.module.css';
+
+export function App() {
+  return (
+    <VirtualSpreadsheet
+    ...
+    theme={theme}>
+  </VirtualSpreadsheet>
+  )
+}
+```
+
+# Try It!
+
+{% include candid-iframe.html src="/assets/dist/react-spreadsheet/index.html" width="100%" height="fit-content" %}
+
+Well, it's a starting point. 
 
 # Next Time
 
+Where to start? Take your pick from proper spreadsheet column names, scroll to cell, auto-fit the available space, auto-grow the spreadsheet when you scroll or jump beyond the starting size, better styling, real content, ...
