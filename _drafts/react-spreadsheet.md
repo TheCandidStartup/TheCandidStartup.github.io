@@ -61,7 +61,7 @@ The required props are component `width` and `height`, along with `minRowCount` 
 </VirtualSpreadsheet>
 ```
 
-The `maxCssSize` and `minNumPages` props are passed through to the internal virtual scrolling components. You'll probably never need to change the defaults. *TODO implement this!*.
+The `maxCssSize` and `minNumPages` props are passed through to the internal virtual scrolling components. You'll probably never need to change the defaults.
 
 Finally, we get to styling. The `className` prop does exactly what you'd expect it to. However, `theme` gets a section to itself.
 
