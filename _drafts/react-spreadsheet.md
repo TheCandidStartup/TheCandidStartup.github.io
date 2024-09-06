@@ -8,7 +8,7 @@ I seem to have spent the past few weeks repeatedly [finding]({% link _posts/2024
 
 {% include candid-image.html src="/assets/images/infinisheet/react-spreadsheet-architecture.svg" alt="React Spreadsheet within the InfiniSheet Architecture" %}
 
-All the Infinisheet frontend apps use `react-spreadsheet` for their main UI. The package needs to implement a React spreadsheet component that implements the classic spreadsheet UI while retrieving the data needed to render the spreadsheet on demand, in a scalable way. 
+All the Infinisheet frontend apps use `react-spreadsheet` for their main UI. The package needs to provide a React spreadsheet component that implements the classic spreadsheet UI while retrieving the data needed to render the spreadsheet on demand, in a scalable way. 
 
 I have a stub `react-spreadsheet` package which I created when [bootstrapping TypeDoc generated API documentation]({% link _posts/2024-08-05-bootstrapping-typedoc.md %}). I also have [sample code]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) for `react-virtual-scroll` which combines my virtual scrolling components into something loosely approximating a spreadsheet. Let's combine the two as the start of a real `react-spreadsheet` package. 
 
@@ -69,7 +69,7 @@ Finally, we get to styling. The `className` prop does exactly what you'd expect 
 
 A `theme` is an abstraction that separates styling and class names from the component itself. The [idea]({% link _posts/2024-08-26-css-react-components.md %}) is to leave the app consuming the component to decide how it wants to manage its style sheets. Rather than hard coding the class names applied to each element within the component, we look them up in the theme object. 
 
-Internally, I use a [BEM](https://getbem.com/) style naming system for components and elements. These names are the properties of the theme, with the corresponding values being the actual class names used. I had to put the theme related code into a separate source file, `VirtualSpreadsheetTheme.ts`, in order for `VirtualSpreadsheet` to support [Vite HMR](https://vitejs.dev/guide/features#hot-module-replacement).
+Internally, I use a [BEM](https://getbem.com/) style naming system for components and elements. These names are the properties of the theme, with the corresponding values being the actual class names used. I had to put the theme related code into a separate source file, `VirtualSpreadsheetTheme.ts`, in order for `VirtualSpreadsheet` to work with [Vite HMR](https://vitejs.dev/guide/features#hot-module-replacement).
 
 ```ts
 export interface VirtualSpreadsheetTheme {
@@ -85,11 +85,11 @@ export interface VirtualSpreadsheetTheme {
 }
 ```
 
-I use a variation of [React style](https://en.bem.info/methodology/naming-convention/#react-style) naming which takes the form `ComponentName_ElementName__modifierName_modifierValue`. I don't use the more usual `-` separator characters because they're not valid in JavaScript properties. 
+I use a variation of [React style BEM naming](https://en.bem.info/methodology/naming-convention/#react-style) which takes the form `ComponentName_ElementName__modifierName_modifierValue`. I don't use the more usual `-` separator characters because they're not valid in JavaScript properties. 
 
 # Default Theme and CSS
 
-I include a default theme and corresponding `VirtualSpreadsheet.css` file. No obligation to use either. Consumers can use their own CSS and theme.
+I include a default theme and corresponding `VirtualSpreadsheet.css` file. No obligation to use either. Consumers can use their own CSS and/or theme, if they wish.
 
 ```ts
 export const VirtualSpreadsheetDefaultTheme: VirtualSpreadsheetTheme = {
@@ -123,7 +123,7 @@ Not much CSS yet but enough to get the idea of how it works.
 
 # CSS Modules
 
-What if you don't want my crappy CSS corrupting your global namespace? I've also provided `VirtualSpreadsheet.module.css` if your tooling supports CSS modules. The implementation is surprisingly simple.
+What if you don't want my crappy CSS corrupting your global namespace? I've also provided `VirtualSpreadsheet.module.css`, if your tooling supports CSS modules. The implementation is surprisingly simple.
 
 ```css
 /* Wrapper that exposes global stylesheet as a CSS module */
@@ -149,7 +149,7 @@ Some CSS Modules tooling can be extended to generate a `.d.ts` file with an expl
 
 # Build
 
-I needed some config changes to get the package to build as I wanted. I have two CSS files to include in the package. However, I don't want them to be bundled during the build process. They should be included as is, so that package consumers can choose which one to consume or just use them as a reference when writing their own CSS. 
+I needed some config changes to get the package to build as I wanted. I have two CSS files to include in the package. However, I don't want them to be bundled during the build process. They should be included as is, so that package consumers can choose which one to consume, or just use them as a reference when writing their own CSS. 
 
 The required magic involves changes to two properties in `package.json`. The CSS files have to be added to the `files` key so that they're included in the package. They also need to be added to the `exports` key so that consuming apps can import them from the package.
 
@@ -200,7 +200,7 @@ Eventually, I came to like the ugly and verbose theme property names. They look 
 
 # Unit Tests
 
-I added some basic tests to `VirtualSpreadsheet.test.tsx`. Just enough to satisfy myself that the theming mechanism was working and to be able to enable Vitest runs in the build.
+I added some basic tests to `VirtualSpreadsheet.test.tsx`. Just enough to satisfy myself that the theming mechanism was working and to enable Vitest runs in the build.
 
 ```tsx
   render(
