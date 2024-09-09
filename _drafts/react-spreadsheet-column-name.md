@@ -5,11 +5,11 @@ tags: react-spreadsheet spreadsheets
 
 [Last time]({% link _posts/2024-09-09-react-spreadsheet.md %}), I ported some spreadsheet-ish sample code into my new stub `react-spreadsheet` package, and called it a spreadsheet. Unsurprisingly, it's not very good. Time to start iterating. 
 
-I have to start somewhere, and what says spreadsheet more than columns named "A", "B", "C" rather than "0", "1", "2"?
+I have to start somewhere, and what says spreadsheet more than columns named A, B, C rather than 0, 1, 2?
 
 # Column Naming
 
-This should be easy. I just need to format the column index in base-26 using characters A-Z rather than in base-10 using characters 0-9. Except, if that was the case, the next column after Z would be BA not AA.
+This should be easy. I just need to format the column index in base-26 using characters A-Z, rather than in base-10 using characters 0-9. Except, if that was the case, the next column after Z would be BA not AA.
 
 {% include candid-image.html src="/assets/images/react-spreadsheet/spreadsheet-column-names.png" alt="Spreadsheet Column Names" %}
 
@@ -21,7 +21,7 @@ As ever, when stuck, I turned to the internet. It seems like nobody else is suff
 
 # Base-10 Numbers Without Zero
 
-Then I realized. A-Z represent 26 non-zero "digits" in a base-26 number system. That's one digit too many. It's like getting rid of zero in base-10 and replacing it with another digit that represents ten. 
+Then I realized. A-Z represent 26 non-zero "digits" in a base-26 number system. That's one digit too many. It's like getting rid of zero in base-10 and replacing it with another digit that represents 10. 
 
 Let's play with that idea. I'll use "X" as my additional digit. Now the next number after 9 is X followed by 11. Here's some more examples of my No-Zero number system. 
 
