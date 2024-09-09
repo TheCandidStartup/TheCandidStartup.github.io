@@ -12,7 +12,7 @@ All the Infinisheet frontend apps use `react-spreadsheet` for their main UI. The
 
 I have a stub `react-spreadsheet` package which I created when [bootstrapping TypeDoc generated API documentation]({% link _posts/2024-08-05-bootstrapping-typedoc.md %}). I also have [sample code]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) for `react-virtual-scroll` which combines my virtual scrolling components into something loosely approximating a spreadsheet. Let's combine the two as the start of a real `react-spreadsheet` package. 
 
-Then iterate.
+Then we can iterate.
 
 # Initial Stub
 
@@ -28,7 +28,7 @@ At some point I should create a [template](https://vitejs.dev/guide/#community-t
 5. Create a `src` folder
 6. Copy `src/index.ts` from an existing package and remove everything except the initial `@packageDocumentation` comment
 
-This is *almost* enough to pass my automated "Build CI" workflow. Unfortunately, Vitest fails if it can't find any tests for a package. This time, I temporarily renamed the `test` script in `package.json` so [Lerna]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}) wouldn't find it. I can rename it back once I have the initial code and test written. Next time I'll try running unit tests using [Vitest workspace mode]({% link _posts/2024-08-19-vitest-monorepo-setup.md %}). Hopefully, it will succeed if it finds some tests in the repo, even if they're all in other packages.
+This is *almost* enough to pass my automated "Build CI" workflow. Unfortunately, Vitest fails if it can't find any tests for a package. This time, I temporarily renamed the `test` script in `package.json` so [Lerna]({% link _posts/2024-05-06-bootstrapping-lerna-monorepo.md %}) wouldn't find it. I can rename it back once I have the initial code and test written. Next time, I'll try running unit tests using [Vitest workspace mode]({% link _posts/2024-08-19-vitest-monorepo-setup.md %}). Hopefully, it will succeed if it finds some tests in the repo, even if they're all in other packages.
 
 # Virtual Spreadsheet Component
 
@@ -69,7 +69,9 @@ Finally, we get to styling. The `className` prop does exactly what you'd expect 
 
 A `theme` is an abstraction that separates styling and class names from the component itself. The [idea]({% link _posts/2024-08-26-css-react-components.md %}) is to leave the app consuming the component to decide how it wants to manage its style sheets. Rather than hard coding the class names applied to each element within the component, we look them up in the theme object. 
 
-Internally, I use a [BEM](https://getbem.com/) style naming system for components and elements. These names are the properties of the theme, with the corresponding values being the actual class names used. I had to put the theme related code into a separate source file, `VirtualSpreadsheetTheme.ts`, in order for `VirtualSpreadsheet` to work with [Vite HMR](https://vitejs.dev/guide/features#hot-module-replacement).
+Internally, I use a [BEM](https://getbem.com/) style naming system for components and elements. These names are the properties of the theme, with the corresponding values being the actual class names used. 
+
+I had to put the theme related code into a separate source file, `VirtualSpreadsheetTheme.ts`, in order for `VirtualSpreadsheet` to work with [Vite HMR](https://vitejs.dev/guide/features#hot-module-replacement).
 
 ```ts
 export interface VirtualSpreadsheetTheme {
@@ -134,7 +136,7 @@ You may be wondering why I've typed `theme` in `VirtualSpreadsheetProps` as `Vir
 
 The `VirtualSpreadsheetTheme` type works perfectly if you're writing your own theme by hand. Declare a theme object with that type and TypeScript tells you if you've messed up any of the properties.
 
-The problem comes when using CSS Modules. The CSS Modules tooling automatically generates a JavaScript object with a key for each class name in the module. All you know is that you're getting an object with string keys and values, a `Record<string,string>` type.
+The problem comes when using CSS Modules. The CSS Modules tooling automatically generates a JavaScript object with a key for each class name in the CSS. All you know is that you're getting an object with string keys and values, a `Record<string,string>` type.
 
 TypeScript doesn't have out of the box support for CSS Modules. The simplest solution is for the consuming app to include a `cssmodule.d.ts` source file. This tells TypeScript that importing any `*.module.css` file will return a `Record<string,string>` type.
 
