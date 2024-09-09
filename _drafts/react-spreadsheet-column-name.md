@@ -3,7 +3,7 @@ title: Spreadsheet Column Naming
 tags: react-spreadsheet spreadsheets
 ---
 
-[Last time]({% link _drafts/react-spreadsheet.md %}), I ported some spreadsheet-ish sample code into my new stub `react-spreadsheet` package, and called it a spreadsheet. Unsurprisingly, it's not very good. Time to start iterating. 
+[Last time]({% link _posts/2024-09-09-react-spreadsheet.md %}), I ported some spreadsheet-ish sample code into my new stub `react-spreadsheet` package, and called it a spreadsheet. Unsurprisingly, it's not very good. Time to start iterating. 
 
 I have to start somewhere, and what says spreadsheet more than columns named "A", "B", "C" rather than "0", "1", "2"?
 
