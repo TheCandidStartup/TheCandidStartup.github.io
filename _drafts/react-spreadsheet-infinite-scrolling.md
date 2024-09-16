@@ -3,7 +3,7 @@ title: React Spreadsheet Infinite Scrolling
 tags: react-spreadsheet
 ---
 
-[Last time]({% link _drafts/react-spreadsheet-column-name.md %}), I left you feeling rather constrained by my starting spreadsheet size of 100 rows and 26 columns. This is the same starting size as Google Sheets. Like Google Sheets, I could have explicit buttons that add additional rows and columns. However, I don't like that behavior in Google Sheets. The UI acts as if rows and columns were precious, giving them out begrudgingly.
+[Last time]({% link _posts/2024-09-16-react-spreadsheet-column-name.md %}), I left you feeling rather constrained by my starting spreadsheet size of 100 rows and 26 columns. This is the same starting size as Google Sheets. Like Google Sheets, I could have explicit buttons that add additional rows and columns. However, I don't like that behavior in Google Sheets. The UI acts as if rows and columns were precious, giving them out begrudgingly.
 
 My spreadsheet will be super scalable. To reflect that, it should feel effortless to navigate anywhere you want and put data there. I could turn up the starting size to a trillion rows and columns. However, that's not very user friendly to navigate around if you're only using a fraction of that space.
 
