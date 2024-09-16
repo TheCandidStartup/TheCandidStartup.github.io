@@ -22,13 +22,13 @@ wise words
 # Spreadsheet Data Interface
 
 ```ts
-export interface SpreadsheetData {
+export interface SpreadsheetData<Snapshot> {
   subscribe: (onDataChange: () => void) => () => void,
-  getSnapshot: () => number,
+  getSnapshot(): Snapshot,
 
-  getRowCount(snapshot: number): number,
-  getColumnCount(snapshot: number): number,
-  getCellValue(snapshot: number, row: number, column: number): string
+  getRowCount(snapshot: Snapshot): number,
+  getColumnCount(snapshot: Snapshot): number,
+  getCellValue(snapshot: Snapshot, row: number, column: number): string
 }
 ```
 
@@ -42,8 +42,8 @@ export interface SpreadsheetData {
 # React Spreadsheet Data
 
 ```ts
-export interface ReactSpreadsheetData extends SpreadsheetData {
-  getServerSnapshot?: () => number
+export interface ReactSpreadsheetData<Snapshot> extends SpreadsheetData<Snapshot> {
+  getServerSnapshot?: () => Snapshot
 }
 ```
 
@@ -56,14 +56,14 @@ export interface ReactSpreadsheetData extends SpreadsheetData {
 # Virtual Spreadsheet Implementation
 
 ```tsx
-export interface VirtualSpreadsheetProps {
-  data: ReactSpreadsheetData
+export interface VirtualSpreadsheetProps<Snapshot> {
+  data: ReactSpreadsheetData<Snapshot>
 }
 
-export function VirtualSpreadsheet(props: VirtualSpreadsheetProps) {
+export function VirtualSpreadsheet<Snapshot>(props: VirtualSpreadsheetProps<Snapshot>) {
   const { data, minRowCount=100, minColumnCount=26 } = props;
 
-  const snapshot = React.useSyncExternalStore<number>(data.subscribe.bind(data), 
+  const snapshot = React.useSyncExternalStore<Snapshot>(data.subscribe.bind(data), 
     data.getSnapshot.bind(data), data.getServerSnapshot?.bind(data));
 
   const [hwmRowIndex, setHwmRowIndex] = React.useState(0);
@@ -95,15 +95,15 @@ export function VirtualSpreadsheet(props: VirtualSpreadsheetProps) {
 * As currently written, they depend on the old hard coded cell name values
 
 ```ts
-class TestData implements SpreadsheetData {
+class TestData implements SpreadsheetData<number> {
   subscribe(_onDataChange: () => void) {
     return () => {};
   }
 
   getSnapshot() { return 0; }
   
-  getRowCount() { return 100; }
-  getColumnCount() { return 26; }
+  getRowCount(_snapshot: number) { return 100; }
+  getColumnCount(_snapshot: number) { return 26; }
   getCellValue(_snapshot: number, row: number, column: number) { 
     return rowColCoordsToRef(row, column); 
   }
@@ -115,7 +115,7 @@ Easy enough to create some mock data that works the same way
 # Dealing With Change
 
 ```ts
-class AppData implements SpreadsheetData {
+class AppData implements SpreadsheetData<number> {
   constructor() { this.count = 0; }
 
   subscribe(onDataChange: () => void) {
