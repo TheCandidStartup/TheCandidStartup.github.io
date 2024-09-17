@@ -3,15 +3,15 @@ title: React Spreadsheet Infinite Scrolling
 tags: react-spreadsheet
 ---
 
-[Last time]({% link _posts/2024-09-16-react-spreadsheet-column-name.md %}), I left you feeling rather constrained by my starting spreadsheet size of 100 rows and 26 columns. This is the same starting size as Google Sheets. Like Google Sheets, I could have explicit buttons that add additional rows and columns. However, I don't like that behavior in Google Sheets. The UI acts as if rows and columns were precious, giving them out begrudgingly.
+[Last time]({% link _posts/2024-09-16-react-spreadsheet-column-name.md %}), I left you feeling rather constrained by my starting spreadsheet size of 100 rows and 26 columns. This is the same starting size as Google Sheets. Like Google Sheets, I could have explicit buttons that add additional rows and columns. However, I don't like that behavior. The UI acts as if rows and columns were precious, giving them out begrudgingly.
 
 My spreadsheet will be super scalable. To reflect that, it should feel effortless to navigate anywhere you want and put data there. I could turn up the starting size to a trillion rows and columns. However, that's not very user friendly to navigate around if you're only using a fraction of that space.
 
 # Infinite Scrolling
 
-I want to have my cake and eat it too. I want comfortable navigation around a manageably small starting point but with no restrictions on where you go after that. You should be able to jump to any row, column or cell and have the grid automatically enlarge as needed. When you scroll to the end row or column, the grid should enlarge so that you can scroll past the end and keep going. 
+I want to have my cake and eat it too. I want comfortable navigation around a manageably small starting point but with no restrictions on where you go after that. You should be able to jump to any row, column or cell and have the grid automatically enlarge as needed. When you scroll to the end row or column, the grid should enlarge so that you can scroll past and keep going. 
 
-This interaction pattern is known as [Infinite Scrolling](https://blog.logrocket.com/infinite-scrolling-react/). It's more commonly used to support doom scrolling through social media. Here I'm using it to support navigation through empty space, making it easy to add content anywhere in the spreadsheet. 
+This interaction pattern is known as [Infinite Scrolling](https://blog.logrocket.com/infinite-scrolling-react/). It's more commonly used to support doom scrolling through social media. Here, I'm using it to support navigation through empty space, making it easy to add content anywhere in the spreadsheet. 
 
 You shouldn't be punished for exploring. If you scroll out to the far limits of the galaxy, leaving no trace, then eventually return home, the grid should snap back to a more manageable size.
 
@@ -144,7 +144,7 @@ We just need to work out how to keep track of the required scroll until the effe
 
 I want to minimize the amount of "side channel" data outside the normal React data flow. I spent a long time thinking through different options. Eventually we'll need state that tracks the current selected cell, row or column. Jumping to an entity will select it, so we can add `selection` state now and store where we're jumping to there.
 
-The only "side channel" I need is a boolean ref to track whether there's a pending "scroll to selection".
+The only side channel I need is a boolean ref to track whether there's a pending "scroll to selection".
 
 ```ts
   const pendingScrollToSelectionRef = React.useRef<boolean>(false);
