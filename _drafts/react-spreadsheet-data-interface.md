@@ -3,21 +3,37 @@ title: Spreadsheet Data Interface
 tags: react-spreadsheet
 ---
 
-wise words
+[Last time]({% link _drafts/react-spreadsheet-infinite-scrolling.md %}), I got fed up with the hardcoded placeholder content in my [react-spreadsheet]({% link _topics/react-spreadsheet.md %}) component. Time to make a start on the spreadsheet data interface that my component can use to retrieve content to display.
 
-* Minimal interface is size (rowCount, columnCount) and a `getCellValue` method
-* Tricky part is that data can change over time. Spreadsheet component needs to *react* (pun intended) to the change and repaint.
+The  minimal interface is just size (`rowCount`, `columnCount`) and a `getCellValue` method. The tricky part is that data can change over time. The spreadsheet component needs to *react* to the change and update itself (pun intended).
 
 # useSyncExternalStore
 
-* Luckily React has the [useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore) hook for just this use case
-* You pass the hook two functions: `subscribe` and `getSnapshot`
-* React calls the `subscribe` function with a callback for you to invoke whenever the content of the store may have changed
-* React calls the `getSnapshot` function to check whether the content has changed since the last render
-* The "snapshot" can be whatever you like, as long as it's comparable using `object.is`
-* The data used for rendering from a snapshot needs to be consistent
-* Snapshot mechanism ensures that data rendered is consistent
-* How snapshot relates to data is entirely up to you
+Luckily React has the [useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore) hook for just this use case. You pass the hook two functions: `subscribe` and `getSnapshot`. React calls the `subscribe` function with a callback for you to invoke whenever the content of the data store may have changed. React calls the `getSnapshot` function to check whether the data store content has changed since the last render.
+
+The result of `getSnapshot` can be whatever you like, as long as it's comparable using `object.is`. The snapshot must be immutable. React uses the snapshot mechanism to ensure that everything rendered comes from a consistent point in time. 
+
+How you extract data from a snapshot is entirely up to you.
+
+# Generics
+
+The `useSyncExternalStore` hook is generic. Most of my previous experience with generic language features is with [templates](https://en.cppreference.com/w/cpp/language/templates) in early versions of C++. Templates were complex to understand, resulted in obscure compiler errors, significantly changed the compilation and linking process and were impossible to debug. I quickly learnt to avoid templates if at all possible.
+
+```ts
+export function useSyncExternalStore<Snapshot>(
+    subscribe: (onStoreChange: () => void) => () => void,
+    getSnapshot: () => Snapshot,
+    getServerSnapshot?: () => Snapshot,
+): Snapshot;
+```
+
+Which is probably why my first reaction on seeing the `useSyncExternalStore` definition was to pick a fixed type to use as a snapshot and minimize the contamination of my code with generics. My main implementation of a data store is going to be based on event sourcing, so I can use an index into the event log as a snapshot. Nice and simple. A snapshot is just a number.
+
+I've also been thinking about how to combine multiple data stores into a single view. You could have a `MultiSpreadsheetData` interface that wrapped an array of `SpreadsheetData` instances. The `getCellValue` method would call each child store in turn until it found a `defined` value. You could have a read-only reference data store and overlay an empty editable data store. 
+
+Unfortunately, that needs a more complex snapshot. In general, `MultiSpreadsheetData` would need to return an array containing each child store's snapshot. I briefly thought about an end run around the type system by declaring `Snapshot` as `unknown` or `any`.
+
+TypeScript is a long way from C++. In the end I decided to try embracing TypeScript generics and see where I ended up. After all, this whole process is meant to be a learning experience. I was comforted by the thought that TypeScript is simply a set of annotations on top of JavaScript. All that compiling TypeScript does is remove the annotations. The runtime code will be exactly the same regardless of whether other functions are generic or based on fixed types.
 
 # Spreadsheet Data Interface
 
@@ -32,12 +48,9 @@ export interface SpreadsheetData<Snapshot> {
 }
 ```
 
-* First two methods are compatible with `useSyncExternalStore` methods
-* Note that `subscribe` needs to return a method that cancels the subscription
-* I've decided to make snapshot a number
-* The full implementation of the interface will be based on an event log so index of entry in event log is a natural and minimal snapshot
-* The rest is the minimal interface needed to retrieve data. Each method takes a snapshot and should return data corresponding to that snapshot
-* For now cell value is just a string. Will eventually be some kind of typed union thing supporting multiple data types.
+After all that build up, there should be no surprises with the interface. The first two methods are compatible with the required parameters from `useSyncExternalStore`. The interface is generic on `Snapshot` so each implementation can use whatever it wants to represent a snapshot. Note that the subscribe method returns a function that React can use to cancel the subscription. 
+
+The remaining functions are the minimal interface needed to retrieve data. Each method takes a `Snapshot` parameter and should return data corresponding to that snapshot. For now the cell value is just a string. We'll eventually need some kind of typed union thing that can support multiple data types.
 
 # React Spreadsheet Data
 
@@ -47,13 +60,13 @@ export interface ReactSpreadsheetData<Snapshot> extends SpreadsheetData<Snapshot
 }
 ```
 
-* `useSyncExternalStore` has an optional third argument used for server side rendering. 
-* Want to be a good citizen and support in case someone wants to use spreadsheet component that way
-* Doesn't belong in main interface as its React specific
-* As its an optional argument and optional property anything that implements `SpreadsheetData` is also compatible with `ReactSpreadsheetData`
-* Costs me almost nothing to support
+The optional third argument to `useSyncExternalStore` is used for React server side rendering. As it's React specific it doesn't belong in the base `SpreadsheetData` interface. However, I want to be a good citizen and support it in case someone wants to use `react-spreadsheet` that way. As it's an optional argument and optional property, anything that implements `SpreadsheetData` is also compatible with `ReactSpreadsheetData`.
+
+It costs me almost nothing to support it. 
 
 # Virtual Spreadsheet Implementation
+
+Finally we get to the main event. What needs to change in `VirtualSpreadsheet` to support the data interface? Surprisingly little.
 
 ```tsx
 export interface VirtualSpreadsheetProps<Snapshot> {
@@ -63,9 +76,29 @@ export interface VirtualSpreadsheetProps<Snapshot> {
 export function VirtualSpreadsheet<Snapshot>(props: VirtualSpreadsheetProps<Snapshot>) {
   const { data, minRowCount=100, minColumnCount=26 } = props;
 
-  const snapshot = React.useSyncExternalStore<Snapshot>(data.subscribe.bind(data), 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const subscribeFn = React.useCallback(data.subscribe.bind(data), [data]);
+  const snapshot = React.useSyncExternalStore<Snapshot>(subscribeFn, 
     data.getSnapshot.bind(data), data.getServerSnapshot?.bind(data));
+```
 
+The most intrusive change was adding `data` to `VirtualSpreadsheetProps`. As I feared, that requires both `VirtualSpreadsheetProps` and `VirtualSpreadsheet` to become generic on `Snapshot`. Remember, these are just type annotations. We get increased type safety with no runtime impact.
+
+Internally, the big change is the addition of the `useSyncExternalStore` hook, passing through the corresponding methods from the data interface object. This created two learning moments. 
+
+Initially, I passed `data.subscribe, data.getSnapshot, data.getServerSnapshot` to `useSyncExternalStore`. No errors in VS Code. No build or lint errors. Just a failure at runtime.
+
+What actually happens is that the methods get passed through but without `data` bound to `this`. You need to use the `bind` utility to make it work as you might expect.
+
+Now the second learning moment. I initially passed `data.subscribe.bind(data)` as the first argument. Everything worked but I later realized that React was unsubscribing and re-subscribing on every render. The [small print](https://react.dev/reference/react/useSyncExternalStore#caveats) in the React documentation explains that this will happen if you pass a different subscribe function on a subsequent render. 
+
+Of course, `data.subscribe.bind(data)` returns a new function each time it's called. I used the [`useCallback`](https://react.dev/reference/react/useCallback) hook to [memoize](https://en.wikipedia.org/wiki/Memoization) the bound function and ensure that it only changes if the `data` prop changes. 
+
+Annoyingly, I had to disable the ESLint rule `react-hooks/exhaustive-deps` for this line with a [configuration comment](https://eslint.org/docs/latest/use/configure/rules#using-configuration-comments-1). ESLint can only validate that dependencies are correct if the first argument to `useCallback` is an inline function definition. In this case dependencies are trivially correct as there's no way that `bind` can capture any additional context and the only argument is listed as a dependency. 
+
+The rest of the changes were simple. 
+
+```tsx
   const [hwmRowIndex, setHwmRowIndex] = React.useState(0);
   const [hwmColumnIndex, setHwmColumnIndex] = React.useState(0);
 
@@ -76,25 +109,19 @@ export function VirtualSpreadsheet<Snapshot>(props: VirtualSpreadsheetProps<Snap
 
   const Cell = ({ rowIndex, columnIndex, style }: { rowIndex: number, columnIndex: number, style: React.CSSProperties }) => (
   <div className={theme?.VirtualSpreadsheet_Cell} style={style}>
-    { (rowIndex < dataRowCount && columnIndex < dataColumnCount) ? data.getCellValue(snapshot, rowIndex, columnIndex) : "" }
+    { (rowIndex < dataRowCount && columnIndex < dataColumnCount) ? 
+        data.getCellValue(snapshot, rowIndex, columnIndex) : "" }
   </div>
   );
 ```
 
-* Implementation pretty simple
-* Added data to the props
-* Call the `useSyncExternalStore` hook passing in the corresponding methods from the interface
-* TypeScript learning moment. Initially passed in `data.subscribe, data.getSnapshot, data.getServerSnapshot`. No errors in VS Code. No build or lint errors. 
-* What actually happens is that the function gets passed through but without `data` bound to `this`. Need to bind explicitly to make it work as you might expect.
-* Overall grid size adjusted to be max of min size, data size and high water mark
-* Internal `Cell` component now renders the cell value from the interface when in range, otherwise the cell is empty
+The overall grid size becomes the max of min size, data size and high water mark. The internal `Cell` component now renders the cell value from the interface when in range, otherwise leaves the cell empty.
 
 # Fixing Unit Tests
 
-* Changed API which means unit tests are broken
-* As currently written, they depend on the old hard coded cell name values
+Adding a new required prop is a breaking change, which broke all my unit tests. As currently written, they depend on the old hard coded cell name values. It was easy enough to create some mock data that works the same way.
 
-```ts
+```tsx
 class TestData implements SpreadsheetData<number> {
   subscribe(_onDataChange: () => void) {
     return () => {};
@@ -108,11 +135,23 @@ class TestData implements SpreadsheetData<number> {
     return rowColCoordsToRef(row, column); 
   }
 }
+
+const data = new TestData;
+
+render(
+  <VirtualSpreadsheet
+    data={data}
+    height={240}
+    width={600}>
+  </VirtualSpreadsheet>
+)
 ```
 
-Easy enough to create some mock data that works the same way
+Notice that we don't need to specify the `Snapshot` type when `VirtualSpreadsheet` is rendered. TypeScript can infer it from the type of `data`.  
 
 # Dealing With Change
+
+The change in interface also broke my sample app. I decided to be a bit more adventurous with my app data. 
 
 ```ts
 class AppData implements SpreadsheetData<number> {
@@ -138,8 +177,16 @@ class AppData implements SpreadsheetData<number> {
 }
 ```
 
-* Still using cell names as content but now starting with an empty spreadsheet and adding a new row every second
-* Subscribe sets an internal timer which is canceled on unsubscribe
-* `AppData` has a member variable for current number of rows which is incremented in the timer before invoking the callback
-* You have to be really careful to maintain the expected snapshot semantics. Notice how `getRowCount` returns the snapshot count, not the current count. Ensures render is consistent even if count incremented in the middle of the render (for example if render was suspended).
-* `getCellValue` is only called for the first `getRowCount` rows so no need to do anything extra with the snapshot.
+I still use cell names as content but now start with an empty spreadsheet and add a new row every second. Each row has 26 columns, so I can test how [infinite scrolling]({% link _drafts/react-spreadsheet-infinite-scrolling.md %}) feels when going past the end of existing content. 
+
+The subscribe method starts a timer which is canceled on unsubscribe. `AppData` has a member variable which is a `count` of the current number of rows. The `count` is incremented in the timer before invoking the callback to React.
+
+You have to be really careful to maintain the expected snapshot semantics. Notice how `getRowCount` returns the snapshot count, not the current count. This ensures the render is consistent even if `count` gets incremented in the middle of the render. As `getCellValue` is only called for the first `getRowCount` rows, there's no need to make it explicitly dependent on `snapshot`. 
+
+# Try It!
+
+How much time have you spent reading this page? How many rows of data does the demo spreadsheet contain? That's how many seconds it's been since you loaded the page. 
+
+# Next Time
+
+* Editing something
