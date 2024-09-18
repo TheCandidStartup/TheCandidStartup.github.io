@@ -33,7 +33,7 @@ I've also been thinking about how to combine multiple data stores into a single 
 
 Unfortunately, that needs a more complex snapshot. In general, `MultiSpreadsheetData` would need to return an array containing each child store's snapshot. I briefly thought about an end run around the type system by declaring `Snapshot` as `unknown` or `any`.
 
-TypeScript is a long way from C++. In the end I decided to try embracing TypeScript generics and see where I ended up. After all, this whole process is meant to be a learning experience. I was comforted by the thought that TypeScript is simply a set of annotations on top of JavaScript. All that compiling TypeScript does is remove the annotations. The runtime code will be exactly the same regardless of whether other functions are generic or based on fixed types.
+TypeScript is a long way from C++. In the end, I decided to try embracing TypeScript generics and see where I ended up. After all, this whole process is meant to be a learning experience. I was comforted by the thought that TypeScript is simply a set of annotations on top of JavaScript. All that compiling TypeScript does is remove the annotations. The runtime code will be exactly the same regardless of whether functions are generic or based on fixed types.
 
 # Spreadsheet Data Interface
 
@@ -76,8 +76,7 @@ export interface VirtualSpreadsheetProps<Snapshot> {
 export function VirtualSpreadsheet<Snapshot>(props: VirtualSpreadsheetProps<Snapshot>) {
   const { data, minRowCount=100, minColumnCount=26 } = props;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const subscribeFn = React.useCallback(data.subscribe.bind(data), [data]);
+  const subscribeFn = React.useCallback((cb: () => void) => data.subscribe(cb), [data]); 
   const snapshot = React.useSyncExternalStore<Snapshot>(subscribeFn, 
     data.getSnapshot.bind(data), data.getServerSnapshot?.bind(data));
 ```
@@ -86,7 +85,7 @@ The most intrusive change was adding `data` to `VirtualSpreadsheetProps`. As I f
 
 Internally, the big change is the addition of the `useSyncExternalStore` hook, passing through the corresponding methods from the data interface object. This created two learning moments. 
 
-Initially, I passed `data.subscribe, data.getSnapshot, data.getServerSnapshot` to `useSyncExternalStore`. No errors in VS Code. No build or lint errors. Just a failure at runtime.
+Initially, I passed `data.subscribe, data.getSnapshot, data.getServerSnapshot` to `useSyncExternalStore`. No errors in VS Code. No build or lint errors. Just a failure at runtime when one of the methods uses a member variable. 
 
 What actually happens is that the methods get passed through but without `data` bound to `this`. You need to use the `bind` utility to make it work as you might expect.
 
@@ -94,7 +93,7 @@ Now the second learning moment. I initially passed `data.subscribe.bind(data)` a
 
 Of course, `data.subscribe.bind(data)` returns a new function each time it's called. I used the [`useCallback`](https://react.dev/reference/react/useCallback) hook to [memoize](https://en.wikipedia.org/wiki/Memoization) the bound function and ensure that it only changes if the `data` prop changes. 
 
-Annoyingly, I had to disable the ESLint rule `react-hooks/exhaustive-deps` for this line with a [configuration comment](https://eslint.org/docs/latest/use/configure/rules#using-configuration-comments-1). ESLint can only validate that dependencies are correct if the first argument to `useCallback` is an inline function definition. In this case dependencies are trivially correct as there's no way that `bind` can capture any additional context and the only argument is listed as a dependency. 
+This works, but fails the ESLint rule `react-hooks/exhaustive-deps`.  ESLint can only validate that dependencies are correct if the first argument to `useCallback` is an inline function definition. My first thought was to disable the rule for this line with a [configuration comment](https://eslint.org/docs/latest/use/configure/rules#using-configuration-comments-1). However, I realized that it would be straightforward to replace `bind` with an equivalent arrow function expression. 
 
 The rest of the changes were simple. 
 
@@ -185,8 +184,12 @@ You have to be really careful to maintain the expected snapshot semantics. Notic
 
 # Try It!
 
-How much time have you spent reading this page? How many rows of data does the demo spreadsheet contain? That's how many seconds it's been since you loaded the page. 
+How much time have you spent reading this page? How many rows of data does the demo spreadsheet contain? 
+
+{% include candid-iframe.html src="/assets/dist/react-spreadsheet-data-interface/index.html" width="100%" height="fit-content" %}
+
+That's how many seconds it's been since you loaded the page. 
 
 # Next Time
 
-* Editing something
+I've sketched out how `VirtualSpreadsheet` can display data from an arbitrary source. Next time, let's see if we can edit some data. 
