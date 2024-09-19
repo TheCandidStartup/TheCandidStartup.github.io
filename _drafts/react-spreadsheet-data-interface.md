@@ -192,4 +192,4 @@ That's how many seconds it's been since you loaded the page.
 
 # Next Time
 
-I've sketched out how `VirtualSpreadsheet` can display data from an arbitrary source. Next time, let's see if we can edit some data. 
+I've sketched out how `VirtualSpreadsheet` can display string data from an arbitrary source. Next time, we'll flesh out the data model so that we have parity with [Excel](https://support.microsoft.com/en-gb/office/type-function-45b4e688-4bc3-48b3-a105-ffa892995899). 
