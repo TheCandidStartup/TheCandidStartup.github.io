@@ -109,4 +109,4 @@ Naturally there are also plenty of unit tests in `RowColRef.test.ts`.
 
 What's that you say? The demo only has 26 columns, making the fancy formatting code pointless? 
 
-Good point. Next time we'll look at dynamically extending the size of the spreadsheet to whatever the user wants. 
+Good point. [Next time]({% link _posts/2024-09-16-react-spreadsheet-infinite-scrolling.md %}) we'll look at dynamically extending the size of the spreadsheet to whatever the user wants. 

@@ -3,7 +3,7 @@ title: Spreadsheet Data Interface
 tags: react-spreadsheet
 ---
 
-[Last time]({% link _drafts/react-spreadsheet-infinite-scrolling.md %}), I got fed up with the hardcoded placeholder content in my [react-spreadsheet]({% link _topics/react-spreadsheet.md %}) component. Time to make a start on the spreadsheet data interface that my component can use to retrieve content to display.
+[Last time]({% link _posts/2024-09-16-react-spreadsheet-infinite-scrolling.md %}), I got fed up with the hardcoded placeholder content in my [react-spreadsheet]({% link _topics/react-spreadsheet.md %}) component. Time to make a start on the spreadsheet data interface that my component can use to retrieve content to display.
 
 The  minimal interface is just size (`rowCount`, `columnCount`) and a `getCellValue` method. The tricky part is that data can change over time. The spreadsheet component needs to *react* to the change and update itself (pun intended).
 
@@ -176,7 +176,7 @@ class AppData implements SpreadsheetData<number> {
 }
 ```
 
-I still use cell names as content but now start with an empty spreadsheet and add a new row every second. Each row has 26 columns, so I can test how [infinite scrolling]({% link _drafts/react-spreadsheet-infinite-scrolling.md %}) feels when going past the end of existing content. 
+I still use cell names as content but now start with an empty spreadsheet and add a new row every second. Each row has 26 columns, so I can test how [infinite scrolling]({% link _posts/2024-09-16-react-spreadsheet-infinite-scrolling.md %}) feels when going past the end of existing content. 
 
 The subscribe method starts a timer which is canceled on unsubscribe. `AppData` has a member variable which is a `count` of the current number of rows. The `count` is incremented in the timer before invoking the callback to React.
 
