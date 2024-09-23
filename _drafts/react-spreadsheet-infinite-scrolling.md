@@ -74,9 +74,9 @@ The basic idea is simple enough. Work out when the user has scrolled to the end,
 
 The width of the horizontal scroll bar is equivalent to the width of the grid's visible content. I know the overall width of the component but that doesn't help. You need to consider the impact of padding, whether there's a vertical scroll bar reducing space for visible content, etc.
 
-To do this right, we need access to the `clientWidth` and `clientHeight` properties of the `VirtualGrid`'s top level element. But that's currently considered an internal implementation detail.
+To do this right, we need access to the `clientWidth` and `clientHeight` properties of the `VirtualGrid`'s top level element. That's currently considered an internal implementation detail.
 
-We could either extend the `OnScroll` interface to pass additional parameters (which would be a breaking change) or expose `clientWidth` and `clientHeight` properties on `VirtualGridProxy`. I went with the latter as it's a less intrusive change and more generally useful.
+We could extend the `OnScroll` interface to pass additional parameters (which would be a breaking change) or expose `clientWidth` and `clientHeight` properties on `VirtualGridProxy`. I went with the latter as it's a less intrusive change and more generally useful.
 
 The mysterious unused `rowOffset` and `columnOffset` variables from the previous section are the offsets to the end of the grid that we need to compare to. The code is a little fiddlier than I would like. We also need to make sure we don't enlarge the grid past the max size and deal with the possibility that `gridRef.current` might be undefined. 
 
@@ -139,7 +139,7 @@ Which is obvious when you think about how React works. I change the high water m
 
 We need to scroll the control after it's been rendered. In modern React, that means using an [effect](https://react.dev/reference/react/useEffect). An effect is code that React runs after the component has been rendered. 
 
-I could use the normal [`useEffect`](https://react.dev/reference/react/useEffect) but that would mean that the component would end up rendering twice. The user will see a visual "flash" if the browser paints both renders. React provides [`useLayoutEffect`](https://react.dev/reference/react/useLayoutEffect) for this kind of use case. It works like `useEffect` except that React ensures that the effect code, together with any state changes and renders triggered by it, complete before the browser paints. 
+I could use the normal [`useEffect`](https://react.dev/reference/react/useEffect) but that means the component will end up rendering twice. The user will see a visual "flash" if the browser paints both renders. React provides [`useLayoutEffect`](https://react.dev/reference/react/useLayoutEffect) for this kind of use case. It works like `useEffect` except that React ensures that the effect code, together with any state changes and renders triggered by it, complete before the browser paints. 
 
 We just need to work out how to keep track of the required scroll until the effect is triggered. We need to stash that information somewhere in the event handler and then retrieve it during the effect. In modern React the only choice is [state](https://react.dev/reference/react/useState) or a [ref](https://react.dev/reference/react/useRef).
 
