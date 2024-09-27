@@ -1,9 +1,10 @@
 ---
 title: Spreadsheet Data Interface
 tags: react-spreadsheet
+thumbnail: /assets/images/boring-spreadsheet.png
 ---
 
-[Last time]({% link _posts/2024-09-16-react-spreadsheet-infinite-scrolling.md %}), I got fed up with the hardcoded placeholder content in my [react-spreadsheet]({% link _topics/react-spreadsheet.md %}) component. Time to make a start on the spreadsheet data interface that my component can use to retrieve content to display.
+[Last time]({% link _posts/2024-09-16-react-spreadsheet-infinite-scrolling.md %}), I got fed up with the hardcoded placeholder content in my [react-spreadsheet]({% link _topics/react-spreadsheet.md %}) component. Time to make a start on the spreadsheet data interface that my component will use to retrieve content for display.
 
 The  minimal interface is just size (`rowCount`, `columnCount`) and a `getCellValue` method. The tricky part is that data can change over time. The spreadsheet component needs to *react* to the change and update itself (pun intended).
 
@@ -85,9 +86,9 @@ The most intrusive change was adding `data` to `VirtualSpreadsheetProps`. As I f
 
 Internally, the big change is the addition of the `useSyncExternalStore` hook, passing through the corresponding methods from the data interface object. This created two learning moments. 
 
-Initially, I passed `data.subscribe, data.getSnapshot, data.getServerSnapshot` to `useSyncExternalStore`. No errors in VS Code. No build or lint errors. Just a failure at runtime when one of the methods uses a member variable. 
+Initially, I passed `data.subscribe, data.getSnapshot, data.getServerSnapshot` to `useSyncExternalStore`. No errors in VS Code. No build or lint errors. Just a failure at runtime if one of the methods accesses a member variable. 
 
-What actually happens is that the methods get passed through but without `data` bound to `this`. You need to use the `bind` utility to make it work as you might expect.
+What actually happens is that the methods get passed through without `data` bound to `this`. You need to use the `bind` utility to make it work as you might expect.
 
 Now the second learning moment. I initially passed `data.subscribe.bind(data)` as the first argument. Everything worked but I later realized that React was unsubscribing and re-subscribing on every render. The [small print](https://react.dev/reference/react/useSyncExternalStore#caveats) in the React documentation explains that this will happen if you pass a different subscribe function on a subsequent render. 
 
