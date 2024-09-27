@@ -1,76 +1,259 @@
 ---
 title: Spreadsheet Data Model
-tags: react-spreadsheet
+tags: react-spreadsheet spreadsheets
+thumbnail: /assets/images/boring-spreadsheet.png
 ---
 
-wise words
+[Last time]({% link _drafts/react-spreadsheet-data-interface.md %}), we defined a minimal data interface and hooked it up to `VirtualSpreadsheet`. Now, I need to get a better understanding of the standard spreadsheet data model so that I can flesh out the interface to match. 
 
-* Have starting point for data interface
-* Need to understand Spreadsheet data model to flesh it out
-* Aim for initial data model is to be Excel compatible with ability to extend to more data types
+I'm aiming for an initial data model that's Excel compatible with the ability to extend to more data types in future.
 
 # Excel Data Model
 
-* Cell Value can be one of [four types](https://www.indeed.com/career-advice/career-development/excel-data-types)
-  * Number (64 bit floating point)
-  * Text (Unicode String)
-  * Logical Value (TRUE or FALSE)
-  * Error Value (up to 12 different error types depending on Excel [version](https://support.microsoft.com/en-gb/office/error-type-function-10958677-7c8d-44f7-ae77-b9a9ee6eefaa) [and](https://excelatfinance.com/online2/xlf-excel-errors.php) [source](https://spreadsheeto.com/formula-errors/))
-    1. `#NULL!`
-    2. `#DIV/0!`
-    3. `#VALUE!`
-    4. `#REF!`
-    5. `#NAME?`
-    6. `#NUM!`
-    7. `#N/A`
-    8. `#GETTING_DATA`
-    9. `#SPILL!`
-    10. `#UNKNOWN!`
-    11. `#FIELD!`
-    12. `#CALC!`
-* What about dates, time and currency?
-* They're all stored as numbers but formatted differently for display
-* Each cell has an associated number format which defines how number values are formatted for display
-* Complex language with warts, particularly around dates
+The core Excel data model is surprisingly simple. Each cell value can be one of [four types](https://www.indeed.com/career-advice/career-development/excel-data-types).
+* Number (64 bit floating point)
+* Text (Unicode String)
+* Logical Value (TRUE or FALSE)
+* Error Value
+  
+There are up to 12 different error types depending on Excel [version](https://support.microsoft.com/en-gb/office/error-type-function-10958677-7c8d-44f7-ae77-b9a9ee6eefaa) [and](https://excelatfinance.com/online2/xlf-excel-errors.php) [source](https://spreadsheeto.com/formula-errors/).
+1. `#NULL!`
+2. `#DIV/0!`
+3. `#VALUE!`
+4. `#REF!`
+5. `#NAME?`
+6. `#NUM!`
+7. `#N/A`
+8. `#GETTING_DATA`
+9. `#SPILL!`
+10. `#UNKNOWN!`
+11. `#FIELD!`
+12. `#CALC!`
+
+Hold on, what about dates, time and currency? 
+
+They're all stored as numbers but formatted differently for display. Each cell has an associated format string which defines how values are formatted.
+
+Many different formatting patterns are supported. It's a mini-language that has clearly grown over time, with many edge cases, particularly around dates. 
+
+By default, a `General` format is used. If the value is a number, a bunch of hard coded formatting rules are applied. Booleans are formatted as `TRUE` or `FALSE`. Strings are displayed as is. Otherwise, formatting proceeds using [rules encoded in the format string](https://support.microsoft.com/en-us/office/review-guidelines-for-customizing-a-number-format-c0a1d1fa-d3f4-4018-96b7-9c9354dd99f5).
+
+The Excel UI lets you pick from a list of built-in formats or create a custom format. However, internally everything uses the same format pattern language.
+
+# Cell Value
+
+Instead of returning a `string` for each cell value, I now return a `CellValue` type. 
+
+```ts
+export type CellErrorValue = '#NULL!' | 
+'#DIV/0!' |
+'#VALUE!' |
+'#REF!' |
+'#NAME?' |
+'#NUM!' |
+'#N/A' |
+'#GETTING_DATA' |
+'#SPILL!' |
+'#UNKNOWN!' |
+'#FIELD!' |
+'#CALC!';
+
+export interface CellError {
+  type: 'CellError',
+  value: CellErrorValue;
+};
+
+export type CellValue = string | number | boolean | null | undefined | CellError;
+```
+
+The Number, Text and Logical Excel data types map directly to `string`, `number` and `boolean` types in TypeScript. The `null` and `undefined` types can both be used to represent empty cells. The difference is that `null` is used when a user has explicitly made a cell blank, while `undefined` represents a cell that has never had a value. 
+
+I talked last time about being able to combine multiple data stores into a single view. If a cell is `undefined` in the first store, you would try the next store and so on. If a cell is `null` in the first store, you would immediately accept that the cell is empty.
+
+The only complex type is `CellError`. It's represented as an object so that it can easily be distinguished from the other types. It has a `value` property which is one of the 12 possible error values. It also has a type property which is always the string "CellError". 
+
+# Discriminating Unions
+
+This is part of a common TypeScript pattern called a [discriminating union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions). This is what lets us add support for additional types in future. Each additional type, for example `CellImage` or `CellBigInteger`, would be represented as an object with a different literal `type` string. 
+
+You can write runtime code that checks whether a `CellValue` is an object and then checks what `type` of object it is. If your code is correct, TypeScript's [narrowing analysis](https://www.typescriptlang.org/docs/handbook/2/narrowing.html) infers the type of object being accessed without having to do anything else.
+
+```ts
+function asString(value: CellValue): string {
+  if (value === null ||  value === undefined)
+    return "";
+
+  if (typeof value === 'object')
+      return value.value;
+
+  return value.toString();
+}
+```
+
+For example, with the current definition of `CellValue`, TypeScript can infer that any CellValue that's an object must be a `CellError` and it's safe to access the `value` property. If I later add additional object types to `CellValue`, TypeScript will report an error until I add code that checks the `type` property before accessing `value`.
+
+# Spreadsheet Data Interface v2
+
+The new version of `SpreadsheetData` returns a `CellValue` from `getCellValue`. It also adds a `getCellFormat` method. This returns a formatting string if one has been defined for the cell, otherwise `undefined`. 
+
+```ts
+export interface SpreadsheetData<Snapshot> {
+  subscribe: (onDataChange: () => void) => () => void,
+  getSnapshot(): Snapshot,
+
+  getRowCount(snapshot: Snapshot): number,
+  getColumnCount(snapshot: Snapshot): number,
+  getCellValue(snapshot: Snapshot, row: number, column: number): CellValue;
+  getCellFormat(snapshot: Snapshot, row: number, column: number): string | undefined;
+}
+```
+
+# Cell Formatting
+
+Formatting is standard spreadsheet functionality that doesn't care how big the spreadsheet is. I have no desire or need to write it myself. Fortunately, I found two open source implementations on NPM. Even better, neither of them add any additional third party dependencies.
+
+[SSF](https://www.npmjs.com/package/ssf) is a mature package that's part of the [SheetJS](https://sheetjs.com/) product. It has one of those dual licenses with a basic open source "community version", and a more fully featured commercial version. It was last published to NPM four years ago. Newer versions are only available direct from [SheetJS.com](https://cdn.sheetjs.com). 
+
+The alternative is [numfmt](https://www.npmjs.com/package/numfmt). This is a fully open source, standalone package with an MIT license. It supports the same features as SSF plus localization (only available in the commercial version of SSF) and parsing of input values.
+
+Obviously, I'm going to try `numfmt` first due to the additional features and less restrictive license.
+
+```ts
+function format(pattern: string, value: any, options?: {
+    dateErrorNumber?: boolean;
+    dateErrorThrows?: boolean;
+    dateSpanLarge?: boolean;
+    fillChar?: boolean;
+    ignoreTimezone?: boolean;
+    invalid?: string;
+    leap1900?: boolean;
+    locale?: string;
+    nbsp?: boolean;
+    overflow?: string;
+    skipChar?: boolean;
+    throws?: boolean;
+}): string;
+```
+
+The `format` function has an intimidating list of options. The most intriguing is `leap1900`.
+
+> Simulate the Lotus 1-2-3 [1900 leap year bug](https://docs.microsoft.com/en-us/office/troubleshoot/excel/wrongly-assumes-1900-is-leap-year).
+> It is a requirement in the Ecma OOXML specification so it is on by default.
+
+Hold tight, there's a lot to unpack here.
+
+# Serial Dates
+
+No, not the natural end result for monogamists with commitment issues. Serial dates are how spreadsheets represent dates (and times) using a single number. The number is interpreted as the number of days since some base date. Times are represented as fractions of days. 
+
+The original version of Excel for Mac came out in September 1985. It used a base date of 1904-01-01, which matched how MacOS represented dates at the time. 
+
+The first version of Excel for Windows was Excel 2 in October 1987. The leading spreadsheet product for PC was Lotus 1-2-3. It used a base date of 1900-01-00 (1900-01-01 is serial 1). To ensure compatibility with Lotus 1-2-3, the Windows version of Excel used the same base date. It was also bug for bug compatible, including [treating 1900 as a leap year]((https://docs.microsoft.com/en-us/office/troubleshoot/excel/wrongly-assumes-1900-is-leap-year)) (it isn't) and formatting serial 0 as 1900-01-00.
+
+When [Visual Basic was integrated into Excel 5]((https://www.joelonsoftware.com/2006/06/16/my-first-billg-review/)) (released in 1993), it used yet another date system. VBA doesn't reproduce the leap year bug. It uses 1899-12-30 as a base date so that its serial numbers are the same as Excel for dates from 1900-03-01 onwards. 
+
+Microsoft went all in on XML and open standards, switching from a proprietary binary format to an open format based on XML and ZIP. The format was published as the [ECMA-376](https://ecma-international.org/publications-and-standards/standards/ecma-376/) standard in December 2005. This is the "Ecma OOXML" specification mentioned in the `numfmt` documentation. It requires implementations to support both the 1900 date base system (including leap year bug) and the 1904 date base system used on the Mac. There's a `date19004` flag per Workbook in the file format to tell you which to use.
+
+The second edition of ECMA-376 came out in December 2008. It documents three date systems.
+  * A new default "1900 date base system" which uses the same approach as VBA. The base date is 1899-12-30 and 1900 is NOT a leap year. It also allows negative serial numbers, supporting dates before 1900 for the first time. The documented range is -9999-01-01 (serial -4346018) to 9999-12-31 (serial 2958465).
+  * 1900 backward compatibility date base system (1900 is a leap year). Range from 1900-01-01 (serial 1) to 9999-12-31 (serial 2958465).
+  * 1904 backward compatibility date base system. Range from 1904-01-01 (serial 0) to 9999-12-31 (serial 2957003)
+
+An additional `dateCompatibility` flag in the file format is used to distinguish between the new and backward compatibility date systems. 
+
+Things stayed the same through the third edition in June 2011 before one final change for the fourth edition in December 2012. Now we're back down to two date systems. The 1900 backward compatibility system has been removed. Strangely, the range for the default 1900 base date system was reduced so that it starts at 0001-01-01 (serial -693593). Maybe they decided negative years were meaningless, or no one ever implemented them. 
+
+This is the date system that Google Sheets uses. Naively, I assumed this meant that Excel on Windows had also finally aligned with VBA and got rid of the leap year bug and that Excel on Mac still had its own 1904 based date system. Neither is true.
+
+Excel [still](https://learn.microsoft.com/en-us/office/troubleshoot/excel/wrongly-assumes-1900-is-leap-year) treats 1900 as a leap year and still doesn't support dates earlier than 1900-01-01. Microsoft says potential backwards compatibility issues mean its not worth fixing when the date is only wrong for Jan/Feb 1900. If you want to work with dates before 1900, Microsoft [recommends that you write a VBA function](https://learn.microsoft.com/en-us/office/troubleshoot/excel/calculate-age-before-1-1-1900) to do it. 
+
+I'm with Google Sheets and ECMA-376 on this one. We're going to use the extended range, leap year free, ECMA standard, 1900 date base system. Serial values are aligned with Excel for every date apart from Jan/Feb 1900, which Excel clearly doesn't care about anyway.
+
+# Formatting Options
+
 * Standardized as ECMA-376
-* Two open source implementations on npm. Neither has any third party dependencies.
-  * [SSF](https://www.npmjs.com/package/ssf) - "community version" part of SheetJS product. Last publish to npm was four years ago. Get latest from `cdn.sheetjs.com`. 
-  * [numfmt](https://www.npmjs.com/package/numfmt) - standalone package. "True" open source. MIT license. Same features as SSF plus localization (only in SSF Pro) and parsing of input values to determine value and format.
-* Will try numfmt first due to the additional features and less restrictive license.
-* By default the format is `General`. If the value is a number, applies a bunch of hard coded formatting rules. Booleans are formatted as `TRUE` or `FALSE`. Strings are displayed as is. 
-* Otherwise uses the rules encoded in the [format string](https://support.microsoft.com/en-us/office/review-guidelines-for-customizing-a-number-format-c0a1d1fa-d3f4-4018-96b7-9c9354dd99f5).
-* Excel UI lets you pick from a list of built in formats or create a custom format. Internally everything uses the same format spec.
-* When typing text into Excel, the input is parsed to try and determine the format. The end result is that both value and format are set for the cell.
-* If you type into a cell with a pure text format, the string is [left as is](https://support.microsoft.com/en-gb/office/stop-automatically-changing-numbers-to-dates-452bd2db-cc96-47d1-81e4-72cec11c4ed8).
-* Not clear if there are special cases when typing into cells with other kinds of format already applied.
-* From StackOverflow questions it looks like Excel will parse general date input and set value and format regardless of any existing format.
 * `numfmt` default options support extended range and the 1900 leap year bug. Which is weird because it's a combination that Excel doesn't support. If you want Excel compatibility you need restricted range and leap year bug. If you want compatibility with Google Sheets, VBA and everything else, use extended range and no leap year bug.
 * `numfmt` default is an attempt at achieving maximum compatibility. It aligns with Excel for dates from 1900-01-01 onwards. It even preserves Excel's *interesting* behavior of formatting serial 0 as 1900-01-00. It aligns with the new ECMA date system for dates from 1899-12-29 and earlier. Which means it doesn't support 1899-12-30 and 1899-12-31 at all.
 * Up to 1899-12-29 are ECMA style (not supported in Excel), 1899-12-30 to 1900-02-29 are Excel style (1 off compared with ECMA), 1900-03-01 and onwards are the same for both Excel and ECMA. 
 
-# Serial Dates
+# Return of the World's Most Boring Spreadsheet
 
-* Not natural end result for monogamists with commitment issues
-* Excel for Mac with 1904 date system (matching Mac system date), September 1985
-* Excel 2 for Windows with 1900 date system with leap year bug, matching Lotus 1-2-3. October 1987.
-* [BillG review](https://www.joelonsoftware.com/2006/06/16/my-first-billg-review/) for Excel/VBA integration, June 1992
-  * VBA uses 1899-12-30 as base date so it can avoid reproducing leap year bug but still align with Excel for most dates
-  * Excel 5.0 with VBA released in 1993
-* [ECMA-376](https://ecma-international.org/publications-and-standards/standards/ecma-376/) 1st Edition, December 2005
-  * 1900 date base system (required to treat 1900 as leap year). Range from 1900-01-01 (serial 1) to 9999-12-31 (serial 2958465)
-  * 1904 data base system. Range from 1904-01-01 (serial 0) to 9999-12-31 (serial 2957003)
-  * `date1904` flag in Workbook XML part if using 1904 base. 1900 is the default.
-* ECMA-376 2nd Edition, December 2008
-  * 1900 date base system (1900 is NOT a leap year). Range from -9999-01-01 (serial -4346018) to 9999-12-31 (serial 2958465). Base date (serial 0) is 1899-12-30. Same approach as VBA. Aligns with serial values of 1900 backwards compatibility system except for Jan/Feb 1900.
-  * 1900 backward compatibility date base system (1900 is a leap year). Range from 1900-01-01 (serial 1) to 9999-12-31 (serial 2958465).
-  * 1904 backward compatibility date base system. Range from 1904-01-01 (serial 0) to 9999-12-31 (serial 2957003)
-  * `date1904` flag if 1904 based, `dataCompatibility` flag if 1900 backward compatibility. Non leap year 1900 is the default.
-* ECMA-376 3rd Edition, June 2011
-  * Same as second edition
-* ECMA-376 4th Edition, December 2012
-  * 1900 date base system (1900 is NOT a leap year). Range from 0001-01-01 (serial -693593) to 9999-12-31 (serial 2958465). Base date (serial 0) is 1899-12-30.
-  * 1904 date base system. Range from 0001-01-01 (serial -695055) to 9999-12-31 (serial 2957003)
-  * `date1904` flag in Workbook XML part if using 1904 base. 1900 is the default.
-  * Despite the evolution of ECMA-376, Excel [still](https://learn.microsoft.com/en-us/office/troubleshoot/excel/wrongly-assumes-1900-is-leap-year) treats 1900 as a leap year. Microsoft says potential backwards compatibility issues mean its not worth fixing when date is only wrong for Jan/Feb 1900.
-  * Excel [still doesn't](https://learn.microsoft.com/en-us/office/troubleshoot/excel/calculate-age-before-1-1-1900) support dates before 1900-01-01, suggesting that users use VBA functions if they need to work with earlier dates.
-  * I'm with Google Sheets and ECMA-376 on this one. Going to use the extended range, leap year free, 1900 data base system. Serial values are aligned with Excel for every date apart from Jan/Feb 1900 which Excel clearly doesn't care about anyway.
+{% include candid-image.html src="/assets/images/boring-spreadsheet.png" alt="The World's Most Boring Spreadsheet" %}
+
+* Added date and time for each purchase
+* Internet store with a sale every minute
+* Live simulation
+
+#  Try It!
+
+# Boring Data
+
+The implementation is almost as boring as the data itself. The main cell values are defined by :
+
+```ts
+const serialDate = baseDate + row / (24*60);
+switch (column) { 
+  case 0: return serialDate;
+  case 1: return serialDate;
+  case 2: return "Nails";
+  case 3: return 0.01;
+  case 4: return 80;
+  case 5: return 0.80;
+  case 6: return 0.15;
+  case 7: return 0.12;
+  case 8: return 0.92;
+  case 9: return 0.08;
+  case 10: return 1.00;
+  case 11: return row;
+}
+```
+
+The totals row at the end is :
+
+```ts
+    switch (column) { 
+      case 0: return baseDate + 1 / (24*60);
+      case 1: return baseDate + count / (24*60);
+      case 2: return count;
+      case 3: return 0.01;
+      case 4: return 80;
+      case 5: return 0.80 * count;
+      case 6: return 0.15;
+      case 7: return 0.12 * count;
+      case 8: return 0.92 * count;
+      case 9: return 0.08 * count;
+      case 10: return count;
+      case 11: return count;
+    }
+```
+
+The most interesting thing is that the cell values are simple numbers and strings, as they would be in a real spreadsheet. The formatting is doing most of the work :
+
+```ts
+getCellFormat(snapshot: number, row: number, column: number) { 
+  if (row == snapshot + 3 && column == 1)
+    return "yyyy-mm-dd";
+
+  switch (column) {
+    case 0:
+      return "yyyy-mm-dd";
+    case 1:
+      return "hh:mm";
+    case 6:
+      return "0%";
+    case 3:
+    case 5:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+      return "$0.00";
+    default:
+      return undefined; 
+  }
+}
+```
+
+# Next Time
+
