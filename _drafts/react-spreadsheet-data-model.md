@@ -76,7 +76,7 @@ The only complex type is `CellError`. It's represented as an object so that it c
 
 This is part of a common TypeScript pattern called a [discriminating union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions). This is what lets us add support for additional types in future. Each additional type, for example `CellImage` or `CellBigInteger`, would be represented as an object with a different literal `type` string. 
 
-You can write runtime code that checks whether a `CellValue` is an object and then checks what `type` of object it is. If your code is correct, TypeScript's [narrowing analysis](https://www.typescriptlang.org/docs/handbook/2/narrowing.html) infers the type of object being accessed without having to do anything else.
+You can write runtime code that checks whether a `CellValue` is an object and then checks what `type` the object has. If your code is correct, TypeScript's [narrowing analysis](https://www.typescriptlang.org/docs/handbook/2/narrowing.html) infers the type of object being accessed without having to do anything else.
 
 ```ts
 function asString(value: CellValue): string {
@@ -152,12 +152,12 @@ The first version of Excel for Windows was Excel 2 in October 1987. The leading 
 
 When [Visual Basic was integrated into Excel 5]((https://www.joelonsoftware.com/2006/06/16/my-first-billg-review/)) (released in 1993), it used yet another date system. VBA doesn't reproduce the leap year bug. It uses 1899-12-30 as a base date so that its serial numbers are the same as Excel for dates from 1900-03-01 onwards. 
 
-Microsoft went all in on XML and open standards, switching from a proprietary binary format to an open format based on XML and ZIP. The format was published as the [ECMA-376](https://ecma-international.org/publications-and-standards/standards/ecma-376/) standard in December 2005. This is the "Ecma OOXML" specification mentioned in the `numfmt` documentation. It requires implementations to support both the 1900 date base system (including leap year bug) and the 1904 date base system used on the Mac. There's a `date19004` flag per Workbook in the file format to tell you which to use.
+Microsoft went all in on XML and open standards, switching from a proprietary binary format to an open format based on XML and ZIP. The format was published as the [ECMA-376](https://ecma-international.org/publications-and-standards/standards/ecma-376/) standard in December 2005. This is the "Ecma OOXML" specification mentioned in the `numfmt` documentation. It requires implementations to support both the 1900 date base system (including leap year bug) and the 1904 date base system used on the Mac. There's a `date1904` flag per Workbook in the file format to tell you which to use.
 
 The second edition of ECMA-376 came out in December 2008. It documents three date systems.
   * A new default "1900 date base system" which uses the same approach as VBA. The base date is 1899-12-30 and 1900 is NOT a leap year. It also allows negative serial numbers, supporting dates before 1900 for the first time. The documented range is -9999-01-01 (serial -4346018) to 9999-12-31 (serial 2958465).
-  * 1900 backward compatibility date base system (1900 is a leap year). Range from 1900-01-01 (serial 1) to 9999-12-31 (serial 2958465).
-  * 1904 backward compatibility date base system. Range from 1904-01-01 (serial 0) to 9999-12-31 (serial 2957003)
+  * "1900 backward compatibility date base system" (1900 is a leap year). Range from 1900-01-01 (serial 1) to 9999-12-31 (serial 2958465).
+  * "1904 backward compatibility date base system". Range from 1904-01-01 (serial 0) to 9999-12-31 (serial 2957003)
 
 An additional `dateCompatibility` flag in the file format is used to distinguish between the new and backward compatibility date systems. 
 
@@ -167,24 +167,36 @@ This is the date system that Google Sheets uses. Naively, I assumed this meant t
 
 Excel [still](https://learn.microsoft.com/en-us/office/troubleshoot/excel/wrongly-assumes-1900-is-leap-year) treats 1900 as a leap year and still doesn't support dates earlier than 1900-01-01. Microsoft says potential backwards compatibility issues mean its not worth fixing when the date is only wrong for Jan/Feb 1900. If you want to work with dates before 1900, Microsoft [recommends that you write a VBA function](https://learn.microsoft.com/en-us/office/troubleshoot/excel/calculate-age-before-1-1-1900) to do it. 
 
-I'm with Google Sheets and ECMA-376 on this one. We're going to use the extended range, leap year free, ECMA standard, 1900 date base system. Serial values are aligned with Excel for every date apart from Jan/Feb 1900, which Excel clearly doesn't care about anyway.
+Excel on Mac has used the same date system as the Windows version for the last decade. The 1904 system is only supported for backwards compatibility with old versions of Excel.
+
+I'm with Google Sheets and ECMA-376 on this one. We're going to use the extended range, leap year free, ECMA standard, 1900 date base system. Serial values are aligned with Excel for every date apart from Jan/Feb 1900, which Excel clearly doesn't care about anyway. We'll eventually need to support import of Excel files. We can fix up dates during import processing if needed.
 
 # Formatting Options
 
-* Standardized as ECMA-376
-* `numfmt` default options support extended range and the 1900 leap year bug. Which is weird because it's a combination that Excel doesn't support. If you want Excel compatibility you need restricted range and leap year bug. If you want compatibility with Google Sheets, VBA and everything else, use extended range and no leap year bug.
-* `numfmt` default is an attempt at achieving maximum compatibility. It aligns with Excel for dates from 1900-01-01 onwards. It even preserves Excel's *interesting* behavior of formatting serial 0 as 1900-01-00. It aligns with the new ECMA date system for dates from 1899-12-29 and earlier. Which means it doesn't support 1899-12-30 and 1899-12-31 at all.
-* Up to 1899-12-29 are ECMA style (not supported in Excel), 1899-12-30 to 1900-02-29 are Excel style (1 off compared with ECMA), 1900-03-01 and onwards are the same for both Excel and ECMA. 
+The `numfmt` default options support extended range *and* the 1900 leap year bug. Which is weird because it's a combination that Excel has never supported. If you want full Excel compatibility you need restricted range and leap year bug. If you want compatibility with Google Sheets, VBA and everything else, use extended range and no leap year bug.
+
+I think the `numfmt` default is an attempt at achieving maximum compatibility. It aligns with Excel for dates from 1900-01-01 onwards. It even preserves Excel's *interesting* behavior of formatting serial 0 as 1900-01-00. It aligns with the new ECMA date system for dates from 1899-12-29 and earlier. Which means that in addition to supporting the non-existent 1900-02-29 it doesn't support 1899-12-30 and 1899-12-31 at all.
+
+```ts
+const numfmtOptions = {
+  leap1900: false,
+  dateSpanLarge: true
+}
+```
+
+In case the defaults change in future I'm explicitly setting both options the way I want them.
 
 # Return of the World's Most Boring Spreadsheet
 
+It's been 18 months since I [first introduced you]({% link _posts/2023-01-30-boring-spreadsheet.md %}) to the world's most boring spreadsheet. At one million rows and ten million cells it's right at the limits of what Excel and Google Sheets allow. 
+
 {% include candid-image.html src="/assets/images/boring-spreadsheet.png" alt="The World's Most Boring Spreadsheet" %}
 
-* Added date and time for each purchase
-* Internet store with a sale every minute
-* Live simulation
+I've finally reached the point where I can implement it, albeit for display purposes only. To make things more interesting, I've two new columns that record the date and time for each purchase. The hardware store has an online presence now, with a new sale hitting the live spreadsheet every minute.
 
 #  Try It!
+
+{% include candid-iframe.html src="/assets/dist/react-spreadsheet-data-model/index.html" width="100%" height="fit-content" %}
 
 # Boring Data
 
@@ -257,3 +269,4 @@ getCellFormat(snapshot: number, row: number, column: number) {
 
 # Next Time
 
+Now that I have some plausible looking data in my spreadsheet, I'm itching to start changing it. Next time, we'll make a start on supporting editing. 
