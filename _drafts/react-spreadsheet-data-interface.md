@@ -10,7 +10,7 @@ The  minimal interface is just size (`rowCount`, `columnCount`) and a `getCellVa
 
 # useSyncExternalStore
 
-Luckily React has the [useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore) hook for just this use case. You pass the hook two functions: `subscribe` and `getSnapshot`. React calls the `subscribe` function with a callback for you to invoke whenever the content of the data store may have changed. React calls the `getSnapshot` function to check whether the data store content has changed since the last render.
+Luckily, React has the [useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore) hook for just this use case. You pass the hook two functions: `subscribe` and `getSnapshot`. React calls the `subscribe` function with a callback for you to invoke whenever the content of the data store may have changed. React calls the `getSnapshot` function to check whether the data store content has changed since the last render.
 
 The result of `getSnapshot` can be whatever you like, as long as it's comparable using `object.is`. The snapshot must be immutable. React uses the snapshot mechanism to ensure that everything rendered comes from a consistent point in time. 
 
@@ -30,9 +30,9 @@ export function useSyncExternalStore<Snapshot>(
 
 Which is probably why my first reaction on seeing the `useSyncExternalStore` definition was to pick a fixed type to use as a snapshot and minimize the contamination of my code with generics. My main implementation of a data store is going to be based on event sourcing, so I can use an index into the event log as a snapshot. Nice and simple. A snapshot is just a number.
 
-I've also been thinking about how to combine multiple data stores into a single view. You could have a `MultiSpreadsheetData` interface that wrapped an array of `SpreadsheetData` instances. The `getCellValue` method would call each child store in turn until it found a `defined` value. You could have a read-only reference data store and overlay an empty editable data store. 
+I've also been thinking about how to combine multiple data stores into a single view. You could have a `MultiSpreadsheetData` interface that wrapped an array of `SpreadsheetData` instances. The `getCellValue` method would call each child store in turn until it found a defined value. You could have a read-only reference data store and overlay an empty editable data store. 
 
-Unfortunately, that needs a more complex snapshot. In general, `MultiSpreadsheetData` would need to return an array containing each child store's snapshot. I briefly thought about an end run around the type system by declaring `Snapshot` as `unknown` or `any`.
+Unfortunately, that needs a more complex snapshot. In general, `MultiSpreadsheetData` would need to return an array containing each child store's snapshot. I briefly thought about an end run around the type system by declaring `Snapshot` as `unknown` or `any`. Then I realized that I'm better than that.
 
 TypeScript is a long way from C++. In the end, I decided to try embracing TypeScript generics and see where I ended up. After all, this whole process is meant to be a learning experience. I was comforted by the thought that TypeScript is simply a set of annotations on top of JavaScript. All that compiling TypeScript does is remove the annotations. The runtime code will be exactly the same regardless of whether functions are generic or based on fixed types.
 
@@ -40,7 +40,7 @@ TypeScript is a long way from C++. In the end, I decided to try embracing TypeSc
 
 ```ts
 export interface SpreadsheetData<Snapshot> {
-  subscribe: (onDataChange: () => void) => () => void,
+  subscribe(onDataChange: () => void): () => void,
   getSnapshot(): Snapshot,
 
   getRowCount(snapshot: Snapshot): number,
