@@ -4,7 +4,7 @@ tags: react-spreadsheet spreadsheets
 thumbnail: /assets/images/boring-spreadsheet.png
 ---
 
-[Last time]({% link _drafts/react-spreadsheet-data-interface.md %}), we defined a minimal data interface and hooked it up to `VirtualSpreadsheet`. Now, I need to get a better understanding of the standard spreadsheet data model so that I can flesh out the interface to match. 
+[Last time]({% link _posts/2024-09-30-react-spreadsheet-data-interface.md %}), we defined a minimal data interface and hooked it up to `VirtualSpreadsheet`. Now, I need to get a better understanding of the standard spreadsheet data model so that I can flesh out the interface to match. 
 
 I'm aiming for an initial data model that's Excel compatible with the ability to extend to more data types in future.
 

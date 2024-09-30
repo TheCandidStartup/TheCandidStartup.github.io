@@ -197,4 +197,4 @@ How does the infinite scrolling feel to you? To me it seems a little trigger hap
 
 This impression is accentuated because I don't have any real content in the grid, just each cell's reference as a place holder. It might feel more reasonable if scrolling to the end results in a couple of rows or columns of empty space past the end of the content.
 
-Next time, I'll make a start on the spreadsheet data interface, get some real (fake) content in place and see how the infinite scrolling feels with that.
+[Next time]({% link _posts/2024-09-30-react-spreadsheet-data-interface.md %}), I'll make a start on the spreadsheet data interface, get some real (fake) content in place and see how the infinite scrolling feels with that.
