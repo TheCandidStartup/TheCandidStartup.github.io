@@ -38,7 +38,7 @@ Many different formatting patterns are supported. It's a mini-language that has 
 
 By default, a `General` format is used. If the value is a number, a bunch of hard coded formatting rules are applied. Booleans are formatted as `TRUE` or `FALSE`. Strings are displayed as is. Otherwise, formatting proceeds using [rules encoded in the format string](https://support.microsoft.com/en-us/office/review-guidelines-for-customizing-a-number-format-c0a1d1fa-d3f4-4018-96b7-9c9354dd99f5).
 
-The Excel UI lets you pick from a list of built-in formats or create a custom format. However, internally everything uses the same format pattern language.
+The Excel UI lets you pick from a list of built-in formats or create a custom format. Internally everything uses the same format pattern language.
 
 # Cell Value
 
@@ -74,7 +74,7 @@ The only complex type is `CellError`. It's represented as an object so that it c
 
 # Discriminating Unions
 
-This is part of a common TypeScript pattern called a [discriminating union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions). This is what lets us add support for additional types in future. Each additional type, for example `CellImage` or `CellBigInteger`, would be represented as an object with a different literal `type` string. 
+`CellError` uses a common TypeScript pattern called a [discriminating union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions). This is what lets us add support for additional types in future. Each additional type, for example `CellImage` or `CellBigInteger`, would be represented as an object with a different literal `type` string. 
 
 You can write runtime code that checks whether a `CellValue` is an object and then checks what `type` the object has. If your code is correct, TypeScript's [narrowing analysis](https://www.typescriptlang.org/docs/handbook/2/narrowing.html) infers the type of object being accessed without having to do anything else.
 
@@ -110,7 +110,7 @@ export interface SpreadsheetData<Snapshot> {
 
 # Cell Formatting
 
-Formatting is standard spreadsheet functionality that doesn't care how big the spreadsheet is. I have no desire or need to write it myself. Fortunately, I found two open source implementations on NPM. Even better, neither of them add any additional third party dependencies.
+Formatting is standard spreadsheet functionality that doesn't care how big the spreadsheet is. I have no desire to write it myself. Fortunately, I found two open source implementations on NPM. Even better, neither of them add any additional third party dependencies.
 
 [SSF](https://www.npmjs.com/package/ssf) is a mature package that's part of the [SheetJS](https://sheetjs.com/) product. It has one of those dual licenses with a basic open source "community version", and a more fully featured commercial version. It was last published to NPM four years ago. Newer versions are only available direct from [SheetJS.com](https://cdn.sheetjs.com). 
 
@@ -169,13 +169,15 @@ Excel [still](https://learn.microsoft.com/en-us/office/troubleshoot/excel/wrongl
 
 Excel on Mac has used the same date system as the Windows version for the last decade. The 1904 system is only supported for backwards compatibility with old versions of Excel.
 
-I'm with Google Sheets and ECMA-376 on this one. We're going to use the extended range, leap year free, ECMA standard, 1900 date base system. Serial values are aligned with Excel for every date apart from Jan/Feb 1900, which Excel clearly doesn't care about anyway. We'll eventually need to support import of Excel files. We can fix up dates during import processing if needed.
+I'm with Google Sheets and ECMA-376 on this one. We're going to use the extended range, leap year bug free, ECMA standard, 1900 date base system. Serial values are aligned with Excel for every date apart from Jan/Feb 1900, which Excel clearly doesn't care about anyway. We'll eventually need to support import of Excel files. We can fix up dates during import processing if needed.
 
 # Formatting Options
 
 The `numfmt` default options support extended range *and* the 1900 leap year bug. Which is weird because it's a combination that Excel has never supported. If you want full Excel compatibility you need restricted range and leap year bug. If you want compatibility with Google Sheets, VBA and everything else, use extended range and no leap year bug.
 
 I think the `numfmt` default is an attempt at achieving maximum compatibility. It aligns with Excel for dates from 1900-01-01 onwards. It even preserves Excel's *interesting* behavior of formatting serial 0 as 1900-01-00. It aligns with the new ECMA date system for dates from 1899-12-29 and earlier. Which means that in addition to supporting the non-existent 1900-02-29 it doesn't support 1899-12-30 and 1899-12-31 at all.
+
+In case the defaults change in future I'm explicitly setting both options the way I want them.
 
 ```ts
 const numfmtOptions = {
@@ -184,15 +186,13 @@ const numfmtOptions = {
 }
 ```
 
-In case the defaults change in future I'm explicitly setting both options the way I want them.
-
 # Return of the World's Most Boring Spreadsheet
 
 It's been 18 months since I [first introduced you]({% link _posts/2023-01-30-boring-spreadsheet.md %}) to the world's most boring spreadsheet. At one million rows and ten million cells it's right at the limits of what Excel and Google Sheets allow. 
 
 {% include candid-image.html src="/assets/images/boring-spreadsheet.png" alt="The World's Most Boring Spreadsheet" %}
 
-I've finally reached the point where I can implement it, albeit for display purposes only. To make things more interesting, I've two new columns that record the date and time for each purchase. The hardware store has an online presence now, with a new sale hitting the live spreadsheet every minute.
+I've finally reached the point where I can implement it, albeit for display purposes only. To make things more interesting, I've added two new columns that record the date and time for each purchase. The hardware store has an online presence now, with a new sale hitting the live spreadsheet every minute.
 
 #  Try It!
 
