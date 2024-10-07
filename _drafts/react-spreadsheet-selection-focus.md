@@ -5,7 +5,7 @@ tags: react-spreadsheet
 thumbnail: /assets/images/react-spreadsheet/selected-row.png
 ---
 
-I'm [about to]({% link _drafts/react-spreadsheet-data-model.md %}) add support for editing data in my React Spreadsheet component. Before I can do that, I need to be able to select the cell I want to edit. Before I can do that, I need to add some grid lines to make it easier to see where the cell boundaries are.
+I'm [about to]({% link _posts/2024-10-07-react-spreadsheet-data-model.md %}) add support for editing data in my React Spreadsheet component. Before I can do that, I need to be able to select the cell I want to edit. Before I can do that, I need to add some grid lines to make it easier to see where the cell boundaries are.
 
 # Grid Lines
 
@@ -151,7 +151,7 @@ When comparing interior elements in the tree, React tries to match up correspond
 
 The profiler shows that cells are not being matched at all. All existing cells are removed and new ones added. React uses keys defined on each child to match them up. The keys look fine to me.
 
-This is a common question on [StackOverflow](https://stackoverflow.com/questions/22573494/react-js-input-losing-focus-when-rerendering). Part of the reconciliation story that I'd glossed over is that children can only match if they have the same type. Which again looks fine to me. All cells in the grid use the `Cell` component. Of course they're the same. 
+This is a common question on [StackOverflow](https://stackoverflow.com/questions/22573494/react-js-input-losing-focus-when-rerendering). Part of the reconciliation story that I'd glossed over is that children can only match if they have the same type. Which again looks fine to me. All cells in the grid use the `Cell` component. Of course they're the same type. 
 
 They're not. In modern React a component is a function. The `Cell` component depends on context from `VirtualSpreadsheet`, so I implemented it as a nested function. Which means that it's a different function instance each time `VirtualSpreadsheet` renders. Cue another learning moment.
 
