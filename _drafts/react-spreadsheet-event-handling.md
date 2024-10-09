@@ -108,3 +108,94 @@ const outerGridRender: VirtualOuterRender = ({...rest}, ref) => {
   * Use onChangedEvent to flip mode
   * In edit mode input is positioned on top of cell so it is seen
   * If focus cell is not present in grid, position input somewhere arbitrary where it won't be seen but can receive input
+
+# Syncing State
+
+* To position focus sink correctly need to know the grid's scroll state
+* Need to share state between `VirtualSpreadsheet` and `VirtualGrid`
+* Usual advice is to [lift shared state up](https://react.dev/learn/sharing-state-between-components) so that there's a single source of truth in the highest level component. However, `VirtualGrid` won't work as a standalone component without it's own scroll state. In the end I decided to sync rather than share state.
+* I already do this in a hacky way by scrolling the header components to match the grid in it's `onScroll` handler. Now I'm formalizing it by updating state in `VirtualSpreadsheet`.
+
+```ts
+  const [gridScrollState, setGridScrollState] = 
+    React.useState<[ScrollState,ScrollState]>([defaultScrollState, defaultScrollState]);
+
+  ...
+
+  function onScroll(rowOffsetValue: number, columnOffsetValue: number, 
+                    rowState: ScrollState, columnState: ScrollState) {
+    ...
+    setGridScrollState([rowState, columnState]);
+  }
+```
+
+* Can now update generic handler with an explicit focus sink
+
+```tsx
+const outerGridRender: VirtualOuterRender = ({children, ...rest}, ref) => {
+  let focusSink;
+  if (focusCell) {
+    const row = focusCell[0];
+    const col = focusCell[1];
+
+    ...
+
+    focusSink = <input
+      ref={focusSinkRef}
+      className={join(theme?.VirtualSpreadsheet_Cell,theme?.VirtualSpreadsheet_Cell__Focus)}
+      type={"text"}
+      onKeyDown={(event) => {
+        switch (event.key) {
+          case "ArrowDown": focusTo(row+1,col); event.preventDefault(); break;
+          case "ArrowUp": focusTo(row-1,col); event.preventDefault(); break;
+          case "ArrowLeft": focusTo(row,col-1); event.preventDefault(); break;
+          case "ArrowRight": focusTo(row,col+1); event.preventDefault(); break;
+        }
+      }}
+      style={{ zIndex: -1, position: "absolute", top: focusTop, height: focusHeight, left: focusLeft, width: focusWidth }}
+    />
+  }
+  return <div ref={ref} {...rest}>
+    {children}
+    {focusSink}
+  </div>
+}
+```
+
+* We only add the focus sink if there's a focused cell
+* Position focus sink underneath focused cell using `zIndex` property
+* Idea is that when user starts typing content we can go into "edit mode" by setting `zIndex` to 1 so that input appears on top of cell.
+* Working out the position of the focus sink is more complex than you might think
+
+```ts
+const originTop = gridScrollState[0].scrollOffset;
+const focusHeight = rowMapping.itemSize(row);
+const maxHeight = Math.max(height, focusHeight*3);
+let focusTop = rowMapping.itemOffset(row) - gridScrollState[0].renderOffset;
+if (focusTop < originTop - maxHeight)
+  focusTop = originTop - maxHeight;
+else if (focusTop > originTop + height + maxHeight)
+  focusTop = originTop + height + maxHeight;
+
+const originLeft = gridScrollState[1].scrollOffset;
+const focusWidth = columnMapping.itemSize(col);
+const maxWidth = Math.max(width, focusWidth*3);
+let focusLeft = columnMapping.itemOffset(col) - gridScrollState[1].renderOffset;
+if (focusLeft < originLeft - maxWidth)
+  focusLeft = originLeft - maxWidth;
+else if (focusLeft > originLeft + width + maxWidth)
+  focusLeft = originLeft + width + maxWidth;
+```
+
+* Need to account for paged virtual scrolling implementation in grid
+* Simple enough when focus cell is visible in viewport. Use row and column mapping to get size and offset to focus cell then use `renderOffset` from scroll state to transform into current page's coordinate space.
+* Don't know exact size of page but do know it's much bigger than any viewport size.
+* If focused cell is more than an incremental scroll outside the viewport, clamp position to make sure we don't run off the VirtualGrid page.
+* Careful - focus cell might be bigger than the viewport!
+* Need to disable auto-scroll when we give focus to focus sink. If focus cell is a long way outside viewport (potentially even on a different page), the browser's default scroll won't work. 
+* Want to do own scrolling anyway. Browser doesn't know about cells so doesn't scroll a cell at a time. 
+
+{% include candid-image.html src="/assets/images/react-spreadsheet/focus-sink.png" alt="Focus Sink positioned behind Focus Cell" %}
+
+* Surprised when I realized that cells are transparent by default, but quite like the effect of seeing the input cell and text caret underneath
+* Easy enough to change in the style sheet if you prefer the sink completely hidden.

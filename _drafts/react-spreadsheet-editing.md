@@ -63,5 +63,6 @@ HTML elements
 * Cell with focus needs to be separate from selection. If more than one cell is selected, one cell in the selection will have focus. Focused cell can be moved around within the selection.
 * Separate edit mode
 
-
+* How to adjust focus cell and selection as data store size changes
+* Make sure grid is sized to include focus cell and selection (size may change when rendered, out of our control)
 
