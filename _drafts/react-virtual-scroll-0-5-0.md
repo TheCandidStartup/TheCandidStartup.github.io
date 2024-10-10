@@ -4,11 +4,39 @@ title: >
 tags: react-virtual-scroll
 ---
 
-The last [0.4.0 release]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) of `react-virtual-scroll` focused on customization. Since then, I've learnt a lot from using `VirtualGrid` and `VirtualList` as building blocks for my [`react-spreadsheet`]({% link _topics/react-spreadsheet.md %}) package. In particular, that the custom container components introduced in 0.4.0 weren't a good fit with modern React.
+The last [0.4.0 release]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) of `react-virtual-scroll` focused on customization. Since then, I've learnt a lot from using `VirtualGrid` and `VirtualList` as building blocks for my [`react-spreadsheet`]({% link _topics/react-spreadsheet.md %}) package. In particular, I learnt that the custom container component props introduced in 0.4.0 aren't a good fit with modern React.
+
+# Modern React
+
+[Modern React]({% link _posts/2024-01-15-modern-react-with-hooks.md %}) replaces class based components with functional components. Once you've implemented a few functional components you start to see a common pattern. Here's a sketch of a higher level component that wraps `VirtualGrid`. Perhaps it's part of the implementation of a spreadsheet.
+
+```tsx
+function MyComponent(props: MyComponentProps) {
+    const gridRef = React.useRef<VirtualGridProxy>(null);
+    const [myState, setMyState] = React.useState<MyComponentState>(null);
+
+    function onClickHandler(event: React.MouseEvent) {
+      doSomethingWith(event, props, myState, gridRef);
+    }
+
+    return <div onClick={onClickHandler}>
+      <VirtualGrid
+        ref={gridRef}
+        height={props.height}
+        width={props.width}/>
+        {Cell}
+      </VirtualGrid>
+    </div>
+}
+```
+
+You end up with a structure that looks pretty similar to a class definition. Instead of a class with member variables and member functions you have a component function with props and hooks (equivalent to member variables) and declarations of nested functions. The top of the function is equivalent to a constructor and the bottom is equivalent to the class render method. 
+
+The magic of Javascript's [function closures](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures) ensures that the nested "member" functions have access to all the local "member" variables declared in the component function. The `onClickHandler` can "do something" with `props`,  `myState` and `gridRef`. 
+
+# Component Props
 
 # Nested Components
-
-
 
 # Render Props
 

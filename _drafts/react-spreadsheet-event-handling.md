@@ -1,5 +1,6 @@
 ---
-title: React Spreadsheet Event Handling
+title: >
+  React Spreadsheet: Event Handling
 tags: react-spreadsheet
 thumbnail: /assets/images/boring-spreadsheet.png
 ---
@@ -129,7 +130,11 @@ const outerGridRender: VirtualOuterRender = ({...rest}, ref) => {
   }
 ```
 
+# Positioning the Focus Sink
+
 * Can now update generic handler with an explicit focus sink
+
+{% raw %}
 
 ```tsx
 const outerGridRender: VirtualOuterRender = ({children, ...rest}, ref) => {
@@ -161,6 +166,8 @@ const outerGridRender: VirtualOuterRender = ({children, ...rest}, ref) => {
   </div>
 }
 ```
+
+{% endraw %}
 
 * We only add the focus sink if there's a focused cell
 * Position focus sink underneath focused cell using `zIndex` property
@@ -199,3 +206,36 @@ else if (focusLeft > originLeft + width + maxWidth)
 
 * Surprised when I realized that cells are transparent by default, but quite like the effect of seeing the input cell and text caret underneath
 * Easy enough to change in the style sheet if you prefer the sink completely hidden.
+
+# Mouse
+
+* Have the pieces we need to replace the new function instance per-cell mouse click handler with a generic grid wide handler
+* Sets us up for adding range selection later
+* Code is more verbose as we have to deal with coordinate system transforms ourselves. 
+
+```tsx
+onClick={(event) => {
+  const gridRect = event.currentTarget.getBoundingClientRect();
+  const rowGridOffset = event.clientY - gridRect.top;
+  const colGridOffset = event.clientX - gridRect.left;
+
+  const rowOffset = rowGridOffset + gridScrollState[0].renderOffset + gridScrollState[0].scrollOffset;
+  const colOffset = colGridOffset + gridScrollState[1].renderOffset + gridScrollState[1].scrollOffset;
+
+  const [rowIndex] = rowMapping.offsetToItem(rowOffset);
+  const [colIndex] = columnMapping.offsetToItem(colOffset);
+  updateSelection(rowIndex,colIndex);
+}} 
+```
+
+* [Mouse event](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent) provides coordinates in a variety of different coordinate systems, none of which are what we want.
+* First step is to take client coords of mouse position and use client coord bounding box of the grid to get coordinates relative to top left corner of the grid
+* Then use grid scroll state to convert into logical grid coordinates
+* Finally use mapping objects to find corresponding row and column indexes
+* Then used same approach to add click handlers to the row and column headers. Select an entire row or column with a single click.
+* I also show the name of the row, column or cell clicked on in the "scroll to" box
+
+# Next Time
+
+* Still need to add automatic scrolling of the grid when you move focus cell so that it's out of view
+* Generally useful grid functionality so will need another update and of `react-virtual-scroll`
