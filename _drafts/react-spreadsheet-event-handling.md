@@ -5,14 +5,13 @@ tags: react-spreadsheet
 thumbnail: /assets/images/boring-spreadsheet.png
 ---
 
-wise words
+[Last time]({% link _drafts/react-spreadsheet-selection-focus.md %}) we got basic selection with a focus cell working. The only way of selecting something was by typing a cell reference into an input box.
 
-* Can select and set focus by typing cell reference into input box
-* Need to add mouse and keyboard support
+I think we need mouse and keyboard support.
 
 # Mouse
 
-* Simple to add click handler to cells for basic selection
+It's simple enough to add a click handler to each cell for basic selection.
 
 ```tsx
 <div 
@@ -25,13 +24,13 @@ wise words
 </div>
 ```
 
-* What do we do when we want to add support for range selects?
-* Also a bit nervous of creating a new function instance with different closure for each cell. Potential performance issue?
-* Park that thought for a moment
+However, I'm left with a few nagging questions. What do we do when we want to add support for range selects? I'm also a bit nervous of creating a new function instance with a different closure for each cell. Are there potential performance issues?
+
+Let's park that thought for a moment.
 
 # Keyboard
 
-* Also simple to add keyboard handler to the focus cell
+It's also simple to add a keyboard handler to the focus cell
 
 ```tsx
 <div
@@ -51,15 +50,11 @@ wise words
 </div>
 ```
 
-* Need to prevent default event handling which would otherwise scroll the grid
-* By default, grid will automatically be scrolled as you move focus towards edge
-* At first glance appears to work nicely
-* Quickly notice that you can lose input focus quite easily
-  * If you navigate fast (change direction frequently, hold key down to get auto repeat)
-  * Scrolling a focused cell off screen and then back on loses focus too
-* Makes perfect sense. Virtualized implementation, so anything off screen isn't rendered and doesn't exist in the DOM.
-* HTML spec says that focus should be given to the root element. Which is completely useless. What happens to keyboard events after that is browser dependent. Chrome and Firefox do some kind of magic which ends up going back to scrolling the grid. Safari ignores the events. 
-* If focus cell ends up off screen, want to be able to use keyboard to bring it back on screen
+Let's start with the arrow keys and do the rest once we've figured out what we're doing. I need to prevent default handling of the event otherwise the grid will scroll the focus cell out of view. We don't need the default scrolling as the `focus` method will (by default) ensure that the focused element is visible, scrolling it into view if needed. 
+
+At first glance it appears to work nicely. However, you quickly notice that you can lose input focus quite easily. Sometimes, if you use the arrow keys to move the focus cell quickly it goes off screen for a second before the browser catches up. Or just use the scroll bar to move if off screen. Either way, when you bring it back the input focus has gone. 
+
+Which makes perfect sense. The grid is virtualized. Anything off screen isn't rendered and is removed from the DOM. When that happens, the HTML spec says that input focus should be given to the root element. Which is completely useless. What happens to keyboard events after that is browser dependent. Chrome and Firefox do some kind of magic which ends up going back to the default behavior of scrolling the grid. Safari ignores the events. 
 
 # Grid Handler
 
@@ -234,6 +229,10 @@ onClick={(event) => {
 * Finally use mapping objects to find corresponding row and column indexes
 * Then used same approach to add click handlers to the row and column headers. Select an entire row or column with a single click.
 * I also show the name of the row, column or cell clicked on in the "scroll to" box
+
+# Try It!
+
+{% include candid-iframe.html src="/assets/dist/react-spreadsheet-event-handling/index.html" width="100%" height="fit-content" %}
 
 # Next Time
 
