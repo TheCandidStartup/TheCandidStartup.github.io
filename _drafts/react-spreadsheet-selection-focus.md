@@ -37,7 +37,7 @@ I used the `box-sizing` property so that border and padding are included in each
 
 # Bad Alignment
 
-Now that I have grid lines, it's much easier to see a problem that I've been vaguely aware of and ignoring for a while. When you scroll to the end of the grid, the header and grid content doesn't match up.
+Now that I have grid lines, it's much easier to see a problem that I've been vaguely aware of and ignoring for a while. When you scroll to the end of the grid, the header and grid content don't match up.
 
 {% include candid-image.html src="/assets/images/react-spreadsheet/skew-grid-headers.png" alt="Misaligned header and grid" %}
 
@@ -84,7 +84,7 @@ else
   setFocusCell([row ? row : 0, col ? col : 0])
 ```
 
-Then I needed to change the `Cell` component to render an alternate version if the cell is focused. 
+I changed the `Cell` component to render an alternate version if the cell is focused. 
 
 ```tsx
 const Cell = ({ rowIndex, columnIndex, style }: { rowIndex: number, columnIndex: number, style: React.CSSProperties }) => {
