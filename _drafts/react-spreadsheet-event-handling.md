@@ -5,9 +5,9 @@ tags: react-spreadsheet
 thumbnail: /assets/images/boring-spreadsheet.png
 ---
 
-[Last time]({% link _drafts/react-spreadsheet-selection-focus.md %}) we got basic selection with a focus cell working. The only way of selecting something was by typing a cell reference into an input box.
+[Last time]({% link _drafts/react-spreadsheet-selection-focus.md %}) we got basic selection with a focus cell working. The only way of selecting something is by typing a cell reference into an input box.
 
-I think we need mouse and keyboard support.
+It's time to add mouse and keyboard support.
 
 # Mouse
 
@@ -58,9 +58,7 @@ Which makes perfect sense. The grid is virtualized. Anything off screen isn't re
 
 # Grid Handler
 
-* Instead of having handlers on multiple cells which are added/removed as focus changes and grid is scrolled, have single generic handler for the entire grid
-* Put on grid's "outer" div
-* `VirtualGrid` [originally]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) let you provide your own outer component but without a handy generic data prop to pass in a render prop. Luckily, I was able to go back in time and [change it to take a render prop directly]({% link _drafts/react-virtual-scroll-0-5-0.md %}) instead.
+Instead of having handlers on multiple cells, which are added and removed as the focus changes and the grid is scrolled, we can have a single generic handler for the entire grid. Luckily, I was able to persuade the maintainer of `react-virtual-scroll` to [support render props]({% link _drafts/react-virtual-scroll-0-5-0.md %}). That made it easy to move the key handler onto the grid's outer container. 
 
 ```tsx
 const outerGridRender: VirtualOuterRender = ({...rest}, ref) => {
@@ -81,29 +79,23 @@ const outerGridRender: VirtualOuterRender = ({...rest}, ref) => {
 }
 ```
 
-* I've consolidated all the keyboard handling into one function instance, which is nice. However, it makes no difference at all functionally. Once focus moves to the root, the handler stops seeing events. 
+That consolidates all the keyboard handling into one function instance, which is nice. However, it makes no difference at all functionally. Once focus moves to the root, the handler stops seeing events. 
 
 # Focus Sink
 
-* Common problem for virtualized grids in general. There's no safe way of recovering focus once it's been lost. How do you know that you're the one that previously had focus? The general advice is to move focus somewhere else before deleting the element with the focus. That gets complicated fast. 
-* The other approach is to put the focus somewhere that never gets deleted. 
-* SlickGrid adds a "focus sink" element. This is a special zero size child at the top of the grid that's always there (whether off screen or not)
-* Instead of giving focus to a transient cell,  SlickGrid always gives focus to the focus sink
-* Handles key input as if the focused cell has the actual focus
-* ??? Why are there two focus sinks? One used if active cell has changed when "tabbing" backwards, the other when going forwards. 
-* I also want
-  * Focus mode where navigation keys move from cell to cell, flipping into edit mode as soon as you start typing content
-  * Edit mode where you have an actual editable input field, with starting value being first thing you typed before mode flipped
-* Input field needs to have focus and fill cell
+This is a common problem for virtualized grids in general. There's no safe way of recovering focus once it's been lost. How do you know that you're the one that previously had focus? The general advice is to move focus somewhere else before deleting the element with the focus. Which gets complicated fast. 
 
-# Crazy Idea
+The other approach is to put the focus somewhere that never gets deleted. [SlickGrid](https://github.com/6pac/SlickGrid) uses a "focus sink" element. This is a special zero size child at the top of the grid that's always there. Instead of giving focus to a transient cell, SlickGrid always gives focus to the focus sink. The focus sink handles key input as if the focused cell has the actual focus.
 
-* Have an input control that acts as a focus sink, always present in grid
-* When in focus mode
-  * If focus cell is present in grid position input under cell so it can't be seen but can receive input
-  * Use onChangedEvent to flip mode
-  * In edit mode input is positioned on top of cell so it is seen
-  * If focus cell is not present in grid, position input somewhere arbitrary where it won't be seen but can receive input
+I will also need to support a spreadsheet like editing experience. Once a focus cell is selected, navigation keys move the focus from cell to cell. However, once the user starts typing content, the cell flips into edit mode. The static cell is replaced by a text input box containing whatever the user typed to trigger the change into edit mode. 
+
+Obviously, the input box needs to fill the cell and have the input focus.
+
+# Input Box Focus Sink
+
+Which gave me an idea. Why not have an input box that acts as a focus sink? If the focus cell is visible in the grid, we can position the focus sink underneath so it can't be seen but can receive input. We can use the input box's `onChangedEvent` to flip into edit mode. All we have to do is position the input box on top of the focus cell. It already contains whatever the user typed without us having to do anything else.
+
+If the focus cell isn't visible in the grid, we put the input somewhere arbitrary where it won't be seen but can receive input. 
 
 # Syncing State
 
