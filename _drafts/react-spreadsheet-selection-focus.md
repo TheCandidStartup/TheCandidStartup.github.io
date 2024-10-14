@@ -5,7 +5,7 @@ tags: react-spreadsheet
 thumbnail: /assets/images/react-spreadsheet/selected-row.png
 ---
 
-I'm [about to]({% link _posts/2024-10-07-react-spreadsheet-data-model.md %}) add support for editing data in my React Spreadsheet component. Before I can do that, I need to be able to select the cell I want to edit. Before I can do that, I need to add some grid lines to make it easier to see where the cell boundaries are.
+I'm [about to]({% link _posts/2024-10-07-react-spreadsheet-data-model.md %}) add support for editing data in my React spreadsheet component. Before I can do that, I need to be able to select the cell I want to edit. Before I can do that, I need to add some grid lines to make it easier to see where the cell boundaries are.
 
 # Grid Lines
 
@@ -13,7 +13,7 @@ I'm lazy, so my first move is to look at Google Sheets and see what it does. It 
 
 Google Sheets isn't going to give me a helping hand when it comes to implementation. The entire spreadsheet is a `Canvas` element with the grid lines drawn on. I'm using HTML and React so need to do it with CSS. 
 
-My first try was to add a border around each cell. That ends up looking ugly with double width borders where cells share an edge. By default, HTML layout draws borders around the outside of each cell which makes things more challenging. 
+My first try was to add a border around each cell. That ends up looking ugly with double width borders where cells share an edge. The default HTML layout draws borders around the outside of each cell, which makes things more challenging. 
 
 I used the `box-sizing` property so that border and padding are included in each cell. I avoided double width borders by ensuring that only one element draws each border. 
 
@@ -61,7 +61,7 @@ When a cell is part of a selection, the corresponding row and column in the head
 
 I already have a `selection` state which can represent a cell, row or column. Currently the only way of selecting something is via the "Scroll To" box. That's good enough for now. In future, I'll need support for range selection and the ability to select using mouse and keyboard.
 
-I'll need separate state to keep track of the focus cell. If more than one cell is selected, only one cell in the selection will have focus. The focused cell can also be moved around within the selection.
+We need separate state to keep track of the focus cell. If more than one cell is selected, only one cell in the selection will have focus. The focused cell can also be moved around within the selection.
 
 # Focus Cell
 
@@ -119,7 +119,7 @@ The last change is to add an additional [BEM style]({% link _posts/2024-08-26-cs
 }
 ```
 
-As well as defining my own style, I also disable whatever focus highlight the browser might apply so that the two don't clash. I need my own highlight for the focus cell because it continues to be the focus cell even if the user moves the input focus elsewhere. For example, they might use the formula box to edit cell content rather than doing it in place.
+As well as defining my own style, I also disable whatever focus highlight the browser might apply so that the two don't clash. I need my own highlight for the focus cell because it continues to be the focus cell even if the user moves the input focus elsewhere. For example, they might use the formula box (coming soon) to edit cell content rather than doing it in place.
 
 To help with debugging in my sample app, I also changed the background color of whatever element has input focus.
 
@@ -137,7 +137,7 @@ Look at that, it works.
 
 Or so I thought. Eventually, I noticed that the focus cell would lose input focus every so often without me doing anything.
 
-I still had my "boring" data source active, with a new row being added every minute. It took an embarrassingly long time to work out that focus was also lost once a minute, when the new row was added. In my defense, the changes were happening out of sight at the other end of the spreadsheet.
+I still had my [boring data source]({% link _posts/2024-10-07-react-spreadsheet-data-model.md %}) active, with a new row being added every minute. It took an embarrassingly long time to work out that focus was also lost once a minute, when the new row was added. In my defense, the changes were happening out of sight at the other end of the spreadsheet.
 
 Why is focus being lost? The change in the data store will trigger a render but nothing has changed in the visible part of the spreadsheet.
 
@@ -145,7 +145,7 @@ I had to drill in using Chrome developer tools and the React profiler. I found t
 
 # Reconciliation
 
-Time for a refresher on the React [reconciliation](https://legacy.reactjs.org/docs/reconciliation.html) process. React needs to compare previous and newly rendered JSX to work out what changes need to be applied to the DOM. 
+Time for a refresher on the React [reconciliation](https://legacy.reactjs.org/docs/reconciliation.html) process. React compares previous and newly rendered JSX to work out what changes need to be applied to the DOM. 
 
 When comparing interior elements in the tree, React tries to match up corresponding children in the old and new tree. Any unmatched child in the old graph needs to be removed from the DOM. Any unmatched child in the new graph needs a new element added to the DOM. Otherwise, React edits the existing DOM element to apply the changes from old to new. 
 
