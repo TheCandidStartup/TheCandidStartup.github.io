@@ -269,4 +269,4 @@ getCellFormat(snapshot: number, row: number, column: number) {
 
 # Next Time
 
-Now that I have some plausible looking data in my spreadsheet, I'm itching to start changing it. Next time, we'll make a start on supporting editing. 
+Now that I have some plausible looking data in my spreadsheet, I'm itching to start changing it. [Next time]({% link _posts/2024-10-14-react-spreadsheet-selection-focus.md %}), we'll make a start on supporting editing. 

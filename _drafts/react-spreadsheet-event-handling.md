@@ -5,7 +5,7 @@ tags: react-spreadsheet
 thumbnail: /assets/images/boring-spreadsheet.png
 ---
 
-[Last time]({% link _drafts/react-spreadsheet-selection-focus.md %}) we got basic selection with a focus cell working. The only way of selecting something is by typing a cell reference into an input box.
+[Last time]({% link _posts/2024-10-14-react-spreadsheet-selection-focus.md %}) we got basic selection with a focus cell working. The only way of selecting something is by typing a cell reference into an input box.
 
 It's time to add mouse and keyboard support.
 
