@@ -5,6 +5,7 @@ tags: react-virtual-scroll
 ---
 
 wise words
+
 * Arranged virtual scroll implementation so React and browser have no chance to muck things up
 * Scroll event -> render -> browser paint - all without returning to the event loop
 * Yet things are mucked up
