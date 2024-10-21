@@ -58,7 +58,7 @@ Which makes perfect sense. The grid is virtualized. Anything off screen isn't re
 
 # Grid Handler
 
-Instead of having handlers on multiple cells, which are added and removed as the focus changes and the grid is scrolled, we can have a single generic event handler for the entire grid. Luckily, I was able to persuade the maintainer of `react-virtual-scroll` to [support render props]({% link _drafts/react-virtual-scroll-0-5-0.md %}). That made it easy to move the key handler onto the grid's outer container. 
+Instead of having handlers on multiple cells, which are added and removed as the focus changes and the grid is scrolled, we can have a single generic event handler for the entire grid. Luckily, I was able to persuade the maintainer of `react-virtual-scroll` to [support render props]({% link _posts/2024-10-21-react-virtual-scroll-0-5-0.md %}). That made it easy to move the key handler onto the grid's outer container. 
 
 ```tsx
 const outerGridRender: VirtualOuterRender = ({...rest}, ref) => {
