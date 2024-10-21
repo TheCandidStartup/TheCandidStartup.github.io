@@ -117,7 +117,7 @@ React's [reconciliation](https://legacy.reactjs.org/docs/reconciliation.html) al
 
 # Render Props
 
-I managed to [resolve]({% link _posts/2024-10-14-react-spreadsheet-selection-focus.md %}) the mess I'd made by replacing my nested component with a [render prop](https://react.dev/reference/react/Children#calling-a-render-prop-to-customize-rendering). A render prop is simply a function that returns some JSX. The body of my nested component becomes a simple function which is passed to the component as a render prop. Along with component prop based customization, `react-window` also gave me a generic `itemData` prop which I could use as a render prop. 
+I managed to [resolve]({% link _posts/2024-10-14-react-spreadsheet-selection-focus.md %}) the mess I'd made by replacing my nested child component with a [render prop](https://react.dev/reference/react/Children#calling-a-render-prop-to-customize-rendering). A render prop is simply a function that returns some JSX. The body of my nested component becomes a simple function which is passed to the component as a render prop. Along with component prop based customization, `react-window` also gave me a generic `itemData` prop which I could use as a render prop. 
 
 ```tsx
 type CellRender = (row: number, col: number, style: React.CSSProperties) => JSX.Element;
