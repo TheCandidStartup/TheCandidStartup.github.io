@@ -127,13 +127,119 @@ scrollToItem(index: number, option?: ScrollToOption): void {
 
 * The render is triggered by a scroll event which results in two additional scroll events that have to be processed before the frame is rendered
 * If browser decides to paint between the events rather than waiting until the end we'll be in trouble
-* Occasionally see glitches when scrolling around spreadsheet, some or all of grid content dropping out
+* Occasionally see glitches when scrolling around spreadsheet (particularly when using mouse wheel), some or all of grid content dropping out
+
+## Principles
+
+* Minimize changes to DOM for small changes to component (in particular small changes in offset)
+* Use inline styles for anything dependent on props or crucial for correct functionality. Primarily layout and size of items in the list.
+* Minimize number of different styles and how often they need to be changed.
 
 ## API
 
+* Added new `DisplayList` component
+
+```ts
+export interface DisplayListProps {
+  children: DisplayListItem,
+  className?: string,
+  innerClassName?: string,
+  height: number,
+  width: number,
+  itemCount: number,
+
+  offset: number,
+
+  itemData?: unknown,
+  itemOffsetMapping: ItemOffsetMapping,
+  itemKey?: (index: number, data: unknown) => React.Key,
+  layout?: ScrollLayout,
+  outerRender?: DisplayContainerRender;
+  innerRender?: DisplayContainerRender;
+}
+
+export function DisplayList(props: DisplayListProps);
+```
+
+* Equivalent API to `VirtualList` except that scroll related APIs are gone and replaced by the `offset` prop
+
 ## Implementation
 
+* The complexity of paged virtual scrolling in `VirtualList` led to an approach where each item used absolute positioning with explicit `top`, `left`, `width` and `height` properties. Every item has a unique style. Item styles also need updating for all items whenever the render page changes.
+* Leads to complex rendering code with heavyweight JSX output.
+* Removing scrolling gives us the opportunity to use a much lighter weight implementation
+* Have the familiar outer and inner container internal structure
+* The inner container is sized to match the visible items from the list
+* The inner container is positioned within the outer container based on the difference between the offset prop and the start offset for the visible items. Typically that results in the inner container being shifted to the left by the fractional part of an item. 
+
+* IMAGE
+
+* Items within the inner container use the CSS grid layout style. This allows us to avoid almost all per item styling. All that's left is setting `boxSizing` to `border-box`. Important to ensure that items always have the expected size and don't overflow the grid if they have borders or padding.
+* Style is the same for all items so considered leaving it up to the style sheet to set. In the end followed principles of inlining functionality critical stuff. 
+* Small optimization - create style once and use same instance on all items. 
+
+{% raw %}
+
+```tsx
+const boxStyle: React.CSSProperties = { boxSizing: 'border-box' };
+
+export function DisplayList(props: DisplayListProps) {
+  const { width, height, itemCount, itemOffsetMapping, className, innerClassName, 
+    offset: renderOffset, children, itemData, itemKey = defaultItemKey, layout = 'vertical', 
+    outerRender = defaultContainerRender, innerRender = defaultContainerRender } = props;
+
+  const isVertical = layout === 'vertical';
+
+  const [startIndex, startOffset, sizes] = getRangeToRender(itemCount, itemOffsetMapping, 
+    isVertical ? height : width, renderOffset);
+  const renderSize = sizes.reduce((accum,current) => accum + current, 0);
+  const template = getGridTemplate(sizes);
+  const offset = startOffset - renderOffset;
+
+  const ChildVar = children;
+
+  return (
+   <Container className={className} render={outerRender}
+        style={{ position: "relative", height, width, overflow: "hidden", willChange: "transform" }}>
+       <Container className={innerClassName} render={innerRender}
+        style={{ position: 'absolute',
+          display: 'grid',
+          gridTemplateColumns: isVertical ? undefined : template,
+          gridTemplateRows: isVertical ? template : undefined,
+          top: isVertical ? offset : 0, 
+          left: isVertical ? 0 : offset, 
+          height: isVertical ? renderSize : "100%", 
+          width: isVertical ? "100%" : renderSize }}>
+        {sizes.map((_size, arrayIndex) => (
+          <ChildVar data={itemData} key={itemKey(startIndex + arrayIndex, itemData)} 
+            index={startIndex + arrayIndex} style={boxStyle}/>
+        ))}
+      </Container>
+    </Container>
+  );
+}
+```
+
+{% endraw %}
+
+* Implementation is much simpler than `VirtualList`.
+* No need for far too clever JSX
+* No refs, state or hooks
+* Only tricky bit is the `getGridTemplate` helper function which converts an array of item sizes into the format expected by CSS grid template properties. 
+
 ## Unit Tests
+
+* Added `VirtualCommon.test.ts` so that I could directly test `getGridTemplate`
+
+```ts
+  expect(getGridTemplate([ 10, 20, 30, 30, 40 ])).toBe("10px 20px repeat(2,30px) 40px")
+```
+
+* Tests simpler because I didn't have to mock up scrolling and layout
+* Tests more complex because offset not constrained in same way as a scroll offset
+* Perfectly legal to have a negative offset or an offset that goes off the end of the list
+* Whatever items are visible (if any) need to be correctly positioned and the rest left blank
+* Added unit tests for all the edge cases and updated `getRangeToRender` to handle them
 
 # Results
 
@@ -146,18 +252,12 @@ scrollToItem(index: number, option?: ScrollToOption): void {
 
 # Try It!
 
+* Select something then use the arrow keys to zoom around the spreadsheet
+
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/index.html" width="100%" height="fit-content" %}
+
 # Glitch
 
 * There's only one problem. The glitches are still there.
-* Chrome performance tool captures screen shots while profiling and I found a smoking gun
-* I hacked the sample so that I include row numbers in both the header and the grid
-* Screenshots are tiny so I increased the text size massively. You can just about see what's happening when I scale the screenshot up.
-
-{% include candid-image.html src="/assets/images/react-virtual-scroll/spreadsheet-perf-scroll-capture.png" alt="Bad frame captured while scrolling" %}
-
-* The row numbers are repeated in column C
-* You can see that the row header and the grid aren't aligned
-* The header is showing rows 2-11 and the grid is showing 5-12 with a blank row at the end
-* Using logs of the rows being rendered for each frame it looks like it's displaying content rendered from the previous frame with the scroll offset from the current frame.
 * How is that possible? We receive the scroll event, render everything and update the DOM before the browser paints.
 * We'll do a deep dive next time.
