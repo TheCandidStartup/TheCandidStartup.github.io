@@ -9,6 +9,18 @@ wise words
 * Arranged virtual scroll implementation so React and browser have no chance to muck things up
 * Scroll event -> render -> browser paint - all without returning to the event loop
 * Yet things are mucked up
+
+* Chrome performance tool captures screen shots while profiling and I found a smoking gun
+* I hacked the sample so that I include row numbers in both the header and the grid
+* Screenshots are tiny so I increased the text size massively. You can just about see what's happening when I scale the screenshot up.
+
+{% include candid-image.html src="/assets/images/react-virtual-scroll/spreadsheet-perf-scroll-capture.png" alt="Bad frame captured while scrolling" %}
+
+* The row numbers are repeated in column C
+* You can see that the row header and the grid aren't aligned
+* The header is showing rows 2-11 and the grid is showing 5-12 with a blank row at the end
+* Using logs of the rows being rendered for each frame it looks like it's displaying content rendered from the previous frame with the scroll offset from the current frame.
+
 * Grid goes blank - shows content from a previous render with the scroll offset from a current render
 * First thought was legacy mode rendering in React - work around to problem with new rendering in React 18
 * Maybe something has broken on the legacy path?
