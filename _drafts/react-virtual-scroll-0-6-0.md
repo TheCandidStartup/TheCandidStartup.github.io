@@ -4,10 +4,7 @@ title: >
 tags: react-virtual-scroll
 ---
 
-wise words
-
-* Requirements from `react-spreadsheet`
-
+It's time for more enhancements to `react-virtual-scroll` driven by [requirements]({% link _drafts/react-spreadsheet-event-handling.md %}) from  [`react-spreadsheet`]({% link _topics/react-spreadsheet.md %}). If that seems a bit dull, don't worry, things get wild by the time we reach the end. 
 
 # Scroll Options
 
