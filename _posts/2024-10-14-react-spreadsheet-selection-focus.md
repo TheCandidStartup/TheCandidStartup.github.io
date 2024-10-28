@@ -233,4 +233,4 @@ Don't take my word, try it for yourself.
 
 # Next Time
 
-It get tedious selecting cells, rows and columns by typing their names into an edit box. We'll look at mouse and keyboard handlers for selection and focus navigation next time. 
+It get tedious selecting cells, rows and columns by typing their names into an edit box. We'll look at mouse and keyboard handlers for selection and focus navigation [next time]({% link _posts/2024-10-28-react-spreadsheet-event-handling.md %}). 
