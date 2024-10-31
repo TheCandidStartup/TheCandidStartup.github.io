@@ -8,21 +8,13 @@ It's time for more enhancements to `react-virtual-scroll` driven by [requirement
 
 # Scroll Options
 
-* Want grid to scroll whenever you change focus cell to ensure it's visible
-* Should apply the minimal scroll needed to bring cell entirely into view
-* If you're using arrow keys to move focus cell to right, should scroll only when you move it out of the viewport and then only to scroll by the single column needed to bring back into view.
+Whenever you change the focused cell, thee grid should scroll as needed to ensure that it's visible. We want to apply the minimal scroll needed to bring the cell entirely into view. If you're using arrow keys to move the focus cell to the right, the grid should scroll only when you move it out of the viewport and then only to scroll by the single column needed to bring it back into view.
 
 ## API Change
 
+I added an optional `ScrollToOption` parameter. Two values are supported. The default, `topleft`, works the same way as before, scrolling the cell to the top left corner of the viewport. The new option, `visible`, performs the minimal scroll needed to make the cell visible. If the cell is already fully visible, it doesn't scroll at all. 
+
 ```ts
-/**
- * Option for {@link VirtualGridProxy.scrollToItem} and {@link VirtualListProxy.scrollToItem}
- * 
- * * `topleft` scrolls the item as far to the top and left as possible
- * * `visible` scrolls the item the minimum amount needed to ensure that it's visible
- * 
- *  @defaultValue `topleft`
- */
 export type ScrollToOption = 'topleft' | 'visible';
 
 export interface VirtualListProxy {
@@ -36,7 +28,7 @@ export interface VirtualGridProxy {
 
 ## Implementation
 
-* Shared implementation in `VirtualCommon.ts` shared by `VirtualGrid` and `VirtualList`
+There's a common implementation in `VirtualCommon.ts` shared by `VirtualGrid` and `VirtualList`. The `getOffsetToScroll` utility function works out the scroll needed in a single dimension. 
 
 ```ts
 export function getOffsetToScroll(index: number | undefined, itemOffsetMapping: ItemOffsetMapping, 
@@ -71,10 +63,12 @@ export function getOffsetToScroll(index: number | undefined, itemOffsetMapping: 
  }
 ```
 
-Here's how it's used in `VirtualGrid`
+It's straightforward apart from dealing with the case where the item is bigger than the viewport. I decided that it was most important that the start of the item is visible. 
+
+Here's how `getOffsetToScroll` is used in `VirtualGrid`
 
 ```ts
-scrollToItem(rowIndex?: number, columnIndex?: number, option?: ScrollToOption): void {
+function scrollToItem(rowIndex?: number, columnIndex?: number, option?: ScrollToOption): void {
   ...
   const rowOffset = getOffsetToScroll(rowIndex, rowOffsetMapping, outer.clientHeight, scrollRowOffset + renderRowOffset, option);
   const colOffset = getOffsetToScroll(columnIndex, columnOffsetMapping, outer.clientWidth, scrollColumnOffset + renderColumnOffset, option);
@@ -85,7 +79,7 @@ scrollToItem(rowIndex?: number, columnIndex?: number, option?: ScrollToOption): 
 And here's `VirtualList`
 
 ```ts
-scrollToItem(index: number, option?: ScrollToOption): void {
+function scrollToItem(index: number, option?: ScrollToOption): void {
   ...
   const extent = isVertical ? outer.clientHeight : outer.clientWidth;
   const offset = getOffsetToScroll(index, itemOffsetMapping, extent, scrollOffset + renderOffset, option);
@@ -96,7 +90,9 @@ scrollToItem(index: number, option?: ScrollToOption): void {
 
 ## Unit Tests
 
-* Use `lastCalledWith` rather than `toBeCalledWith` when writing unit tests with a series of calls to mocks. `toBeCalledWith` succeeds when any of the calls has the expected value.
+I ran into a couple of gotchas while updating the unit tests. Described here as a reminder not to make the same stupid mistakes again. 
+
+First, I originally used the `toBeCalledWith` assertion to check that the grid's `scrollTo` mock was called with the correct values when I used `scrollToItem`. This assertion succeeds if any previous call to the mocked function has the specified values. I should have used `lastCalledWith` to check only the most recent call.
 
 ```
       proxy = ref.current || throwErr("null ref");
@@ -104,7 +100,7 @@ scrollToItem(index: number, option?: ScrollToOption): void {
       expect(mock).lastCalledWith(0, 42*30);
 ```
 
-* Remember that `ref.current` can change every time you render which is triggered by `act` at each step of test. Need to grab proxy at each step or end up calling `scrollToItem` on a proxy with an out of date closure.
+Second, remember that `ref.current` can change every time you render, which happens every time you use `act` at each step of a test. You have to grab the current value of the proxy at each step or you end up calling `scrollToItem` on a proxy with an out of date closure. Which is hilarious to debug.
 
 # Display List
 

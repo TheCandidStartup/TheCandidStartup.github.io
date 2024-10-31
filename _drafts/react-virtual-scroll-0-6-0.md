@@ -59,3 +59,58 @@ wise words
 # Virtual Grid
 
 * VirtualGrid = VirtualScroll + AutoSizer + DisplayGrid
+
+# Upgrading
+
+* Kept as much of the existing `VirtualList` and `VirtualGrid` interface as I could
+* In general all the samples and `react-spreadsheet` just worked without any code changes despite massive internal changes
+* Was most worried about `outerRender` and `innerRender` customization
+* `outerRender` is used to customize how component interacts with it's parent
+* `innerRender` is used to customize how component interacts with it's children
+* In principle, structure in between can change
+* All the `outerRender` stuff was fine
+* One problem was the padding sample which recreates a `react-window` sample
+* Adds padding to top and bottom of a `VirtualList`
+* Uses `innerRender` to mess with layout of children
+* Has strong dependency on how layout used to be done with absolute positioning
+* Reimplementing equivalent hackery isn't possible with the new structure because you need access to internals
+* There's a better way. If you have more complex needs use the basic components yourself
+
+# Overscan
+
+# Layout Shift
+
+{% include candid-image.html src="/assets/images/react-virtual-scroll/spreadsheet-perf-decoupled-legacy.png" alt="Performance tool frame capture" %}
+
+* Layout Shift = stuff on the page moving around
+* https://web.dev/articles/debug-layout-shifts#devtools
+* In our case that's expected as we're moving content in a DisplayGrid to simulate the effects of scrolling
+
+# Cumulative Layout Shift
+
+* Core web performance metric
+* https://web.dev/articles/cls
+* Calculates an abstract score based on the number and size of layout shifts during an interaction session
+* Intent is to measure only unintended layout shifts - for example from async tasks like image or content load
+* Layout shifts within 500ms of user interaction are ignored.
+
+* Tool in Chrome. Here's metric when scrolling around the grid using the keyboard.
+{% include candid-image.html src="/assets/images/react-virtual-scroll/web-metrics-good.png" alt="Web metrics during keyboard navigation" %}
+
+* Here's the metric for the same grid when using mouse wheel and scroll bar
+{% include candid-image.html src="/assets/images/react-virtual-scroll/web-metrics-bad.png" alt="Web metrics during scrolling" %}
+
+* Scrolling doesn't count as intended!
+* Consider this to be a false positive
+* Only happens when user actively scrolling, so no impact on CLS score during page load (which is important for Google Search's [page experience](https://developers.google.com/search/docs/appearance/page-experience) based ranking)
+
+# React 18 Rendering
+
+{% include candid-image.html src="/assets/images/react-virtual-scroll/spreadsheet-perf-decoupled-modern.png" alt="Performance tool frame capture" %}
+
+# Try It!
+
+* Link to NPM release
+* Spreadsheet sample
+
+# Next Time
