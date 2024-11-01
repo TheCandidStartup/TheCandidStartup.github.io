@@ -8,7 +8,7 @@ It's time for more enhancements to `react-virtual-scroll` driven by [requirement
 
 # Scroll Options
 
-Whenever you change the focused cell, thee grid should scroll as needed to ensure that it's visible. We want to apply the minimal scroll needed to bring the cell entirely into view. If you're using arrow keys to move the focus cell to the right, the grid should scroll only when you move it out of the viewport and then only to scroll by the single column needed to bring it back into view.
+Whenever you change the focused cell, the grid should scroll as needed to ensure that it's visible. We want to apply the minimal scroll needed to bring the cell entirely into view. If you're using arrow keys to move the focus cell to the right, the grid should scroll only when you move it out of the viewport and then only to scroll by the single column needed to bring it back into view.
 
 ## API Change
 
@@ -104,33 +104,25 @@ Second, remember that `ref.current` can change every time you render, which happ
 
 # Display List
 
-* While I'm working in here ...
-* Mentioned the hackiness of using `VirtualList` for spreadsheet row and column headers a couple of times
-* Lots of complexity including paged scrolling, active scroll detection, having to send scroll events to synchronize grid and headers ...
-* Allowed offsets limited by range of scroll bar. Needed to add dummy items.
-* Then I go and hide the scroll bar
-* Much cleaner to have a simple controlled component
-  * Pass render offset as a prop, no need to send extra events
-  * Rip out `useVirtualScroll`, `useIsScrolling` hooks
-  * No need for `VirtualListProxy` as imperative scroll method replaced by `offset` prop
+I should have stopped there. But then I thought I'd try one more thing while I'm working in here.
 
-* Can see the complexity of the current approach 
+I've [previously]({% link _posts/2024-10-14-react-spreadsheet-selection-focus.md %}) [mentioned]({% link _posts/2024-10-28-react-spreadsheet-event-handling.md %}) problems caused by [my hack]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) of using `VirtualList` for spreadsheet row and column headers. There's lots of extra complexity including paged scrolling, event listeners for active scroll detection, having to send scroll events to synchronize grid and headers, valid offsets being limited by the range of the scroll bar. None of which is needed because I hide the scroll bar.
+
+You can see the complexity introduced by the current approach in the Chrome profiler. 
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/spreadsheet-sample-perf-render.png" alt="Rendering a single frame" %}
 
-* The render is triggered by a scroll event which results in two additional scroll events that have to be processed before the frame is rendered
-* If browser decides to paint between the events rather than waiting until the end we'll be in trouble
-* Occasionally see glitches when scrolling around spreadsheet (particularly when using mouse wheel), some or all of grid content dropping out
+The event loop has to deal with three scroll events per frame. In this instance, the browser waits for all three events to be processed before painting. However, if the browser decided to paint between events you'd see occasional stale data as you scrolled. That wouldn't normally be a problem but these controls are virtualized. There's blank space around the visible data in the viewport. Scroll that and paint it without re-rendering and you'll see empty space until the next frame.
 
-## Principles
+Which actually happens. Try the demo from [last time]({% link _posts/2024-10-28-react-spreadsheet-event-handling.md %}). It's easiest to see when using the mouse wheel vigorously. If you get it just right you can also make the grid go blank for a few seconds when using the scroll bar.
 
-* Minimize changes to DOM for small changes to component (in particular small changes in offset)
-* Use inline styles for anything dependent on props or crucial for correct functionality. Primarily layout and size of items in the list.
-* Minimize number of different styles and how often they need to be changed.
+{% include candid-iframe.html src="/assets/dist/react-spreadsheet-event-handling/index.html" width="100%" height="fit-content" %}
+
+It would all be much cleaner if I had a simple [controlled component](https://legacy.reactjs.org/docs/forms.html#controlled-components). I can pass in the render offset as a prop. No need to send extra events. 
 
 ## API
 
-* Added new `DisplayList` component
+I added a new `DisplayList` component.
 
 ```ts
 export interface DisplayListProps {
@@ -154,22 +146,25 @@ export interface DisplayListProps {
 export function DisplayList(props: DisplayListProps);
 ```
 
-* Equivalent API to `VirtualList` except that scroll related APIs are gone and replaced by the `offset` prop
+The API is equivalent to `VirtualList` except that scroll related APIs are gone and replaced by the `offset` prop.
 
 ## Implementation
 
-* The complexity of paged virtual scrolling in `VirtualList` led to an approach where each item used absolute positioning with explicit `top`, `left`, `width` and `height` properties. Every item has a unique style. Item styles also need updating for all items whenever the render page changes.
-* Leads to complex rendering code with heavyweight JSX output.
-* Removing scrolling gives us the opportunity to use a much lighter weight implementation
-* Have the familiar outer and inner container internal structure
-* The inner container is sized to match the visible items from the list
-* The inner container is positioned within the outer container based on the difference between the offset prop and the start offset for the visible items. Typically that results in the inner container being shifted to the left by the fractional part of an item. 
+The complexity of paged virtual scrolling in `VirtualList` led to an approach where each item used absolute positioning with explicit `top`, `left`, `width` and `height` properties. Every item has a unique style. Item styles also need updating for all items whenever the render page changes.
 
-* IMAGE
+That leads to complex rendering code with heavyweight JSX output. Removing scrolling gives us the opportunity to use a much lighter weight implementation. There are three principles that we're trying to follow.
 
-* Items within the inner container use the CSS grid layout style. This allows us to avoid almost all per item styling. All that's left is setting `boxSizing` to `border-box`. Important to ensure that items always have the expected size and don't overflow the grid if they have borders or padding.
-* Style is the same for all items so considered leaving it up to the style sheet to set. In the end followed principles of inlining functionality critical stuff. 
-* Small optimization - create style once and use same instance on all items. 
+1. Minimize changes to the DOM caused by small changes to the component. In our case, there will be lots of small changes to `offset`.
+2. Use inline styles only for anything dependent on props or crucial for correct functionality. Primarily layout and size of items in the list.
+3. Minimize the number of different styles and how often they need to be changed.
+
+The component keeps the familiar outer and inner container internal structure. The inner container is sized to match the visible items from the list. The inner container is positioned within the outer container based on the difference between the offset prop and the start offset for the visible items. Typically that results in the inner container being shifted up by the fractional part of an item. 
+
+{% include candid-image.html src="/assets/images/react-virtual-scroll/display-list-structure.svg" alt="Display List Structure" %}
+
+Items within the inner container use the CSS grid layout style. This allows us to avoid almost all per item styling. All that's left is setting `boxSizing` to `border-box`. It's important to ensure that items always have the expected size and don't overflow the grid if they have borders or padding. 
+
+The style is the same for all items. I considered leaving it up to the style sheet to set. In the end I stuck with the principles of inlining functionality critical stuff. At least I only need to create the style once and can use the same instance on all items.
 
 {% raw %}
 
@@ -178,7 +173,7 @@ const boxStyle: React.CSSProperties = { boxSizing: 'border-box' };
 
 export function DisplayList(props: DisplayListProps) {
   const { width, height, itemCount, itemOffsetMapping, className, innerClassName, 
-    offset: renderOffset, children, itemData, itemKey = defaultItemKey, layout = 'vertical', 
+    offset, children, itemData, itemKey = defaultItemKey, layout = 'vertical', 
     outerRender = defaultContainerRender, innerRender = defaultContainerRender } = props;
 
   const isVertical = layout === 'vertical';
@@ -187,7 +182,7 @@ export function DisplayList(props: DisplayListProps) {
     isVertical ? height : width, renderOffset);
   const renderSize = sizes.reduce((accum,current) => accum + current, 0);
   const template = getGridTemplate(sizes);
-  const offset = startOffset - renderOffset;
+  const renderOffset = startOffset - offset;
 
   const ChildVar = children;
 
@@ -199,8 +194,8 @@ export function DisplayList(props: DisplayListProps) {
           display: 'grid',
           gridTemplateColumns: isVertical ? undefined : template,
           gridTemplateRows: isVertical ? template : undefined,
-          top: isVertical ? offset : 0, 
-          left: isVertical ? 0 : offset, 
+          top: isVertical ? renderOffset : 0, 
+          left: isVertical ? 0 : renderOffset, 
           height: isVertical ? renderSize : "100%", 
           width: isVertical ? "100%" : renderSize }}>
         {sizes.map((_size, arrayIndex) => (
@@ -215,42 +210,38 @@ export function DisplayList(props: DisplayListProps) {
 
 {% endraw %}
 
-* Implementation is much simpler than `VirtualList`.
-* No need for far too clever JSX
-* No refs, state or hooks
-* Only tricky bit is the `getGridTemplate` helper function which converts an array of item sizes into the format expected by CSS grid template properties. 
+This is much simpler than `VirtualList`. The [far too clever]({% link _posts/2024-02-19-modern-react-virtual-scroll-grid-4.md %}) JSX has gone. There's no refs, state, hooks or handles. 
+
+The only tricky bit is the `getGridTemplate` helper function which converts an array of item sizes into the format expected by CSS grid template properties. 
 
 ## Unit Tests
 
-* Added `VirtualCommon.test.ts` so that I could directly test `getGridTemplate`
+I added `VirtualCommon.test.ts` so that I could directly test `getGridTemplate`
 
 ```ts
   expect(getGridTemplate([ 10, 20, 30, 30, 40 ])).toBe("10px 20px repeat(2,30px) 40px")
 ```
 
-* Tests simpler because I didn't have to mock up scrolling and layout
-* Tests more complex because offset not constrained in same way as a scroll offset
-* Perfectly legal to have a negative offset or an offset that goes off the end of the list
-* Whatever items are visible (if any) need to be correctly positioned and the rest left blank
-* Added unit tests for all the edge cases and updated `getRangeToRender` to handle them
+The `DisplayList` tests are simpler than `VirtualList` because I didn't have to mock up scrolling and layout. However, there are more edge cases to check as the offset prop is not constrained in same way as a scroll offset. It's perfectly legal to have a negative offset or an offset that goes off the end of the list. Whatever items are visible (if any) need to be correctly positioned and the rest left blank.
 
 # Results
 
-* Updated `VirtualSpreadsheet` to use `ScrollToItem` and `visible` whenever focus cell changes
-* Replaced `VirtualList` with `DisplayList` removing `VirtualList` related hacks
+I updated `VirtualSpreadsheet` to use `ScrollToItem` and `visible` whenever the focus cell changes. I replaced `VirtualList` with `DisplayList`, removing all the `VirtualList` related hacks. You can see the difference in the performance profile. 
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/spreadsheet-sample-perf-displaylist.png" alt="Rendering a single frame" %}
 
-* Everything happens in scope of incoming scroll event. One render for grid and headers. Browser can't insert paint in the middle. 
+Everything happens in the scope of a single incoming scroll event. One render for grid and headers. No way for the browser to insert a paint in the middle. 
 
 # Try It!
 
-* Select something then use the arrow keys to zoom around the spreadsheet
+Select something then use the arrow keys to zoom around the spreadsheet
 
 {% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/index.html" width="100%" height="fit-content" %}
 
-# Glitch
+There's only one problem. The rendering glitches are still there. 
 
-* There's only one problem. The glitches are still there.
-* How is that possible? We receive the scroll event, render everything and update the DOM before the browser paints.
-* We'll do a deep dive next time.
+How is that possible? We receive the scroll event, render everything and update the DOM before the browser paints.
+
+# Next Time
+
+We'll do a deep dive next time.
