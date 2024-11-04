@@ -225,4 +225,4 @@ Click to select and then use the arrow keys to move the focus cell around. Notic
 
 # Next Time
 
-We still need to add automatic scrolling of the grid when you move the focus cell so that it's out of view. The grid should scroll the minimum amount needed to bring the cell back into view. That's generally useful functionality that belongs in `VirtualGrid`. I can feel a `react-virtual-scroll 0.6.0` release coming on. 
+We still need to add automatic scrolling of the grid when you move the focus cell so that it's out of view. The grid should scroll the minimum amount needed to bring the cell back into view. That's generally useful functionality that belongs in `VirtualGrid`. I can feel a `react-virtual-scroll 0.6.0` release [coming on]({% link _posts/2024-11-04-react-virtual-scroll-options-display-list.md %}). 

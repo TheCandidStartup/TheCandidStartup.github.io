@@ -4,7 +4,7 @@ title: >
 tags: react-virtual-scroll
 ---
 
-How can this be happening? I'm doing [everything in my power]({% link _drafts/react-virtual-scroll-options-display-list.md %}) to ensure that the visible content in my virtualized components is rendered *before* the browser paints. I'm using the [legacy React render method]({% link _posts/2023-11-20-react-virtual-scroll-grid-3.md %}) which ensures that the DOM is updated immediately when an event is handled. I've [restructured my spreadsheet component]({% link _drafts/react-virtual-scroll-options-display-list.md %}) to ensure that everything is rendered before React returns to the event loop.
+How can this be happening? I'm doing [everything in my power]({% link _posts/2024-11-04-react-virtual-scroll-options-display-list.md %}) to ensure that the visible content in my virtualized components is rendered *before* the browser paints. I'm using the [legacy React render method]({% link _posts/2023-11-20-react-virtual-scroll-grid-3.md %}) which ensures that the DOM is updated immediately when an event is handled. I've [restructured my spreadsheet component]({% link _posts/2024-11-04-react-virtual-scroll-options-display-list.md %}) to ensure that everything is rendered before React returns to the event loop.
 
 Despite all this, I still see flashes of blank content as I scroll, particularly when using the mouse wheel.
 
