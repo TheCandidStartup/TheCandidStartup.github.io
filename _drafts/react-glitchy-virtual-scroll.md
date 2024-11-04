@@ -71,7 +71,7 @@ Now it makes sense. Scroll events are handled as a special case. They get delive
 
 Over on the main thread, the event is dispatched to JavaScript by the event loop. React does its thing, the visible content is rendered and the DOM updated. The browser repaints the scrollable area and tells the compositor that the corresponding layer needs updating. 
 
-The compositor decides that a frame is due. It combines all the layers and makes the result visible. If the main thread's update completes before this happens you get a normal frame and all is well. If the main thread didn't report back in time, the compositor uses what it has and you get a partially presented frame with up to date scrolling of stale content.
+The compositor decides that a frame is due. It combines all the layers and makes the result visible. If the main thread's update completes before this happens, you get a normal frame and all is well. If the main thread didn't report back in time, the compositor uses what it has and you get a partially presented frame with up to date scrolling of stale content.
 
 # Maximum Frame Time
 
@@ -83,30 +83,42 @@ To make sure that rendering time isn't the problem I turned my monitor refresh r
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/mouse-wheel-profile-frames.png" alt="Mouse Wheel Flick Profile Frames" %}
 
-There are six scroll events with three good frames produced, then two bad ones before everything catches up for the final frame. Apart from the 5ms spent rendering, nothing happens during the remaining 28ms. 
+There are six scroll events with three good frames produced, then two bad ones before everything catches up for the final frame. There's 28ms of idle time between each 5ms burst of rendering activity. 
 
 # Good Frame
 
-* Overview with a lane for the main thread (orange is JavaScript execution, purple is rendering, green is painting), below that the raster thread that actually paints each layer with the GPU compositor activity at the bottom.
+Let's zoom into one of the good frames and look at the multi-track overview. THe multi-colored track shows activity on the main thread. Orange is JavaScript execution, purple is rendering and green is painting. Below that is the raster thread that actually paints each layer, with the GPU compositor activity at the bottom.
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/perf-scroll-good-frame.png" alt="Overview profile of a good frame" %}
 
-* Frame starts, scroll event is delivered. There's a flurry of activity, the DOM is updated and the changes committed. The raster thread paints then the GPU compositor wakes up and completes the frame. Everything done in 5ms.
+It all makes sense. The frame starts with the scroll event dispatched to the event loop within the first ms. There's a flurry of activity, the DOM is updated and the changes committed. The raster thread paints, then the GPU compositor wakes up and completes the frame. Everything done in 5ms.
 
 # Bad Frame
 
-* Had to zoom out 2X to fit everything in.
+I had to zoom out 2X on the bad frames to fit everything relevant into view.
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/perf-scroll-bad-frame.png" alt="Overview profile of a bad frame" %}
 
-* Frame starts but it takes 13ms before the scroll event is dispatched. Rendering and rasterization only takes 4ms this time. However, i't's too late. The GPU compositor woke up briefly just as the event was being delivered, saw that nothing new had been rendered and used the stale content from the previous frame. 
-* Why is the scroll event delayed? No idea. The event loop is doing nothing. In a way it doesn't matter. Whatever is causing this is outside of my control. I just need to deal with the consequences. 
+The frame starts but it takes 13ms before the scroll event is dispatched. Rendering and rasterization only takes 4ms this time. However, it's too late. The GPU compositor woke up briefly just as the event was being delivered, saw that nothing new had been rendered and used the stale content from the previous frame. 
 
-One flick of the mouse wheel results in 6 frames
-* 1012 -> 1013 for 4.96 Normal Good
-* 1046 -> 1046 for 3.56 Normal Good
-* 1079 -> 1079 for 3.95 Normal Good
-* 1113 -> 1126 for 3.55 Partial Bad, GPU 1126
-* 1145 -> 1160 for 2.85 Normal Bad, GPU 1160
-* 1179 -> 1193 for 4.74 Normal Good
-* 1212
+Why is the scroll event delayed? No idea. The event loop is doing nothing. In a way it doesn't matter. Whatever is causing this is outside of my control. I need to deal with the consequences. 
+
+# Google Sheets
+
+Which made me wonder. Would Google Sheets have the same problem?
+
+{% include candid-image.html src="/assets/images/frontend/google-sheets-annotated.svg" alt="Google Sheets Component Structure" %}
+
+It wouldn't. Google Sheets has virtual scrolling components but all you can see of them is the scroll bars. The grid and headers are implemented as an independent Canvas element. Callbacks from the scroll bars are used to update the rendering offset for the canvas, in the same way that we update the rendering offset for our `DisplayList` based headers.
+
+The browser may still end up using stale content when it refreshes the screen but you don't notice because it's consistent. You either see a fully rendered grid for the previous scroll position or the current one. The content only lags behind while you're actively scrolling and catches up as soon as you stop. You really can't tell.
+
+This is also why you never see flashes of blank content in the headers of our spreadsheet. They're decoupled from the compositor's scroll handling.
+
+# Next Time
+
+Now I know how to fix this. All I need to do is decouple the grid too. Instead of rendering the visible content of the grid into the scrollable area, I can render it using a separate component. 
+
+Using the same approach as Google Sheets would be fiddly. You'd have to replicate the browser's logic that decides whether scroll bars are needed and works out how much space to give them. 
+
+Luckily, I have a way to avoid that. I'll tell you about it next time. 
