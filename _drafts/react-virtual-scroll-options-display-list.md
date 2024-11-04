@@ -118,7 +118,7 @@ Which actually happens. Try the demo from [last time]({% link _posts/2024-10-28-
 
 {% include candid-iframe.html src="/assets/dist/react-spreadsheet-event-handling/index.html" width="100%" height="fit-content" %}
 
-It would all be much cleaner if I had a simple [controlled component](https://legacy.reactjs.org/docs/forms.html#controlled-components). I can pass in the render offset as a prop. No need to send extra events. 
+It would all be much cleaner if I had a simple [controlled component](https://legacy.reactjs.org/docs/forms.html#controlled-components) list. I can pass in the render offset as a prop. No need to send extra events. 
 
 ## API
 
@@ -155,10 +155,10 @@ The complexity of paged virtual scrolling in `VirtualList` led to an approach wh
 That leads to complex rendering code with heavyweight JSX output. Removing scrolling gives us the opportunity to use a much lighter weight implementation. There are three principles that we're trying to follow.
 
 1. Minimize changes to the DOM caused by small changes to the component. In our case, there will be lots of small changes to `offset`.
-2. Use inline styles only for anything dependent on props or crucial for correct functionality. Primarily layout and size of items in the list.
+2. Only use inline styles for anything dependent on props or crucial for correct functionality. Primarily layout and size of items in the list.
 3. Minimize the number of different styles and how often they need to be changed.
 
-The component keeps the familiar outer and inner container internal structure. The inner container is sized to match the visible items from the list. The inner container is positioned within the outer container based on the difference between the offset prop and the start offset for the visible items. Typically that results in the inner container being shifted up by the fractional part of an item. 
+The component keeps the familiar outer viewport container and inner content container structure. The inner container is sized to match the visible items from the list. The inner container is positioned within the outer container based on the difference between the offset prop and the start offset for the visible items. Typically that results in the inner container being shifted up by the fractional part of an item. 
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/display-list-structure.svg" alt="Display List Structure" %}
 
@@ -216,13 +216,13 @@ The only tricky bit is the `getGridTemplate` helper function which converts an a
 
 ## Unit Tests
 
-I added `VirtualCommon.test.ts` so that I could directly test `getGridTemplate`
+I added `VirtualCommon.test.ts` so that I could directly test `getGridTemplate`.
 
 ```ts
   expect(getGridTemplate([ 10, 20, 30, 30, 40 ])).toBe("10px 20px repeat(2,30px) 40px")
 ```
 
-The `DisplayList` tests are simpler than `VirtualList` because I didn't have to mock up scrolling and layout. However, there are more edge cases to check as the offset prop is not constrained in same way as a scroll offset. It's perfectly legal to have a negative offset or an offset that goes off the end of the list. Whatever items are visible (if any) need to be correctly positioned and the rest left blank.
+The `DisplayList` tests are simpler than `VirtualList` because I didn't have to mock up scrolling and layout. However, there are more edge cases to check as the offset prop is not constrained in the same way as a scroll offset. It's perfectly legal to have a negative offset or an offset that goes off the end of the list. Whatever items are visible (if any) need to be correctly positioned and the rest left blank.
 
 # Results
 
@@ -238,7 +238,7 @@ Select something then use the arrow keys to zoom around the spreadsheet
 
 {% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/index.html" width="100%" height="fit-content" %}
 
-There's only one problem. The rendering glitches are still there. 
+There's only one problem. The scroll related rendering glitches are still there. 
 
 How is that possible? We receive the scroll event, render everything and update the DOM before the browser paints.
 
