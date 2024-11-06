@@ -34,9 +34,15 @@ wise words
 * Nested div setup
 * Outer div is sized by parent in the usual way - caller can apply whatever style they want to influence this
 * Inner div has zero width and height and visible overflow. Need to prevent size of child having any influence on outer div size.
+* Simple layout effect to determine initial size and to add a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) to track future resizes
 * Potential infinite loop if we pass computed size to child which renders itself bigger and increases size of parent
-* Simple layout effect to compute size
-* Render with new size (due to changes in parent) -> layout effect -> Render child with new size without triggering knock on change to parent
+* Parent resizes -> observer updates width and height -> Render child with new size without triggering knock on resize to parent
+* Separate `width` and `height` state as easily comparable by React to short circuit render if duplicate values set
+* No need to check whether width and height have changed, which means no dependencies on state or props in resize handler
+* Which means same function instance can be used
+* Which means layout effect only needs to run once on mount
+* No churn of observers
+* [`jsdom-testing-mocks`](https://www.npmjs.com/package/jsdom-testing-mocks) package provides ResizeObserver mock as not supported by `jsdom`.
 
 # Virtual Scroll
 
