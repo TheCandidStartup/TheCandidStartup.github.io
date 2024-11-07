@@ -4,45 +4,108 @@ title: >
 tags: react-virtual-scroll
 ---
 
-wise words
+As we discovered [last time]({% link _drafts/react-glitchy-virtual-scroll.md %}), traditional virtual scrolling implementations don't work properly. Both React and the Chrome browser prioritize responsiveness when scrolling. New frames can be displayed before virtualized components have a chance to render updated content. Content appears torn or goes blank.
 
-* Traditional virtual scrolling implementations don't work
-* Both React and Chrome Browser want to maintain responsiveness by occasionally painting before virtual scrolling components can render updated content in response to the scroll event
-* What if we completely separated virtual scrolling from the display of "scrolled" content?
-* Virtual scrolling component consists of fixed size outer viewport div and much larger scrollable inner div
-* Don't render anything in the inner div. Then doesn't matter if it's not up to date
-* Have a separate component that can display content starting from an arbitrary offset
-* DisplayList!
-* Position the display component in the viewport on top of the scrollable area
-* Scrolling events update state which in turn renders the display component with a new offset
-* Display can still get a frame behind scroll position but you don't notice because what's rendered is consistent
+Luckily, I have a plan. Instead of rendering visible content into the scrollable area, we can render it into a separate component which is placed *on top* of the scrollable area. The browser can scroll away as much as it likes without impacting the displayed content. It only changes when we update it in response to scroll events. What's displayed may be a frame behind the scroll bar position when interacting, but you don't notice because what's rendered is always consistent.
+
+After lots of thought and experimentation, I've mirrored the decoupling of virtual scrolling and content display by breaking the functionality into separate components. This gives clients much greater flexibility in how they combine the components. Composition for the win!
+
+I've also included pre-composed `VirtualList` and `VirtualGrid` components for simple use cases. These components are largely backwards compatible with previous versions of the package. 
+
+It's time to introduce the new React Virtual Scrolling component family.
 
 # Virtual Container
 
+Let's start simple. The previous generation of components used a common pattern. Components were typically implemented using nested divs with a fixed size outer viewport div and a larger inner div holding the content. The styling and rendering of these divs can be customized by passing in optional [render props]({% link _posts/2024-10-21-react-virtual-scroll-0-5-0.md %}). 
+
+Each component had its own implementation of the pattern, with lots of repeated boiler plate code. Now, I've pulled the common code out into a common component. `VirtualContainer` simply provides a div whose rendering can be customized via a render prop. 
+
+```tsx
+export type VirtualContainerRenderProps = React.ComponentPropsWithoutRef<'div'>;
+
+export type VirtualContainerRender = (props: VirtualContainerRenderProps, ref?: React.ForwardedRef<HTMLDivElement>) => JSX.Element;
+
+export interface VirtualContainerComponentProps extends VirtualContainerRenderProps {
+  render?: VirtualContainerRender;
+}
+
+const defaultContainerRender: VirtualContainerRender = ({...rest}, ref) => (
+  <div ref={ref} {...rest} />
+)
+
+export const VirtualContainer = React.forwardRef<HTMLDivElement, VirtualContainerComponentProps >(
+  function VirtualContainer({render = defaultContainerRender, ...rest}, ref) {
+    return render(rest, ref)
+})
+```
+
+That's all there is to it. It's surprising how much boilerplate code I was able to get rid of. Consolidating all the special case container types into one really helped.
+
 # Auto Sizer
 
-* Components like DisplayList need to be given an explicit width and height so that they know what subset of the underlying list's content needs to be rendered to fill the viewport.
-* DisplayList needs to be positioned to exactly fill the VirtualScroll viewport area. Size of viewport area depends on styling and whether scroll bars are visible. 
-* Most general solution is to measure the actual size of the display area and pass that through to DisplayList
-* Inspiration from [`react-virtualized-auto-sizer`](https://github.com/bvaughn/react-virtualized-auto-sizer). Companion project to `react-window`. Provides a higher order component which passes measured width and height to child.
-* Implemented my own version in modern React
-* Original has a complex implementation and boundary issues
-* It subscribes to events on its parent and resizes its child to the area of its parent
-* Sizing logic involves determining style applied to parent and how much padding there is outside content box
-* Unexpected results unless parent has single child - docs suggest a workaround of wrapping in a div
-* Gone for a much simpler implementation
-* Nested div setup
-* Outer div is sized by parent in the usual way - caller can apply whatever style they want to influence this
-* Inner div has zero width and height and visible overflow. Need to prevent size of child having any influence on outer div size.
-* Simple layout effect to determine initial size and to add a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) to track future resizes
-* Potential infinite loop if we pass computed size to child which renders itself bigger and increases size of parent
-* Parent resizes -> observer updates width and height -> Render child with new size without triggering knock on resize to parent
-* Separate `width` and `height` state as easily comparable by React to short circuit render if duplicate values set
-* No need to check whether width and height have changed, which means no dependencies on state or props in resize handler
-* Which means same function instance can be used
-* Which means layout effect only needs to run once on mount
-* No churn of observers
-* [`jsdom-testing-mocks`](https://www.npmjs.com/package/jsdom-testing-mocks) package provides ResizeObserver mock as not supported by `jsdom`.
+After giving `VirtualContainer` such a big build up, it's ironic that my next component doesn't use `VirtualContainer` at all.
+
+Components like `DisplayList` and `VirtualGrid` need to be given an explicit width and height so that they know what subset of the virtualized content needs to be rendered to fill the viewport. What if you want their size to be dynamic and respond as the browser window is resized and the layout changes? That's where `AutoSizer` comes in.
+
+`AutoSizer` was inspired by [`react-virtualized-auto-sizer`](https://github.com/bvaughn/react-virtualized-auto-sizer), a companion project to `react-window`. It provides a higher order component which measures its size, then passes explicit width and height props to its children.
+
+I've implemented my own version in modern React. The original has an overly complex implementation and boundary issues. It subscribes to events on its *parent* and resizes its child to the area of its parent. There's lots of edge cases because it can't control its parent's lifetime. At the same time, it imposes constraints on the parent. For example, it only really works if the parent has a single child. The documentation suggests the workaround of wrapping the component in a dedicated div.
+
+I've gone for a much simpler implementation with a nested div setup. `AutoSizer` measures the size of the outer div. The outer div's size is controlled by it's parent in the usual way. There are no constraints on the parent and no unnatural interactions with it. Clients can apply whatever style they want to the outer div to influence the layout process. 
+
+The inner div is unusual. It has zero width and height with a visible overflow. Children are added to the inner div. It's vital that children have no influence on the size of the outer div. It's easy to end up with infinite loops if we pass a measured size to a child which in turn makes itself bigger which then increases the size of it's parent. Wrapping the children in a zero size div ensures that the outer div ignores child sizes when determining it's own size. The visible overflow ensures the children are visible. 
+
+```tsx
+<div ref={ref} className={className} style={style}>
+  <div style={{ overflow: 'visible', width: 0, height: 0 }}>
+  {children({height, width})}
+  </div>
+</div>
+```
+
+There's no need to use `VirtualContainer` as these divs don't need to support additional customization. `AutoSizer` does a very specific job as a higher order component. Any further customization would be applied to the parent or children.
+
+Children are defined using a render prop with `width` and `height` parameters. This provides flexibility in how the measured width and height are used. You use an `AutoSizer` like this:
+
+```tsx
+<AutoSizer style={{ height: '100%', width: '100%' }}>
+{({height,width}) => (
+  <DisplayList
+    ...
+    height={height}
+    width={width}>
+    {Row}
+  </DisplayList>
+)}
+</AutoSizer>
+```
+
+The implementation uses a simple layout effect to determine the initial size and to add a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) to track future resizes. Resize observers are only available in a browser context so we take care not to crash if used in a unit test or server side rendering.
+
+```ts
+React.useLayoutEffect(() => {
+  const div = ref.current;
+  if (!div)
+    return;
+
+  setHeight(div.clientHeight);
+  setWidth(div.clientWidth);
+
+  if (typeof ResizeObserver !== 'undefined') {
+    const resizeObserver = new ResizeObserver(resizeCallback);
+    resizeObserver.observe(div);
+    return () => { resizeObserver.disconnect() }
+  }
+}, [resizeCallback])
+```
+
+Great care is needed to avoid running the effect repeatedly which would result in observers being repeatedly disconnected and recreated. We use separate `width` and `height` state as primitives are directly comparable by React. Subsequent renders can be short circuited if the size hasn't changed. That avoids having to explicitly check whether width and height have changed. Which in turn means there are no dependencies on state or props in the resize handler. The layout effect runs once on mount. 
+
+* SAMPLE!
+
+A sample app using `AutoSizer` is embedded above. It doesn't do anything interesting if you can't resize it, so best follow this link run the sample on a dedicated page.
+
+As usual, unit testing achieves 100% code coverage. I needed to add the [`jsdom-testing-mocks`](https://www.npmjs.com/package/jsdom-testing-mocks) package to my development environment to provide a `ResizeObserver` mock as it's not supported by `jsdom`.
 
 # Virtual Scroll
 
@@ -55,6 +118,10 @@ wise words
 * OG VirtualScroll sample with display of state
 
 # Virtual List
+
+* DisplayList needs to be big enough to cover the VirtualScroll viewport client area. It can be larger, as long as it remains within the scrollable area. 
+* Size client area depends on styling and whether scroll bars are visible. Using the overall size of the VirtualScroll. and not worrying about being slightly too large, doesn't work in all cases. List is the simplest example. Has a large scroll height (so vertical scroll bar displayed) but minimal width. Over sizing display list width will result in an unintended horizontal scroll bar. 
+* Most general solution is to measure the actual size of the client area and pass that through to DisplayList
 
 * VirtualList = VirtualScroll + AutoSizer + DisplayList
 * Need AutoSizer because the DisplayList needs to perfectly fit the VirtualScroll client area
