@@ -244,4 +244,4 @@ How is that possible? We receive the scroll event, render everything and update 
 
 # Next Time
 
-We'll do a deep dive next time.
+We'll do a deep dive [next time]({% link _posts/2024-11-11-react-glitchy-virtual-scroll.md %}).

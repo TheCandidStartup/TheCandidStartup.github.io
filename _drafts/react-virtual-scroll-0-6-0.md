@@ -4,7 +4,7 @@ title: >
 tags: react-virtual-scroll
 ---
 
-As we discovered [last time]({% link _drafts/react-glitchy-virtual-scroll.md %}), traditional virtual scrolling implementations don't work properly. Both React and the Chrome browser prioritize responsiveness when scrolling. New frames can be displayed before virtualized components have a chance to render updated content. Content appears torn or goes blank.
+As we discovered [last time]({% link _posts/2024-11-11-react-glitchy-virtual-scroll.md %}), traditional virtual scrolling implementations don't work properly. Both React and the Chrome browser prioritize responsiveness when scrolling. New frames can be displayed before virtualized components have a chance to render updated content. Content appears torn or goes blank.
 
 Luckily, I have a plan. Instead of rendering visible content into the scrollable area, we can render it into a separate component which is placed *on top* of the scrollable area. The browser can scroll away as much as it likes without impacting the displayed content. It only changes when we update it in response to scroll events. What's displayed may be a frame behind the scroll bar position when interacting, but you don't notice because what's rendered is always consistent.
 
@@ -55,6 +55,8 @@ I've gone for a much simpler implementation with a nested div setup. `AutoSizer`
 
 The inner div is unusual. It has zero width and height with a visible overflow. Children are added to the inner div. It's vital that children have no influence on the size of the outer div. It's easy to end up with infinite loops if we pass a measured size to a child which in turn makes itself bigger which then increases the size of it's parent. Wrapping the children in a zero size div ensures that the outer div ignores child sizes when determining it's own size. The visible overflow ensures the children are visible. 
 
+{% raw %}
+
 ```tsx
 <div ref={ref} className={className} style={style}>
   <div style={{ overflow: 'visible', width: 0, height: 0 }}>
@@ -63,9 +65,13 @@ The inner div is unusual. It has zero width and height with a visible overflow. 
 </div>
 ```
 
+{% endraw %}
+
 There's no need to use `VirtualContainer` as these divs don't need to support additional customization. `AutoSizer` does a very specific job as a higher order component. Any further customization would be applied to the parent or children.
 
 Children are defined using a render prop with `width` and `height` parameters. This provides flexibility in how the measured width and height are used. You use an `AutoSizer` like this:
+
+{% raw %}
 
 ```tsx
 <AutoSizer style={{ height: '100%', width: '100%' }}>
@@ -79,6 +85,8 @@ Children are defined using a render prop with `width` and `height` parameters. T
 )}
 </AutoSizer>
 ```
+
+{% endraw %}
 
 The implementation uses a simple layout effect to determine the initial size and to add a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) to track future resizes. Resize observers are only available in a browser context so we take care not to crash if used in a unit test or server side rendering.
 
