@@ -32,7 +32,9 @@ Makes no difference.
 
 My next thought was that maybe the React legacy mode rendering was broken. I've applied a few minor updates to React. It's easy for bugs to creep into a rarely used legacy code path. 
 
-I switched to React 18 rendering. Which, as before, is even more broken. React 18 encourages the browser to paint before rendering for "continuous" events like scrolling. I then wrapped my handling of the scroll event with [`flushSync`](), which forces the DOM to update before returning. Which puts me back to the same behavior I see with legacy rendering. 
+I switched to React 18 rendering. Which, as before, is even more broken. React 18 encourages the browser to paint before rendering for "continuous" events like scrolling. 
+
+I wrapped my handling of the scroll event with [`flushSync`](https://react.dev/reference/react-dom/flushSync), which forces the DOM to update before returning. Which puts me back to the same behavior I see with legacy rendering. 
 
 # Partially Presented Frame
 
@@ -87,11 +89,11 @@ There are six scroll events with three good frames produced, then two bad ones b
 
 # Good Frame
 
-Let's zoom into one of the good frames and look at the multi-track overview. THe multi-colored track shows activity on the main thread. Orange is JavaScript execution, purple is rendering and green is painting. Below that is the raster thread that actually paints each layer, with the GPU compositor activity at the bottom.
+Let's zoom into one of the good frames and look at the multi-track overview. The multi-colored track shows activity on the main thread. Orange is JavaScript execution, purple is rendering and green is painting. Below that is the raster thread that actually paints each layer, with the GPU compositor activity at the bottom.
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/perf-scroll-good-frame.png" alt="Overview profile of a good frame" %}
 
-It all makes sense. The frame starts with the scroll event dispatched to the event loop within the first ms. There's a flurry of activity, the DOM is updated and the changes committed. The raster thread paints, then the GPU compositor wakes up and completes the frame. Everything done in 5ms.
+It all looks good. The frame starts with the scroll event dispatched to the event loop within the first millisecond. There's a flurry of activity, the DOM is updated and the changes committed. The raster thread paints, then the GPU compositor wakes up and completes the frame. Everything done in 5ms.
 
 # Bad Frame
 
