@@ -51,9 +51,9 @@ Components like `DisplayList` and `VirtualGrid` need to be given an explicit wid
 
 I've implemented my own version in modern React. The original has an overly complex implementation and boundary issues. It subscribes to events on its *parent* and resizes its child to the area of its parent. There's lots of edge cases because it can't control its parent's lifetime. At the same time, it imposes constraints on the parent. For example, it only really works if the parent has a single child. The documentation suggests the workaround of wrapping the component in a dedicated div.
 
-I've gone for a much simpler implementation with a nested div setup. `AutoSizer` measures the size of the outer div. The outer div's size is controlled by it's parent in the usual way. There are no constraints on the parent and no unnatural interactions with it. Clients can apply whatever style they want to the outer div to influence the layout process. 
+I've gone for a much simpler implementation with a nested div setup. `AutoSizer` measures the size of the outer div. The outer div's size is controlled by its parent in the usual way. There are no constraints on the parent and no unnatural interactions with it. Clients can apply whatever style they want to the outer div to influence the layout process. 
 
-The inner div is unusual. It has zero width and height with a visible overflow. Children are added to the inner div. It's vital that children have no influence on the size of the outer div. It's easy to end up with infinite loops if we pass a measured size to a child which in turn makes itself bigger which then increases the size of it's parent. Wrapping the children in a zero size div ensures that the outer div ignores child sizes when determining it's own size. The visible overflow ensures the children are visible. 
+The inner div is unusual. It has zero width and height with a visible overflow. Children are added to the inner div. It's vital that children have no influence on the size of the outer div. It's easy to end up with infinite loops if we pass a measured size to a child which in turn makes itself bigger which then increases the size of it's parent. Wrapping the children in a zero size div ensures that the outer div ignores child sizes when determining its own size. The visible overflow ensures the children are visible. 
 
 {% raw %}
 
@@ -109,9 +109,9 @@ React.useLayoutEffect(() => {
 
 Great care is needed to avoid running the effect repeatedly which would result in observers being repeatedly disconnected and recreated. We use separate `width` and `height` state as primitives are directly comparable by React. Subsequent renders can be short circuited if the size hasn't changed. That avoids having to explicitly check whether width and height have changed. Which in turn means there are no dependencies on state or props in the resize handler. The layout effect runs once on mount. 
 
-* SAMPLE!
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/auto-sizer/index.html" width="100%" height="fit-content" %}
 
-A sample app using `AutoSizer` is embedded above. It doesn't do anything interesting if you can't resize it, so best follow this link run the sample on a dedicated page.
+A sample app using `AutoSizer` is embedded above. It doesn't do anything interesting if you can't resize it, so best [follow this link](/assets/dist/react-virtual-scroll-0-6-0/samples/auto-sizer/index.html) to run the sample on a dedicated page.
 
 As usual, unit testing achieves 100% code coverage. I needed to add the [`jsdom-testing-mocks`](https://www.npmjs.com/package/jsdom-testing-mocks) package to my development environment to provide a `ResizeObserver` mock as it's not supported by `jsdom`.
 
@@ -123,7 +123,15 @@ As usual, unit testing achieves 100% code coverage. I needed to add the [`jsdom-
 * Set both for two-dimensional scrolling experience, set one for horizontal or vertical scrolling experience
 * One component does both and can dynamically switch as size of scrollable area changes relative to size of viewport
 
-* OG VirtualScroll sample with display of state
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/virtual-scroll/index.html" width="100%" height="fit-content" %}
+
+# Display List
+
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/display-list/index.html" width="100%" height="fit-content" %}
+
+# Display Grid
+
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/display-grid/index.html" width="100%" height="fit-content" %}
 
 # Virtual List
 
@@ -135,11 +143,13 @@ As usual, unit testing achieves 100% code coverage. I needed to add the [`jsdom-
 * Need AutoSizer because the DisplayList needs to perfectly fit the VirtualScroll client area
 * If you oversize DisplayList it will impact size of scrollable area
 
-# Display Grid
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/trillion-row-list/index.html" width="100%" height="fit-content" %}
 
 # Virtual Grid
 
 * VirtualGrid = VirtualScroll + AutoSizer + DisplayGrid
+
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/trillion-square-grid/index.html" width="100%" height="fit-content" %}
 
 # Upgrading
 
@@ -156,6 +166,8 @@ As usual, unit testing achieves 100% code coverage. I needed to add the [`jsdom-
 * Has strong dependency on how layout used to be done with absolute positioning
 * Reimplementing equivalent hackery isn't possible with the new structure because you need access to internals
 * There's a better way. If you have more complex needs use the basic components yourself
+
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/padding/index.html" width="100%" height="fit-content" %}
 
 # Overscan
 

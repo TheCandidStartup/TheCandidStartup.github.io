@@ -1,0 +1,2 @@
+var n=Object.defineProperty;var m=(t,e,i)=>e in t?n(t,e,{enumerable:!0,configurable:!0,writable:!0,value:i}):t[e]=i;var f=(t,e,i)=>m(t,typeof e!="symbol"?e+"":e,i);class r{constructor(e){f(this,"fixedItemSize");this.fixedItemSize=e}itemSize(e){return this.fixedItemSize}itemOffset(e){return e*this.fixedItemSize}offsetToItem(e){const i=Math.floor(e/this.fixedItemSize),s=i*this.fixedItemSize;return[i,s]}}function I(t){return new r(t)}export{I as u};
+//# sourceMappingURL=useFixedSizeItemOffsetMapping-CnpHxw9A.js.map
