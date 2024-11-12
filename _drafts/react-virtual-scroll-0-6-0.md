@@ -1,6 +1,6 @@
 ---
 title: >
-  React Virtual Scroll 0.6.0 : Consciously Uncoupling
+  React Virtual Scroll 0.6.x : Consciously Uncoupling
 tags: react-virtual-scroll
 ---
 
@@ -12,7 +12,9 @@ After lots of thought and experimentation, I've mirrored the decoupling of virtu
 
 I've also included pre-composed `VirtualList` and `VirtualGrid` components for simple use cases. These components are largely backwards compatible with previous versions of the package. 
 
-It's time to introduce the new React Virtual Scrolling component family.
+It's time to introduce the new [React Virtual Scroll 0.6.x](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.6.0) component family.
+
+{% include candid-image.html src="/assets/images/react-virtual-scroll/npm-react-virtual-scroll-0-6-0.png" alt="react-virtual-scroll 0.6.0 release" %}
 
 # Virtual Container
 
@@ -39,13 +41,113 @@ export const VirtualContainer = React.forwardRef<HTMLDivElement, VirtualContaine
 })
 ```
 
-That's all there is to it. It's surprising how much boilerplate code I was able to get rid of. Consolidating all the special case container types into one really helped.
+That's all there is to it.
+
+# Display List
+
+I gave an overview of `DisplayList` [last time](/_posts/2024-11-04-react-virtual-scroll-options-display-list.md). It's a controlled component that renders a window onto a virtualized list starting from a specified `offset`. 
+
+There are two changes since then. I removed lots of boilerplate code by using `VirtualContainer` instead of a local implementation of a customizable container. The change is backwards compatible as the shape of the types hasn't changed. 
+
+I also added an `isScrolling` prop which `DisplayList` just passes through to it's rendered children. We'll see why that's useful later. 
+
+{% raw %}
+
+```tsx
+<VirtualContainer className={className} render={outerRender} style={outerStyle}>
+    <VirtualContainer className={innerClassName} render={innerRender} style={innerStyle}>
+    {sizes.map((_size, arrayIndex) => (
+      <ChildVar isScrolling={isScrolling} {...rest}/>
+    ))}
+  </VirtualContainer>
+</VirtualContainer>
+```
+
+{% endraw %}
+
+Try pressing and holding the up and down arrows in the "Offset" field to get a good understanding of how the component works. You can also switch between horizontal and vertical layouts.
+
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/display-list/index.html" width="100%" height="360" %}
+
+# Display Grid
+
+`DisplayGrid` is the same thing for grids. You get a `rowOffset` and a `columnOffset` instead of just one. Implementation is a simple extension of what `DisplayList` did to two dimensions.
+
+{% raw %}
+
+```tsx
+<VirtualContainer className={className} render={outerRender} style={outerStyle}>
+    <VirtualContainer className={innerClassName} render={innerRender} style={innerStyle}>
+    {rowSizes.map((_rowSize, rowIndex) => (
+      <Fragment key={itemKey(rowStartIndex + rowIndex, 0, itemData)}>
+      {colSizes.map((_size, colIndex) => (
+        <ChildVar data={itemData} isScrolling={isScrolling} style={boxStyle}
+          key={itemKey(rowStartIndex + rowIndex, colStartIndex + colIndex, itemData)} 
+          rowIndex={rowStartIndex + rowIndex}
+          columnIndex={colStartIndex + colIndex}/>
+      ))}
+      </Fragment>
+    ))}
+  </VirtualContainer>
+</VirtualContainer>
+```
+
+{% endraw %}
+
+Press and hold the arrow buttons in the offset fields to move window over the virtualized grid.
+
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/display-grid/index.html" width="100%" height="fit-content" %}
+
+# Virtual Scroll
+
+`VirtualScroll` extracts the scrolling functionality from the old `VirtualList` and `VirtualGrid`. Scrolling behavior is determined by the `scrollableWidth` and `scrollableHeight` props. These directly set the size of the scrollable area. Set both for a two-dimensional scrolling experience, set either one for a horizontal or vertical scrolling experience.
+
+```ts
+export interface VirtualScrollProps extends VirtualScrollableProps {
+  scrollHeight?: number,
+  scrollWidth?: number,
+
+  onScroll?: (verticalOffset: number, horizontalOffset: number, 
+    newVerticalScrollState: ScrollState, newHorizontalScrollState: ScrollState) => void;
+
+  children: VirtualContentRender
+}
+```
+
+The inherited props are the common ones from the old `VirtualList` and `VirtualGrid`. 
+
+The `onScroll` callback is a superset of the old `VirtualList` and `VirtualGrid` `onScroll` callbacks. A `children` render prop is used to render content that should respond to the scroll position, making `isScrolling`, `verticalOffset` and `horizontalOffset` props available to the rendered children. 
+
+`VirtualScroll`, `DisplayList` and `DisplayGrid` are designed to work well together.
+
+```tsx
+<VirtualScroll
+  useIsScrolling={true}
+  scrollHeight={scrollHeight}
+  scrollWidth={scrollWidth}
+  height={200}
+  width={600}>
+  {({ isScrolling, verticalOffset, horizontalOffset }) => (
+    <DisplayGrid
+      ...
+      isScrolling={isScrolling}
+      rowOffset={verticalOffset}
+      columnOffset={horizontalOffset}>
+      {Cell}
+    </DisplayGrid>
+  )}
+</VirtualScroll>
+```
+
+This sample uses `onScroll` to display the detailed scroll position as you interact with the `VirtualScroll` component. 
+
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/virtual-scroll/index.html" width="100%" height="fit-content" %}
+
+Try changing the scroll height and width and seeing how the scroll bars respond.
 
 # Auto Sizer
 
-After giving `VirtualContainer` such a big build up, it's ironic that my next component doesn't use `VirtualContainer` at all.
-
-Components like `DisplayList` and `VirtualGrid` need to be given an explicit width and height so that they know what subset of the virtualized content needs to be rendered to fill the viewport. What if you want their size to be dynamic and respond as the browser window is resized and the layout changes? That's where `AutoSizer` comes in.
+Components like `DisplayList` and `DisplayGrid` need to be given an explicit width and height so that they know what subset of the virtualized content needs to be rendered. What if you want the size to be dynamic and respond as the browser window is resized and the layout changes? That's where `AutoSizer` comes in.
 
 `AutoSizer` was inspired by [`react-virtualized-auto-sizer`](https://github.com/bvaughn/react-virtualized-auto-sizer), a companion project to `react-window`. It provides a higher order component which measures its size, then passes explicit width and height props to its children.
 
@@ -53,7 +155,7 @@ I've implemented my own version in modern React. The original has an overly comp
 
 I've gone for a much simpler implementation with a nested div setup. `AutoSizer` measures the size of the outer div. The outer div's size is controlled by its parent in the usual way. There are no constraints on the parent and no unnatural interactions with it. Clients can apply whatever style they want to the outer div to influence the layout process. 
 
-The inner div is unusual. It has zero width and height with a visible overflow. Children are added to the inner div. It's vital that children have no influence on the size of the outer div. It's easy to end up with infinite loops if we pass a measured size to a child which in turn makes itself bigger which then increases the size of it's parent. Wrapping the children in a zero size div ensures that the outer div ignores child sizes when determining its own size. The visible overflow ensures the children are visible. 
+The inner div is unusual. It has zero width and height with a visible overflow. Children are added to the inner div. It's vital that children have no influence on the size of the outer div. It's easy to end up with infinite loops if we pass a measured size to a child which in turn makes itself bigger which then increases the size of its parent. Wrapping the children in a zero size div ensures that the outer div ignores child sizes when determining its own size. The visible overflow ensures the children are visible. 
 
 {% raw %}
 
@@ -67,7 +169,7 @@ The inner div is unusual. It has zero width and height with a visible overflow. 
 
 {% endraw %}
 
-There's no need to use `VirtualContainer` as these divs don't need to support additional customization. `AutoSizer` does a very specific job as a higher order component. Any further customization would be applied to the parent or children.
+There's no need to use `VirtualContainer` as these divs don't need to support additional customization. `AutoSizer` does a very specific job as a higher order component. Any further customization would be applied to the parent or children instead.
 
 Children are defined using a render prop with `width` and `height` parameters. This provides flexibility in how the measured width and height are used. You use an `AutoSizer` like this:
 
@@ -77,9 +179,9 @@ Children are defined using a render prop with `width` and `height` parameters. T
 <AutoSizer style={{ height: '100%', width: '100%' }}>
 {({height,width}) => (
   <DisplayList
-    ...
     height={height}
-    width={width}>
+    width={width}
+    {...rest}>
     {Row}
   </DisplayList>
 )}
@@ -107,65 +209,124 @@ React.useLayoutEffect(() => {
 }, [resizeCallback])
 ```
 
-Great care is needed to avoid running the effect repeatedly which would result in observers being repeatedly disconnected and recreated. We use separate `width` and `height` state as primitives are directly comparable by React. Subsequent renders can be short circuited if the size hasn't changed. That avoids having to explicitly check whether width and height have changed. Which in turn means there are no dependencies on state or props in the resize handler. The layout effect runs once on mount. 
+Great care is needed to avoid running the effect repeatedly which would result in observers being repeatedly disconnected and recreated. We use separate `width` and `height` state as primitives are directly comparable by React. React will automatically short circuit subsequent renders if the size hasn't changed. That avoids having to explicitly check whether width and height have changed, which in turn means there are no dependencies on state or props in the resize handler. 
+
+The end result is that the layout effect runs once on mount. 
 
 {% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/auto-sizer/index.html" width="100%" height="fit-content" %}
 
 A sample app using `AutoSizer` is embedded above. It doesn't do anything interesting if you can't resize it, so best [follow this link](/assets/dist/react-virtual-scroll-0-6-0/samples/auto-sizer/index.html) to run the sample on a dedicated page.
 
-As usual, unit testing achieves 100% code coverage. I needed to add the [`jsdom-testing-mocks`](https://www.npmjs.com/package/jsdom-testing-mocks) package to my development environment to provide a `ResizeObserver` mock as it's not supported by `jsdom`.
-
-# Virtual Scroll
-
-* Uncouple the virtual paged scrolling functionality from VirtualList and VirtualGrid into a separate component
-* Has an `OnScroll` callback and a `contentRender` render prop for rendering content on top of the viewport
-* Props for `scrollableWidth` and `scrollableHeight`
-* Set both for two-dimensional scrolling experience, set one for horizontal or vertical scrolling experience
-* One component does both and can dynamically switch as size of scrollable area changes relative to size of viewport
-
-{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/virtual-scroll/index.html" width="100%" height="fit-content" %}
-
-# Display List
-
-{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/display-list/index.html" width="100%" height="fit-content" %}
-
-# Display Grid
-
-{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/display-grid/index.html" width="100%" height="fit-content" %}
+As usual, I aim for 100% code coverage in unit tests. I needed to add the [`jsdom-testing-mocks`](https://www.npmjs.com/package/jsdom-testing-mocks) package to my development environment to provide a `ResizeObserver` mock as it's not supported by `jsdom`.
 
 # Virtual List
 
-* DisplayList needs to be big enough to cover the VirtualScroll viewport client area. It can be larger, as long as it remains within the scrollable area. 
-* Size client area depends on styling and whether scroll bars are visible. Using the overall size of the VirtualScroll. and not worrying about being slightly too large, doesn't work in all cases. List is the simplest example. Has a large scroll height (so vertical scroll bar displayed) but minimal width. Over sizing display list width will result in an unintended horizontal scroll bar. 
-* Most general solution is to measure the actual size of the client area and pass that through to DisplayList
+Virtual List is a little more complicated than you might think. It's been reimplemented as a combination of a `VirtualScroll` and a `DisplayList`. The  `DisplayList` needs to be big enough to cover the `VirtualScroll` viewport client area. It can be larger but has to stay within the bounds of the scrollable area. 
 
-* VirtualList = VirtualScroll + AutoSizer + DisplayList
-* Need AutoSizer because the DisplayList needs to perfectly fit the VirtualScroll client area
-* If you oversize DisplayList it will impact size of scrollable area
+The viewport client area size depends on styling and whether scroll bars are visible. I initially set the `DisplayList` to the overall size of the `VirtualScroll`, deciding not to worry about it being slightly too large. Unfortunately, that doesn't work in all cases. 
+
+For example, consider a list with a large scroll height that needs a vertical scroll bar displayed. The list content has minimal width. Over sizing the `DisplayList` will result in an unintended horizontal scroll bar. 
+
+The simplest solution is to wrap the `DisplayList` in an `AutoSizer` so that it exactly fits the client area. 
+
+{% raw %}
+
+```tsx
+<VirtualScroll
+  scrollHeight={isVertical ? renderSize : undefined}
+  scrollWidth={isVertical ? undefined : renderSize}
+  {...otherScrollProps}>
+  {({ isScrolling, verticalOffset, horizontalOffset }) => (
+    <AutoSizer style={{ height: '100%', width: '100%' }}>
+      {({height,width}) => (
+        <DisplayList
+          offset={isVertical ? verticalOffset : horizontalOffset}
+          isScrolling={isScrolling}
+          height={height}
+          width={width}
+          {...otherDisplayProps}>
+          {ChildVar}
+        </DisplayList>
+      )}
+    </AutoSizer>
+  )}
+</VirtualScroll>
+```
+
+{% endraw %}
+
+Most of the remaining code involved is needed to maintain backwards compatibility with the `onScroll` callback and `VirtualListProxy`. Lots of forwarding and restructuring to and from `VirtualScroll`. 
+
+One of the reasons for decoupling functionality is to allow the client to put together their own combinations. To make it easier, I exported most of the `VirtualListProxy` functionality as utility functions that you can use with your own `VirtualScroll`. Which annoyingly means moving it into its own TypeScript source file to avoid breaking Vite HMR. 
+
+All worth it because the existing samples build and run unmodified. This is the trillion row list sample.
 
 {% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/trillion-row-list/index.html" width="100%" height="fit-content" %}
 
 # Virtual Grid
 
-* VirtualGrid = VirtualScroll + AutoSizer + DisplayGrid
+I think you know the drill by now. `VirtualGrid` = `VirtualScroll` + `AutoSizer` + `DisplayGrid`.
+
+{% raw %}
+
+```tsx
+<VirtualScroll
+  scrollHeight={totalRowSize}
+  scrollWidth={totalColumnSize}
+  {...otherScrollProps}>
+  {({ isScrolling, verticalOffset, horizontalOffset }) => (
+    <AutoSizer style={{ height: '100%', width: '100%' }}>
+    {({height,width}) => (
+      <DisplayGrid
+        isScrolling={isScrolling}
+        rowOffset={verticalOffset}
+        columnOffset={horizontalOffset}
+        height={height}
+        width={width}
+        {...otherDisplayProps}>
+        {ChildVar}
+    </DisplayGrid>
+  )}
+  </AutoSizer>
+  )}
+</VirtualScroll>
+```
+
+{% endraw %}
+
+This is the trillion square grid sample. Super responsive scrolling. No more [rendering glitches]({% link _posts/2024-11-11-react-glitchy-virtual-scroll.md %}).
 
 {% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/trillion-square-grid/index.html" width="100%" height="fit-content" %}
 
 # Upgrading
 
-* Kept as much of the existing `VirtualList` and `VirtualGrid` interface as I could
-* In general all the samples and `react-spreadsheet` just worked without any code changes despite massive internal changes
-* Was most worried about `outerRender` and `innerRender` customization
-* `outerRender` is used to customize how component interacts with it's parent
-* `innerRender` is used to customize how component interacts with it's children
-* In principle, structure in between can change
-* All the `outerRender` stuff was fine
-* One problem was the padding sample which recreates a `react-window` sample
-* Adds padding to top and bottom of a `VirtualList`
-* Uses `innerRender` to mess with layout of children
-* Has strong dependency on how layout used to be done with absolute positioning
-* Reimplementing equivalent hackery isn't possible with the new structure because you need access to internals
-* There's a better way. If you have more complex needs use the basic components yourself
+Upgrading in most cases is straightforward. I kept as much of the existing `VirtualList` and `VirtualGrid` interface as I could. In general all the samples and `react-spreadsheet` just worked without any code changes, despite massive internal changes.
+
+The most likely thing to cause problems is `outerRender` and `innerRender` customization. The `outerRender` prop is used to customize how components interact with their parent. The `innerRender` prop is used to customize how components interact with their children. In principle the structure in between is free to change. 
+
+In practice there was one use of `innerRender` that caused problems. I [created]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) a "customized vertical list with padding" sample based on a `react-window` sample. The sample adds padding to the top and bottom of a `VirtualList` by modifying the layout of the list's children. It assumes the children use absolute positioning and rewrites each child's style to add an offset.
+
+The `innerRender` prop is forwarded to the internal `DisplayList`. `DisplayList` uses a grid layout so the sample doesn't work. You can't implement equivalent hackery with the new `VirtualList` because you'd need access to the structure in between.
+
+Luckily, there's a better way. If you have more complex needs you can combine the basic components yourself. It turns out that you don't need to make any assumptions about `DisplayList` internals.
+
+```tsx
+<VirtualScroll
+  scrollHeight={totalSize + PADDING_SIZE*2}
+  {...otherScrollProps}>
+  {({ verticalOffset }) => (
+    <AutoSizer style={{ height: '100%', width: '100%' }}>
+    {({height,width}) => (
+      <DisplayList
+        offset={verticalOffset - PADDING_SIZE}
+        {...otherDisplayProps}>
+        {Row}
+      </DisplayList>
+    )}
+    </AutoSizer>
+  )}
+</VirtualScroll>
+```
 
 {% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/padding/index.html" width="100%" height="fit-content" %}
 
@@ -200,10 +361,5 @@ As usual, unit testing achieves 100% code coverage. I needed to add the [`jsdom-
 # React 18 Rendering
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/spreadsheet-perf-decoupled-modern.png" alt="Performance tool frame capture" %}
-
-# Try It!
-
-* Link to NPM release
-* Spreadsheet sample
 
 # Next Time
