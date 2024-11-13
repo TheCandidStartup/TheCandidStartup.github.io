@@ -12,7 +12,7 @@ After lots of thought and experimentation, I've mirrored the decoupling of virtu
 
 I've also included pre-composed `VirtualList` and `VirtualGrid` components for simple use cases. These components are largely backwards compatible with previous versions of the package. 
 
-It's time to introduce the new [React Virtual Scroll 0.6.x](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.6.0) component family.
+It's time to introduce the new [React Virtual Scroll 0.6.x](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.6.1) component family.
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/npm-react-virtual-scroll-0-6-0.png" alt="react-virtual-scroll 0.6.0 release" %}
 
@@ -100,7 +100,28 @@ Press and hold the arrow buttons in the offset fields to move window over the vi
 
 # Virtual Scroll
 
-`VirtualScroll` extracts the scrolling functionality from the old `VirtualList` and `VirtualGrid`. Scrolling behavior is determined by the `scrollableWidth` and `scrollableHeight` props. These directly set the size of the scrollable area. Set both for a two-dimensional scrolling experience, set either one for a horizontal or vertical scrolling experience.
+`VirtualScroll` extracts the scrolling functionality from the old `VirtualList` and `VirtualGrid`. Implementation uses the standard approach of an outer viewport container holding an inner content container. The difference is that the outer container has two children. 
+
+The content container uses [sticky positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/position) to ensure that it always fills the viewport, regardless of scroll position. The other child is an empty div which acts as the scrollable area. Content rendering is decoupled from scrolling. The browser can no longer scroll stale content out of view. 
+
+{% raw %}
+
+```tsx
+<VirtualContainer className={className} render={outerRender} onScroll={onScroll}
+    style={{position:"relative", height, width, overflow: "auto", willChange: "transform"}}>
+  <VirtualContainer className={innerClassName} render={innerRender} 
+    style={{zIndex: 1, position: 'sticky', top: 0, left: 0, width: '100%', height: '100%'}}>
+    {children({isScrolling, verticalOffset, horizontalOffset})}
+  </VirtualContainer>
+  <div style={{ position: 'absolute', top: 0, left: 0, 
+    height: scrollHeight ? renderRowSize : '100%', 
+    width: scrollWidth ? renderColumnSize : '100%'}}/>
+</VirtualContainer>
+```
+
+{% endraw %}
+
+Scrolling behavior is determined by the `scrollableWidth` and `scrollableHeight` props. These directly set the size of the scrollable area. Set both for a two-dimensional scrolling experience, set either one for a horizontal or vertical scrolling experience.
 
 ```ts
 export interface VirtualScrollProps extends VirtualScrollableProps {
@@ -255,7 +276,7 @@ The simplest solution is to wrap the `DisplayList` in an `AutoSizer` so that it 
 
 {% endraw %}
 
-Most of the remaining code involved is needed to maintain backwards compatibility with the `onScroll` callback and `VirtualListProxy`. Lots of forwarding and restructuring to and from `VirtualScroll`. 
+Most of the remaining code is needed to maintain backwards compatibility with the `onScroll` callback and `VirtualListProxy`. Lots of forwarding and restructuring to and from `VirtualScroll`. 
 
 One of the reasons for decoupling functionality is to allow the client to put together their own combinations. To make it easier, I exported most of the `VirtualListProxy` functionality as utility functions that you can use with your own `VirtualScroll`. Which annoyingly means moving it into its own TypeScript source file to avoid breaking Vite HMR. 
 
@@ -332,34 +353,44 @@ Luckily, there's a better way. If you have more complex needs you can combine th
 
 # Overscan
 
+Traditional virtual scrolling implementations, like `react-window`, use [overscanning](https://web.dev/articles/virtualize-long-lists-react-window#overscanning) to try and compensate for glitchy rendering. Overscanning is the process of rendering additional content outside the visible window. If the browser scrolls stale content, the overscan items will be scrolled into view, reducing flashing. Obviously, this only works for small scale scrolls and ultimately reduces performance as you have more to render each frame.
+
+With the new decoupled rendering approach none of this is needed. I removed all the overscan rendering from `react-virtual-scroll`.
+
 # Layout Shift
+
+If you profile the new components using Chrome, you may see purple bars labeled as "Layout Shift".
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/spreadsheet-perf-decoupled-legacy.png" alt="Performance tool frame capture" %}
 
-* Layout Shift = stuff on the page moving around
-* https://web.dev/articles/debug-layout-shifts#devtools
-* In our case that's expected as we're moving content in a DisplayGrid to simulate the effects of scrolling
+[Layout shifts](https://web.dev/articles/debug-layout-shifts#devtools) occur when content moves around on the page. They're meant to identify user experience problems when content changes unpredictably, typically from images or data loading asynchronously and triggering a layout change.
+
+In our case we're intentionally changing the layout of a `DisplayList` or `DisplayGrid` to simulate the effects of scrolling. The weird thing is that Chrome only reports layout shifts when using the mouse wheel to scroll.
 
 # Cumulative Layout Shift
 
-* Core web performance metric
-* https://web.dev/articles/cls
-* Calculates an abstract score based on the number and size of layout shifts during an interaction session
-* Intent is to measure only unintended layout shifts - for example from async tasks like image or content load
-* Layout shifts within 500ms of user interaction are ignored.
+[Cumulate Layout Shift](https://web.dev/articles/cls) is a core web performance metric. It calculates an abstract score based on the number and size of layout shifts during an interaction session. The intent is to measure only unintended layout shifts. Layout shifts within 500ms of user interaction are ignored. Unfortunately, continuous interactions such as scrolls are [not considered to be recent input](https://github.com/WICG/layout-instability#recent-input-exclusion). 
 
-* Tool in Chrome. Here's metric when scrolling around the grid using the keyboard.
+The Chrome dev tools performance tab shows web metrics for the current session. Here's what they look like when interacting with the controls using mouse and keyboard. 
+
 {% include candid-image.html src="/assets/images/react-virtual-scroll/web-metrics-good.png" alt="Web metrics during keyboard navigation" %}
 
-* Here's the metric for the same grid when using mouse wheel and scroll bar
-{% include candid-image.html src="/assets/images/react-virtual-scroll/web-metrics-bad.png" alt="Web metrics during scrolling" %}
+Here's the metrics after some heavy duty mouse wheel scrolling. 
 
-* Scrolling doesn't count as intended!
-* Consider this to be a false positive
-* Only happens when user actively scrolling, so no impact on CLS score during page load (which is important for Google Search's [page experience](https://developers.google.com/search/docs/appearance/page-experience) based ranking)
+{% include candid-image.html src="/assets/images/react-virtual-scroll/web-metrics-bad.png" alt="Web metrics during mouse wheel scrolling" %}
+
+I consider this to be a false positive. It only happens when the user is actively scrolling using the mouse wheel, so has no impact on CLS score during page load. CLS scores are important for many people as they are part of Google Search's [page experience](https://developers.google.com/search/docs/appearance/page-experience) based ranking.
 
 # React 18 Rendering
 
+Decoupling virtualized content update from scrolling means that I no longer need to [rely on](https://www.thecandidstartup.org/2023/11/20/react-virtual-scroll-grid-3.html) the legacy React rendering path. All of these samples use the new React 18 rendering which gives continuous input events like scrolling a lower priority. 
+
 {% include candid-image.html src="/assets/images/react-virtual-scroll/spreadsheet-perf-decoupled-modern.png" alt="Performance tool frame capture" %}
 
+This is a frame from the middle of a sequence of scroll events. You can see that React returns to the event loop immediately after the scroll event is received, the browser paints the content from the previous frame and then React renders and updates the DOM for the new scroll position. 
+
+Play with the samples. You can't tell that what you're seeing is a frame behind because each frame is consistent.
+
 # Next Time
+
+Next time we'll see how we can make use of these new super powers in our [React Spreadsheet]({% link _topics/react-spreadsheet.md %}).
