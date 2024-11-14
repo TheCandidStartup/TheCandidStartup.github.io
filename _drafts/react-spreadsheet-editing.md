@@ -1,5 +1,6 @@
 ---
-title: React Spreadsheet Editing
+title: >
+  React Spreadsheet: Editing
 tags: react-spreadsheet
 thumbnail: /assets/images/boring-spreadsheet.png
 ---
