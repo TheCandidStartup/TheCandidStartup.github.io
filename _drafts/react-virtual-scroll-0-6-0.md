@@ -20,7 +20,9 @@ It's time to introduce the new [React Virtual Scroll 0.6.x](https://www.npmjs.co
 
 Let's start simple. The previous generation of components used a common pattern. Components were typically implemented using nested divs with a fixed size outer viewport div and a larger inner div holding the content. The styling and rendering of these divs can be customized by passing in optional [render props]({% link _posts/2024-10-21-react-virtual-scroll-0-5-0.md %}). 
 
-Each component had its own implementation of the pattern, with lots of repeated boiler plate code. Now, I've pulled the common code out into a common component. `VirtualContainer` simply provides a div whose rendering can be customized via a render prop. 
+Each component had its own implementation of the pattern, with lots of repeated boiler plate code. Now, I've pulled the common code out into a common component. 
+
+`VirtualContainer` simply provides a div whose rendering can be customized via a render prop. 
 
 ```tsx
 export type VirtualContainerRenderProps = React.ComponentPropsWithoutRef<'div'>;
@@ -94,7 +96,7 @@ Try pressing and holding the up and down arrows in the "Offset" field to get a g
 
 {% endraw %}
 
-Press and hold the arrow buttons in the offset fields to move window over the virtualized grid.
+Press and hold the arrow buttons in the offset fields to move the window over the virtualized grid.
 
 {% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/display-grid/index.html" width="100%" height="fit-content" %}
 
@@ -230,7 +232,7 @@ React.useLayoutEffect(() => {
 }, [resizeCallback])
 ```
 
-Great care is needed to avoid running the effect repeatedly which would result in observers being repeatedly disconnected and recreated. We use separate `width` and `height` state as primitives are directly comparable by React. React will automatically short circuit subsequent renders if the size hasn't changed. That avoids having to explicitly check whether width and height have changed, which in turn means there are no dependencies on state or props in the resize handler. 
+Great care is needed to avoid running the effect repeatedly, which would result in observers being repeatedly disconnected and recreated. We use separate `width` and `height` state as primitives are directly comparable by React. React will automatically short circuit subsequent renders if the size hasn't changed. That avoids having to explicitly check whether width and height have changed, which in turn means there are no dependencies on state or props in the resize handler. 
 
 The end result is that the layout effect runs once on mount. 
 
@@ -276,7 +278,7 @@ The simplest solution is to wrap the `DisplayList` in an `AutoSizer` so that it 
 
 {% endraw %}
 
-Most of the remaining code is needed to maintain backwards compatibility with the `onScroll` callback and `VirtualListProxy`. Lots of forwarding and restructuring to and from `VirtualScroll`. 
+Most of the remaining code is needed to maintain backwards compatibility with the `onScroll` callback and `VirtualListProxy`. There's lots of forwarding and restructuring to and from `VirtualScroll`. 
 
 One of the reasons for decoupling functionality is to allow the client to put together their own combinations. To make it easier, I exported most of the `VirtualListProxy` functionality as utility functions that you can use with your own `VirtualScroll`. Which annoyingly means moving it into its own TypeScript source file to avoid breaking Vite HMR. 
 
@@ -325,7 +327,7 @@ Upgrading in most cases is straightforward. I kept as much of the existing `Virt
 
 The most likely thing to cause problems is `outerRender` and `innerRender` customization. The `outerRender` prop is used to customize how components interact with their parent. The `innerRender` prop is used to customize how components interact with their children. In principle the structure in between is free to change. 
 
-In practice there was one use of `innerRender` that caused problems. I [created]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) a "customized vertical list with padding" sample based on a `react-window` sample. The sample adds padding to the top and bottom of a `VirtualList` by modifying the layout of the list's children. It assumes the children use absolute positioning and rewrites each child's style to add an offset.
+In practice there was one use of `innerRender` that caused problems. I previously [created]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) a "customized vertical list with padding" sample based on a `react-window` sample. The sample adds padding to the top and bottom of a `VirtualList` by modifying the layout of the list's children. It assumes the children use absolute positioning and rewrites each child's style to add an offset.
 
 The `innerRender` prop is forwarded to the internal `DisplayList`. `DisplayList` uses a grid layout so the sample doesn't work. You can't implement equivalent hackery with the new `VirtualList` because you'd need access to the structure in between.
 
@@ -371,7 +373,7 @@ In our case we're intentionally changing the layout of a `DisplayList` or `Displ
 
 [Cumulate Layout Shift](https://web.dev/articles/cls) is a core web performance metric. It calculates an abstract score based on the number and size of layout shifts during an interaction session. The intent is to measure only unintended layout shifts. Layout shifts within 500ms of user interaction are ignored. Unfortunately, continuous interactions such as scrolls are [not considered to be recent input](https://github.com/WICG/layout-instability#recent-input-exclusion). 
 
-The Chrome dev tools performance tab shows web metrics for the current session. Here's what they look like when interacting with the controls using mouse and keyboard. 
+The Chrome dev tools performance tab shows web metrics for the current session. Here's what they look like when interacting with the components using mouse and keyboard. 
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/web-metrics-good.png" alt="Web metrics during keyboard navigation" %}
 
