@@ -2,7 +2,6 @@
 title: >
   React Spreadsheet: Decoupled Rendering
 tags: react-spreadsheet
-thumbnail: /assets/images/boring-spreadsheet.png
 ---
 
 wise words
@@ -205,4 +204,20 @@ function ensureVisible(row: number, col: number) {
 * Another side effect of scroll event
 * Auto-extension of spreadsheet as you scroll off the end
 * Doesn't work consistently anymore
-* Simple fix. Update explicitly in ensureVisible.
+* Simple fix. Extend explicitly whenever we move focus cell to last row or column.
+
+# Synchronizing Scroll Bar Position
+
+* Realized that I can make spreadsheet state the complete source of truth
+* Canonical React approach when something in DOM or external needs to be aligned with state, use an effect
+* Instead of calling `scrollTo` directly when changing grid offset state, can leave it to an effect at render time
+
+```ts
+React.useEffect(() => {
+  scrollRef.current?.scrollTo(gridRowOffset, gridColumnOffset);
+}, [gridRowOffset, gridColumnOffset])
+```
+
+* Have some existing complex code that defers a scroll until after render time when grid is being enlarged. Can throw that away.
+* I did check and no scroll event is raised if scroll position is already correct. Even if it was, I have an early out check in my `onScroll`.
+* Only downside is that I need to mock `scrollTo` in my unit test as its now called on mount
