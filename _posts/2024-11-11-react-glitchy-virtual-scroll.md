@@ -123,4 +123,4 @@ Now I know how to fix this. All I need to do is decouple the grid too. Instead o
 
 Using the same approach as Google Sheets would be fiddly. You'd have to replicate the browser's logic that decides whether scroll bars are needed and works out how much space to give them. 
 
-Luckily, I have a way to avoid that. I'll tell you about it next time. 
+Luckily, I have a way to avoid that. I'll tell you about it [next time]({% link _posts/2024-11-18-react-virtual-scroll-0-6-x.md %}). 
