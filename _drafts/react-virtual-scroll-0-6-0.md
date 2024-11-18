@@ -6,7 +6,7 @@ tags: react-virtual-scroll
 
 As we discovered [last time]({% link _posts/2024-11-11-react-glitchy-virtual-scroll.md %}), traditional virtual scrolling implementations don't work properly. Both React and the Chrome browser prioritize responsiveness when scrolling. New frames can be displayed before virtualized components have a chance to render updated content. Content appears torn or goes blank.
 
-Luckily, I have a plan. Instead of rendering visible content into the scrollable area, we can render it into a separate component which is placed *on top* of the scrollable area. The browser can scroll away as much as it likes without impacting the displayed content. It only changes when we update it in response to scroll events. What's displayed may be a frame behind the scroll bar position when interacting, but you don't notice because what's rendered is always consistent.
+Luckily, I have a plan. Instead of rendering visible content into the scrollable area, we can render it into a separate component which is placed *on top* of the scrollable area. The browser can scroll away as much as it likes without impacting the displayed content. It only changes when *we* update it in response to scroll events. What's displayed may be a frame behind the scroll bar position when interacting, but you don't notice because what's rendered is always consistent.
 
 After lots of thought and experimentation, I've mirrored the decoupling of virtual scrolling and content display by breaking the functionality into separate components. This gives clients much greater flexibility in how they combine the components. Composition for the win!
 
@@ -47,7 +47,7 @@ That's all there is to it.
 
 # Display List
 
-I gave an overview of `DisplayList` [last time](/_posts/2024-11-04-react-virtual-scroll-options-display-list.md). It's a controlled component that renders a window onto a virtualized list starting from a specified `offset`. 
+I gave an overview of `DisplayList` [last time]({% link _posts/2024-11-04-react-virtual-scroll-options-display-list.md %}). It's a controlled component that renders a window onto a virtualized list, starting from a specified `offset`. 
 
 There are two changes since then. I removed lots of boilerplate code by using `VirtualContainer` instead of a local implementation of a customizable container. The change is backwards compatible as the shape of the types hasn't changed. 
 
@@ -102,7 +102,7 @@ Press and hold the arrow buttons in the offset fields to move the window over th
 
 # Virtual Scroll
 
-`VirtualScroll` extracts the scrolling functionality from the old `VirtualList` and `VirtualGrid`. Implementation uses the standard approach of an outer viewport container holding an inner content container. The difference is that the outer container has two children. 
+`VirtualScroll` extracts the scrolling functionality from the old `VirtualList` and `VirtualGrid`. Implementation uses the standard approach of an outer viewport container holding an inner content container. The difference is that the outer container now has two children. 
 
 The content container uses [sticky positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/position) to ensure that it always fills the viewport, regardless of scroll position. The other child is an empty div which acts as the scrollable area. Content rendering is decoupled from scrolling. The browser can no longer scroll stale content out of view. 
 
@@ -123,7 +123,7 @@ The content container uses [sticky positioning](https://developer.mozilla.org/en
 
 {% endraw %}
 
-Scrolling behavior is determined by the `scrollableWidth` and `scrollableHeight` props. These directly set the size of the scrollable area. Set both for a two-dimensional scrolling experience, set either one for a horizontal or vertical scrolling experience.
+Scrolling behavior is determined by the `scrollWidth` and `scrollHeight` props. These directly set the size of the scrollable area. Set both for a two-dimensional scrolling experience, set either one for a horizontal or vertical scrolling experience.
 
 ```ts
 export interface VirtualScrollProps extends VirtualScrollableProps {
@@ -236,7 +236,7 @@ Great care is needed to avoid running the effect repeatedly, which would result 
 
 The end result is that the layout effect runs once on mount. 
 
-{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/auto-sizer/index.html" width="100%" height="fit-content" %}
+{% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/auto-sizer/index.html" width="100%" height="324px" %}
 
 A sample app using `AutoSizer` is embedded above. It doesn't do anything interesting if you can't resize it, so best [follow this link](/assets/dist/react-virtual-scroll-0-6-0/samples/auto-sizer/index.html) to run the sample on a dedicated page.
 
@@ -323,7 +323,7 @@ This is the trillion square grid sample. Super responsive scrolling. No more [re
 
 # Upgrading
 
-Upgrading in most cases is straightforward. I kept as much of the existing `VirtualList` and `VirtualGrid` interface as I could. In general all the samples and `react-spreadsheet` just worked without any code changes, despite massive internal changes.
+Upgrading in most cases is straightforward. I kept as much of the existing `VirtualList` and `VirtualGrid` interface as I could. In general all the samples and [`react-spreadsheet`]({% link _topics/react-spreadsheet.md %}) just worked without any code changes, despite massive internal changes.
 
 The most likely thing to cause problems is `outerRender` and `innerRender` customization. The `outerRender` prop is used to customize how components interact with their parent. The `innerRender` prop is used to customize how components interact with their children. In principle the structure in between is free to change. 
 
@@ -342,6 +342,8 @@ Luckily, there's a better way. If you have more complex needs you can combine th
     {({height,width}) => (
       <DisplayList
         offset={verticalOffset - PADDING_SIZE}
+        height={height}
+        width={width}
         {...otherDisplayProps}>
         {Row}
       </DisplayList>
@@ -385,7 +387,7 @@ I consider this to be a false positive. It only happens when the user is activel
 
 # React 18 Rendering
 
-Decoupling virtualized content update from scrolling means that I no longer need to [rely on](https://www.thecandidstartup.org/2023/11/20/react-virtual-scroll-grid-3.html) the legacy React rendering path. All of these samples use the new React 18 rendering which gives continuous input events like scrolling a lower priority. 
+Decoupling virtualized content update from scrolling means that I no longer need to [rely on](https://www.thecandidstartup.org/2023/11/20/react-virtual-scroll-grid-3.html) the legacy React rendering API. All of these samples use the new React 18 API which gives continuous input events, like scrolling, a lower priority. 
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/spreadsheet-perf-decoupled-modern.png" alt="Performance tool frame capture" %}
 
