@@ -35,7 +35,7 @@ The ideal place is the `DisplayGrid` outer render. However, I don't have access 
 
 # Decoupling
 
-`VirtualGrid` is a convenient pre-composed set containing `VirtualScroll` + `AutoSizer` + `DisplayGrid`. The intent is that consumers use the underlying components directly for advanced customization scenarios. 
+`VirtualGrid` is a convenient pre-composed set consisting of `VirtualScroll` + `AutoSizer` + `DisplayGrid`. The intent is that consumers use the underlying components directly for advanced customization scenarios. 
 
 Let's see how well that works out.
 
@@ -202,7 +202,7 @@ The spreadsheet will [auto-extend]({% link _posts/2024-09-16-react-spreadsheet-i
 
 It turns out this only worked previously as a side effect of the scroll event. It was simple to fix by extending explicitly whenever we move the focus cell to the last row or column.
 
-As soon as I did that, I realized that my `focusTo` function was now very similar to the `onNameKeyUp` function used to implement the `Scroll To` functionality. I was able to consolidate the functionality and simplify `onNameKeyUp`.
+As soon as I did that, I realized that my `focusTo` function was now very similar to the `onNameKeyUp` function used to implement the "Scroll To" functionality. I was able to consolidate the functionality and simplify `onNameKeyUp`.
 
 ```ts
 function onNameKeyUp(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -250,5 +250,5 @@ My first thought was that it must be delayed scroll events combining with the ef
 
 # Next Time
 
-Somehow over the last two weeks I've managed to break the core paged virtual scrolling functionality without me or my unit tests noticing. Next time I'd better figure out what the heck is going on. 
+Somehow over the last two weeks I've managed to break the core paged virtual scrolling functionality without me or my unit tests noticing. Next time we'll see if I manage to figure out what the heck is going on. 
 
