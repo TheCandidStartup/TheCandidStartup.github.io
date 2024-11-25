@@ -4,7 +4,7 @@ title: >
 tags: react-virtual-scroll
 ---
 
-[Last time]({% link _drafts/react-spreadsheet-decoupled-rendering.md %}), I was tearing my hair out because I'd broken the core paged virtual scrolling functionality in the big [0.6.0 update]({% link _posts/2024-11-18-react-virtual-scroll-0-6-x.md %}).
+[Last time]({% link _posts/2024-11-25-react-spreadsheet-decoupled-rendering.md %}), I was tearing my hair out because I'd broken the core paged virtual scrolling functionality in the big [0.6.0 update]({% link _posts/2024-11-18-react-virtual-scroll-0-6-x.md %}).
 
 I was expecting to add a few console logging statements, have a face palm moment as the obvious flaw in the control flow revealed itself, put in a quick fix and move on.
 

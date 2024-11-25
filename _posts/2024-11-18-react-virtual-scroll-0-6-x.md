@@ -397,4 +397,4 @@ Play with the samples. You can't tell that what you're seeing is a frame behind 
 
 # Next Time
 
-Next time we'll see how we can make use of these new super powers in our [React Spreadsheet]({% link _topics/react-spreadsheet.md %}).
+[Next time]({% link _posts/2024-11-25-react-spreadsheet-decoupled-rendering.md %}) we'll see how we can make use of these new super powers in our [React Spreadsheet]({% link _topics/react-spreadsheet.md %}).
