@@ -124,7 +124,7 @@ As I'm using a regular effect, the render is deferred and the browser delivers t
 * Not recommended for performance reasons
 * Feels like something of a band aid
 
-# Guilty State
+# State Considered Harmful
 
 * The root cause is my use of state to track last position of scroll bar
 * Use state for data that render depends on and that needs to persistent across multiple renders
