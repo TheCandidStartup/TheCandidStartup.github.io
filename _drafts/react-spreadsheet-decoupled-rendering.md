@@ -8,7 +8,7 @@ I [rebuilt]({% link _posts/2024-11-18-react-virtual-scroll-0-6-x.md %}) my `reac
 
 Given the major restructure of `react-virtual-scroll`, what did it take to get the React spreadsheet front end that I built on top of it working again?
 
-Nothing. My spreadsheet sample app works fine. The glitchy rendering with cells flashing on and off while scrolling is fixed. I just have a few loose threads to tidy up. Unfortunately, when you pull on loose threads things can unravel ... 
+Nothing. My spreadsheet sample app works fine. The glitchy rendering with cells flashing on and off while scrolling is fixed. I just have a few loose threads to tidy up. Unfortunately, when you pull on loose threads, things can unravel ... 
 
 # Unit Tests
 
