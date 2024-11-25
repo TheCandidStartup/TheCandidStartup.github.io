@@ -39,6 +39,8 @@ The ideal place is the `DisplayGrid` outer render. However, I don't have access 
 
 Let's see how well that works out.
 
+{% raw %}
+
 ```tsx
 <VirtualScroll
   className={theme?.VirtualSpreadsheet_Grid}
@@ -71,6 +73,8 @@ Let's see how well that works out.
   )}
 </VirtualScroll>
 ```
+
+{% endraw %}
 
 Expanding the JSX is simple enough. It's mostly a case of figuring out whether a prop needs to be set on `VirtualScroll` or `DisplayGrid`. 
 

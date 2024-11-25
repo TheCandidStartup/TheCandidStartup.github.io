@@ -333,6 +333,8 @@ The `innerRender` prop is forwarded to the internal `DisplayList`. `DisplayList`
 
 Luckily, there's a better way. If you have more complex needs you can combine the basic components yourself. It turns out that you don't need to make any assumptions about `DisplayList` internals.
 
+{% raw %}
+
 ```tsx
 <VirtualScroll
   scrollHeight={totalSize + PADDING_SIZE*2}
@@ -352,6 +354,8 @@ Luckily, there's a better way. If you have more complex needs you can combine th
   )}
 </VirtualScroll>
 ```
+
+{% endraw %}
 
 {% include candid-iframe.html src="/assets/dist/react-virtual-scroll-0-6-0/samples/padding/index.html" width="100%" height="fit-content" %}
 
