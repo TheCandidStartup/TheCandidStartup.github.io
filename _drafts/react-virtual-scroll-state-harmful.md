@@ -129,7 +129,7 @@ It feels like a band aid.
 
 The root cause of my problems is the use of state to track the last position of the scroll bar. The snapshot semantics of state aren't useful here. I want to capture the scroll bar position on each scroll event so that I can compare it against the current position on the next scroll event. 
 
-The React rule of thumb is that you use state for data that rendering depends on that is independent of the component's props. `VirtualScroll` rendering clearly depends on the position of the scroll bar.
+The React rule of thumb is that you use state for data that rendering depends on, that is independent of the component's props. `VirtualScroll` rendering clearly depends on the position of the scroll bar.
 
 Decoupling made the situation clearer for me. The current scroll state is doing two different jobs. It defines the offset within the scrollable area that needs to be passed to the `VirtualScroll` children when rendering, as well as the internal state needed to keep track of the scroll bar's last position. 
 
@@ -209,39 +209,46 @@ I added a `useOffsets` prop so that `VirtualSpreadsheet` can disable updates to 
 
 # Premature Optimization
 
-* `VirtualScrollProxy` now provides access to live offset
-* Added so that I could optimize effect in react spreadsheet's `VirtualSpreadsheet` so that it doesn't try to update scroll bar position if already correct
-* Didn't make any noticeable difference to performance but it did break auto-extension of the spreadsheet when you scroll to the end and keep dragging on the scroll bar
-* Spreadsheet auto-extends by one row when you hit the end but doesn't keep extending
-* Problem is that increasing the size of the spreadsheet increases the size of the `VirtualScroll` scrollable area, which changes how the virtual pages are laid out.
-* Once the `VirtualScroll` has been rendered with the new size, the internal state and scroll bar position are incorrect. The scroll bar should be moved back a little from the end due to the increase in size, with `renderOffset` slightly larger so that the overall `totalOffset` remains the same. 
-* Sorts itself out on next scroll event or call to `scrollTo`.
-* The "unnecessary" effect conveniently sorts it out
-* Refs are normal mutable JavaScript objects so there's nothing stopping me from updating my internal `ScrollState` and adjusting the scroll bar position during `VirtualScroll` rendering. However, React assumes that component render functions are [pure](https://react.dev/learn/keeping-components-pure) and explicitly [warns you](https://react.dev/reference/react/useRef) against reading or writing refs in a render function.
-* The right way to do this is with an effect. There isn't enough context in `useVirtualScroll` for a nice self contained implementation. 
-* Would end up adding more code and complexity to `useVirtualScroll` and `VirtualScroll` so that I can add more code and complexity to `VirtualSpreadsheet` to achieve the same end result as leaving things as they are.
-* I decided to leave things as they are.
+I added `verticalOffset` and `horizontalOffset` props to `VirtualScrollProxy` that provide access to the current live offsets. The idea was to use them to optimize the effect in react spreadsheet's `VirtualSpreadsheet` so that it doesn't try to update the scroll bar position if it's already correct. 
+
+It didn't make any noticeable difference to performance, but it did break auto-extension of the spreadsheet when you scroll to the end and keep on dragging the scroll bar. The spreadsheet auto-extends by one row when you hit the end but doesn't extend any further.
+
+The problem is that increasing the size of the spreadsheet increases the size of the `VirtualScroll` scrollable area, which changes how the virtual pages are laid out. Once `VirtualScroll` has rendered with the new size, the internal state and scroll bar position are incorrect. The scroll bar should be moved back a little from the end due to the increase in size, with `renderOffset` correspondingly larger so that the overall `totalOffset` remains the same.
+
+Normally this isn't a problem as everything sorts itself out on the next scroll event or `scrollTo`. In this specific scenario it doesn't. The scroll bar is right at the end so attempting to drag it further does nothing. You have to awkwardly jiggle it up and down.
+
+The `VirtualSpreadsheet` effect was making an "unnecessary" `scrollTo` call which conveniently fixed things. My first instinct was that the right place to fix this is `useVirtualScroll`. We shouldn't be relying on a consumer's  unintended side effect for correct operation. 
+
+Refs are normal mutable JavaScript objects so there's nothing stopping me from updating my internal `ScrollState` and adjusting the scroll bar position during `VirtualScroll` rendering. However, React assumes that component render functions are [pure](https://react.dev/learn/keeping-components-pure) and explicitly [warns you](https://react.dev/reference/react/useRef) against reading or writing refs in a render function.
+
+The right way to do this is with an effect. The two `useVirtualScroll` hooks provide all the logic for paged virtual scrolling with the owning `VirtualScroll` responsible for applying updates to the scrollable HTML element. I'd need to extend the `useVirtualScroll` interface and add the effect in `VirtualScroll`. 
+
+Let's think about this a bit more. I'm proposing to add more code and complexity to `useVirtualScroll` and `VirtualScroll`, so that I can add more code and complexity to `VirtualSpreadsheet`, to achieve the same end result as leaving things as they are.
+
+I removed my "optimization" and left things as they are.
 
 # Lessons Learned
 
-* Think much more deeply about when something should be stored as state rather than a ref
-* React 18 more likely to catch you out if you get it wrong
-* Rule of thumb for state is now data that render depends on + needs to persistent across multiple renders + valid to read from last rendered snapshot
-* If necessary have two copies of data, one as state for render and snapshot, one as ref for current value
+Life was easier in the old days before React 18. You didn't have to think much about the snapshot semantics of React state. You change state in your event handlers, then React renders based on your state. You only ran across issues with stale state if you tried writing then reading state in the same event handler, and who would want to do that?
+
+Now you need to think more deeply about use of state. React 18 will catch you out if you get it wrong. Write state in an effect and read stale values when handling the next event. Write state when handling one event and read stale state when handling the next event. 
+
+Be prepared to store two copies of the same data, one as state for use when rendering with snapshot semantics, one as a ref when reading the current value in an event handler. 
 
 # Try It!
 
-* Fixed `react-virtual-scroll` published as [version 0.6.2](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.6.2)
-* Rebuilt spreadsheet sample and added the `useOffsets={false}` prop
+The latest release of `react-virtual-scroll` is published as [version 0.6.2](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll/v/0.6.2). I rebuilt the spreadsheet sample and added the `useOffsets={false}` prop. 
+
+Take it for a spin.
 
 {% include candid-iframe.html src="/assets/dist/react-spreadsheet-state-harmful/index.html" width="100%" height="fit-content" %}
 
-* As far as I can tell all problems are now fixed
+As far as I can tell, after *extensive* testing, all problems are now fixed.
 
 # Next Time
 
-* Concerned that it took two weeks before I noticed this problem
-* Find myself doing lots of manual testing with spreadsheet sample to be confident I haven't broken anything
-* Clear sign that I don't have enough automated testing
-* Existing unit tests using `jsdom` aren't cutting it. Having to mock event behavior when the root cause of recent problems has been real life event behavior in the browser.
-* Time to add some more tooling
+I'm concerned that it took two weeks before I noticed this problem. I find myself doing lots of manual testing with the spreadsheet sample to be confident I haven't broken anything else.
+
+It's a clear sign that I don't have enough automated testing. My existing unit tests using `jsdom` aren't cutting it. `jsdom` is lightweight and fast but doesn't support layout and scrolling. I  mock the expected browser behavior when testing my logic. Unfortunately, the root cause of my recent problems is the unexpected real life browser behavior.
+
+It's time to add some more tooling so that I can automate tests with a real browser.
