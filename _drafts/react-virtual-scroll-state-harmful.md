@@ -129,7 +129,7 @@ It feels like a band aid.
 
 The root cause of my problems is the use of state to track the last position of the scroll bar. The snapshot semantics of state aren't useful here. I want to capture the scroll bar position on each scroll event so that I can compare it against the current position on the next scroll event. 
 
-The React rule of thumb is that you use state for data that rendering depends on, that is independent of the component's props. `VirtualScroll` rendering clearly depends on the position of the scroll bar.
+The React rule of thumb is that you use state for data that rendering depends on, that's independent of the component's props. `VirtualScroll` rendering clearly depends on the position of the scroll bar.
 
 Decoupling made the situation clearer for me. The current scroll state is doing two different jobs. It defines the offset within the scrollable area that needs to be passed to the `VirtualScroll` children when rendering, as well as the internal state needed to keep track of the scroll bar's last position. 
 
