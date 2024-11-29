@@ -9,7 +9,7 @@ wise words
 
 # Playwright
 
-# Update
+# Minor updates
 
 * Get everything updated before trying to install new tools
 * Like to start with `npm update` to get all the compatible minor versions done
@@ -211,3 +211,180 @@ export default defineWorkspace([
     exclude: ['packages/*/src/test/**','packages/*/src/*.test.*']
   }
 ```
+
+# jsdom 25
+
+* May as well do this one next, while I'm looking at unit tests
+* Marked as major release but breaking changes only when using non-default options that I don't use
+
+```json
+  "devDependencies": {
+    "jsdom": "^25.0.0"
+  }
+```
+
+```
+% npm update
+
+added 2 packages, removed 5 packages, changed 8 packages, and audited 1037 packages in 27s
+```
+
+* Half my unit tests now failing with a JavaScript runtime error deep inside jsdom: `TypeError: list.map is not a function`
+* Rolled back to version 24. Still failing.
+* A few unrelated minor updates got applied when I updated jsdom. Reverted `package-lock.json` to previous version and used `npm ci` to get installed state to match
+* Now tests are working again
+* Tried again but instead of updating `package.json` directly and running `npm update`, I did it properly, restricting scope of changes to just jsdom
+
+```
+% npm install -D jsdom@"^25.0.0"
+
+added 2 packages, removed 5 packages, changed 2 packages, and audited 1037 packages in 1s
+```
+
+* This time tests run OK
+* Let's try the minor updates again
+
+```
+% npm update
+
+changed 6 packages, and audited 1037 packages in 19s
+```
+
+* Unit tests broken again
+* Trawling through `package-lock.json` I see the following changes.
+  * `electron-to-chromium`  1.5.66 -> 1.5.67
+  * `nwsapi` 2.2.13 -> 2.2.14
+  * `ts-api-utils` 1.4.2 -> 1.4.3
+  * `nx` 20.1.3 -> 20.1.4
+
+* I updated one at a time, trying unit tests after each. They broke after updating `nwsapi`
+* [`nwsapi`](https://github.com/dperini/nwsapi) is an engine that implements the CSS selectors API
+
+```
+% npm ls nwsapi
+root@ /Users/tim/GitHub/infinisheet
+└─┬ jsdom@25.0.1
+  └── nwsapi@2.2.14
+```
+
+* `nwsapi` is a dependency of `jsdom`
+* jsdom requires nwsapi ^2.2.12
+* Looks like a bad nwsapi update which I can safely roll back
+* I added `nwsapi` to my package.json and excluded the bad version
+
+```json
+  "devDependencies": {
+    "nwsapi": "^2.2.12 <2.2.14 || ^2.2.15"
+  }
+```
+
+* Tried `npm update` one more time
+* This time everything works
+* A day later 2.2.15 was released to fix the problem. The developer had added a new experimental feature behind an feature flag which they'd left turned on. I removed nwsapi from my package.json and updated. Everything still works.
+
+# vite-tsconfig-paths 5
+
+* Dropping support for CommonJS modules which I don't use
+
+```
+% npm install -D vite-tsconfig-paths@"^5.0.0" 
+
+changed 1 package, and audited 1037 packages in 2s
+```
+
+* Everything builds and runs OK
+
+# Rollup plugin-typescript 12
+
+* Fixing an issue where some combinations of output options would put files in the wrong place
+* Breaking change for anyone relying on incorrect behavior
+
+```
+% npm install -D @rollup/plugin-typescript@"^12.0.0"
+
+changed 1 package, and audited 1037 packages in 1s
+```
+
+* Build now fails with error `Path of Typescript compiler option 'declarationDir' must be located inside the same directory as the Rollup 'file' option.`
+* Here's my Rollup config which involved [quite a journey]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}) to put together in the first place
+
+```js
+export default [
+  {
+    input: "src/index.ts",
+    external: isExternal,
+    output: [
+      {
+        sourcemap: true,
+        file: "dist/index.js",
+        format: "es"
+      },
+    ],
+    plugins: [
+      typescript({ "declarationDir": "./types", tsconfig: "./tsconfig.build.json" })
+    ],
+  },
+  {
+    input: "dist/types/index.d.ts",
+    output: [{
+      file: "dist/index.d.ts",
+      format: "es",
+      plugins: []
+    }],
+    plugins: [      
+      dts(),
+      del({ targets: "dist/types", hook: "buildEnd" })
+    ],
+  }
+];
+```
+
+* This is a two stage pipeline. The first stage uses the `typescript` plugin to transpile and bundle the source code into `dist/index.js` with declaration files output to `dist/types`. The second stage uses the `dts` plugin to read the declaration files in `dist/types` and bundle them into `dist/index.d.ts`.
+* In the end had to find the code that [outputs the error message](https://github.com/rollup/plugins/blob/92daef00b0da30de172868d4e0792c8686da0045/packages/typescript/src/options/validate.ts#L72) to understand the problem
+* The actual breaking change is not correcting where the output files go, it's [adding validation](https://github.com/rollup/plugins/pull/1728) to stop you putting output files where you want
+* Ironically, I'm putting the files in the approved place, under the output directory. It's the validation that's wrong.
+* Even more ironically, the original validation in 12.0.0 would have worked. It was changed in 12.1.11 to [fix a different problem](https://github.com/rollup/plugins/pull/1783).
+* If you specify a Rollup output file, the validation checks that the output file is inside every typescript directory option. This makes sense if you're using the `outDir` typescript option to specify the overall output dir then writing individual output files into it. It makes no sense if you're using the `declarationDir` option.
+* If you specify the overall Rollup output dir (and let Rollup choose the output file name), the validation checks that every typescript directory option is inside the overall output dir. 
+* With some fiddling around I was able to rewrite the first stage config so that it does exactly the same thing as before while satisfying the validation checks.
+
+```js
+  {
+    input: "src/index.ts",
+    external: isExternal,
+    output: [
+      {
+        sourcemap: true,
+        dir: "dist",
+        format: "es"
+      },
+    ],
+    plugins: [
+      typescript({ "declarationDir": "dist/types", tsconfig: "./tsconfig.build.json" })
+    ],
+  },
+```
+
+# NodeJS 22
+
+* NodeJS 22.11.0 release on October 29th 2024 marked the entry of the 22.x release line into "Active LTS"
+* Time to upgrade and switch my GitHub builds from 20 and 18 to 22 and 20. 
+
+# rimraf 6
+
+* Drops support for Node 18
+* Should be safe to upgrade now
+
+# TypeDoc 0.27
+
+* Released November 27th 2024, with 0.27.1 following a day later
+* Too close to the bleeding edge for me
+* Leave it for next time
+* Annoying, because this update is the thing that's blocking TypeScript 5.7
+* TypeScript 5.7 was released November 22nd 2024, happy to let it bake a little longer
+
+# Vite 6
+
+* Released November 26th 2024, with 6.0.1 following a day later
+* Too close to the bleeding edge for me
+* Leave it for next time
