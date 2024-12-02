@@ -254,5 +254,5 @@ My first thought was that it must be delayed scroll events combining with the ef
 
 # Next Time
 
-Somehow over the last two weeks I've managed to break the core paged virtual scrolling functionality without me or my unit tests noticing. Next time we'll see if I manage to figure out what the heck is going on. 
+Somehow over the last two weeks I've managed to break the core paged virtual scrolling functionality without me or my unit tests noticing. [Next time]({% link _posts/2024-12-02-react-virtual-scroll-state-harmful.md %}) we'll see if I manage to figure out what the heck is going on. 
 
