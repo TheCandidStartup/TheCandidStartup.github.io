@@ -22,14 +22,14 @@ There's also some synchronization deep within the `VirtualScroll` component. [Pa
 
 {% include candid-image.html src="/assets/images/frontend/slick-grid-virtual-pages.svg" alt="Paged Virtual Scrolling" %}
 
-A consequence of this approach is that when you scroll from one page to another you need to move the scroll bar back slightly. Now you have a scroll event which causes an update to React state which in turn means adjusting the scroll bar position which raises another scroll event which we ignore.
+A consequence of this approach is that when you scroll from one page to another, you need to move the scroll bar back slightly. Now you have a scroll event which causes an update to React state which in turn means adjusting the scroll bar position which raises another scroll event which we need to ignore.
 
 # Virtual Scroll Hook
 
 Internally `VirtualScroll` uses two instances of the `useVirtualScroll` hook to manage paged scrolling in each dimension. The hook keeps track of the paged scrolling state and provides an `onScroll` event handler and a `doScrollTo` function. The functions update the internal state as needed and return the expected DOM scroll bar position to `VirtualScroll`, which updates the scroll bar.
 
 ```ts
-export function useVirtualScroll(totalSize: number, maxCssSize, minNumberPages) {
+function useVirtualScroll(totalSize: number, maxCssSize: number, minNumberPages: number) {
   // Determine number and size of pages
   ...
 
@@ -74,7 +74,7 @@ Can you see the problem yet?
 
 My first thought was that there could be a problem with event ordering. Consider the case where the user holds down the arrow key in my spreadsheet. They're generating a stream of key down events. Each event moves the focus cell, which in turn scrolls the grid, which results in a scroll event being raised. If another key down is handled before the scroll event is delivered, then the early out check in `onScroll` will fail. The grid has already been scrolled further over. We'll end up handling the event and scrolling the grid back to the previous point.
 
-That's not what's happening. In all the scenarios I checked, the scroll event is delivered before any other event. Even if it was delayed it wouldn't explain what I'm seeing. In some scenarios the scroll position jumps forward rather than back. In addition, any discrepancy would be transient. Eventually the scroll event from the final key down will get delivered and the scroll bar position moved back where it should be.
+That's not what's happening. In all the scenarios I checked, the scroll event is delivered before any other event. Even if it was delayed, it wouldn't explain what I'm seeing. In some scenarios the scroll position jumps forward rather than back. In addition, any discrepancy would be transient. Eventually the scroll event from the final key down will get delivered and the scroll bar position moved back where it should be.
 
 # State and Rendering
 
@@ -109,7 +109,7 @@ As this is a scroll event, React 18 schedules a callback to render later. The br
 
 My first thought was to use an effect to adjust the scroll bar position. That would ensure it happened after React rendered. However, I was nervous of introducing an even longer interval between cause and effect. 
 
-I also had other broken scenarios to look at, including one where my spreadsheet already uses an effect to synchronize the scroll bar position. This scenario changes the `DisplayGrid` offset in response to a key event that makes a new focus cell visible. The spreadsheet component uses an effect that calls `scrollTo` on `VirtualScrollProxy` to position the scroll bar to match the grid offset.
+I also had other broken scenarios to look at, including one where my spreadsheet already uses an effect to synchronize the scroll bar position. This scenario changes the `DisplayGrid` offset in response to a key event that makes a new focus cell visible. The spreadsheet component uses an effect that calls `scrollTo` to position the scroll bar to match the grid offset.
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/effect-update-state-and-scroll.png" alt="Dependent Scroll Events Profile" %}
 
@@ -195,7 +195,7 @@ I've added another helper function, `getCurrentOffset`, which returns the curren
 
 The previous version of `useVirtualScroll` returned all the `ScrollState` properties to `VirtualScroll` by inlining all the individual properties into the returned object. They're no longer needed and can now be considered internal only implementation details. To avoid future confusion I removed them. 
 
-An hour later I had to add them back as the `useVirtualScroll` unit test depends on them. However, I now return the ref as a single property that makes it clear that these are for internal/advanced use.
+An hour later I had to add them back as the `useVirtualScroll` unit test depends on them. However, I now return the ref as a single property that makes it clearer that these are for internal/advanced use.
 
 # Who needs State?
 
@@ -209,7 +209,7 @@ I added a `useOffsets` prop so that `VirtualSpreadsheet` can disable updates to 
 
 # Premature Optimization
 
-I added `verticalOffset` and `horizontalOffset` props to `VirtualScrollProxy` that provide access to the current live offsets. The idea was to use them to optimize the effect in react spreadsheet's `VirtualSpreadsheet` so that it doesn't try to update the scroll bar position if it's already correct. 
+I added `verticalOffset` and `horizontalOffset` props to `VirtualScrollProxy` that provide access to the current live offsets. The idea was to use them to optimize the effect in my `VirtualSpreadsheet` component so that it doesn't try to update the scroll bar position if it's already correct. 
 
 It didn't make any noticeable difference to performance, but it did break auto-extension of the spreadsheet when you scroll to the end and keep on dragging the scroll bar. The spreadsheet auto-extends by one row when you hit the end but doesn't extend any further.
 
@@ -229,7 +229,7 @@ I removed my "optimization" and left things as they are.
 
 # Lessons Learned
 
-Life was easier in the old days before React 18. You didn't have to think much about the snapshot semantics of React state. You change state in your event handlers, then React renders based on your state. You only ran across issues with stale state if you tried writing then reading state in the same event handler, and who would want to do that?
+Life was easier in the old days before React 18. You didn't have to think much about the snapshot semantics of React state. You change state in your event handlers, then React renders based on your state. You only ran across issues with stale state if you tried writing then reading state in the same event handler. Who would want to do that?
 
 Now you need to think more deeply about use of state. React 18 will catch you out if you get it wrong. Write state in an effect and read stale values when handling the next event. Write state when handling one event and read stale state when handling the next event. 
 
