@@ -369,6 +369,224 @@ export default [
 
 * NodeJS 22.11.0 release on October 29th 2024 marked the entry of the 22.x release line into "Active LTS"
 * Time to upgrade and switch my GitHub builds from 20 and 18 to 22 and 20. 
+* Locally I'm still on the [first major version I installed]({% link _posts/2022-09-21-mac-local-blog-dev.md %}), Node 18
+
+```
+% node -v
+v18.18.1
+```
+
+* Using asdf version manager for Node which can query latest available LTS version for me
+
+```
+% asdf nodejs resolve lts --latest-available
+18.20.3
+```
+
+* That's weird. Maybe the check is hardcoded in some way and I need to update asdf
+* I use homebrew to manage software on my Mac that's outside the scope of the npm ecosystem
+* Let's see how out of date everything is
+
+```
+% brew outdated
+Running `brew update --auto-update`...
+==> Downloading https://ghcr.io/v2/homebrew/portable-ruby/portable-ruby/blobs/sha256:303bed4c7fc431a685db3c3c151d873740114adbdccd23762ea2d1e39ea78f47
+######################################################################################################################################################################################### 100.0%
+==> Pouring portable-ruby-3.3.6.arm64_big_sur.bottle.tar.gz
+==> homebrew/core is old and unneeded, untapping to save space...
+Untapping homebrew/core...
+Untapped 3 commands and 7246 formulae (7,402 files, 801.5MB).
+==> Auto-updated Homebrew!
+
+You have 11 outdated formulae and 1 outdated cask installed.
+==> Migrating cask git-credential-manager-core to git-credential-manager
+Error: inreplace failed
+/opt/homebrew/Caskroom/git-credential-manager/.metadata/2.0.785/20220914161131.951/Casks/git-credential-manager.rb:
+  expected replacement of /\A\s*cask\s+"git\-credential\-manager\-core"/ with "cask \"git-credential-manager\""
+asdf (0.10.2) < 0.14.1
+autoconf (2.71) < 2.72
+automake (1.16.5) < 1.17
+ca-certificates (2022-07-19_1) < 2024-11-26
+coreutils (9.1) < 9.5
+gmp (6.2.1_1) < 6.3.0
+libtool (2.4.7) < 2.5.4
+openssl@1.1 (1.1.1q) < 1.1.1w
+readline (8.1.2) < 8.2.13
+tree (2.1.1_1) < 2.2.1
+unixodbc (2.3.11) < 2.3.12
+git-credential-manager (2.0.785) != 2.6.0
+```
+
+* I was surprised that querying for outdated software would automatically upgrade homebrew itself and try to migrate `git-credential-manager`, whatever that means
+* asdf is several versions behind, and so is lots of other stuff.  I clearly need to upgrade.
+* It's all gone so well so far, I'm sure it will be fine ...
+
+```
+% brew upgrade
+==> Upgrading 11 outdated packages:
+tree 2.1.1_1 -> 2.2.1
+libtool 2.4.7 -> 2.5.4
+coreutils 9.1 -> 9.5
+gmp 6.2.1_1 -> 6.3.0
+asdf 0.10.2 -> 0.14.1
+readline 8.1.2 -> 8.2.13
+unixodbc 2.3.11 -> 2.3.12
+ca-certificates 2022-07-19_1 -> 2024-11-26
+autoconf 2.71 -> 2.72
+openssl@1.1 1.1.1q -> 1.1.1w
+automake 1.16.5 -> 1.17
+
+==> Upgrading ca-certificates
+  2022-07-19_1 -> 2024-11-26 
+==> Pouring ca-certificates--2024-11-26.all.bottle.tar.gz
+==> Regenerating CA certificate bundle from keychain, this may take a while...
+🍺  /opt/homebrew/Cellar/ca-certificates/2024-11-26: 4 files, 239.4KB
+==> Running `brew cleanup ca-certificates`...
+Removing: /opt/homebrew/Cellar/ca-certificates/2022-07-19_1... (3 files, 222.6KB)
+
+==> Upgrading readline
+  8.1.2 -> 8.2.13 
+==> Pouring readline--8.2.13.arm64_sonoma.bottle.tar.gz
+🍺  /opt/homebrew/Cellar/readline/8.2.13: 51 files, 1.7MB
+==> Running `brew cleanup readline`...
+Removing: /opt/homebrew/Cellar/readline/8.1.2... (48 files, 1.7MB)
+
+==> Upgrading gmp
+  6.2.1_1 -> 6.3.0 
+==> Pouring gmp--6.3.0.arm64_sonoma.bottle.tar.gz
+🍺  /opt/homebrew/Cellar/gmp/6.3.0: 22 files, 3.3MB
+==> Running `brew cleanup gmp`...
+Removing: /opt/homebrew/Cellar/gmp/6.2.1_1... (21 files, 3.2MB)
+
+==> Upgrading coreutils
+  9.1 -> 9.5 
+==> Pouring coreutils--9.5.arm64_sonoma.bottle.1.tar.gz
+🍺  /opt/homebrew/Cellar/coreutils/9.5: 477 files, 13.5MB
+==> Running `brew cleanup coreutils`...
+Removing: /opt/homebrew/Cellar/coreutils/9.1... (480 files, 13.3MB)
+
+==> Upgrading autoconf
+  2.71 -> 2.72 
+==> Pouring autoconf--2.72.arm64_sonoma.bottle.1.tar.gz
+🍺  /opt/homebrew/Cellar/autoconf/2.72: 72 files, 3.6MB
+==> Running `brew cleanup autoconf`...
+Removing: /opt/homebrew/Cellar/autoconf/2.71... (71 files, 3.2MB)
+
+==> Upgrading automake
+  1.16.5 -> 1.17 
+==> Pouring automake--1.17.arm64_sonoma.bottle.tar.gz
+🍺  /opt/homebrew/Cellar/automake/1.17: 134 files, 3.3MB
+==> Running `brew cleanup automake`...
+Removing: /opt/homebrew/Cellar/automake/1.16.5... (131 files, 3.5MB)
+
+==> Upgrading libtool
+  2.4.7 -> 2.5.4 
+==> Pouring libtool--2.5.4.arm64_sonoma.bottle.tar.gz
+🍺  /opt/homebrew/Cellar/libtool/2.5.4: 76 files, 4.0MB
+==> Running `brew cleanup libtool`...
+Removing: /opt/homebrew/Cellar/libtool/2.4.7... (75 files, 3.8MB)
+
+==> Upgrading unixodbc
+  2.3.11 -> 2.3.12 
+==> Pouring unixodbc--2.3.12.arm64_sonoma.bottle.tar.gz
+🍺  /opt/homebrew/Cellar/unixodbc/2.3.12: 48 files, 2.3MB
+==> Running `brew cleanup unixodbc`...
+Removing: /opt/homebrew/Cellar/unixodbc/2.3.11... (48 files, 2.3MB)
+
+==> Upgrading asdf
+  0.10.2 -> 0.14.1 
+==> Installing dependencies for asdf: openssl@3
+==> Installing asdf dependency: openssl@3
+==> Pouring openssl@3--3.4.0.arm64_sonoma.bottle.tar.gz
+🍺  /opt/homebrew/Cellar/openssl@3/3.4.0: 7,236 files, 33.4MB
+==> Installing asdf
+==> Pouring asdf--0.14.1.all.bottle.tar.gz
+🍺  /opt/homebrew/Cellar/asdf/0.14.1: 193 files, 777.6KB
+==> Running `brew cleanup asdf`...
+Removing: /opt/homebrew/Cellar/asdf/0.10.2... (168 files, 717.0KB)
+
+==> Upgrading tree
+  2.1.1_1 -> 2.2.1 
+==> Pouring tree--2.2.1.arm64_sonoma.bottle.tar.gz
+🍺  /opt/homebrew/Cellar/tree/2.2.1: 9 files, 187.7KB
+
+==> Running `brew cleanup tree`...
+Removing: /opt/homebrew/Cellar/tree/2.1.1_1... (8 files, 177.2KB)
+Removing: /Users/tim/Library/Caches/Homebrew/tree_bottle_manifest--2.1.1_1... (7.3KB)
+Removing: /Users/tim/Library/Caches/Homebrew/tree--2.1.1_1... (59.2KB)
+
+==> Upgrading 1 dependent of upgraded formulae:
+Disable this behaviour by setting HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK.
+Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).
+openssl@1.1 1.1.1q -> 1.1.1w
+Error: openssl@1.1 has been disabled because it is not supported upstream! It was disabled on 2024-10-24.
+==> Checking for dependents of upgraded formulae...
+==> No broken dependents found!
+
+==> Upgrading 1 outdated package:
+git-credential-manager 2.0.785 -> 2.6.0
+==> Upgrading git-credential-manager-core
+==> Running uninstall script /opt/homebrew/share/gcm-core/uninstall.sh
+==> Purging files for version 2.6.0 of Cask git-credential-manager
+Error: git-credential-manager: uninstall script /opt/homebrew/share/gcm-core/uninstall.sh does not exist.
+```
+
+* Horribly verbose but looks like it mostly worked with `git-credential-manager` going wrong at the end again
+* Let's see what homebrew thinks it's achieved
+
+```
+% brew outdated
+openssl@1.1 (1.1.1q) < 1.1.1w
+git-credential-manager (2.0.785) != 2.6.0
+```
+
+* As far as I can tell, the latest asdf used openssl 3 which was installed. Homebrew didn't realize that it could uninstall openssl 1.1. It tried to upgrade it and failed because it's no longer supported but did identify that nothing is using it. I guess I can manually remove it?
+* Homebrew seems to be confused about `git-credential-manager-core` and `git-credential-manager`. `brew list` shows `git-credential-manager-core` is installed but `brew outdated` lists `git-credential-manager, plus there's that failed "migration" from one to the other. 
+* Apparently [GCM replaced GCM core](https://github.blog/security/application-security/git-credential-manager-authentication-for-everyone/) in 2022, so it's probably my fault for not keeping up.
+
+* Let's try uninstalling and reinstalling
+
+```
+% brew uninstall git-credential-manager-core
+Warning: Formula microsoft/git/git-credential-manager-core was renamed to homebrew/cask/git-credential-manager.
+Warning: Cask microsoft/git/git-credential-manager-core was renamed to git-credential-manager.
+==> Uninstalling Cask git-credential-manager-core
+==> Running uninstall script /opt/homebrew/share/gcm-core/uninstall.sh
+Error: uninstall script /opt/homebrew/share/gcm-core/uninstall.sh does not exist.
+```
+
+```
+brew uninstall git-credential-manager     
+==> Uninstalling Cask git-credential-manager-core
+==> Running uninstall script /opt/homebrew/share/gcm-core/uninstall.sh
+Error: uninstall script /opt/homebrew/share/gcm-core/uninstall.sh does not exist.
+```
+
+* Seems to be completely screwed up. Try to manually remove it.
+
+```
+rm -r /opt/homebrew/Caskroom/git-credential-manager-core
+```
+
+* Now try again
+
+```
+% brew install git-credential-manager
+==> Installing Cask git-credential-manager
+installer: Package name is Git Credential Manager
+installer: Upgrading at base path /
+installer: The upgrade was successful.
+🍺  git-credential-manager was successfully installed!
+
+==> `brew cleanup` has not been run in the last 30 days, running now...
+==> Autoremoving 1 unneeded formula:
+openssl@1.1
+Uninstalling /opt/homebrew/Cellar/openssl@1.1/1.1.1q... (8,097 files, 18MB)
+Removing: /Users/tim/Library/Caches/Homebrew/portable-ruby-3.1.4.arm64_big_sur.bottle.tar.gz... (12.4MB)
+Pruned 0 symbolic links and 1 directories from /opt/homebrew
+```
+
+* That seems to have worked, and removed openssl 1.1 for me too
 
 # rimraf 6
 
