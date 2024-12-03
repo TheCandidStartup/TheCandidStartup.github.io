@@ -4,25 +4,26 @@ title: >
 tags: infinisheet
 ---
 
-wise words
+[Last time]({% link _posts/2024-12-02-react-virtual-scroll-state-harmful.md %}), I decided that I needed some additional tools for browser based automated testing. Before I can do that, I should really make sure all my existing dependencies are up to date.
+
+That would normally warrant a throw-away opening paragraph before moving on to playing with the new tooling. Not this time. Welcome to my update week of hell. 
 
 # Minor updates
 
-* Get everything updated before trying to install new tools
-* Like to start with `npm update` to get all the compatible minor versions done
-* First time I've had a problem - reports `ERESOLVE could not resolve` errors
-* Where package is a direct dependency, npm seems to find the most recent version allowed and then complain if that's more recent that other dependencies support
-* I would have expected it to find the most recent version allowed by all
-* To get through the minor updates I constrained versions of two direct dependencies to highest commonly supported
+I like to start with `npm update` to get all the compatible minor versions done. That way they're not cluttering up the `npm outdated` list of outstanding major upgrades. 
 
-```json
+This is the first time I've had a problem. Npm reports `ERESOLVE could not resolve` errors for `typescript` and `@eslint/compat`. Both are direct `devDependencies` for InfiniSheet. Where a package is a direct dependency, npm seems to find the most recent version allowed and then complain if that's more recent that other dependencies support. 
+
+I expected npm to find the most recent version allowed by all dependencies. On well, I'll have to do it manually, and constrain the versions I allow.
+
+```
   "devDependencies": {
     "@eslint/compat": ">=1.1.0 <1.2",
     "typescript": ">=5.0.2 <5.7",
   }
 ```
 
-* Now `npm update` runs
+Now `npm update` runs
 
 ```
 npm update  
@@ -34,7 +35,7 @@ added 37 packages, removed 16 packages, changed 126 packages, and audited 1060 p
 found 0 vulnerabilities
 ```
 
-* I've clearly fallen behind on my major updates. Let's see what else is pending.
+I've clearly fallen behind on my major updates. Let's see what else is pending.
 
 ```
 % npm outdated
@@ -59,11 +60,9 @@ vitest                       1.6.0    1.6.0    2.1.6
 
 # ESLint 9
 
-* Start with ESLint. Let's get rid of those shouty deprecation warnings
-* ESLint 9 makes flat config files the default. Luckily we sorted that out when first bootstrapping use of ESLint.
-* `typescript-eslint` adds support for ESLint 9 in 8.0.0 so we'll need to update that at the same time
-* I locked down @eslint/compat because it requires ESLint 9, can remove that restriction.
-* `eslint-plugin-react-hooks` adds support for ESLint 9 in 5.0.0 so we need to update that one too
+Let's start with ESLint and get rid of those shouty deprecation warnings. 
+
+ESLint 9 makes flat config files the default. Luckily we sorted that out when first [bootstrapping ESLint]({% link _posts/2024-07-15-bootstrapping-eslint.md %}). The `typescript-eslint` plugin adds support for ESLint 9 in 8.0.0, so we'll need to update that at the same time. I locked down `@eslint/compat` because it requires ESLint 9, so can remove that restriction. Finally, `eslint-plugin-react-hooks` adds support for ESLint 9 in 5.0.0, so we need to update that one too.
 
 ```json
   "devDependencies": {
@@ -82,13 +81,11 @@ vitest                       1.6.0    1.6.0    2.1.6
 added 11 packages, removed 11 packages, changed 29 packages, and audited 1060 packages in 25s
 ```
 
-* ESLint 9 and corresponding plugins have lots of changes to the default rule sets
-* I didn't run into any issues, linting ran clean.
+ESLint 9 and the updated plugins have lots of changes to the default rule sets. However, I didn't run into any issues and linting ran clean.
 
 ## Typed Linting
 
-* `typescript-eslint` 8 supports [typed linting](https://typescript-eslint.io/getting-started/typed-linting) which adds rules powered by TypeScript's type checking APIs
-* Needs some additional lines in `eslint.config.mjs`, copied verbatim from the documentation
+The `typescript-eslint` plugin supports a new, easy to configure system for [typed linting](https://typescript-eslint.io/getting-started/typed-linting). Typed linting adds rules powered by TypeScript's type checking APIs. I needed to add a few lines to `eslint.config.mjs`, copied verbatim from the documentation.
 
 ```
   ...tseslint.configs.recommendedTypeChecked,
@@ -102,23 +99,24 @@ added 11 packages, removed 11 packages, changed 29 packages, and audited 1060 pa
   },
 ```
 
-* Got an error because of trying to lint config files with .ts extensions which aren't in scope for TypeScript.
+When I ran linting again, I got an error from trying to lint config files with .ts extensions which aren't in scope for TypeScript.
 
 ```
 react-virtual-scroll/vite.config.ts
-  0:0  error  Parsing error: react-virtual-scroll/vite.config.ts was not found by the project service. Consider either including it in the tsconfig.json or including it in allowDefaultProject
+  0:0  error  Parsing error: react-virtual-scroll/vite.config.ts was not found by
+  the project service. Consider either including it in the tsconfig.json or including
+  it in allowDefaultProject
 ```
 
-* Can't see any point in linting config files so added them to the list to ignore.
-* After that, seems to work. ESLint runs and finds additional errors.
-* Lots of [`@typescript-eslint/unbound-method`](https://typescript-eslint.io/rules/unbound-method/) in clients of `useVirtualScroll`
+I can't see much point in linting config files, so added them to the list of files to ignore. After that, it seems to work. ESLint runs and finds additional errors. Most of them are from the [`@typescript-eslint/unbound-method`](https://typescript-eslint.io/rules/unbound-method/) rule in clients of `useVirtualScroll`.
 
 ```
 Avoid referencing unbound methods which may cause unintentional scoping of `this`.
-If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead
+If your function does not access `this`, you can annotate it with `this: void`, 
+or consider using an arrow function instead
 ```
 
-* `useVirtualScroll` is a custom hook which returns an object containing a collection of values and utility functions.
+`useVirtualScroll` is a custom hook which returns an object containing a collection of values and utility functions.
 
 ```ts
 export interface VirtualScrollState {
@@ -129,9 +127,9 @@ export interface VirtualScrollState {
 }
 ```
 
-* This looks like a class with methods to TypeScript rather than the collection of standalone functions it's intended to be
-* The clients destructure the object and call the functions. That's a bad idea with the a real object, because the this point gets lost.
-* Solution was to add type annotations so that it's clear there's no use of this
+This looks like a class with methods to TypeScript, rather than the collection of standalone functions it's intended to be. To be fair, it would look like a class with methods to any human reading the code too.
+
+The `useVirtualScroll` clients use destructuring to extract the values and functions from the object. That's a bad idea with a real instance-of-a-class object, because the `this` point gets lost. The solution is to add additional type annotations so that it's clear there's no use of `this`.
 
 ```ts
 export interface VirtualScrollState {
@@ -142,11 +140,11 @@ export interface VirtualScrollState {
 }
 ```
 
-*  The only other problem found was a [`@typescript-eslint/no-duplicate-type-constituents`](https://typescript-eslint.io/rules/no-duplicate-type-constituents) where I'd declared a type in an overly verbose way as a misguided attempt to convey more meaning to human readers. I removed the duplication. 
+The only other problem found was from the [`@typescript-eslint/no-duplicate-type-constituents`](https://typescript-eslint.io/rules/no-duplicate-type-constituents) rule, where I'd declared a type in an overly verbose way as a misguided attempt to convey more meaning to human readers. I removed the duplication. 
 
 # Vitest 2
 
-* Looks like breaking changes only effect advanced configuration options that I'm not using
+Upgrading to Vitest 2 takes care of another four packages. Based on the [migration guide](https://vitest.dev/guide/migration.html), it looks like breaking changes only effect advanced configuration options that I'm not using.
 
 ```json
   "devDependencies": {
@@ -163,22 +161,25 @@ export interface VirtualScrollState {
 added 10 packages, removed 30 packages, changed 21 packages, and audited 1040 packages in 23s
 ```
 
-* Unit tests all run successfully
-* Coverage report at package level is pulling in unit test files for some reason, throwing off coverage stats
-* Running at the workspace level fails completely with 100s of errors about `api-extractor-base.json`. 
-* There was a [change in Vite 2.1](https://vitest.dev/guide/workspace.html#defining-a-workspace) which means that a `vitest.workspace.ts` config with the standard pattern of `packages/*` now treats any files in the packages dir as Vitest config files. 
-* I put common config files for other tools in there.
-* Easy, I thought. Just change the pattern to exclude the config files
-* No way to distinguish folders from files with a glob pattern
-* All my config files have extensions. Want anything without an extension
-* Can use `*.*` for anything with an extension but no obvious way to say anything without
-* Can't find any detailed reference documentation for globs anywhere
-* Ended up looking at [unit tests](https://github.com/SuperchupuDev/tinyglobby/blob/main/test/index.test.ts) for the `tinyglobby` library that vitest uses
-* Suggests that `!packages/*.*` should work
-* It appears to work, ignoring the config files and finding my two packages. Then all the unit tests blow up, failing to import anything.
-* If I explicitly list the packages using `packages/react-spreadsheet` and `packages/react-virtual-scroll` the same tests run successfully.
-* Weirdly listing both `packages/*` and `!packages/*.*` does work
-* The vitest docs say that you can reference packages by their config files instead of their folders and that's what I went with in the end. Seems less prone to errors.
+Unit tests all run successfully. However, the coverage report at the package level is pulling in unit test files for some reason, throwing off the coverage stats. Running at the workspace level fails completely with 100s of errors about `api-extractor-base.json`. 
+
+It turns out there was a [change in Vite 2.1](https://vitest.dev/guide/workspace.html#defining-a-workspace) which means that a `vitest.workspace.ts` config with the standard pattern of `packages/*` now treats any files in the packages dir as Vitest config files. Previously files were ignored. No idea why that's not considered a breaking change.
+
+I've put common package level config files for a variety of tools in the packages directory. Easy, I thought. Just change the pattern to exclude the config files.
+
+There's no way to distinguish folders from files with a glob pattern. I need to find some feature of the naming that distinguishes them. All my config files have extensions, so I need a pattern that matches anything without an extension.
+
+I can use `*.*` to match anything with an extension but there's no obvious way to negate that. A variety of Google searches fail to find anything resembling a reference manual for glob patterns.
+
+I ended up looking at [unit tests](https://github.com/SuperchupuDev/tinyglobby/blob/main/test/index.test.ts) for the `tinyglobby` library that Vitest uses. That suggests that `!packages/*.*` should work. 
+
+It appears to work when I try it, ignoring the config files and finding my two packages. Then all the unit tests blow up with errors on import statements. 
+
+If I explicitly list the packages using `packages/react-spreadsheet` and `packages/react-virtual-scroll`, the same tests run successfully. After trying some more combinations, I found that listing both `packages/*` and `!packages/*.*` works. 
+
+It doesn't fill me with confidence.
+
+The Vitest workspace docs say that you can reference packages by their config files instead of their folders. That's what I went with in the end. Feels like it should be less prone to errors.
 
 ```ts
 export default defineWorkspace([
@@ -186,8 +187,7 @@ export default defineWorkspace([
 ])
 ```
 
-* Now that it runs, I can see that workspace level coverage also includes the test files in the report
-* Looking at my coverage config I can see why
+Now that the workspace level unit tests run, I can see that the workspace level coverage report also includes the test files. Looking at my coverage config I can see why.
 
 ```ts
   coverage: {
@@ -197,9 +197,7 @@ export default defineWorkspace([
   }
 ```
 
-* I explicitly exclude some common source containing test utilities but not the unit tests themselves
-* Somehow Vitest 1.x was implicitly excluding them but Vitest 2 isn't
-* Once I included them explicitly I got the coverage reports I was expecting again
+I explicitly exclude some common source code containing test utilities but not the unit test source files. Somehow, Vitest 1.x was implicitly excluding them but Vitest 2 doesn't. Once I excluded them explicitly I got the coverage reports I was expecting.
 
 ```ts
   coverage: {
@@ -211,8 +209,7 @@ export default defineWorkspace([
 
 # jsdom 25
 
-* May as well do this one next, while I'm looking at unit tests
-* Marked as major release but breaking changes only when using non-default options that I don't use
+May as well do this one next, while I'm looking at unit tests. It's marked as a major release but the breaking changes only apply to obscure non-default options that I don't use. 
 
 ```json
   "devDependencies": {
@@ -226,20 +223,21 @@ export default defineWorkspace([
 added 2 packages, removed 5 packages, changed 8 packages, and audited 1037 packages in 27s
 ```
 
-* Half my unit tests now failing with a JavaScript runtime error deep inside jsdom: `TypeError: list.map is not a function`
-* Rolled back to version 24. Still failing.
-* A few unrelated minor updates got applied when I updated jsdom. Reverted `package-lock.json` to previous version and used `npm ci` to get installed state to match
-* Now tests are working again
-* Tried again but instead of updating `package.json` directly and running `npm update`, I did it properly, restricting scope of changes to just jsdom
+Oh dear. Half my unit tests are failing with a JavaScript runtime error deep inside jsdom: "`TypeError: list.map is not a function`". 
+
+I rolled the changes back to version 24. Tests are still failing. 
+
+A few unrelated minor updates got applied when I ran `npm update` after editing `package.json`. I reverted `package-lock.json` to the previous version and used `npm ci` to get the installed state to match. Thankfully, the tests are working again.
+
+I tried again but this time instead of updating `package.json` directly and running `npm update`, I did it properly, restricting the scope of changes to just `jsdom`.
 
 ```
-% npm install -D jsdom@"^25.0.0"
+% npm install -D jsdom@25
 
 added 2 packages, removed 5 packages, changed 2 packages, and audited 1037 packages in 1s
 ```
 
-* This time tests run OK
-* Let's try the minor updates again
+This time the tests run fine. Let's try the minor updates again.
 
 ```
 % npm update
@@ -247,15 +245,15 @@ added 2 packages, removed 5 packages, changed 2 packages, and audited 1037 packa
 changed 6 packages, and audited 1037 packages in 19s
 ```
 
-* Unit tests broken again
-* Trawling through `package-lock.json` I see the following changes.
-  * `electron-to-chromium`  1.5.66 -> 1.5.67
-  * `nwsapi` 2.2.13 -> 2.2.14
-  * `ts-api-utils` 1.4.2 -> 1.4.3
-  * `nx` 20.1.3 -> 20.1.4
+And of course the unit tests are broken again. Trawling through `package-lock.json`, I see the following changes.
+* `electron-to-chromium`  1.5.66 -> 1.5.67
+* `nwsapi` 2.2.13 -> 2.2.14
+* `ts-api-utils` 1.4.2 -> 1.4.3
+* `nx` 20.1.3 -> 20.1.4
 
-* I updated one at a time, trying unit tests after each. They broke after updating `nwsapi`
-* [`nwsapi`](https://github.com/dperini/nwsapi) is an engine that implements the CSS selectors API
+I reverted back, then updated them one at a time, running the unit tests after each one. They broke after updating `nwsapi`.
+
+[`nwsapi`](https://github.com/dperini/nwsapi) is an engine that implements the CSS selectors API. Let's see what it's a dependency for. 
 
 ```
 % npm ls nwsapi
@@ -264,10 +262,7 @@ root@ /Users/tim/GitHub/infinisheet
   └── nwsapi@2.2.14
 ```
 
-* `nwsapi` is a dependency of `jsdom`
-* jsdom requires nwsapi ^2.2.12
-* Looks like a bad nwsapi update which I can safely roll back
-* I added `nwsapi` to my package.json and excluded the bad version
+Surprise, `nwsapi` is a dependency of `jsdom`. However, `jsdom` 25 only requires `nwsapi` 2.2.12 or later. It looks like this is a bad `nwsapi` update which I can safely roll back. I added `nwsapi` to my package.json and excluded the bad version.
 
 ```json
   "devDependencies": {
@@ -275,35 +270,33 @@ root@ /Users/tim/GitHub/infinisheet
   }
 ```
 
-* Tried `npm update` one more time
-* This time everything works
-* A day later 2.2.15 was released to fix the problem. The developer had added a new experimental feature behind an feature flag which they'd left turned on. I removed nwsapi from my package.json and updated. Everything still works.
+Then I tried `npm update` one more time. This time everything works.
+
+A day later `nwsapi` 2.2.15 was released to fix the problem. The developer had added a new experimental feature behind a feature flag which they'd accidentally left turned on. I removed `nwsapi` from my package.json and updated. All fine.
 
 # vite-tsconfig-paths 5
 
-* Dropping support for CommonJS modules which I don't use
+This Vite plugin is dropping support for CommonJS modules. Shouldn't effect me as all my stuff is ESM.
 
 ```
-% npm install -D vite-tsconfig-paths@"^5.0.0" 
+% npm install -D vite-tsconfig-paths@5 
 
 changed 1 package, and audited 1037 packages in 2s
 ```
 
-* Everything builds and runs OK
+For a change, everything builds and runs OK.
 
 # Rollup plugin-typescript 12
 
-* Fixing an issue where some combinations of output options would put files in the wrong place
-* Breaking change for anyone relying on incorrect behavior
+Looking at the [change log](https://github.com/rollup/plugins/blob/master/packages/typescript/CHANGELOG.md) and the [PR of the breaking change](https://github.com/rollup/plugins/pull/1728), this appears to be fixing a problem where TypeScript type declaration files could be output in the wrong place. It will be a breaking change for anyone relying on the incorrect behavior.
 
 ```
-% npm install -D @rollup/plugin-typescript@"^12.0.0"
+% npm install -D @rollup/plugin-typescript@12
 
 changed 1 package, and audited 1037 packages in 1s
 ```
 
-* Build now fails with error `Path of Typescript compiler option 'declarationDir' must be located inside the same directory as the Rollup 'file' option.`
-* Here's my Rollup config which involved [quite a journey]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}) to put together in the first place
+My build now fails with the error "`Path of Typescript compiler option 'declarationDir' must be located inside the same directory as the Rollup 'file' option`". Here's the relevant part of my Rollup config, which involved [quite a journey]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}) to put together in the first place.
 
 ```js
 export default [
@@ -318,32 +311,25 @@ export default [
       },
     ],
     plugins: [
-      typescript({ "declarationDir": "./types", tsconfig: "./tsconfig.build.json" })
-    ],
-  },
-  {
-    input: "dist/types/index.d.ts",
-    output: [{
-      file: "dist/index.d.ts",
-      format: "es",
-      plugins: []
-    }],
-    plugins: [      
-      dts(),
-      del({ targets: "dist/types", hook: "buildEnd" })
+      typescript({ "declarationDir": "dist/types", tsconfig: "./tsconfig.build.json" })
     ],
   }
 ];
 ```
 
-* This is a two stage pipeline. The first stage uses the `typescript` plugin to transpile and bundle the source code into `dist/index.js` with declaration files output to `dist/types`. The second stage uses the `dts` plugin to read the declaration files in `dist/types` and bundle them into `dist/index.d.ts`.
-* In the end had to find the code that [outputs the error message](https://github.com/rollup/plugins/blob/92daef00b0da30de172868d4e0792c8686da0045/packages/typescript/src/options/validate.ts#L72) to understand the problem
-* The actual breaking change is not correcting where the output files go, it's [adding validation](https://github.com/rollup/plugins/pull/1728) to stop you putting output files where you want
-* Ironically, I'm putting the files in the approved place, under the output directory. It's the validation that's wrong.
-* Even more ironically, the original validation in 12.0.0 would have worked. It was changed in 12.1.11 to [fix a different problem](https://github.com/rollup/plugins/pull/1783).
-* If you specify a Rollup output file, the validation checks that the output file is inside every typescript directory option. This makes sense if you're using the `outDir` typescript option to specify the overall output dir then writing individual output files into it. It makes no sense if you're using the `declarationDir` option.
-* If you specify the overall Rollup output dir (and let Rollup choose the output file name), the validation checks that every typescript directory option is inside the overall output dir. 
-* With some fiddling around I was able to rewrite the first stage config so that it does exactly the same thing as before while satisfying the validation checks.
+This is the first part of a two stage pipeline. It uses the `typescript` plugin to transpile and bundle the source code into `dist/index.js` with declaration files output to `dist/types`. The second stage, not shown, uses the `dts` plugin to read the declaration files in `dist/types` and bundle them into `dist/index.d.ts`.
+
+I don't understand what the error is complaining about. The generated output goes into `dist/types`, which is located inside `dist`, which is the directory containing the Rollup file option, `dist/index.js`. 
+
+In the end, I had to find the code that [outputs the error message](https://github.com/rollup/plugins/blob/92daef00b0da30de172868d4e0792c8686da0045/packages/typescript/src/options/validate.ts#L72) to understand the problem. The actual breaking change is not correcting where the output files go, it's [adding validation](https://github.com/rollup/plugins/pull/1728) to stop you putting output files where you want.
+
+Ironically, I'm putting the files in the approved place, under the output directory. It's the validation code that's wrong. Even more ironically, the original validation in 12.0.0 would have worked. It was changed in 12.1.11 because it [breaks a different valid use case](https://github.com/rollup/plugins/pull/1783).
+
+If you specify a Rollup output file, the latest validation code checks that the output file is inside every TypeScript directory option. This makes sense if you're using the `outDir` TypeScript option to specify the overall output dir, then writing individual output files into it. It makes no sense if you're using the `declarationDir` option, or a combination of directory options.
+
+If you specify the overall Rollup output dir (and let Rollup choose the output file name), the validation works the other way round, and checks that every TypeScript directory option is inside the overall output dir.
+
+With some fiddling around I was able to rewrite the config so that it does exactly the same thing as before while satisfying the validation checks.
 
 ```js
   {
@@ -362,31 +348,31 @@ export default [
   },
 ```
 
+This feels like an anti-feature to me. All that effort putting in validation checks that instead of preventing the user from shooting themselves in the foot, takes the gun and does it for them.
+
 # NodeJS 22
 
-* Seeing `@types/node` at version 22 made me check the current version of NodeJS
-* NodeJS 22.11.0 release on October 29th 2024 marked the entry of the 22.x release line into "Active LTS"
-* Time to upgrade and switch my GitHub builds from 18 and 18 to 20 and 22. 
-* Locally I'm still on the [first major version I installed]({% link _posts/2022-09-21-mac-local-blog-dev.md %}), Node 18
+Seeing `@types/node` at version 22 in the list of outdated packages made me check the current version of NodeJS. [NodeJS 22.11.0](https://nodejs.org/en/blog/release/v22.11.0), released on October 29th 2024, marks the entry of the 22.x release line into "Active LTS". I try to support both the "Active LTS" and "Maintenance LTS" version of NodeJS. 
+
+It's time to upgrade and switch my GitHub builds from Node 18 and 20 to Node 20 and 22. Locally, I'm still on the [first major version I installed]({% link _posts/2022-09-21-mac-local-blog-dev.md %}), Node 18. 
 
 ```
 % node -v
 v18.18.1
 ```
 
-* Using asdf version manager for Node which can query latest available LTS version for me
+I'll need to upgrade that first and make sure everything works with Node 22. I use the [asdf version manager](https://asdf-vm.com/) for Node, which can query and install the latest available LTS version for me.
 
 ```
 % asdf nodejs resolve lts --latest-available
 18.20.3
 ```
 
-* That's weird. Maybe the check is hardcoded in some way and I need to update asdf
+That's weird. Maybe the check is hardcoded in some way and I need to update asdf first?
 
 ## Brew Update
 
-* I use homebrew to manage software on my Mac that's outside the scope of the npm ecosystem
-* Let's see how out of date everything is
+I use [Homebrew](https://brew.sh/) to manage software on my Mac. Let's see how out of date everything is.
 
 ```
 % brew outdated
@@ -418,12 +404,11 @@ unixodbc (2.3.11) < 2.3.12
 git-credential-manager (2.0.785) != 2.6.0
 ```
 
-* I was surprised that querying for outdated software would automatically upgrade homebrew itself and try to migrate `git-credential-manager`, whatever that means
-* asdf is several versions behind, and so is lots of other stuff.  I clearly need to upgrade.
+I was surprised that querying for outdated software would automatically upgrade Homebrew itself and try to migrate `git-credential-manager`, whatever that means. It looks like I haven't updated anything since setting up my Mac. I clearly need to upgrade.
 
 ## Brew Upgrade
 
-* It's all gone so well so far, I'm sure it will be fine ...
+Everything's gone so well so far. What's the worst that could happen?
 
 ```
 % brew upgrade
@@ -520,8 +505,6 @@ Removing: /Users/tim/Library/Caches/Homebrew/tree_bottle_manifest--2.1.1_1... (7
 Removing: /Users/tim/Library/Caches/Homebrew/tree--2.1.1_1... (59.2KB)
 
 ==> Upgrading 1 dependent of upgraded formulae:
-Disable this behaviour by setting HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK.
-Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).
 openssl@1.1 1.1.1q -> 1.1.1w
 Error: openssl@1.1 has been disabled because it is not supported upstream! It was disabled on 2024-10-24.
 ==> Checking for dependents of upgraded formulae...
@@ -535,8 +518,7 @@ git-credential-manager 2.0.785 -> 2.6.0
 Error: git-credential-manager: uninstall script /opt/homebrew/share/gcm-core/uninstall.sh does not exist.
 ```
 
-* Horribly verbose but looks like it mostly worked with `git-credential-manager` going wrong at the end again
-* Let's see what homebrew thinks it's achieved
+The output is horribly verbose but it looks like it mostly worked. Although `git-credential-manager` goes wrong at the end again. Let's see what Homebrew thinks it's achieved.
 
 ```
 % brew outdated
@@ -544,14 +526,15 @@ openssl@1.1 (1.1.1q) < 1.1.1w
 git-credential-manager (2.0.785) != 2.6.0
 ```
 
-* As far as I can tell, the latest asdf used openssl 3 which was installed. Homebrew didn't realize that it could uninstall openssl 1.1. It tried to upgrade it and failed because it's no longer supported but did identify that nothing is using it. I guess I can manually remove it?
+As far as I can tell, the latest asdf uses openssl 3 which was installed. Homebrew didn't realize that it could uninstall openssl 1.1. It tried to upgrade it and failed because it's no longer supported but did identify that nothing is using it. I guess I can manually remove it?
 
 ## Git Credential Manager
 
-* Homebrew seems to be confused about `git-credential-manager-core` and `git-credential-manager`. `brew list` shows `git-credential-manager-core` is installed but `brew outdated` lists `git-credential-manager, plus there's that failed "migration" from one to the other. 
-* Apparently [GCM replaced GCM core](https://github.blog/security/application-security/git-credential-manager-authentication-for-everyone/) in 2022, so it's probably my fault for not keeping up.
+Homebrew seems to be confused about `git-credential-manager-core` and `git-credential-manager`. `brew list` shows `git-credential-manager-core` is installed but `brew outdated` lists `git-credential-manager, plus there's that failed "migration" from one to the other. 
 
-* Let's try uninstalling and reinstalling
+Apparently [GCM replaced GCM core](https://github.blog/security/application-security/git-credential-manager-authentication-for-everyone/) in 2022, so it's probably my fault for not keeping up.
+
+Let's try uninstalling and reinstalling
 
 ```
 % brew uninstall git-credential-manager-core
@@ -560,22 +543,20 @@ Warning: Cask microsoft/git/git-credential-manager-core was renamed to git-crede
 ==> Uninstalling Cask git-credential-manager-core
 ==> Running uninstall script /opt/homebrew/share/gcm-core/uninstall.sh
 Error: uninstall script /opt/homebrew/share/gcm-core/uninstall.sh does not exist.
-```
 
-```
 brew uninstall git-credential-manager     
 ==> Uninstalling Cask git-credential-manager-core
 ==> Running uninstall script /opt/homebrew/share/gcm-core/uninstall.sh
 Error: uninstall script /opt/homebrew/share/gcm-core/uninstall.sh does not exist.
 ```
 
-* Seems to be completely screwed up. Try to manually remove it.
+Seems to be completely screwed up. I do a few Google searches to find out how best to manually remove it.
 
 ```
 rm -r /opt/homebrew/Caskroom/git-credential-manager-core
 ```
 
-* Now try again
+Now try again.
 
 ```
 % brew install git-credential-manager
@@ -593,15 +574,11 @@ Removing: /Users/tim/Library/Caches/Homebrew/portable-ruby-3.1.4.arm64_big_sur.b
 Pruned 0 symbolic links and 1 directories from /opt/homebrew
 ```
 
-* That seems to have worked, and removed openssl 1.1 for me too
-* Git still works too
+That seems to have worked, and removed openssl 1.1 for me too. Even better, Git still works.
 
-## asdf Node 20 and 22
+## Installing Node 20 and 22 with asdf
 
-* All that and asdf still reports 18 as latest LTS version
-* `asdf list all nodejs` shows that 22.11.0 is the most recent version of Node 22, which is the version that Node announced as the LTS version
-* I guess I can install that by hand. Nice thing with asdf as you can have multiple versions of Node installed and switch between them
-* If something goes wrong, trivial to switch back
+All that and asdf still reports 18 as the latest LTS version. It does know about more recent versions, `asdf list all nodejs` shows that 22.11.0 is the most recent version of Node 22, which is the version that Node announced as the LTS version. I guess I can install that by hand. The nice thing with asdf is that you can have multiple versions of Node installed and switch instantly between them. If something goes wrong, it's trivial to switch back.
 
 ```
 % asdf install nodejs 22.11.0
@@ -620,14 +597,14 @@ v18.18.1
 v22.11.0
 ```
 
-* Everything appears to work but I get a warning from node whenever I use lerna, my monorepo build tool.
+Everything appears to work but I get a warning from Node whenever I use Lerna, my monorepo build tool.
 
 ```
 (node:18030) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 ```
 
-* Diving deeper
+Diving deeper.
 
 ```
 % node --trace-deprecation node_modules/.bin/lerna info
@@ -645,8 +622,9 @@ v22.11.0
 lerna notice cli v8.1.9
 ```
 
-* This is a [known issue](https://github.com/lerna/lerna/issues/4074) for lerna. Seems like lerna has lots of old dependencies which need to be brought up to date.
-* Let's use asdf to put the most recent version of Node 20 on (latest maintenance LTS) and give that a try
+This is a [known issue](https://github.com/lerna/lerna/issues/4074) for Lerna. It seems like Lerna has lots of old dependencies which need to be brought up to date.
+
+Let's use asdf to put the most recent version of Node 20 on (latest maintenance LTS) and give that a try.
 
 ```
 % asdf install nodejs 20.18.1                          
@@ -666,13 +644,11 @@ Installed node-v20.18.1-darwin-arm64 to /Users/tim/.asdf/installs/nodejs/20.18.1
 lerna notice cli v8.1.9
 ```
 
-* Can run with Node 20 locally for now so I don't have to look at the deprecation notice and wait for lerna to update dependencies
-
-* Still safe to update GitHub Build CI workflow to use Node 20 and 22
+I can run with Node 20 locally for now so I don't have to look at the deprecation notice. Let's hope Lerna finds it easier to update its dependencies than I have. It's still safe for me to update my GitHub Build CI workflow to use Node 20 and 22.
 
 ## Node 22 Types
 
-* Should be fine to update to node 22 TypeScript types
+It should be fine to update to Node 22 TypeScript types.
 
 ```
 % npm install -D @types/node@22
@@ -680,38 +656,34 @@ lerna notice cli v8.1.9
 changed 2 packages, and audited 1037 packages in 1s
 ```
 
-* Nice, no issues for a change
+Nice, no issues for a change.
 
 # rimraf 6
 
-* Drops support for Node 18
-* Should be safe to upgrade now
+The breaking change is dropping support for Node 18. It should be safe to upgrade now.
 
 ```
  % npm install -D rimraf@6      
 
 added 6 packages, changed 1 package, and audited 1043 packages in 1s
 ```
-
-* No issues here either
+No issues here either.
 
 # TypeDoc 0.27
 
-* Released November 27th 2024, with 0.27.1 following a day later
-* Too close to the bleeding edge for me
-* Leave it for next time
-* Annoying, because this update is the thing that's blocking TypeScript 5.7
-* TypeScript 5.7 was released November 22nd 2024, happy to let it bake a little longer
+TypeDoc 0.27 was released on November 27th 2024, with 0.27.1 following a day later. There's a [long list](https://github.com/TypeStrong/typedoc/blob/master/CHANGELOG.md) of new features and breaking changes. 
+
+That's too close to the bleeding edge for me. I'm going to leave upgrading until next time. It's a little annoying as this is what's blocking the upgrade to TypeScript 5.7.
+
+TypeScript 5.7 was released November 22nd 2024, so maybe it's a good thing that I'm not updating immediately.
 
 # Vite 6
 
-* Released November 26th 2024, with 6.0.1 following a day later
-* Too close to the bleeding edge for me
-* Leave it for next time
+ Vite 6 was released on November 26th 2024, with 6.0.1 following a day later. It sounds like there's been a [significant rework](https://vite.dev/blog/announcing-vite6) of Vite internals. Also too close to the bleeding edge.
 
 # Minor Updates 3
 
-* Let's check final state
+Let's check the final state we've ended up with.
 
 ```
 % npm outdated
@@ -730,8 +702,7 @@ vite                          5.4.11   5.4.11    6.0.2
 vitest                         2.1.6    2.1.8    2.1.8 
 ```
 
-* Already out of date
-* Another round of minor updates and try again
+We're already out of date. Another round of minor updates and try again.
 
 ```
 % npm update
@@ -745,9 +716,8 @@ typescript    5.6.3    5.6.3   5.7.2
 vite         5.4.11   5.4.11   6.0.2
 ```
 
-* That's more like what I was expecting to see
-* Typedoc and Vite have both had another bug fix release since I started updating. Feeling comfortable with my decision to hold off for now.
+That's more like what I was expecting to see. TypeDoc and Vite have both had another bug fix release since I started updating. I'm feeling very comfortable with my decision to hold off for now.
 
 # Next Time
 
-* Hopefully, finally get round to installing something new
+* Hopefully, I'll finally get round to installing something new.
