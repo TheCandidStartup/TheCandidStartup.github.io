@@ -132,6 +132,8 @@ await page.goto('http://localhost:5173/');
 await page.getByRole('link', { name: 'Get started' }).click();
 ```
 
+## Locators
+
 * There are lots of types of [locator](https://playwright.dev/docs/locators), the documentation lists them in order of preference, with [`getByRole`](https://playwright.dev/docs/api/class-page#page-get-by-role) the most preferred. This locates an element by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). 
 * Playwright includes a handy [codegen](https://playwright.dev/docs/codegen-intro#running-codegen) utility if, like me, you're unsure of the best locator to use for an element
 * I fired up my spreadsheet sample app and ran `npx playwright codegen http:/localhost:5173`
@@ -142,4 +144,77 @@ await page.getByRole('link', { name: 'Get started' }).click();
 * You can hover over elements in the page and see a suggested locator or record an interactive session and generate actions that you can copy into your test
 * It immediately became clear that most of the elements on my page don't have good locators
 * Which also implies that they're not very accessible
+* The input fields are easy to sort out. I've noticed some warnings in Chrome developer tools that I need either a name or id for autofill to work
+* I don't like adding ids to elements within components as ids need to be global on a page. The app should decide.
+
+## Accessible Name
+
+* Names will work nicely and allow a `getByRole` locator
+* Spreadsheet cells in grid and headers are more tricky
+* Can I give them all names using Row, Column and Cell references?
+* No - divs can't have names, only active UI elements
+
+* Gave my input box a name of "name" (it displays the name of a row, column or cell). That's what Google Sheets calls it too.
+* `getByRole('textbox', { name: 'name'})` doesn't work
+* Turns out the [accessible name](https://accessibilityinsights.io/info-examples/web/input-button-name/) for an input doesn't come from the name attribute
+* `title` didn't work either. I had to use `aria-label` to get it to work. 
+* Can lookup by title directly using `getByTitle` so went with that. Accessibility is a whole topic on its own so happy to leave for another time.
+
+## Accessing Rows, Columns and Cells
+
+* In the end I realized that locating specific elements isn't that useful. I can locate the header cell for row 5000 but what can I do with it? Check that the text it contains is "5000"? Testing at this level should be about events and layout, things I can't do at unit test level.
+* Think about the bugs that motivated use of Playwright. Use the "Scroll To" input field to select row 5000 and find the grid has jumped to 8211.
+* Test is to put "5000" into the input field, press enter and then check that the selected row in the row header contains "5000".
+* Need to locate elements by semantic class (row, column, cell, focus, selection) and layout
+* Despite being at the bottom of the priority list in the Playwright documentation, CSS locators seem like the best fit
+* Playwright recommends prioritizing user-visible locators because CSS is an implementation detail that could break when the page changes
+* In my case, CSS classes are part of the [contract between component and app]({% link _posts/2024-08-26-css-react-components.md %}). They're semantically meaningful, describing the visual state of the component.
+* CSS class based selectors can be easily combined with [layout based queries](https://playwright.dev/docs/other-locators#css-matching-elements-based-on-layout) (the cell to the right of the row header containing "5000") and [DOM structure based queries](https://playwright.dev/docs/other-locators#n-th-element-locator) (the first row in the row header)
+* The only problem is that my sample app currently uses CSS Modules so CSS class names are dynamic. Fortunately, my approach to CSS means that the app is in control and it's easy to switch to fixed class names.
+
+## First Test
+
+```ts
+test.beforeEach(async ({ page }) => {
+  await page.goto('/');
+});
+
+test('Scroll to 5000', async ({ page }) => {
+  const name = page.getByTitle('Name');
+  await name.click();
+  await name.fill('5000');
+  await name.press('Enter');
+
+  const row = page.locator('.VirtualSpreadsheet_Row__Selected');
+  await expect(row).toHaveText('5000');
+});
+```
+
+## Developer Experience
+
+* Codegen is useful to record something that works as a starting point that you then refine
+* VS Code extension is fantastic
+* Run test direct from VS Code editor with option to pop up browser to see what's happening
+* As you edit locator, corresponding element is highlighted in browser
+* Most of the codegen tools are also available from the Playwright tab in VS Code
+* `webServer` option in playwright config file lets you specify how to start local dev server, e.g. `npm run dev`
+* Then `npx playwright test` on command line or during CI will start server, run tests, shutdown server
+* Setting the `reuseExistingServer` option means Playwright will use any existing server running on the specified port rather than erroring out
+* Playwright tests will run against a dev server you started manually, or use their own server
+
+```ts
+{
+  webServer: {
+     command: 'npm run dev',
+     url: 'http://localhost:5173/',
+     reuseExistingServer: !process.env.CI
+  }
+}
+```
+
+* You can use `process.env.CI` to check for a CI environment and use more conservative settings
+* VS Code extension works the same way, except that it leaves server running until it exits
+* If you need to force quit a dev server then `npx kill-port 5173` will do the trick
+
+# Vitest Browser Installation
 
