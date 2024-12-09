@@ -2,6 +2,7 @@
 title: >
   InfiniSheet: Chore Updates
 tags: infinisheet
+thumbnail: /assets/images/frontend/npm-package.png
 ---
 
 [Last time]({% link _posts/2024-12-02-react-virtual-scroll-state-harmful.md %}), I decided that I needed some additional tools for browser based automated testing. Before I can do that, I should really make sure all my existing dependencies are up to date.
@@ -12,9 +13,9 @@ That would normally warrant a throw-away opening paragraph before moving on to p
 
 I like to start with `npm update` to get all the compatible minor versions done. That way they're not cluttering up the `npm outdated` list of outstanding major upgrades. 
 
-This is the first time I've had a problem. Npm reports `ERESOLVE could not resolve` errors for `typescript` and `@eslint/compat`. Both are direct `devDependencies` for InfiniSheet. Where a package is a direct dependency, npm seems to find the most recent version allowed and then complain if that's more recent that other dependencies support. 
+This is the first time I've had a problem. NPM reports `ERESOLVE could not resolve` errors for `typescript` and `@eslint/compat`. Both are direct `devDependencies` for InfiniSheet. Where a package is a direct dependency, npm seems to find the most recent version allowed and then complain if that's more recent than other dependencies support. 
 
-I expected npm to find the most recent version allowed by all dependencies. On well, I'll have to do it manually, and constrain the versions I allow.
+I expected npm to find the most recent version allowed by all dependencies. Oh well, I'll have to do it manually, and constrain the versions I allow.
 
 ```
   "devDependencies": {
@@ -129,7 +130,7 @@ export interface VirtualScrollState {
 
 This looks like a class with methods to TypeScript, rather than the collection of standalone functions it's intended to be. To be fair, it would look like a class with methods to any human reading the code too.
 
-The `useVirtualScroll` clients use destructuring to extract the values and functions from the object. That's a bad idea with a real instance-of-a-class object, because the `this` point gets lost. The solution is to add additional type annotations so that it's clear there's no use of `this`.
+The `useVirtualScroll` clients use destructuring to extract the values and functions from the object. That's a bad idea with a real instance-of-a-class object, because the `this` pointer gets lost. The solution is to add additional type annotations so that it's clear there's no use of `this`.
 
 ```ts
 export interface VirtualScrollState {
@@ -526,11 +527,11 @@ openssl@1.1 (1.1.1q) < 1.1.1w
 git-credential-manager (2.0.785) != 2.6.0
 ```
 
-As far as I can tell, the latest asdf uses openssl 3 which was installed. Homebrew didn't realize that it could uninstall openssl 1.1. It tried to upgrade it and failed because it's no longer supported but did identify that nothing is using it. I guess I can manually remove it?
+As far as I can tell, the latest asdf uses openssl 3, which was installed. Homebrew didn't realize that it could uninstall openssl 1.1. It tried to upgrade it and failed because it's no longer supported but did identify that nothing is using it. I guess I can manually remove it?
 
 ## Git Credential Manager
 
-Homebrew seems to be confused about `git-credential-manager-core` and `git-credential-manager`. `brew list` shows `git-credential-manager-core` is installed but `brew outdated` lists `git-credential-manager, plus there's that failed "migration" from one to the other. 
+Homebrew seems to be confused about `git-credential-manager-core` and `git-credential-manager`. `brew list` shows `git-credential-manager-core` is installed but `brew outdated` lists `git-credential-manager`, plus there's that failed "migration" from one to the other. 
 
 Apparently [GCM replaced GCM core](https://github.blog/security/application-security/git-credential-manager-authentication-for-everyone/) in 2022, so it's probably my fault for not keeping up.
 
@@ -720,4 +721,4 @@ That's more like what I was expecting to see. TypeDoc and Vite have both had ano
 
 # Next Time
 
-* Hopefully, I'll finally get round to installing something new.
+Hopefully, I'll finally get round to installing something new.
