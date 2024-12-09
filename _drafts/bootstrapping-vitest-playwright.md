@@ -216,5 +216,93 @@ test('Scroll to 5000', async ({ page }) => {
 * VS Code extension works the same way, except that it leaves server running until it exits
 * If you need to force quit a dev server then `npx kill-port 5173` will do the trick
 
-# Vitest Browser Installation
+# Vitest Browser
 
+## Installation
+
+* As I already have vitest and Playwright installed there's only one more package to install
+
+```
+npm install -D @vitest/browser
+
+added 36 packages, and audited 1082 packages in 5s
+```
+
+* That's a lot chunkier than I expected
+* I couldn't find an npm command that gave me the complete tree of dependencies for `@vitest/browser`. Documentation suggests `npm ls --all` should do it but it didn't give me any dependencies at all. `npm view` gives me the top level dependencies only. After some searching I found [npmgraph](https://npmgraph.js.org/) that generates a pretty graph of dependencies for any npm module, without even having to install it.
+
+
+{% include candid-image.html src="/assets/images/frontend/vitest_browser_dependencies.svg" alt="Vitest Browser Dependencies" %}
+
+* There's clearly a lot going on under the hood given that Playwright will be doing the heavy lifting
+* Spoke too soon. There's another utility package required to render React components
+
+```
+npm install -D vitest-browser-react
+
+added 1 package, and audited 1083 packages in 3s
+```
+
+## Configuration
+
+* Browser mode is enabled per project by adding some options to the `test` object in the project config
+* You can have normal Node based unit tests or browser mode, not both
+* The workaround is to define an additional project for your browser mode tests and keep your node based unit tests in the main project
+* Makes sense for browser mode to be the special case given testing pyramid
+* Most convenient way of adding extra projects is via inline definition at the workspace level
+
+## Writing Tests
+
+* Started with my existing Playwright test and attempted to convert into a Vitest browser mode test for `VirtualSpreadsheet`
+* Rather than having `page` object passed in to test can use Vitest utility to render component and create equivalent of Playwright `page`
+* Only implements a subset of the Playwright API
+* Instead of `press` have to use a separate utility `userEvent.type(name, '{Enter}')`
+* Trying to define a higher level API that abstracts the underlying provider
+* Follows the `testing-library` `userEvent` API
+* Some things, like `fill`, directly accessible on "page" object, others not
+* There's no CSS locator API!
+* Hacked together something less specific to try and get runnable test
+* Need to manually code retries waiting for browser to complete operations
+* Manual mentions an `expect.element` API that avoids need to write explicit `poll` but it doesn't appear to exist
+
+```tsx
+test('Scroll to 5000', async ({}) => {
+  const page = render(
+    <VirtualSpreadsheet
+      data={data}
+      theme={VirtualSpreadsheetDefaultTheme}
+      height={240}
+      width={600}>
+    </VirtualSpreadsheet>)
+
+  const name = page.getByTitle('Name');
+  await name.click();
+  await name.fill('5000');
+  await userEvent.type(name, '{Enter}');
+
+  const row = page.getByText("4999")
+  await expect.poll(() => row).toHaveTextContent("4999");
+});
+```
+
+* Querying for row before the one I jumped to as "5000" appears in both `name` input box and row header
+* By default pops up Chromium browser while the test is running and then displays report
+* Test fails with `Error: Matcher did not succeed in 1000ms`
+
+{% include candid-image.html src="/assets/images/frontend/vitest-browser-mode-error.png" alt="Vitest Browser Mode Error" %}
+
+* Report includes a screenshot of the UI which shows the test succeeded. Obviously I've written the assertion incorrectly
+* Tried to debug using VS Code extension but get an error `Failed to fetch dynamically imported module`
+* There's a [known issue](https://github.com/vitest-dev/vitest/issues/5477) about this error in a variety of different contexts
+* There's a more detailed error message in the console
+
+```
+Caused by: Error: expect(received).toHaveTextContent()
+
+received value must be a Node.
+```
+
+* Using poll wrong - should be `await expect.poll(() => row.element()).toHaveTextContent('4999');
+* Docs are very misleading
+* There is an `expect.element` but VS Code won't see it unless you add `"@vitest/browser/providers/playwright` to your `tsconfig.json`
+* Test runs and passes with three different ways to handle the retry
