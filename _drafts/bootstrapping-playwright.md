@@ -21,26 +21,19 @@ Finally, the top level of the pyramid is end to end testing. You might be testin
 
 # Playwright
 
-* Had my eye on this for a while
-* End to end browser based testing in the same space as [Selenium](https://www.selenium.dev/), [Cypress](https://www.cypress.io/) and [WebDriverIO](https://webdriver.io/)
-* Write automated tests that interact with a browser that in turn connects to your web app (either local dev server or real staging/production deployment).
-* The main difference is that rather than using the installed web browser, Playwright [installs its own browser binaries](https://playwright.dev/docs/browsers) built against the upstream open source toolkits used by the main browsers. These include Chromium (Chrome and Edge), Webkit (Safari) and Firefox.
-* This approach gives Playwright more control over its environment, applying patches where needed to support tighter integration.
-* Playwright tests run entirely out of process, driving each browser through an optimized web socket connection. 
-* Playwright works with the multiple processes used by modern browsers. For example, you can write tests that interact with multiple browser tabs and multiple origins. 
-* Playwright can run the same tests against multiple browsers in parallel.
-* Great support for TypeScript out of the box.
-* Generates native events indistinguishable from real user.
-* Integrated test runner and UI
-* Lots more [nice features](https://playwright.dev/)
+I've had my eye on [Playwright](https://playwright.dev/) for a while. It provides end to end browser based testing in the same space as [Selenium](https://www.selenium.dev/), [Cypress](https://www.cypress.io/) and [WebDriverIO](https://webdriver.io/). You write automated tests that interact with a browser that in turn connects to your web app (either local dev server or real staging/production deployment).
+
+The main difference is that rather than using the installed web browser, Playwright [installs its own browser binaries](https://playwright.dev/docs/browsers) built against the upstream open source toolkits used by the main browsers. These include Chromium (Chrome and Edge), Webkit (Safari) and Firefox. This approach gives Playwright more control over its environment, applying patches where needed to support tighter integration.
+
+Playwright tests run entirely out of process, driving each browser through an optimized web socket connection.  it can run the same tests against multiple different browsers in parallel. Playwright works with the multiple processes used by modern browsers. For example, you can write tests that interact with multiple browser tabs and multiple origins. 
+
+There's great support for TypeScript out of the box. Like Vite, you can write your tests in TypeScript and Playwright deals with transpilation transparently on demand. Your tests can generate native events indistinguishable from a real user, there's an integrated test runner and UI, and many more [features](https://playwright.dev/).
 
 # Installation
 
-* [Installation documentation](https://playwright.dev/docs/intro) is minimal, suggesting you simply run `npm init playwright@latest`
-* This installs everything, populates a project with `package.json` and a config file, then creates some example tests
-* I'm using a monorepo so I suspect the standard setup won't be right for me. Plus I like to understand what's going on behind the scenes.
-* I'll install manually
-* The only mention of manual installation is in the [Updating Playwright](https://playwright.dev/docs/intro#updating-playwright) section at the bottom of the page
+The [Installation documentation](https://playwright.dev/docs/intro) is minimal, suggesting you simply run `npm init playwright@latest`. This installs everything, populates a project with `package.json` and a config file, then creates some example tests.
+
+I'm using a monorepo, so I suspect the standard setup won't be right for me. Plus I like to understand what's going on behind the scenes. The only mention of manual installation is in the [Updating Playwright](https://playwright.dev/docs/intro#updating-playwright) section at the bottom of the page.
 
 ```
 npm install -D @playwright/test@latest
@@ -48,14 +41,13 @@ npm install -D @playwright/test@latest
 npx playwright install --with-deps
 ```
 
-* The first line is as you'd expect but what's `npx playwright install` doing?
-* Playwright uses its own system for [downloading and installing browser binaries](https://playwright.dev/docs/browsers#install-browsers)
-* By default Chromium, Webkit and Firefox will all be installed
-* Browser binaries are stored in [OS-specific cache folders](https://playwright.dev/docs/browsers#managing-browser-binaries)
-* Each version of Playwright requires a [specific set](https://github.com/microsoft/playwright/commits/main/packages/playwright-core/browsers.json) of browser binaries
-* Unused browser binaries for old versions of Playwright are automatically removed when updating
-* I was initially worried about doing an end run around npm like this. However, having a fixed set of binaries for each version of Playwright means that versions are still controlled by your package manager. The only downside is the extra step needed to update the browser binaries whenever Playwright gets updated.
-* The `--with-deps` [argument](https://playwright.dev/docs/browsers#install-system-dependencies) is a convenience for CI. It ensures that all system level dependencies required by the browsers are installed on the host system. Developer machines should already have these and if not you probably want more control over what system level changes get made. 
+The first line is as you'd expect but what's `npx playwright install` doing? Playwright uses its own system for [downloading and installing browser binaries](https://playwright.dev/docs/browsers#install-browsers). By default Chromium, Webkit and Firefox will all be installed.
+
+Browser binaries are stored in [OS-specific cache folders](https://playwright.dev/docs/browsers#managing-browser-binaries). Each version of Playwright requires a [specific version](https://github.com/microsoft/playwright/commits/main/packages/playwright-core/browsers.json) of browser binaries. Unused binaries for old versions of Playwright are automatically removed when updating.
+
+I was initially worried about doing an end run around npm like this. However, having a fixed set of binaries for each version of Playwright means that versions are still controlled by your package manager. The only downside is the extra step needed to update the browser binaries whenever Playwright gets updated.
+
+The `--with-deps` [argument](https://playwright.dev/docs/browsers#install-system-dependencies) is a convenience for Continuous Integration. It ensures that all system level dependencies required by the browsers are installed on whatever host system your CI is running on. Developer machines should already have these. If not, you probably want to decide for yourself what system level changes get made. 
 
 ```
 % npm install -D @playwright/test
@@ -63,7 +55,7 @@ npx playwright install --with-deps
 added 3 packages, and audited 1046 packages in 7s
 ```
 
-* Base package was quick to install. All the meat is in the browsers. Took about three minutes to download everything.
+The base package is quick to install. All the meat is in the browsers. It took about three minutes to download the binaries.
 
 ```
  % npx playwright install
@@ -84,9 +76,9 @@ Downloading FFMPEG playwright build v1010 from https://playwright.azureedge.net/
 FFMPEG playwright build v1010 downloaded to /Users/tim/Library/Caches/ms-playwright/ffmpeg-1010
 ```
 
-# Configuration
+# Example Test
 
-* Added `playwright.config.ts` and `tests/example.spec.ts` to `spreadsheet-sample` copied from a [Playwright Example](https://github.com/microsoft/playwright/tree/main/examples/svgomg)
+I added `playwright.config.ts` and `tests/example.spec.ts` to my `spreadsheet-sample` app, copied from a [Playwright Example](https://github.com/microsoft/playwright/tree/main/examples/svgomg). I executed the test using the Playwright CLI and it worked first time.
 
 ```
 % npx playwright test
@@ -99,32 +91,29 @@ To open last HTML report run:
   npx playwright show-report
 ```
 
-* Running `show-report` opened up an html report in my browser
+Running `npx playwright show-report` opened up an html report in my browser. Output goes into `playwright-report` and `test-results` subdirectories. I added both to my `.gitignore`.
 
 {% include candid-image.html src="/assets/images/frontend/playwright-show-report.png" alt="Playwright HTML Report" %}
 
-* The example interacts with a web app running at [https://demo.playwright.dev/svgomg](https://demo.playwright.dev/svgomg)
-* Interacts with the web page, uploads and downloads a file, using all 3 browsers, in parallel, in 18 seconds
-* Had to add `playwright-report` and `test-results` to my `.gitignore`
+The example test uses a web app running at [https://demo.playwright.dev/svgomg](https://demo.playwright.dev/svgomg). It interacts with the web page, uploads and downloads a file, using all 3 browsers, in parallel, in 18 seconds.
 
-* You can run Playwright with a UI to develop and debug your tests
+You can also run Playwright with a UI to develop and debug your tests. There's a timeline, snapshots for each action, the corresponding test source code, logs, errors, network activity and more. 
 
 {% include candid-image.html src="/assets/images/frontend/playwright-ui.png" alt="Playwright Test UI" %}
 
-* There's a timeline, snapshots for each action, the corresponding test source code, logs, errors, network activity and more
-* There's also a [VS Code extension](https://playwright.dev/docs/getting-started-vscode) which includes most of the functionality of the Playwright UI integrated into the VS Code test tab. Test failures are reported in the source code editor window, complete with callstack. You can also live debug a test.
+There's also a [VS Code extension](https://playwright.dev/docs/getting-started-vscode) which includes most of the functionality of the Playwright UI integrated into the VS Code test tab. Test failures are reported in the source code editor window, complete with callstack. You can also live debug a test.
 
 # Writing Tests
 
-* [Playwright tests](https://playwright.dev/docs/writing-tests) perform actions and assert that the resulting state matches expectations
-* Playwright automatically waits for actions to complete before checking assertions
-* Tests almost always start with navigating to a specific URL
+[Playwright tests](https://playwright.dev/docs/writing-tests) perform actions and assert that the resulting state matches expectations. Playwright automatically waits for actions to complete before checking assertions. 
+
+Tests start by navigating to a specific URL.
 
 ```ts
 await page.goto('http://localhost:5173/');
 ```
 
-* You'll then need to interact with elements on the page. You first need to *locate* the element, then perform an action on it.
+You'll then need to interact with elements on the page. You first need to *locate* the element, then perform an action on it.
 
 ```ts
 await page.getByRole('link', { name: 'Get started' }).click();
@@ -132,43 +121,44 @@ await page.getByRole('link', { name: 'Get started' }).click();
 
 # Locators
 
-* There are lots of types of [locator](https://playwright.dev/docs/locators), the documentation lists them in order of preference, with [`getByRole`](https://playwright.dev/docs/api/class-page#page-get-by-role) the most preferred. This locates an element by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). 
-* Playwright includes a handy [codegen](https://playwright.dev/docs/codegen-intro#running-codegen) utility if, like me, you're unsure of the best locator to use for an element
-* I fired up my spreadsheet sample app and ran `npx playwright codegen http:/localhost:5173`
+There are lots of types of [locator](https://playwright.dev/docs/locators). The documentation lists them in order of preference, with [`getByRole`](https://playwright.dev/docs/api/class-page#page-get-by-role) the most preferred. This locates an element by its [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+Playwright includes a handy [codegen](https://playwright.dev/docs/codegen-intro#running-codegen) utility if, like me, you're unsure of the best locator to use for an element. I fired up my spreadsheet sample app and ran `npx playwright codegen http:/localhost:5173`.
 
 {% include candid-image.html src="/assets/images/frontend/playwright-codegen.png" alt="Playwright Codegen" %}
 
-* Codegen adds a toolbar and floating palette to your test app
-* You can hover over elements in the page and see a suggested locator or record an interactive session and generate actions that you can copy into your test
-* It immediately became clear that most of the elements on my page don't have good locators
-* Which also implies that they're not very accessible
-* The input fields are easy to sort out. I've noticed some warnings in Chrome developer tools that I need either a name or id for autofill to work
-* I don't like adding ids to elements within components as ids need to be global on a page. The app should decide.
+Codegen adds a toolbar and floating palette to the app under test. You can hover over elements in the page and see a suggested locator or record an interactive session and generate actions that you can copy into your test.
+
+It immediately became clear that most of the elements on my page don't have good locators. Which also implies that they're not very accessible. 
+
+The input fields should be easy to sort out. I've noticed some warnings in Chrome developer tools that I need either a name or id for autofill to work. I don't like adding ids to elements within components as ids need to be unique for the entire page. The app should decide what ids, if any, are used. So, names it is.
 
 # Accessible Name
 
-* Names will work nicely and allow a `getByRole` locator
-* Spreadsheet cells in grid and headers are more tricky
-* Can I give them all names using Row, Column and Cell references?
-* No - divs can't have names, only active UI elements
+I gave my input box a name of "name" as it displays the name of a row, column or cell. That's what Google Sheets calls it too. I tried using `getByRole('textbox', { name: 'name'})` as a locator but it didn't match anything. 
 
-* Gave my input box a name of "name" (it displays the name of a row, column or cell). That's what Google Sheets calls it too.
-* `getByRole('textbox', { name: 'name'})` doesn't work
-* Turns out the [accessible name](https://accessibilityinsights.io/info-examples/web/input-button-name/) for an input doesn't come from the name attribute
-* `title` didn't work either. I had to use `aria-label` to get it to work. 
-* Can lookup by title directly using `getByTitle` so went with that. Accessibility is a whole topic on its own so happy to leave for another time.
+It turns out that the [accessible name](https://accessibilityinsights.io/info-examples/web/input-button-name/) for an input doesn't come from the `name` attribute. There's a list of places where accessibility APIs look, including the `title` attribute. Which didn't work either. The only thing that worked for me was the `aria-label` attribute.
+
+I can lookup an element by title directly using the `getByTitle` locator, so I went with that. Accessibility is a whole topic on its own, so happy to leave it for another time. Setting a title gives my text box a handy tooltip too. I left the `name` attribute in place to shut up the Chrome warnings. 
 
 # Accessing Rows, Columns and Cells
 
-* In the end I realized that locating specific elements isn't that useful. I can locate the header cell for row 5000 but what can I do with it? Check that the text it contains is "5000"? Testing at this level should be about events and layout, things I can't do at unit test level.
-* Think about the bugs that motivated use of Playwright. Use the "Scroll To" input field to select row 5000 and find the grid has jumped to 8211.
-* Test is to put "5000" into the input field, press enter and then check that the selected row in the row header contains "5000".
-* Need to locate elements by semantic class (row, column, cell, focus, selection) and layout
-* Despite being at the bottom of the priority list in the Playwright documentation, CSS locators seem like the best fit
-* Playwright recommends prioritizing user-visible locators because CSS is an implementation detail that could break when the page changes
-* In my case, CSS classes are part of the [contract between component and app]({% link _posts/2024-08-26-css-react-components.md %}). They're semantically meaningful, describing the visual state of the component.
-* CSS class based selectors can be easily combined with [layout based queries](https://playwright.dev/docs/other-locators#css-matching-elements-based-on-layout) (the cell to the right of the row header containing "5000") and [DOM structure based queries](https://playwright.dev/docs/other-locators#n-th-element-locator) (the first row in the row header)
-* The only problem is that my sample app currently uses CSS Modules so CSS class names are dynamic. Fortunately, my approach to CSS means that the app is in control and it's easy to switch to fixed class names.
+Spreadsheet cells in the grid and headers are more tricky. I don't really want to add a title to each cell. It doesn't add any value to the app. 
+
+In the end I realized that locating specific cells isn't that useful. I can locate the header cell for row 5000 but what can I do with it? Check that the text it contains is "5000"? I can do that in a unit test. Testing at this level of the pyramid should be about browser events and layout, things I can't do at unit test level.
+
+I thought about the [bugs]({% link _posts/2024-11-25-react-spreadsheet-decoupled-rendering.md %}) that motivated use of Playwright. I used the "Scroll To" input field to select row 5000 and found that the grid jumped to row 8211 instead. Let's write a test case that confirms the problem is fixed.
+
+The test needs to put "5000" into the input field, press enter and then check that the selected row in the row header contains "5000". I need to be able to locate elements by their semantic class (row, column, cell, focus, selection, etc.) and how they're place in the grid.
+
+
+Despite being at the bottom of the priority list in the Playwright documentation, CSS locators seem like the best fit. Playwright recommends prioritizing user-visible locators because CSS is an implementation detail that could break when the app is updated. 
+
+In my case, CSS classes are part of the [contract between component and app]({% link _posts/2024-08-26-css-react-components.md %}). They're semantically meaningful, describing the visual state of the component.
+
+CSS class based selectors can be easily combined with [layout based queries](https://playwright.dev/docs/other-locators#css-matching-elements-based-on-layout) (e.g. the cell to the right of the row header containing "5000") and [DOM structure based queries](https://playwright.dev/docs/other-locators#n-th-element-locator) (e.g. the first row in the row header).
+
+The only problem is that my sample app currently uses CSS Modules so CSS class names are dynamic. Fortunately, my approach to CSS means that the app is in control and it's easy to switch to fixed class names.
 
 # First Test
 
