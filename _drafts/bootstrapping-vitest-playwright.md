@@ -264,6 +264,9 @@ added 1 package, and audited 1083 packages in 3s
 * Hacked together something less specific to try and get runnable test
 * Need to manually code retries waiting for browser to complete operations
 * Manual mentions an `expect.element` API that avoids need to write explicit `poll` but it doesn't appear to exist
+* Manual says that "`expect.element` is a shorthand for `expect.poll(() => element)`"
+* Made no sense to me, there's no `element` defined either
+* In desperation, I came up with the nonsense below, which a few minutes of reflection would have told me can't possibly work.
 
 ```tsx
 test('Scroll to 5000', async ({}) => {
@@ -286,13 +289,17 @@ test('Scroll to 5000', async ({}) => {
 ```
 
 * Querying for row before the one I jumped to as "5000" appears in both `name` input box and row header
+* VS Code shows no errors so let's go.
 * By default pops up Chromium browser while the test is running and then displays report
 * Test fails with `Error: Matcher did not succeed in 1000ms`
 
 {% include candid-image.html src="/assets/images/frontend/vitest-browser-mode-error.png" alt="Vitest Browser Mode Error" %}
 
-* Report includes a screenshot of the UI which shows the test succeeded. Obviously I've written the assertion incorrectly
+* Report includes a screenshot of the UI which shows the test succeeded. Obviously I've written the assertion incorrectly.
 * Tried to debug using VS Code extension but get an error `Failed to fetch dynamically imported module`
+
+{% include candid-image.html src="/assets/images/frontend/vitest-browser-vs-code-error.png" alt="VS Code Error running Vitest Browser Mode test" %}
+
 * There's a [known issue](https://github.com/vitest-dev/vitest/issues/5477) about this error in a variety of different contexts
 * There's a more detailed error message in the console
 
@@ -302,7 +309,64 @@ Caused by: Error: expect(received).toHaveTextContent()
 received value must be a Node.
 ```
 
-* Using poll wrong - should be `await expect.poll(() => row.element()).toHaveTextContent('4999');
-* Docs are very misleading
-* There is an `expect.element` but VS Code won't see it unless you add `"@vitest/browser/providers/playwright` to your `tsconfig.json`
-* Test runs and passes with three different ways to handle the retry
+* Time for those few minutes of reflection and some digging around in the Vitest source code
+* Vitest browser mode combines a [subset](https://vitest.dev/guide/browser/locators.html) of the Playwright `locator` API with Testing Library's `jest-dom` [assertions](https://vitest.dev/guide/browser/assertion-api.html) and a [subset](https://vitest.dev/guide/browser/interactivity-api.html) of Testing Library's `userEvent` API.
+* You need to be aware of the joins. In particular you need to call the `element()` method on a locator to get an `HTMLElement` that you can pass to the assertion.
+* The Vitest manual should have said that `expect.element(locator)` is equivalent to `expect.poll(() => locator.element())`
+* Once I changed the final line of my test to `await expect.poll(() => row.element()).toHaveTextContent('4999')`, it worked
+* What about the missing `expect.element`? Buried in an [unrelated section](https://vitest.dev/guide/browser/commands.html#custom-playwright-commands) of the documentation is a tip to add `"@vitest/browser/providers/playwright` to the `compilerOptions.types` section of your `tsconfig.json`. This is presented as a nice to have to get autocompletion. 
+* It's actually vital that you do this if you're using TypeScript. Once done, VS Code sees the `expect.element` extension and I can use the more friendly looking `expect.element(row).toHaveTextContent('4999')`
+
+## Coverage
+
+* Another reason for investigating Vitest browser mode was the promise of unified coverage metrics across unit tests and browser integration tests. 
+* Amazingly to me, it worked first time.
+* Detailed coverage report looks exactly as I expected
+
+```
+ RUN  v2.1.8 /Users/tim/GitHub/infinisheet
+      Coverage enabled with istanbul
+
+ ✓ |@candidstartup/react-spreadsheet| src/RowColRef.test.ts (5)
+ ✓ |@candidstartup/react-spreadsheet| src/VirtualSpreadsheet.test.tsx (5)
+ ✓ |chromium| packages/react-spreadsheet/src/VirtualSpreadsheet.browser-test.tsx (1)
+ ✓ |@candidstartup/react-virtual-scroll| src/AutoSizer.test.tsx (1)
+ ✓ |@candidstartup/react-virtual-scroll| src/DisplayGrid.test.tsx (1)
+ ✓ |@candidstartup/react-virtual-scroll| src/DisplayList.test.tsx (8)
+ ✓ |@candidstartup/react-virtual-scroll| src/VirtualCommon.test.ts (4)
+ ✓ |@candidstartup/react-virtual-scroll| src/VirtualGrid.test.tsx (6) 340ms
+ ✓ |@candidstartup/react-virtual-scroll| src/VirtualList.test.tsx (12) 307ms
+ ✓ |@candidstartup/react-virtual-scroll| src/VirtualScroll.test.tsx (3)
+ ✓ |@candidstartup/react-virtual-scroll| src/VirtualScrollProxy.test.ts (1)
+ ✓ |@candidstartup/react-virtual-scroll| src/useEventListener.test.ts (2)
+ ✓ |@candidstartup/react-virtual-scroll| src/useIsScrolling.test.ts (4)
+ ✓ |@candidstartup/react-virtual-scroll| src/useVirtualScroll.test.ts (4)
+ ✓ |@candidstartup/react-virtual-scroll| src/useEventListener.ts (1)
+
+ Test Files  15 passed (15)
+      Tests  58 passed (58)
+```
+
+## Conclusion
+
+* Coverage works but there's too much about Vitest browser mode that doesn't
+* Being unable to debug tests is a deal-breaker for me
+* Lack of CSS locators makes it significantly more difficult to write tests than using Playwright directly
+* It might be possible to write a [custom command plugin](https://vitest.dev/guide/browser/commands.html#custom-commands) that [gives access](https://vitest.dev/guide/browser/commands.html#custom-playwright-commands) to Playwright's native CSS locator API. Beyond the scope of what I'm prepared to do.
+* Having to be aware of the joins adds friction. Playwright has it's own assertions designed for use with it's locators. Retry and conversion to element are handled behind the scenes.
+* Developer experience with Playwright is so much better that I would find myself writing tests in Playwright then transferring them to Vitest
+* Do I need Vitest browser mode at all?
+* Unified coverage is nice but it's really cheating. Testing pyramid tells us that we should do as much as we can at the unit test level. I absolutely can, and should, test all the component logic using unit tests. If I get it right, I get 100% coverage.
+* Component-browser integration testing is there to check that the actual interactions between component and browser are the same as we expected with our unit test mocks.
+
+# Playwright Component testing
+
+* Can I do component-browser integration testing using Playwright? In a way I already am. Playwright end-to-end testing of my spreadsheet sample app is really just testing `VirtualSpreadsheet` component integration with the browser. The sample is a simple wrapper around the component with just enough of a test fixture to get it running.
+* Playwright also has an [experimental component testing feature](https://playwright.dev/docs/test-components).
+* Your test starts with mounting a component (using the `mount` API) which you then interact with. This is equivalent to the `render` API in Vitest.
+* You need to add quite a lot of supporting scaffolding to your project
+  * A `playwright/index.html` file uses to render component during testing
+  * A `playwright/index.ts` file which sets up the environment for testing, for example including stylesheets and injecting code into the page
+  * [Component wrappers](https://playwright.dev/docs/test-components#test-stories) which initialize your component with any complex props needed. The component runs in the browser so your test code can only pass plain JavaScript objects and primitive types to it. Instead of mounting the component directly, you mount a wrapper which takes care of any complex configuration.
+* Behind the scenes Playwright uses Vite to compile a bundle containing the component and scaffolding, then serves it using the Vite development server
+* Seems like a really convoluted way of recreating the sample app I already have and would still need
