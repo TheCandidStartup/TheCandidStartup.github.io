@@ -3,7 +3,21 @@ title: Bootstrapping Playwright
 tags: frontend
 ---
 
-wise words
+I'm ready to add browser based automated testing to my [InfiniSheet]({% link _topics/infinisheet.md %}) project. Before we get into the details of getting my chosen tool up and running, let's have a quick reminder of [why we need it]({% link _posts/2024-12-02-react-virtual-scroll-state-harmful.md %}).
+
+# Testing Pyramid
+
+The concept of the [test pyramid](https://martinfowler.com/articles/practical-test-pyramid.html) has been around for over a decade now. It's a useful visual metaphor that tells you how to divide tests into buckets with different granularity, while also giving you an idea of how many tests you should have in each bucket.
+
+{% include candid-image.html src="/assets/images/frontend/testing-pyramid.svg" alt="Testing Pyramid" %}
+
+The base of the pyramid is made up of unit tests. These are the most granular, testing the smallest units of code in isolation. The small code size and isolation makes unit tests fast and easy to understand. You should cover as much testing as possible with unit tests. Front end unit testing typically uses a mock DOM implementation, such as jsdom, to increase isolation. 
+
+The next level up in my pyramid is component tests. A component is a meaningful unit of code with a strong abstraction layer and API. In the front end world, a React component would be a great example. You'll use many of the same techniques as unit testing but with more of a focus on the public API. Component testing typically covers more code, particularly when testing higher level components that are built from simpler components. 
+
+Integration tests look at the integration of components with external systems that are typically mocked at the lower levels of the pyramid. A database is the classic example of an external system. For front end components, integration testing will focus on integration with the browser, perhaps running the same tests with each of the major browsers.
+
+Finally, the top level of the pyramid is end to end testing. You might be testing a full stack application, automating a web app which interacts with a backend service that in turn stores data in a database. Tests at this level involve the most integration, have the most dependencies and are the slowest to setup and run.
 
 # Playwright
 
@@ -20,7 +34,7 @@ wise words
 * Integrated test runner and UI
 * Lots more [nice features](https://playwright.dev/)
 
-# Playwright Installation
+# Installation
 
 * [Installation documentation](https://playwright.dev/docs/intro) is minimal, suggesting you simply run `npm init playwright@latest`
 * This installs everything, populates a project with `package.json` and a config file, then creates some example tests
@@ -70,6 +84,8 @@ Downloading FFMPEG playwright build v1010 from https://playwright.azureedge.net/
 FFMPEG playwright build v1010 downloaded to /Users/tim/Library/Caches/ms-playwright/ffmpeg-1010
 ```
 
+# Configuration
+
 * Added `playwright.config.ts` and `tests/example.spec.ts` to `spreadsheet-sample` copied from a [Playwright Example](https://github.com/microsoft/playwright/tree/main/examples/svgomg)
 
 ```
@@ -114,7 +130,7 @@ await page.goto('http://localhost:5173/');
 await page.getByRole('link', { name: 'Get started' }).click();
 ```
 
-## Locators
+# Locators
 
 * There are lots of types of [locator](https://playwright.dev/docs/locators), the documentation lists them in order of preference, with [`getByRole`](https://playwright.dev/docs/api/class-page#page-get-by-role) the most preferred. This locates an element by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). 
 * Playwright includes a handy [codegen](https://playwright.dev/docs/codegen-intro#running-codegen) utility if, like me, you're unsure of the best locator to use for an element
@@ -129,7 +145,7 @@ await page.getByRole('link', { name: 'Get started' }).click();
 * The input fields are easy to sort out. I've noticed some warnings in Chrome developer tools that I need either a name or id for autofill to work
 * I don't like adding ids to elements within components as ids need to be global on a page. The app should decide.
 
-## Accessible Name
+# Accessible Name
 
 * Names will work nicely and allow a `getByRole` locator
 * Spreadsheet cells in grid and headers are more tricky
@@ -142,7 +158,7 @@ await page.getByRole('link', { name: 'Get started' }).click();
 * `title` didn't work either. I had to use `aria-label` to get it to work. 
 * Can lookup by title directly using `getByTitle` so went with that. Accessibility is a whole topic on its own so happy to leave for another time.
 
-## Accessing Rows, Columns and Cells
+# Accessing Rows, Columns and Cells
 
 * In the end I realized that locating specific elements isn't that useful. I can locate the header cell for row 5000 but what can I do with it? Check that the text it contains is "5000"? Testing at this level should be about events and layout, things I can't do at unit test level.
 * Think about the bugs that motivated use of Playwright. Use the "Scroll To" input field to select row 5000 and find the grid has jumped to 8211.
@@ -154,7 +170,7 @@ await page.getByRole('link', { name: 'Get started' }).click();
 * CSS class based selectors can be easily combined with [layout based queries](https://playwright.dev/docs/other-locators#css-matching-elements-based-on-layout) (the cell to the right of the row header containing "5000") and [DOM structure based queries](https://playwright.dev/docs/other-locators#n-th-element-locator) (the first row in the row header)
 * The only problem is that my sample app currently uses CSS Modules so CSS class names are dynamic. Fortunately, my approach to CSS means that the app is in control and it's easy to switch to fixed class names.
 
-## First Test
+# First Test
 
 ```ts
 test.beforeEach(async ({ page }) => {
@@ -172,7 +188,7 @@ test('Scroll to 5000', async ({ page }) => {
 });
 ```
 
-## Developer Experience
+# Developer Experience
 
 * Codegen is useful to record something that works as a starting point that you then refine
 * VS Code extension is fantastic
@@ -198,3 +214,4 @@ test('Scroll to 5000', async ({ page }) => {
 * VS Code extension works the same way, except that it leaves server running until it exits
 * If you need to force quit a dev server then `npx kill-port 5173` will do the trick
 
+# Next Time
