@@ -151,7 +151,6 @@ I thought about the [bugs]({% link _posts/2024-11-25-react-spreadsheet-decoupled
 
 The test needs to put "5000" into the input field, press enter and then check that the selected row in the row header contains "5000". I need to be able to locate elements by their semantic class (row, column, cell, focus, selection, etc.) and how they're place in the grid.
 
-
 Despite being at the bottom of the priority list in the Playwright documentation, CSS locators seem like the best fit. Playwright recommends prioritizing user-visible locators because CSS is an implementation detail that could break when the app is updated. 
 
 In my case, CSS classes are part of the [contract between component and app]({% link _posts/2024-08-26-css-react-components.md %}). They're semantically meaningful, describing the visual state of the component.
@@ -162,12 +161,14 @@ The only problem is that my sample app currently uses CSS Modules so CSS class n
 
 # First Test
 
+After that long preamble, here's what my first test looks like.
+
 ```ts
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('Scroll to 5000', async ({ page }) => {
+test('Scroll to row 5000', async ({ page }) => {
   const name = page.getByTitle('Name');
   await name.click();
   await name.fill('5000');
@@ -178,17 +179,17 @@ test('Scroll to 5000', async ({ page }) => {
 });
 ```
 
+I'm happy. It's concise and very readable. 
+
 # Developer Experience
 
-* Codegen is useful to record something that works as a starting point that you then refine
-* VS Code extension is fantastic
-* Run test direct from VS Code editor with option to pop up browser to see what's happening
-* As you edit locator, corresponding element is highlighted in browser
-* Most of the codegen tools are also available from the Playwright tab in VS Code
-* `webServer` option in playwright config file lets you specify how to start local dev server, e.g. `npm run dev`
-* Then `npx playwright test` on command line or during CI will start server, run tests, shutdown server
-* Setting the `reuseExistingServer` option means Playwright will use any existing server running on the specified port rather than erroring out
-* Playwright tests will run against a dev server you started manually, or use their own server
+Codegen is a great tool to help you get started. Record an interaction with your app. Copy the generated test code and paste it into your test as a starting point that you then refine. Get recommendations for locators to use, or try out your own ideas and see the corresponding elements highlighted.
+
+The VS Code extension is even better. You can record interactions directly into your source code. Run your test direct from the VS Code editor with the option to pop up a browser to see what's happening. As you edit locators, the corresponding elements are highlighted in the browser.
+
+The `webServer` option in the Playwright config file lets you specify how to start a local dev server. In my case it's `npm run dev`. I'm [using Vite]({% link _posts/2023-10-23-bootstrapping-vite.md %}), which defaults to port 5173 for dev.
+
+Running `npx playwright test` on the command line will start the server, run the tests and shut it down when done. 
 
 ```ts
 {
@@ -200,8 +201,36 @@ test('Scroll to 5000', async ({ page }) => {
 }
 ```
 
-* You can use `process.env.CI` to check for a CI environment and use more conservative settings
-* VS Code extension works the same way, except that it leaves server running until it exits
-* If you need to force quit a dev server then `npx kill-port 5173` will do the trick
+Setting the `reuseExistingServer` option means Playwright will use any existing server running on the specified port rather than trying and failing to start a new one. This is great for local development. If you have a dev server you started manually, Playwright will use that. If you haven't, no worries, it'll run one for you. Note the use of `process.env.CI` to use more conservative settings in a CI environment.
+
+The VS Code extension works the same way. However, it leaves any server it started running until VS Code exits. If you need to force quit a dev server, then `npx kill-port 5173` will do the trick.
+
+# GitHub Actions
+
+Playwright is a keeper, so I want to finish by including Playwright test runs in my [GitHub Actions Build CI]({% link _posts/2024-06-03-bootstrapping-github-actions.md %}) workflow. 
+
+There's a [dedicated section](https://playwright.dev/docs/ci-intro#setting-up-github-actions) in the manual for setting this up. If you have an existing workflow, you'll need to add two extra lines. The all important `- run: npx playwright install --with-deps` after your existing `npm ci`, plus whatever you use to run playwright for each project.
+
+For my monorepo, it's `npx lerna run playwright` where each project with Playwright tests has the script `"playwright": "npx playwright test"` in it's `package.json`.
+
+You can also tweak your playwright configuration to distinguish between CI and your local dev environment. I'm using the recommended CI specific settings.
+
+```ts
+export default defineConfig({
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env.CI,
+
+  /* Retry on CI only */
+  retries: process.env.CI ? 2 : 0,
+
+  /* Opt out of parallel tests on CI. */
+  workers: process.env.CI ? 1 : undefined,
+
+  /* Reporter to use. Concise 'dot' for CI,  full 'list' when running locally */
+  reporter: process.env.CI ? 'dot' : 'list'
+})
+```
 
 # Next Time
+
+We have the extremes of the testing pyramid covered. Vitest for unit testing and Playwright for end to end testing. Next time, we'll look at solutions for the middle of the testing pyramid. 
