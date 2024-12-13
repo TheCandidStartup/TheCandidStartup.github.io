@@ -25,9 +25,9 @@ I've had my eye on [Playwright](https://playwright.dev/) for a while. It provide
 
 The main difference is that rather than using the installed web browser, Playwright [installs its own browser binaries](https://playwright.dev/docs/browsers) built against the upstream open source toolkits used by the main browsers. These include Chromium (Chrome and Edge), Webkit (Safari) and Firefox. This approach gives Playwright more control over its environment, applying patches where needed to support tighter integration.
 
-Playwright tests run entirely out of process, driving each browser through an optimized web socket connection.  it can run the same tests against multiple different browsers in parallel. Playwright works with the multiple processes used by modern browsers. For example, you can write tests that interact with multiple browser tabs and multiple origins. 
+Playwright tests run entirely out of process, driving each browser through an optimized web socket connection. It can run the same tests against multiple different browsers in parallel. Playwright works with the multiple processes used by modern browsers. For example, you can write tests that interact with multiple browser tabs and multiple origins. 
 
-There's great support for TypeScript out of the box. Like Vite, you can write your tests in TypeScript and Playwright deals with transpilation transparently on demand. Your tests can generate native events indistinguishable from a real user, there's an integrated test runner and UI, and many more [features](https://playwright.dev/).
+There's great support for TypeScript out of the box. Like [Vite]({% link _posts/2023-10-23-bootstrapping-vite.md %}), you can write your tests in TypeScript and Playwright deals with transpilation transparently on demand. Your tests can generate native events indistinguishable from a real user, there's an integrated test runner and UI, and [much more](https://playwright.dev/).
 
 # Installation
 
@@ -97,7 +97,7 @@ Running `npx playwright show-report` opened up an html report in my browser. Out
 
 The example test uses a web app running at [https://demo.playwright.dev/svgomg](https://demo.playwright.dev/svgomg). It interacts with the web page, uploads and downloads a file, using all 3 browsers, in parallel, in 18 seconds.
 
-You can also run Playwright with a UI to develop and debug your tests. There's a timeline, snapshots for each action, the corresponding test source code, logs, errors, network activity and more. 
+You can also run Playwright with a UI to develop and debug your tests. There's a timeline, screenshots after each action, the corresponding test source code, logs, errors, network activity and more. 
 
 {% include candid-image.html src="/assets/images/frontend/playwright-ui.png" alt="Playwright Test UI" %}
 
@@ -131,11 +131,11 @@ Codegen adds a toolbar and floating palette to the app under test. You can hover
 
 It immediately became clear that most of the elements on my page don't have good locators. Which also implies that they're not very accessible. 
 
-The input fields should be easy to sort out. I've noticed some warnings in Chrome developer tools that I need either a name or id for autofill to work. I don't like adding ids to elements within components as ids need to be unique for the entire page. The app should decide what ids, if any, are used. So, names it is.
+The input fields should be easy to sort out. I've noticed some warnings in Chrome developer tools that I need either a `name` or `id` for autofill to work. I don't like adding ids to elements within components as ids need to be unique for the entire page. The app should decide what ids, if any, are used. So, names it is.
 
 # Accessible Name
 
-I gave my input box a name of "name" as it displays the name of a row, column or cell. That's what Google Sheets calls it too. I tried using `getByRole('textbox', { name: 'name'})` as a locator but it didn't match anything. 
+I gave my input box a name of "name" as it displays the name of a row, column or cell. I tried using `getByRole('textbox', { name: 'name'})` as a locator but it didn't match anything. 
 
 It turns out that the [accessible name](https://accessibilityinsights.io/info-examples/web/input-button-name/) for an input doesn't come from the `name` attribute. There's a list of places where accessibility APIs look, including the `title` attribute. Which didn't work either. The only thing that worked for me was the `aria-label` attribute.
 
@@ -149,15 +149,15 @@ In the end I realized that locating specific cells isn't that useful. I can loca
 
 I thought about the [bugs]({% link _posts/2024-11-25-react-spreadsheet-decoupled-rendering.md %}) that motivated use of Playwright. I used the "Scroll To" input field to select row 5000 and found that the grid jumped to row 8211 instead. Let's write a test case that confirms the problem is fixed.
 
-The test needs to put "5000" into the input field, press enter and then check that the selected row in the row header contains "5000". I need to be able to locate elements by their semantic class (row, column, cell, focus, selection, etc.) and how they're place in the grid.
+The test needs to put "5000" into the input field, press enter and then check that the selected row in the row header contains "5000". I need to be able to locate elements by their semantic class (row, column, cell, focus, selection, etc.) and how they're placed in the grid.
 
 Despite being at the bottom of the priority list in the Playwright documentation, CSS locators seem like the best fit. Playwright recommends prioritizing user-visible locators because CSS is an implementation detail that could break when the app is updated. 
 
 In my case, CSS classes are part of the [contract between component and app]({% link _posts/2024-08-26-css-react-components.md %}). They're semantically meaningful, describing the visual state of the component.
 
-CSS class based selectors can be easily combined with [layout based queries](https://playwright.dev/docs/other-locators#css-matching-elements-based-on-layout) (e.g. the cell to the right of the row header containing "5000") and [DOM structure based queries](https://playwright.dev/docs/other-locators#n-th-element-locator) (e.g. the first row in the row header).
+CSS class based selectors can be easily combined with [layout based queries](https://playwright.dev/docs/other-locators#css-matching-elements-based-on-layout) (e.g. the cell to the right of the focus cell) and [DOM structure based queries](https://playwright.dev/docs/other-locators#n-th-element-locator) (e.g. the first row in the row header).
 
-The only problem is that my sample app currently uses CSS Modules so CSS class names are dynamic. Fortunately, my approach to CSS means that the app is in control and it's easy to switch to fixed class names.
+The only problem is that my sample app currently uses CSS Modules which makes CSS class names dynamic. Fortunately, my approach to CSS means that the app is in control and it's easy to switch to fixed class names.
 
 # First Test
 
