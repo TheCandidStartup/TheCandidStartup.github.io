@@ -246,7 +246,53 @@ wise words
 
 ## S3 Tables
 
-## S3 Metadata
+* [YouTube](https://youtu.be/1U7yX4HTLCI?si=_s4ClmqAQQlt4pMP): Store tabular data at scale with Amazon S3 Tables
+* Customers already use S3 as a tabular data store - Exabytes of Parquet objects in S3 today
+* Organized in same way as files and folders
+* Evolving schemas, maintaining consistency becomes complex
+* New open table formats have arrived, including Apache Iceberg
+* Iceberg adds an additional metadata file that enables higher level workflows
+* Schema evolution, versioning of data, snapshots, multiple applications reading/writing common data set, SQL querying
+* Challenges with use of Iceberg in standard S3
+  * Additional traffic to S3
+  * Hard to enforce table level security
+  * Operational burden of optimizing storage cost (compacting, removing redundant snapshots)
+* S3 Tables is fully managed Iceberg tables
+  * New S3 table bucket type
+  * Tables are first class AWS resource (each table has an ARN, can apply policies to it)
+  * Dedicated tables API endpoint (CRUD on tables, update and commit changes)
+  * Maintenance policies for table management - compaction configuration, lifetime for snapshots
+  * Each table has its own S3 location that applications can use to read/write data and metadata files
+  * Deletes and Overwrites are blocked - use the table APIs and maintenance policies
+* Optimized performance
+  * 10x transactions per second, 3x query performance
+  * Using standard S3 APIs to read/write but S3 is aware that this is a table bucket and tunes for that
+  * Tweaks to S3 namespace to lay out data more optimally - optimized for iceberg key naming
+  * Capacity provisioned for higher throughput than general purpose bucket
+  * [Iceberg optimizations](https://aws.amazon.com/blogs/storage/how-amazon-ads-uses-iceberg-optimizations-to-accelerate-their-spark-workload-on-amazon-s3/) on client side tuned for S3
+* Automatic Compaction
+  * Compaction consolidates many small data files into larger ones
+  * Previously customers would have to spin up their own compute to run the compaction
+  * S3 tables [runs compaction](https://aws.amazon.com/blogs/storage/how-amazon-s3-tables-use-compaction-to-improve-query-performance-by-up-to-3-times/) automatically in the background. The 3x improvement is compared against unmanaged tables that have never been compacted.
+* Security Controls
+  * Previously had to apply policies to underlying data and metadata objects - had to understand structure
+  * Now just apply policy to the overall table
+  * Can create namespaces to group tables and apply policy per namespace
+* Cost Optimization
+  * Each commit adds a new set of data files as a snapshot
+  * Previously needed to run procedures to expire old snapshots, remove unreferenced files
+  * Now automated
+* Usage
+  * S3 Tables is a storage primitive
+  * To query/load data use AWS analytics tools like EMR, Athena, Redshift, Data Firehouse via AWS Glue
+  * S3 Tables automatically registered with AWS Glue data catalog
+  * Fine grained access control for specific rows/columns via AWS Lake Formation
+  * S3 tables catalog for Iceberg is a plugin that allows third party Iceberg compatible applications (e.g. Spark) to discover and access your data
+* Use Cases
+  * Real-time analytics: Data Firehose -> S3 Tables -> Quicksight
+  * S3 Metadata Tables
+
+## S3 Metadata Tables
 
 * [YouTube](https://youtu.be/hB0AxWKh4wA?si=zj8o9aeMZ-74eLGt): Unlock the power of your data with Amazon S3 Metadata
 * Customer metadata stores have to live outside of storage - difficult to build, operate, scale, keep consistent
@@ -266,3 +312,62 @@ wise words
 * Distinguished Engineers: Marc Brooker, Colm MacCarthaigh, Becky Weiss, David Yanacek
 * Authors of [Builder's Library](https://aws.amazon.com/builders-library) articles
 * Level 3 or 4
+* [Reinvent Planner Filter](https://reinvent-planner.cloud/sessions?catalog.view=cards&speakers=Becky+Weiss%2CColm+MacCarthaigh%2CMarc+Brooker%2CDavid+Yanacek&level=300+%E2%80%93+Advanced%2C400+%E2%80%93+Expert)
+
+## Failing without flailing: Lessons we learned at AWS the hard way
+
+* [YouTube](https://youtu.be/c2ekr1Us51s?si=0q57kjtBTk4YsLRS)
+* Building on 5 things we wish everyone knew about resilience at scale from last year
+* Three more things
+* Persistent  connections
+  * Horizontal distributed system that scales up when it needs more capacity
+  * Front end service connecting to authentication service
+  * When an instance in authentication service fails, the frontend services switch over to the healthy instances
+  * Connection overhead is expensive so front end service will prefer to use persistent connections
+  * What happens when connection fails when destination authentication instance goes bad
+  * Connection can get stuck with some messages in indeterminate state. Usual pattern is that a watchdog process on frontend notices and restarts the stack
+  * As scale increases this becomes more and more of a problem
+  * Hypothesis: An application's resilience is, in part, proportional to how often its recovery workflows are executed
+  * Naive architecture with a fresh connection for every message is much more resilient ...
+  * Best middle ground is to regularly recreate connections. Have a maximum lifetime, for example a few minutes.
+  * Takeaways: Resilient system embrace and expect failure at all layers. The most resilient workflows are ones that happen all the time as part of normal operations. Connection management is a good indicator of how well a service team thinks about resilience.
+* Is it a problem or a deployment?
+  * load balancer -> app servers -> AWS storage backend
+  * What if app servers have state? e.g. cache
+  * When an app server is replaced, it takes a significant amount of time to ramp up and able to handle full share of load
+  * Long winded example from 10 years ago of how this caused problems for DNS within EC2, resolving DNS queries for other instances within VPC
+  * Fleet of DNS servers, each with significant amount of state
+  * Updates to DNS being propagated from DNS control plane to DNS hosts
+  * When new host spins up, needs todo a full sync of state which takes a long time
+  * If you graph time from EC2 launch to it being resolvable via DNS, it jumps up during a deployment then normalizes once state has propagated
+  * During deployment it looks just like a problem. You assume its just the deployment and will go back to normal ...
+  * Had a bad deploy which led to prolonged degradation because couldn't tell the difference, delayed rolling back
+  * Short term fix was focus on DNS host startup time - optimize to get it under the 30 seconds it then took to get an EC2 instance up and running
+  * Other techniques for stateful hosts: Download snapshots of state, control max size of state with cellular architecture, pre-warm cache, send host synthetic traffic to warm up connection pools
+* Measuring bottlenecks
+  * Example from VPC
+  * Control plane and data plane architecture
+  * Distribute state from control plane to data plane
+  * Uses append only queue which data plane reads from
+  * Also writes pre-computed state to reduce work needed by data plane
+  * Pre-computation process means that updates aren't independent any more. If two control plane instances are writing to the queue, the second one has to take account of what the first one wrote.
+  * Had to add a lock. Critical section is read existing state, compute new state, write to end of log. 
+  * As system scales up reach state where rate of arrival saturates the lock. Requests timing out because they couldn't acquire lock.
+  * Ran into this problem after update with new feature that slightly increased length of critical section.
+  * Wanted to add metrics to see how much headroom was left
+  * Sum up critical section time over a time window. Alarm at some point before the sum is the entire time window
+  * Little's law is generalized version of this: avg(concurrency) = avg(arrival-rate) * avg(latency)
+  * Right hand side for fixed time window is n * (sum(latency) / n) which is sum(latency)
+  * For a lock, max concurrency is 1. Little's law applies more generally. e.g. If you have pool of workers can use Little's law to predict how many workers you'll need, or how close your are to running out of headroom.
+  * Takeaway: Sum(latency) is a really easy metric to measure concurrency over time
+* Bonus topic: Cheap tricks for faster recovery
+  * If you log count of rarely seen errors, also log 0 if you haven't seen any errors in that logging interval. Makes it easy to see if whatever you've done has fixed the problem. Also means you can tell if system is in such a bad way that its stopped posting metrics at all.
+  * Graph by instance id makes it easy to see if you can mitigate problem immediately by killing problem instance
+  * Turn it off and on again. Assuming you restart regularly and have high confidence, first response to any problem is to restart, then figure out what the root cause is. 
+
+* Scaling reliably
+* Measuring bottlenecks
+
+## Thing big, build small: When to scale and when to simplify
+
+## Try again: The tools and techniques behind resilient systems
