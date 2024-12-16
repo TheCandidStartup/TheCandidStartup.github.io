@@ -15,7 +15,7 @@ The base of the pyramid is made up of unit tests. These are the most granular, t
 
 The next level up in my pyramid is component tests. A component is a meaningful unit of code with a strong abstraction layer and API. In the front end world, a React component would be a great example. You'll use many of the same techniques as unit testing but with more of a focus on the public API. Component testing typically covers more code, particularly when testing higher level components that are built from simpler components. 
 
-Integration tests look at the integration of components with external systems that are typically mocked at the lower levels of the pyramid. A database is the classic example of an external system. For front end components, integration testing will focus on integration with the browser, perhaps running the same tests with each of the major browsers.
+Integration tests look at the integration of components with external systems that are mocked at the lower levels of the pyramid. A database is the classic example of an external system. For front end components, integration testing will focus on integration with the browser, perhaps running the same tests with each of the major browsers.
 
 Finally, the top level of the pyramid is end to end testing. You might be testing a full stack application, automating a web app which interacts with a backend service that in turn stores data in a database. Tests at this level involve the most integration, have the most dependencies and are the slowest to setup and run.
 
@@ -189,8 +189,6 @@ The VS Code extension is even better. You can record interactions directly into 
 
 The `webServer` option in the Playwright config file lets you specify how to start a local dev server. In my case it's `npm run dev`. I'm [using Vite]({% link _posts/2023-10-23-bootstrapping-vite.md %}), which defaults to port 5173 for dev.
 
-Running `npx playwright test` on the command line will start the server, run the tests and shut it down when done. 
-
 ```ts
 {
   webServer: {
@@ -201,13 +199,15 @@ Running `npx playwright test` on the command line will start the server, run the
 }
 ```
 
+Running `npx playwright test` on the command line will start the server, run the tests and shut it down when done. 
+
 Setting the `reuseExistingServer` option means Playwright will use any existing server running on the specified port rather than trying and failing to start a new one. This is great for local development. If you have a dev server you started manually, Playwright will use that. If you haven't, no worries, it'll run one for you. Note the use of `process.env.CI` to use more conservative settings in a CI environment.
 
 The VS Code extension works the same way. However, it leaves any server it started running until VS Code exits. If you need to force quit a dev server, then `npx kill-port 5173` will do the trick.
 
 # GitHub Actions
 
-Playwright is a keeper, so I want to finish by including Playwright test runs in my [GitHub Actions Build CI]({% link _posts/2024-06-03-bootstrapping-github-actions.md %}) workflow. 
+Playwright is a keeper, so I want to finish by including Playwright test runs in my [GitHub Actions]({% link _posts/2024-06-03-bootstrapping-github-actions.md %}) Build CI workflow. 
 
 There's a [dedicated section](https://playwright.dev/docs/ci-intro#setting-up-github-actions) in the manual for setting this up. If you have an existing workflow, you'll need to add two extra lines. The all important `- run: npx playwright install --with-deps` after your existing `npm ci`, plus whatever you use to run playwright for each project.
 
