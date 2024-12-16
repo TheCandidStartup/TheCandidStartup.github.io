@@ -370,4 +370,135 @@ wise words
 
 ## Thing big, build small: When to scale and when to simplify
 
+* Approach to architecture for achieving right level of scale and complexity for whatever you're building
+* Making an existing system smaller and less complex is great if you can do it but not always possible
+* Smaller is more understandable, easier to make reliable and secure
+* Architecting for small
+  * Application architecture: Structure for efficiency, Monolith vs micro-services, common cloud architectures
+  * Organizational architecture: How to promote and reward economy, measure outcomes, align incentives, being data driven
+* Iterative Architecture
+  * Not just up front design in your ivory tower
+  * First take on architecture is usually wrong
+  * Need to decide what success looks like, measure constantly, adapt and iterate based on feedback
+  * Prototype, Test, Monitor, Improve, Repeat
+* Integrating Costs
+  * Understand costs as soon as possible
+  * Teams should know how much they are spending
+  * Per-unit costs analyzed weekly is a good standard (e.g. cost per request)
+  * Usually cost of developers is more significant - particularly opportunity cost
+  * Need a rigorous prioritization process. What cans can be kicked down the road.
+  * Example: Choosing a programming language. Evaluating Rust vs Go as a C replacement.
+    * Driver for decision was developer and opportunity cost. More chance of attracting Rust rock stars as first big company to go all in on Rust.
+  * Example: Monolith vs micro-services
+    * Do performance requirements demand tightly coupled code?
+    * What's the opportunity cost of having dev teams blocked on each other?
+    * How do we monitor and measure changes to those answers over time as system iterates?
+  * Example: We need to re-architect!
+    * Why? What cliff are we running off? How far away is it?
+    * How quickly can we measure improvements of next architecture?
+    * Can we put a monetary value on that?
+    * Not re-architecting for the sake of it
+* Common cloud patterns
+* High Availability
+  * Most common type of cloud workload
+  * Deploy to two or more AZs
+  * Best way to make more efficient is use more AZs
+  * Instead of 100% overhead to allow for AZ failure, get massive reduction
+* Best effort
+  * No redundancy or resilience
+  * OK to restart if there'a a failure
+  * Single AZ or multi-AZ without redundancy
+  * Non-latency sensitive, non-critical systems
+  * Common for machine learning training - not affordable to have extra redundancy
+  * Savings from most efficient hardware and network, optimizations in how you use AWS
+* Highly isolated systems
+  * Isolated, often single-tenant environment
+  * Highly-regulated and critical workloads with top-to-bottom change control and long testing cycle
+  * Trading exchanges, critical government systems
+  * Dedicated AWS local zones and outposts
+  * Cost management is about right-sizing
+  * Traditionally focused on 100% availability for 40 hour working week
+  * Moving from 40 hour to 24/7 can drive larger system efficiencies
+* Globally distributed
+  * Multi-region and edge applications
+  * Failover architectures can occur 3X or 4X footprint
+  * 2 AZs in primary region, 1-2 in failover region
+  * Active-Active is cheaper and best for end-user latency
+* Culture
+  * Open book finance and awareness of costs
+  * Avoid "not invented here"
+  * Celebrate wins
+
 ## Try again: The tools and techniques behind resilient systems
+
+* Marc Brooker
+* [YouTube](https://youtu.be/rvHd4Y76-fs?si=zFyGaA-_c6oh3xi6)
+
+* Rethinking retries
+  * Web client configured with timeout, max retries, exponential backoff and jitter
+  * Server where Latency is proportional to currency (A + B * concurrency)
+  * Baseline load comfortable for system + one second spike of overload
+  * If no retries configured client sees outage of 1-2 seconds where requests fail and then back to normal within twice length of spike
+  * Now try it with the 3 retries - client sees outage and system never recovers!
+  * Client retries cause 4X traffic ...
+  * This kind of thing is behind most large scale failures seen in the field. System gets in bad way and enters doom loop where more load is piled on.
+  * Two kinds of failures: Transient failures caused by individual component failures where retries help, system failures caused by load/correlated behavior/bugs/etc where retries are harmful.
+  * AWS uses adaptive retries (token bucket) to avoid these issues
+  * Each client has a token bucket for retries. Any time it does a retry it consumes a token from the bucket, any time a call succeeds it adds 0.01 tokens to the bucket
+  * Result is that for a stable set of clients load during an outage is capped at 101% of the usual load, compared to 400% for 3 retries case
+  * Eliminates whole class of metastable failures
+* Open vs Closed System
+  * Open system: New work comes in from somewhere external, system has no control over rate at which it arrives. e.g. Web server.
+  * Closed system: Work generated from within the system. e.g. Pool of workers processing jobs for server.
+  * Asking caller to backoff has almost no effect on rate of work coming in for open system, but very effective for closed systems
+  * Jitter always a good idea
+  * Need to choose retry/resilience method appropriately depending on type of system
+  * Some systems can have mix of open and closed behavior
+* Circuit Breakers
+  * Lots of different definitions
+  * Boils down to mechanisms for deciding whether to try a request at all or reject it out of hand
+  * Two types: Reducing harvest where non-essential functionality is sacrificed for availability, rejecting load where available is sacrificed in the hope that it will reduce contention
+  * Most appropriate algorithms different for the two cases
+  * Have to be careful with sharded systems. System with four shards where one shard goes down. Client sees 25% failure rate. If it flips circuit breaker you've turned 25% failure rate into 100% failure rate.
+  * Can expand blast radius in microservice architectures. API server with APIs A, B, C and D internally implemented by microservices. If C fails, naive circuit breaker on client of API server sees 25% failure rate and blocks access to A, B and D too.
+  * Avoid on/off circuit breakers, prefer algorithms that adapt to downstream capacity like additive increase multiplicative decrease in TCP
+  * Successful circuit breakers might need to know internal details of downstream service (yuck)
+* Tackling tail latency
+  * Examples based on data from real AWS web service with mean latency 1ms, P99 2.5ms, P99.99 8.5ms
+  * Actually a really fast service with much better tail latency (8X) than most
+  * What can we do to reduce impact of tail latency?
+  * First response of two - P50 no change, P99 40% lower, P99.9 66% lower but double request volume
+  * Hedging. Send one request if it doesn't come back soon, send another.  Use first result. Set threshold so that extra request set at P90 latency.
+    * P50 no change, P99 17% lower, P99.99 54% lower at cost of 10% extra traffic
+    * Problem is that this introduces metastable failure modes
+    * If service under pressure and responses slow down, client will make extra request more often, potentially every time
+    * Can fix with token bucket but getting fiddly
+  * Erasure coding. Not general solution, only works with storage systems and caches. Needs some interesting maths but can arrange things so that you send *N* requests and can assemble response from the first *k* to come back. Cost is *N* times the request rate, *N/k* bandwidth, *N/k* storage
+    * Old idea commonly used withing storage systems, less common in distributed systems
+    * Makes more sense for bandwidth/throughput constrained systems than request constrained
+    * Constant work (same for failure and success cases)
+    * Super effective at reducing tail latency
+    * Easy to tune *N* and *k* to meet needs of your system
+    * Used in many AWS services including container loading system in AWS Lambda
+    * As well as general tail latency benefits also see improved resilience. Can handle failed server or in-progress deployment
+    * Lambda uses a simple 4-of-5 code (just XOR)
+* What is metastability?
+
+{% include candid-image.html src="/assets/images/reinvent-2024/requests-vs-load-graph.png" alt="Requests vs Load graph" %}
+
+  * Almost all systems have an inverted U shaped curve of successful requests vs load. At low loads the number of successful requests scales linearly with increasing load. Eventually system becomes overloaded and the number of successful requests starts to go down due to increased contention.
+  * Bad place to be. Would like reduction in load to move state back to the left with more successful requests.
+  * For most systems, like initial 3X retry example, thats not what happens. Have to drop load right down to get it back to normal. For retry example need to get to 30% of normal load.
+
+{% include candid-image.html src="/assets/images/reinvent-2024/overload-recovery-graph.png" alt="Overload recovery graph" %}
+
+  * The open area inside the graph indicates metastability
+
+* Simulation: Understanding behavior
+  * Intuition for how systems behave is usually wrong
+  * Could try and do the math to analyze behavior but needs good math knowledge
+  * Much simpler to run a simulation
+  * For 4-of-5 analysis above used resampling. Take real world measurements of latency. Pick 5 samples, write down 4th best. Repeat a lot of times and measure the results. Three lines of python.
+  * For 3X retry system took 150 lines of python. Code is super simple, directly models behavior of system, easy to write, review and understand.
+  * Another example, Nudge algorithm for improving latency in first come first served work queueing system. Rather than implementing in real system and then using metrics to see if it improves things, write a simulation. Much quicker, much less risk.
+  * Can use gen AI to create simulation for you from high level written description
