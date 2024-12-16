@@ -251,4 +251,4 @@ I'm concerned that it took two weeks before I noticed this problem. I find mysel
 
 It's a clear sign that I don't have enough automated testing. My existing unit tests using `jsdom` aren't cutting it. `jsdom` is lightweight and fast but doesn't support layout and scrolling. I  mock the expected browser behavior when testing my logic. Unfortunately, the root cause of my recent problems is the unexpected real life browser behavior.
 
-It's time to add some more tooling so that I can automate tests with a real browser.
+It's time to [add some more tooling]({% link _posts/2024-12-16-bootstrapping-playwright.md %}) so that I can automate tests with a real browser.

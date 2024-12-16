@@ -721,4 +721,4 @@ That's more like what I was expecting to see. TypeDoc and Vite have both had ano
 
 # Next Time
 
-Hopefully, I'll finally get round to installing something new.
+Hopefully, I'll finally get round to [installing something new]({% link _posts/2024-12-16-bootstrapping-playwright.md %}).
