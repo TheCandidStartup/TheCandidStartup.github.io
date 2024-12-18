@@ -166,7 +166,7 @@ The focus in [this session](https://youtu.be/9wx5qNUJdCE?si=cHFSEX5kdVUv5wA0) is
   * Tens of thousands of requests per second, 99.95% availability, no infrastructure
 * Large single-region application
   * DNS -> LB -> 3 x App stack per AZ -> Regional DSQL Endpoint
-  * Tens of thousands of requests per seconds, 99.95% availability, infrastructure depends on app stack used
+  * Tens of thousands of requests per second, 99.95% availability, infrastructure depends on app stack used
 * Avoid hot write keys
   * Incrementing counter hit by lots of transactions
   * Design schema so that you spread reads and writes across multiple keys
@@ -182,7 +182,7 @@ The focus in [this session](https://youtu.be/9wx5qNUJdCE?si=cHFSEX5kdVUv5wA0) is
 * Just taken single-region architecture and stamped it out in each region with Global DNS for request routing
 * No inter-region connections needed at app level
 * AZ failure: Availability impact milliseconds to seconds, no data loss, no consistency loss
-* Region failure: Availability impact of milliseconds in remaining regions, time for global DNS to reroute for failed region, no data loss, no consistency loss
+* Region failure: Availability impact of milliseconds in remaining regions, time for global DNS to reroute for failed region and restart failed transactions, no data loss, no consistency loss
 * Active-Active benefits: Caches/JITs are warm (compared with failover region), you know both sides work, easy capacity planning, route customers to closest region, DSQL offers symmetric latency (doesn't matter which regional endpoint you speak to).
 * Multi-region speed tips
   * Reads are always in-region (including commits for read only transactions, reads in read-write transactions)
@@ -244,13 +244,13 @@ I've been a fan of [event sourced systems](https://www.thecandidstartup.org/2023
 * Multi-Region
   * All about minimizing round trips between regions
   * Only commits of write transactions need cross-region coordination. Need to check isolation rules and make data durable. 
-  * Optimized for fast failover. Only place this matters is failover of adjudicator that owns a keyspace. Adjudicators only have fixed size transient soft state. 
+  * Optimized for fast failover. Only place this matters is failover of adjudicator that owns a keyspace. Adjudicators have fixed size transient soft state, so easy to replace. 
   * Preview supports three region architecture. Two active regions with data storage, one journal only "witness" region. If there's a network split, the active region on the same side as the witness region has a clear majority and can continue to be available. For large scale geography can put witness region in the middle to optimize for latency. 
   * Adjudicators spread across regions. Only one adjudicator for each range of keyspace.
   * If region fails or is isolated, new adjudicators have to be started on the majority side.
   * Region can use its existing QPs, journals and storage nodes for everything else. Journal and Storage are replicated. QPs only have transient state.
   * Journal and Storage use existing internal components that are foundations for DynamoDB and Aurora. They already handle ordered replication across hosts, AZs, regions.
-  * *??? How do you know which journal to write a transaction to?*
+  * *??? How do you decide which journal to write a transaction to?*
 
 {% include candid-image.html src="/assets/images/databases/dsql-multi-region-internals.jpg" alt="Multi-Region Internal Architecture" %}
 
@@ -260,7 +260,8 @@ I've been a fan of [event sourced systems](https://www.thecandidstartup.org/2023
   * Fuzzing of SQL surface area, compare with results on RDS and Aurora
   * Formal methods
   * Runtime monitoring - compare runtime logs against formal specification to ensure that actual implementation matches formal spec
-* More details on Marc Brooker's [blog](https://brooker.co.za/blog/)
+
+If you're interested in more detail on DSQL internals, there's more on Marc Brooker's [blog](https://brooker.co.za/blog/).
   * [Aurora DSQL and A Personal Story](https://brooker.co.za/blog/2024/12/03/aurora-dsql.html): Overview of DSQL and history of work that led up to it
   * [Reads and Compute](https://brooker.co.za/blog/2024/12/04/inside-dsql.html): DSQL read path, avoiding need for cache in query processor
   * [Transactions and Durability](https://brooker.co.za/blog/2024/12/05/inside-dsql-writes.html): DSQL write path, only commited transactions written to journal, how storage nodes know they have all data from transactions committing before a given time
@@ -269,7 +270,7 @@ I've been a fan of [event sourced systems](https://www.thecandidstartup.org/2023
 
 ## S3 Tables
 
-I watched [Store tabular data at scale with Amazon S3 Tables](https://youtu.be/1U7yX4HTLCI?si=_s4ClmqAQQlt4pMP) to understand whether S3 tables is a feature I might use in future. S3 tables is basically some optimizations and automated management that make it easier and more efficient to use Apache Iceberg with S3. [Apache Iceberg](https://iceberg.apache.org/) is a data format for S3 like blob stores that provides table semantics for large analytic datasets.
+I watched [Store tabular data at scale with Amazon S3 Tables](https://youtu.be/1U7yX4HTLCI?si=_s4ClmqAQQlt4pMP) to understand whether S3 tables is a feature I might use in future. S3 tables is basically some optimizations and automated management that make it easier and more efficient to use Apache Iceberg with S3. [Apache Iceberg](https://iceberg.apache.org/) is a data format for S3-like blob stores that provides table semantics for large analytic datasets.
 
 Iceberg builds on the foundations of the [Parquet](https://parquet.apache.org/) column-oriented data file format. Iceberg adds a tree of immutable metadata files above the data files. Each write operation adds a new set of data files and metadata files that represent the change, referencing the unchanged files from the previous snapshot. The principles are the same ones that I [plan on using]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) for my [super scalable cloud hosted spreadsheet]({% link _topics/spreadsheets.md %}).
 
@@ -364,7 +365,7 @@ This [session](https://youtu.be/c2ekr1Us51s?si=0q57kjtBTk4YsLRS) has three speak
 * Hypothesis: An application's resilience is, in part, proportional to how often its recovery workflows are executed
 * Naive architecture with a fresh connection for every message is much more resilient ...
 * Best middle ground is to regularly recreate connections. Have a maximum lifetime, for example a few minutes.
-* Takeaways: Resilient system embrace and expect failure at all layers. The most resilient workflows are ones that happen all the time as part of normal operations. Connection management is a good indicator of how well a service team thinks about resilience.
+* Takeaways: Resilient systems embrace and expect failure at all layers. The most resilient workflows are ones that happen all the time as part of normal operations. Connection management is a good indicator of how well a service team thinks about resilience.
 
 ### Is it a problem or a deployment?
 
@@ -486,7 +487,7 @@ Marc Brooker again, [talking](https://youtu.be/rvHd4Y76-fs?si=zFyGaA-_c6oh3xi6) 
 ### Rethinking retries
 
 * Web client configured with timeout, max retries, exponential backoff and jitter
-* Server where Latency is proportional to currency (A + B * concurrency)
+* Server where Latency is proportional to currency (modelled as *A + B * concurrency*)
 * Baseline load comfortable for system + one second spike of overload
 * If no retries configured client sees outage of 1-2 seconds where requests fail and then back to normal within twice length of spike
 * Now try it with the 3 retries - client sees outage and system never recovers!
@@ -495,11 +496,13 @@ Marc Brooker again, [talking](https://youtu.be/rvHd4Y76-fs?si=zFyGaA-_c6oh3xi6) 
 * Two kinds of failures: Transient failures caused by individual component failures where retries help, system failures caused by load/correlated behavior/bugs/etc where retries are harmful.
 * AWS uses adaptive retries (token bucket) to avoid these issues
 * Each client has a token bucket for retries. Any time it does a retry it consumes a token from the bucket, any time a call succeeds it adds 0.01 tokens to the bucket
-* Result is that for a stable set of clients load during an outage is capped at 101% of the usual load, compared to 400% for 3 retries case
+* Result is that for a stable set of clients load during an outage is capped at 101% of the usual load, compared to 400% for 3 retries without token bucket
 * Eliminates whole class of metastable failures
+* Behaves exactly the same as before if your transient failure rate is below 1%.
 
 ### Open vs Closed System
 
+* Idea of Open and Closed systems comes from [classic distributed systems paper](https://www.usenix.org/legacy/events/nsdi06/tech/full_papers/schroeder/schroeder.pdf)
 * Open system: New work comes in from somewhere external, system has no control over rate at which it arrives. e.g. Web server.
 * Closed system: Work generated from within the system. e.g. Pool of workers processing jobs for server.
 * Asking caller to backoff has almost no effect on rate of work coming in for open system, but very effective for closed systems
@@ -511,7 +514,7 @@ Marc Brooker again, [talking](https://youtu.be/rvHd4Y76-fs?si=zFyGaA-_c6oh3xi6) 
 
 * Lots of different definitions
 * Boils down to mechanisms for deciding whether to try a request at all or reject it out of hand
-* Two types: Reducing harvest where non-essential functionality is sacrificed for availability, rejecting load where available is sacrificed in the hope that it will reduce contention
+* Two types: "Reducing Harvest" where non-essential functionality is sacrificed for availability, "Rejecting Load" where availability is sacrificed in the hope that it will reduce contention
 * Most appropriate algorithms different for the two cases
 * Have to be careful with sharded systems. System with four shards where one shard goes down. Client sees 25% failure rate. If it flips circuit breaker you've turned 25% failure rate into 100% failure rate.
 * Can expand blast radius in microservice architectures. API server with APIs A, B, C and D internally implemented by microservices. If C fails, naive circuit breaker on client of API server sees 25% failure rate and blocks access to A, B and D too.
@@ -524,7 +527,7 @@ Marc Brooker again, [talking](https://youtu.be/rvHd4Y76-fs?si=zFyGaA-_c6oh3xi6) 
 * Actually a really fast service with much better tail latency (8X) than most
 * What can we do to reduce impact of tail latency?
 * Send two requests and use first response to come back. P50 no change, P99 40% lower, P99.9 66% lower but double request volume
-* Hedging. Send one request. If it doesn't come back soon, send another. Use first result. Set threshold so that extra request set at P90 latency.
+* Hedging. Send one request. If it doesn't come back soon, send another. Use first result. Set threshold so that extra request sent at P90 latency.
   * P50 no change, P99 17% lower, P99.99 54% lower at cost of 10% extra traffic
   * Problem is that this introduces metastable failure modes
   * If service under pressure and responses slow down, client will make extra request more often, potentially every time
@@ -547,7 +550,7 @@ Marc Brooker again, [talking](https://youtu.be/rvHd4Y76-fs?si=zFyGaA-_c6oh3xi6) 
 
 * Almost all systems have an inverted U shaped curve of successful requests vs load. At low loads the number of successful requests scales linearly with increasing load. Eventually system becomes overloaded and the number of successful requests starts to go down due to increased contention.
 * Bad place to be. Would like reduction in load to move state back to the left with more successful requests.
-* For most systems, like initial 3X retry example, thats not what happens. Have to drop load right down to get it back to normal. For retry example need to get to 30% of normal load.
+* For most systems, like initial 3X retry example, that's not what happens. Have to drop load right down to get it back to normal. For retry example need to get to 30% of normal load.
 
 {% include candid-image.html src="/assets/images/reinvent-2024/overload-recovery-graph.png" alt="Overload recovery graph" %}
 
