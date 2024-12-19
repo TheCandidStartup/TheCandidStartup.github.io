@@ -118,7 +118,9 @@ received value must be a Node.
 
 After a lot of reflection and digging around in the Vitest source, I worked out what was going on. The Vitest manual should have said that `expect.element(locator)` is equivalent to `expect.poll(() => locator.element())`.
 
-Once I changed the final line of my test to `await expect.poll(() => row.element()).toHaveTextContent('4999')`, it worked. What about the missing `expect.element`? Buried in an [unrelated section](https://vitest.dev/guide/browser/commands.html#custom-playwright-commands) of the documentation is a tip to add `"@vitest/browser/providers/playwright` to the `compilerOptions.types` section of your `tsconfig.json`. This is presented as a nice to have to get autocompletion. 
+Once I changed the final line of my test to `await expect.poll(() => row.element()).toHaveTextContent('4999')`, it worked. 
+
+What about the missing `expect.element`? Buried in an [unrelated section](https://vitest.dev/guide/browser/commands.html#custom-playwright-commands) of the documentation is a tip to add `"@vitest/browser/providers/playwright` to the `compilerOptions.types` section of your `tsconfig.json`. This is presented as a nice to have to get autocompletion. 
 
 It's actually vital that you do this if you're using TypeScript. Once done, VS Code sees the `expect.element` extension and I can use the more friendly looking `expect.element(row).toHaveTextContent('4999')`.
 
@@ -171,7 +173,7 @@ Can I do component-browser integration testing using Playwright? In a way I alre
 Playwright also has an [experimental component testing feature](https://playwright.dev/docs/test-components). Your test starts with mounting a component (using the `mount` API) which you then interact with. This is equivalent to the `render` API in Vitest.
 
 You need to add quite a lot of supporting scaffolding to your project
-  * A `playwright/index.html` file uses to render the component during testing
+  * A `playwright/index.html` file used to render the component during testing
   * A `playwright/index.ts` file which sets up the environment for testing, for example including stylesheets and injecting code into the page
   * [Component Stories](https://playwright.dev/docs/test-components#test-stories) which initialize your component with any complex props needed. The component runs in the browser so your test code can only pass plain JavaScript objects and primitive types to it. Instead of mounting the component directly, you mount a wrapper object which takes care of any complex configuration.
 
@@ -181,6 +183,6 @@ This all seems like a really convoluted way of recreating the sample app I alrea
 
 # Next Time
 
-I think I'll pass on Playwright component testing. However, it did get me thinking. Is there a better way of creating apps that are simple wrappers around components for testing purposes. Playwright's "component stories" reminded me of another tool I've been meaning to take a look at.
+I think I'll pass on Playwright component testing. However, it did get me thinking. Is there a better way of creating apps that are simple wrappers around components for testing purposes? Playwright's "component stories" reminded me of another tool I've been meaning to take a look at.
 
-Next time we'll take a look at [Storybook](https://storybook.js.org/). Maybe it can hit the sweet spot for component testing.
+Next time we'll take a look at [Storybook](https://storybook.js.org/). Maybe it will hit the sweet spot for component testing.
