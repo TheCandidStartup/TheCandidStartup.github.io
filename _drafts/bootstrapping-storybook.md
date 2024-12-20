@@ -322,6 +322,7 @@ Hit CTRL-C to stop the server
 
 * That worked. Looks and behaves just like the dev server.
 * There are instructions on how to [deploy the built app using GitHub Pages](https://storybook.js.org/docs/sharing/publish-storybook#github-pages) which would allow me to include the Storybook as part of my online documentation. 
+* No obvious option for specifying the base path that static app will be served from (cf Vite option). There's a Storybook [discussion](https://github.com/storybookjs/storybook/discussions/17433) that suggests you can [dynamically adjust the Vite config](https://storybook.js.org/docs/api/main-config/main-config-vite-final) that Storybook uses to build. 
 
 # Component Testing
 
