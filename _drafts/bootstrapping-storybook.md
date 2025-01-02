@@ -345,4 +345,84 @@ The simplest approach is to use [Playwright to interact with your Storybook](htt
 * Alternatively you can use a URL that contains just the control (the content of the iframe) and interact with it directly `http://localhost:6006/iframe.html?id=react-virtual-scroll-virtuallist--default`
 * You can create multiple stories as starting points for tests or [override the args](https://storybook.js.org/docs/writing-stories/args#setting-args-through-the-url) of existing stories in the URL `http://localhost:6006/?path=/docs/react-virtual-scroll-virtuallist--docs&args=itemCount:200` or `http://localhost:6006/iframe.html?id=react-virtual-scroll-virtuallist--default&args=itemCount:200`
 
+# Black Box Testing
 
+* This all looks great but there's a problem
+* Component and integration tests should treat the component as a black box, interacting entirely through the public interface
+* Storybook prioritizes ease of setup and encourages intrusive integration
+* Stories are placed next to the corresponding component's source code
+* Stories use relative imports not package imports
+* The Storybook app uses a custom build process that directly includes component source code rather than using the build packages
+* I could have libraries that pass all units, component and integration tests while being unusable because I've forgotten to export something vital
+
+# Storybook as a monorepo app
+
+* The consensus from the Storybook monorepo [discussion](https://github.com/storybookjs/storybook/discussions/22521) is that Storybook should be setup as just another app in the monorepo.
+* There are lots of benefits from doing it this way
+  * Get rid of the special case extra directories in the monorepo root
+  * Storybook config and source code (stories) become part of a dedicated Storybook app
+  * Use `dev` and `build` scripts like any other app rather than special Storybook magic
+  * Stories import component packages using the public interface like any other app
+  * Clean separation of Storybook dependencies from those for other apps and packages
+  * Option to have multiple Storybook apps if you need different configurations. For example, if you have components that use other frameworks.
+* First remove all the sample stories to get down to a minimal set of files to muck around with
+* Setup a basic app skeleton by copying and pasting from my existing `spreadsheet-sample` app
+* The Storybook [Vite builder](https://storybook.js.org/docs/builders/vite) uses the project's existing Vite config file by default so hopefully should just work
+* Moved the `.storybook` config directory from root to `apps/storybook/.storybook`
+* Moved `VirtualList.stories.tsx` from `packages/react-virtual-scroll/src` to `apps/storybook/src`
+* Updated `.storybook/main.ts` to look for stories in `../src` rather than `../stories` or directly in packages
+* Changed the story to import from `@candidstartup/react-virtual-scroll`
+* Updated `package.json` 
+
+```json
+{
+  "name": "storybook",
+  "private": true,
+  "version": "0.6.2",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "storybook dev -p 6006",
+    "build": "storybook build -o dist",
+    "preview": "vite preview --port 6006",
+    "playwright": "npx playwright test",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "@candidstartup/react-virtual-scroll": "^0.6.2",
+    "@candidstartup/react-spreadsheet": "^0.6.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}
+```
+
+* Changed the name to storybook, added storybook scripts for `dev` and `build`. 
+* Changed the output directory for build to the standard `dist` from default of `storybook-static`.
+* Removed `storybook-static` from my .gitignore
+* Added my dependencies for the build and left it to Storybook to add whatever it needed at build time
+* Left the copied `vite.config.ts`, `tsconfig.json` and `tsconfig.build.json` config files as is
+* To my surprise the dev and build scripts worked first time
+* I tried running `vite preview` and it happily worked with the build output that Storybook put in `dist`. No need for `http-server`.
+* Using the standard Storybook port of `6006` for both dev and preview. Avoid potential conflict with other apps. Using same port for dev and preview makes it easy to run Playwright tests against both.
+* Last, and most time consuming, step was setting up eslint to use the storybook plugin
+* Removed the old style eslint config that `storybook init` added to the root `package.json`
+* Edited the storybook app stub `eslint.config.mjs` to merge in the Storybook eslint config
+
+```ts
+import configs from "../../eslint.config.mjs";
+import tseslint from "typescript-eslint";
+import storybook from "eslint-plugin-storybook";
+
+export default tseslint.config(
+  ...configs,
+  ...storybook.configs['flat/recommended'],
+  { ignores: [ ".storybook" ] },
+);
+```
+
+* Same as every time I touch the new eslint flat config, wasn't straight forward to get it working
+* After a few false starts did what I should have done in the first place and read the instructions that [come with the plugin](https://github.com/storybookjs/eslint-plugin-storybook)
+* As previously, ignored the config files when linting to avoid warnings about tsconfig not including them
