@@ -376,7 +376,7 @@ The simplest approach is to use [Playwright to interact with your Storybook](htt
 
 ```json
 {
-  "name": "storybook",
+  "name": "@candidstartup/storybook",
   "private": true,
   "version": "0.6.2",
   "type": "module",
@@ -399,7 +399,8 @@ The simplest approach is to use [Playwright to interact with your Storybook](htt
 }
 ```
 
-* Changed the name to storybook, added storybook scripts for `dev` and `build`. 
+* Changed the name to storybook, added storybook scripts for `dev` and `build`
+* My first attempt at this missed off the `@candidstartup` scope qualifier. Everything worked fine until I checked it in and CI failed running `npm ci` with an unintelligible multi-page dependency error. After an hour tearing my hair out I eventually found that npm writes an `eresolve-report.txt` file into the npm logs directory which tells you exactly what the problem is. No idea why it doesn't output it to the terminal. Obviously, npm is going to get confused by a dependency tree that includes both my private app package called "storybook" and the main Storybook package also called "storybook". 
 * Changed the output directory for build to the standard `dist` from default of `storybook-static`.
 * Removed `storybook-static` from my .gitignore
 * Added my dependencies for the build and left it to Storybook to add whatever it needed at build time
