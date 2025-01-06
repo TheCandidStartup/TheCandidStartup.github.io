@@ -408,6 +408,33 @@ The simplest approach is to use [Playwright to interact with your Storybook](htt
 * To my surprise the dev and build scripts worked first time
 * I tried running `vite preview` and it happily worked with the build output that Storybook put in `dist`. No need for `http-server`.
 * Using the standard Storybook port of `6006` for both dev and preview. Avoid potential conflict with other apps. Using same port for dev and preview makes it easy to run Playwright tests against both.
+* Storybook actually works too well. It picks up and uses the TypeScript path alias definition in my `tsconfig.json` for both development and production builds. This is the definition that allows package imports like `@candidstartup/react-virtual-scroll` to be resolved against the source code in the monorepo. This gives a great development experience but you don't want it to happen for production builds. For true component testing you want the production build to consume the built packages via `node_modules`. 
+* This happens by default for normal Vite production builds because Vite uses it's own internal `tsconfig`. This doesn't have the path alias or the `vite-tsconfig-paths` plugin that allows Vite to make use of the alias.
+* I initially tried to configure Storybook to use my `tsconfig.build.json` config file rather than `tsconfig.json` but couldn't find an option for that.
+* Storybook does provide a way to tweak the final merged Vite configuration using the Storybook `viteFinal` [config option](https://storybook.js.org/docs/builders/vite#configuration). That allows me to remove the `vite-tsconfig-paths` plugin from `vite.config.ts` and then add it conditionally for development builds in `viteFinal`.
+
+```ts
+import tsconfigPaths from 'vite-tsconfig-paths';
+
+const config: StorybookConfig = {
+  ...,
+  async viteFinal(config, { configType }) { 
+    const { mergeConfig } = await import("vite");
+
+    if (configType === 'PRODUCTION')
+      return config;
+
+    return mergeConfig(config, {
+      plugins: [ tsconfigPaths() ]
+    })
+  }
+};
+```
+
+# Playwright Test
+
+# ESLint
+
 * Last, and most time consuming, step was setting up eslint to use the storybook plugin
 * Removed the old style eslint config that `storybook init` added to the root `package.json`
 * Edited the storybook app stub `eslint.config.mjs` to merge in the Storybook eslint config
