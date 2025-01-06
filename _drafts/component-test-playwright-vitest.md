@@ -31,13 +31,13 @@ I couldn't find an npm command that gave me the complete tree of dependencies fo
 
 {% include candid-image.html src="/assets/images/frontend/vitest_browser_dependencies.svg" alt="Vitest Browser Dependencies" %}
 
-There's clearly a lot going on under the hood given that Playwright will be doing the heavy lifting
+There's clearly a lot going on under the hood given that Playwright will be doing the heavy lifting.
 
 ## Configuration
 
 Browser mode is enabled per project by adding some options to the `test` object in the project config. You can have normal Node based unit tests or browser mode, not both. 
 
-The workaround is to define an additional project for your browser mode tests and keep your node based unit tests in the main project. It makes sense for browser mode to be the special case given the testing pyramid. The most convenient way of adding extra projects is via inline definition at the workspace level.
+The workaround is to define an additional project for your browser mode tests and keep your node based unit tests in the main project. It makes sense for browser mode to be the special case given the way the testing pyramid works. The most convenient way of adding extra projects is via inline definition at the workspace level.
 
 ```ts
 export default defineWorkspace([
@@ -58,7 +58,7 @@ export default defineWorkspace([
 ])
 ```
 
-I added a single project that would run browser tests for all packages using Chromium. If I want to use this for integration testing too, I can add projects for Webkit and Firefox too.
+I added a single project that would run browser tests for all packages using Chromium. If I want to use this for integration testing too, I can add projects for Webkit and Firefox.
 
 ## Writing Tests
 
@@ -66,7 +66,7 @@ I initially thought that I would be able to take one of my existing unit tests a
 
 With browser mode, Vitest and your test code run in a Node.js process but the component being tested and the DOM are in a browser process with interaction marshalled via the Playwright process. You have to render and interact with your component via a dedicated set of APIs that are closer to Playwright than a unit test.
 
-I started with my existing Playwright test and attempted to convert it into a Vitest browser mode test for `VirtualSpreadsheet`. Rather than having a `page` object passed in to the test, you use a Vitest utility to render the component and create the equivalent of the Playwright `page`. Unfortunately, it only implements a subset of the Playwright API.
+I started with my [existing Playwright test]({% link _posts/2024-12-16-bootstrapping-playwright.md %}) and attempted to convert it into a Vitest browser mode test for `VirtualSpreadsheet`. Rather than having a `page` object passed in to the test, you use a Vitest utility to render the component and create the equivalent of the Playwright `page`. Unfortunately, it only implements a subset of the Playwright API.
 
 There's a familiar looking [locators API](https://vitest.dev/guide/browser/locators.html) but it doesn't include CSS locators. Also, many of the actions are missing. Some things like `fill` are directly accessible, others are not. Instead of writing `name.press('Enter')` you have to use a separate utility and write  `userEvent.type(name, '{Enter}')`.
 
@@ -102,7 +102,7 @@ The test failed with `Error: Matcher did not succeed in 1000ms`.
 
 {% include candid-image.html src="/assets/images/frontend/vitest-browser-mode-error.png" alt="Vitest Browser Mode Error" %}
 
-The report includes a screenshot of the UI which shows the test succeeded. Obviously I've written the assertion incorrectly. I tried to debug using the Vitest VS Code extension but get an error `Failed to fetch dynamically imported module`.
+The report includes a screenshot of the UI which shows the test succeeded. Obviously, I've written the assertion incorrectly. I tried to debug using the Vitest VS Code extension but get an error `Failed to fetch dynamically imported module`.
 
 {% include candid-image.html src="/assets/images/frontend/vitest-browser-vs-code-error.png" alt="VS Code Error running Vitest Browser Mode test" %}
 
@@ -120,7 +120,7 @@ After a lot of reflection and digging around in the Vitest source, I worked out 
 
 Once I changed the final line of my test to `await expect.poll(() => row.element()).toHaveTextContent('4999')`, it worked. 
 
-What about the missing `expect.element`? Buried in an [unrelated section](https://vitest.dev/guide/browser/commands.html#custom-playwright-commands) of the documentation is a tip to add `"@vitest/browser/providers/playwright` to the `compilerOptions.types` section of your `tsconfig.json`. This is presented as a nice to have to get autocompletion. 
+What about the missing `expect.element`? Buried in an [unrelated section](https://vitest.dev/guide/browser/commands.html#custom-playwright-commands) of the documentation is a tip to add `"@vitest/browser/providers/playwright` to the `compilerOptions.types` section of your `tsconfig.json`". This is presented as a nice to have to get autocompletion. 
 
 It's actually vital that you do this if you're using TypeScript. Once done, VS Code sees the `expect.element` extension and I can use the more friendly looking `expect.element(row).toHaveTextContent('4999')`.
 
@@ -174,7 +174,7 @@ Playwright also has an [experimental component testing feature](https://playwrig
 
 You need to add quite a lot of supporting scaffolding to your project
   * A `playwright/index.html` file used to render the component during testing
-  * A `playwright/index.ts` file which sets up the environment for testing, for example including stylesheets and injecting code into the page
+  * A `playwright/index.ts` file which sets up the environment for testing. For example, including stylesheets and injecting code into the page
   * [Component Stories](https://playwright.dev/docs/test-components#test-stories) which initialize your component with any complex props needed. The component runs in the browser so your test code can only pass plain JavaScript objects and primitive types to it. Instead of mounting the component directly, you mount a wrapper object which takes care of any complex configuration.
 
 Behind the scenes Playwright uses Vite to compile a bundle containing the component and scaffolding, then serves it using the Vite development server. Use of Vite is hidden away behind the scenes and uses Playwright provided configuration. You [can't reuse your existing config](https://playwright.dev/docs/test-components#i-have-a-project-that-already-uses-vite-can-i-reuse-the-config). Instead you have to copy your high level settings into Playwright's configuration.
