@@ -433,6 +433,43 @@ const config: StorybookConfig = {
 
 # Playwright Test
 
+* I added `VirtualList.spec.ts` containing the simplest possible Playwright test
+
+```ts
+import { test, expect } from '@playwright/test';
+
+test.describe.configure({ mode: 'parallel' });
+
+test('Control loads', async ({ page }) => {
+  await page.goto('/iframe.html?id=react-virtual-scroll-virtuallist--default');
+  const header = page.getByText('Header');
+  await expect(header).toBeInViewport();
+});
+```
+
+* It loads the isolated version of the control, looks for the first item in the list and confirms that it's in the viewport
+* I copied `playwright.config.ts` from my spreadsheet sample app and updated it to work with Storybook
+
+```ts
+{
+  webServer: {
+     command: (process.env.CI || process.env.PROD) ? 'npm run preview' : 'npm run dev',
+     url: 'http://localhost:6006/',
+     reuseExistingServer: !process.env.CI
+  }
+}
+```
+
+* I use the production build when in a CI environment and default to the dev version otherwise
+* I added a check on my own environment variable so I can force use of the production build locally for final testing, without activating all the other CI specific behavior. Use it like this: `PROD=true npx lerna run playwright`
+* I tried to run the test using the Playwright VS Code extension, but found that only the spreadsheet sample app test had been loaded
+* It turns out that by default the extension only loads tests for the first config file it finds
+* You can choose which config file to use via a dropdown in the UI
+
+{% include candid-image.html src="/assets/images/frontend/playwright-vscode-multiple-configs.png" alt="Playwright VSCode Extension with multiple configs" %}
+
+* If you click on the icon next to the drop down you can multi-select configs so that all tests are loaded. No idea why this isn't the default.
+
 # ESLint
 
 * Last, and most time consuming, step was setting up eslint to use the storybook plugin
@@ -454,3 +491,7 @@ export default tseslint.config(
 * Same as every time I touch the new eslint flat config, wasn't straight forward to get it working
 * After a few false starts did what I should have done in the first place and read the instructions that [come with the plugin](https://github.com/storybookjs/eslint-plugin-storybook)
 * As previously, ignored the config files when linting to avoid warnings about tsconfig not including them
+
+# Next Time
+
+* Add stories for each component, add some CSS for basic styling, flesh out the Playwright tests
