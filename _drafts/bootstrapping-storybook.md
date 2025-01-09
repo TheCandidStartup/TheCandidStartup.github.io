@@ -3,24 +3,29 @@ title: Bootstrapping Storybook
 tags: frontend
 ---
 
-wise words
+[Last time]({% link _posts/2025-01-06-component-test-playwright-vitest.md %}), we had a look at Vitest browser mode and Playwright component testing. I was looking for a tool to help with component and integration testing of my React components. 
 
-* component and integration testing
-* create apps that are simple wrappers around components for testing purposes
+Neither worked well enough to convince me. In both cases you needed to write a significant amount of wrapper code to make components testable. About the same amount of code as a simple standalone sample app. In both cases the developer experience was worse than using Playwright to test a sample app. 
+
+What if there was a way to write that component wrapper code once and have it automatically integrated into an app that's a combination of sample app, interactive documentation and component test fixture?
 
 # Storybook
 
-* what it is
-* options for component and integration testing
+[Storybook]() describes itself as a "frontend workshop for building UI components and pages in isolation". Teams use it for UI development, testing and documentation.
+
+Storybook generates an app that showcases your components. Each component has its own page with embedded documentation and controls that allow you to modify component props and interact with the component. Different component states can be saved as [stories](https://storybook.js.org/docs/get-started/whats-a-story). Each story has a corresponding page in the app. 
+
+Stories are defined using [Component Story Format](https://storybook.js.org/docs/api/csf). CSF is simply an ES6 module, written in JavaScript or TypeScript, that exports `Story` objects and component metadata. 
+
+CSF is portable, allowing stories to be integrated with a variety of [design](https://storybook.js.org/docs/sharing/design-integrations) and [testing](https://storybook.js.org/docs/writing-tests) tools.
 
 # Installation
 
-* As with Playwright, little detail on installation and configuration, just a command to run "inside your project's root directory"
-* When that's done is launches a setup wizard to take you through an onboarding experience
-* There's nothing in the Docs about monorepos
-* I did find this [discussion](https://github.com/storybookjs/storybook/discussions/22521) of different ways to setup Storybook in a monorepo
-* The simplest approach is to run the default setup in the root of the monorepo
-* There are various downsides described that mean this isn't the best long term solution but seems like the easiest way to kick the tyres and see if I want to go further
+As with Playwright, there's [little detail](https://storybook.js.org/docs/get-started/install) on installation and configuration, just a command to run "inside your project's root directory". Once that's done, it promises to launch a setup wizard to take you through an onboarding experience.
+
+There's nothing in the documentation about monorepos. However, I did find this [discussion](https://github.com/storybookjs/storybook/discussions/22521) of different ways to setup Storybook in a monorepo.
+
+The simplest approach is to run the default setup in the root of the monorepo. There are various downsides described that mean this isn't the best long term solution. It does seem like the easiest way to kick the tyres and see if I want to go further.
 
 ```
 % npx storybook@latest init
@@ -36,7 +41,6 @@ Ok to proceed? (y) y
  • Detecting project type. ✓
 Installing dependencies...
 
-
 up to date, audited 1047 packages in 1s
 
 found 0 vulnerabilities
@@ -46,54 +50,29 @@ found 0 vulnerabilities
 ✔ Do you want to manually choose a Storybook project type to install? … yes
 ```
 
-* Not surprising as we're in root of monorepo so nothing in `package.json` for the installer to go on. 
-* Thought it would just be a case of picking `react` from a list of frameworks. The choice includes `react`, `react_scripts`, `react_native`, `react_project` and `webpack_react`.
-* Nothing in the storybook documentation to explain the difference.
-* The best thing I could find was a [stack overflow question](https://stackoverflow.com/questions/71074658/whats-the-difference-react-vs-react-project-vs-webpack-react-for-storybook) which suggests the difference is in what dependencies are added to `package.json`.
-* I can fix up the dependencies easily enough if wrong, so went with `react`.
+I'm running this in the root of a monorepo, so not surprising that there's nothing in `package.json` for the installer to go on. I thought it would just be a case of picking `react` from a list of frameworks. 
+
+There's a long list of choices including `react`, `react_scripts`, `react_native`, `react_project` and `webpack_react`. There's nothing in the Storybook documentation to explain the differences. The best thing I could find was a [stack overflow question](https://stackoverflow.com/questions/71074658/whats-the-difference-react-vs-react-project-vs-webpack-react-for-storybook) which suggests the difference is in what dependencies are added to `package.json`.
+
+I can fix up the dependencies easily enough if wrong, so went with `react`.
 
 ```
 ✔ Please choose a project type from the following list: › react
- • Adding Storybook support to your "React" app • Detected Vite project. Setting builder to Vite. ✓
+ • Adding Storybook support to your "React" app
+ • Detected Vite project. Setting builder to Vite. ✓
 
   ✔ Getting the correct version of 9 packages
     Configuring eslint-plugin-storybook in your package.json
   ✔ Installing Storybook dependencies
-. ✓
+
 Installing dependencies...
 
 up to date, audited 1132 packages in 1s
 
 found 0 vulnerabilities
-
-attention => Storybook now collects completely anonymous telemetry regarding usage.
-This information is used to shape Storybook's roadmap and prioritize features.
-You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
-https://storybook.js.org/telemetry
-
-╭──────────────────────────────────────────────────────────────────────────────╮
-│                                                                              │
-│   Storybook was successfully installed in your project! 🎉                   │
-│   To run Storybook manually, run npm run storybook. CTRL+C to stop.          │
-│                                                                              │
-│   Wanna know more about Storybook? Check out https://storybook.js.org/       │
-│   Having trouble or want to chat? Join us at https://discord.gg/storybook/   │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-Running Storybook
-
-> storybook
-> storybook dev -p 6006 --quiet
-
-@storybook/core v8.4.7
-
-info Using tsconfig paths for react-docgen
-14:36:54 [vite] ✨ new dependencies optimized: @storybook/blocks
-14:36:54 [vite] ✨ optimized dependencies changed. reloading
 ```
 
-* I checked the changes made to `package.json` and didn't see anything too weird. This is the monorepo root `package.json` so only contains dev dependencies. 
+I checked the changes made to `package.json` and didn't see anything too weird. This is the monorepo root `package.json` so only contains dev dependencies. 
 
 ```json
 {
@@ -121,8 +100,7 @@ info Using tsconfig paths for react-docgen
 }
 ```
 
-* I'll integrate the eslint config into my main eslint config later
-* As well as installing Storybook, the setup script adds some configuration files in `.storybook` and a complete example in `stories`.
+I'll integrate the eslint config into my main eslint config later. As well as installing Storybook, the setup script adds some configuration files in `.storybook` and a complete set of example components and stories in `stories`.
 
 ```ts
 import type { StorybookConfig } from "@storybook/react-vite";
@@ -155,18 +133,44 @@ const config: StorybookConfig = {
 export default config;
 ```
 
-* The setup process has detected that I'm using Vite and has included some sort of magic to handle the case where Storybook is installed in a nested directory within a monorepo. 
-* The final step is to run the dev server with the example
+The setup process has detected that I'm using Vite and has included some sort of magic to handle the case where Storybook is installed in a nested directory within a monorepo. 
+
+Setup ends by running the dev server with the example stories.
+
+```
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Storybook was successfully installed in your project! 🎉                   │
+│   To run Storybook manually, run npm run storybook. CTRL+C to stop.          │
+│                                                                              │
+│   Wanna know more about Storybook? Check out https://storybook.js.org/       │
+│   Having trouble or want to chat? Join us at https://discord.gg/storybook/   │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Running Storybook
+
+> storybook
+> storybook dev -p 6006 --quiet
+
+@storybook/core v8.4.7
+
+info Using tsconfig paths for react-docgen
+14:36:54 [vite] ✨ new dependencies optimized: @storybook/blocks
+14:36:54 [vite] ✨ optimized dependencies changed. reloading
+```
+
+Everything seems to be working.
 
 {% include candid-image.html src="/assets/images/frontend/storybook-example.png" alt="Storybook Dev Server with example project" %}
 
-* I was looking forward to experiencing the setup wizard but it didn't appear for me. I was able to trigger it manually by changing the URL in the browser to `http://localhost:6006/?path=onboarding`.
-* It uses large tooltips to guide you through the process of changing the Props for an example button control and saving it as a new story. Then you get to see some lovely animated fireworks.
+I was looking forward to experiencing the setup wizard but it didn't appear for me. I was able to trigger it manually by changing the URL in the browser to `http://localhost:6006/?path=onboarding`. It uses large tooltips to guide you through the process of changing the Props for an example button control and saving it as a new story. 
+
+Then you get to see some lovely animated fireworks.
 
 # First Story
 
-* I added `../packages/*/src/*.stories.@(js|jsx|mjs|ts|tsx)` to the `stories` key in the config file. I'm going to put my stories next to the corresponding component source file.
-* I copied one of the example stories to `VirtualList.stories.tsx` and started hacking
+I added `../packages/*/src/*.stories.@(js|jsx|mjs|ts|tsx)` to the `stories` key in the config file. The recommended practice is to put stories next to the corresponding component source file. I copied one of the example stories to `VirtualList.stories.tsx` and started hacking.
 
 ```tsx
 import React from "react";
@@ -187,7 +191,7 @@ const meta = {
   tags: ['autodocs'],
   argTypes: {
   },
-  // Use `fn` to spy on the onClick arg, which will appear in the actions panel once invoked
+  // Use `fn` to spy on the onScroll arg, which will appear in the actions panel once invoked
   args: { onScroll: fn() },
 } satisfies Meta<typeof VirtualList>;
 
@@ -211,13 +215,11 @@ export const Default: Story = {
 };
 ```
 
-Stories are self-contained ES6 modules that in theory can be imported by anything in the JavaScript ecosystem. Stories need to comply with [Component Story Format](https://storybook.js.org/docs/api/csf). In CSF each module has one required [default export](https://storybook.js.org/docs/api/csf#default-export) and one or more [named exports](https://storybook.js.org/docs/api/csf#named-story-exports). 
+In CSF each module has one required [default export](https://storybook.js.org/docs/api/csf#default-export) and one or more [named exports](https://storybook.js.org/docs/api/csf#named-story-exports). The default export, usually named meta, defines metadata for a component which controls how the the component appears inside Storybook. Each named export is a story that represents an interesting state of the component. The simplest story is a list of `args` which are passed as props to your component. 
 
-The default export, usually named meta, defines metadata for a component which controls how the the component appears inside Storybook. Each named export is a story that represents an interesting state of the component. The simplest story is a list of `args` which are passed as props to your component. 
+There's quite a lot of boiler plate to write. As it's a self contained ES6 module, you have to import all your dependencies explicitly, including Storybook APIs and types as well as your component. You'll need to provide reasonable values for any required props. Complex props may pull in additional dependencies. 
 
-There's quite a lot of boiler plate to write. As it's a self contained ES6 module, you have to import all your dependencies explicitly, including Storybook APIs and types as well as your component. You'll need to provide reasonable values for any required props. Complex props may pull in additional dependencies. My `VirtualList` component requires a child React component and an implementation of a mapping interface.
-
-The resulting story is actually more verbose than the corresponding sample app.
+My `VirtualList` component requires a child React component and an implementation of a mapping interface. The resulting story is actually more verbose than the corresponding standalone sample app.
 
 ```tsx
 import React from 'react';
@@ -247,17 +249,19 @@ function App() {
 createRoot(document.getElementById('root')!).render(<App />);
 ```
 
-However, you do get a lot for your money once you fire up Storybook.
+However, you do get a lot for your money once you fire up Storybook. 
 
 {% include candid-image.html src="/assets/images/frontend/storybook-first-story.png" alt="VirtualList story as it appears in Storybook" %}
 
-* It worked first time!
-* Storybook has generated interactive documentation using my [TSDoc]({% link _posts/2024-07-08-bootstrapping-tsdoc.md %}) comments. It hasn't done a perfect job - there's a few tags it doesn't understand.
-* You can view the current value of all props, even the complex ones, and change them
-* When you scroll the list, the values passed to the `onScroll` callback are recorded in the actions tab
-* I'd need an awful lot more code in the sample app to achieve a fraction of this
+What do you know, it worked first time.
 
-# Build a Static App
+Storybook has picked up my new story and included my component. There's auto-generated interactive documentation using my [TSDoc]({% link _posts/2024-07-08-bootstrapping-tsdoc.md %}) comments. It hasn't done a perfect job - there's a few tags it doesn't understand.
+
+You can view the current value of all props, even the complex ones, and change them. When you scroll the list, the values passed to the `onScroll` callback are recorded in the actions tab.
+
+I'd need an awful lot more code in the sample app to achieve a fraction of this.
+
+# Static App
 
 ```
 % npm run build-storybook
