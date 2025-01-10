@@ -246,7 +246,7 @@ My components will support a `theme` prop. A `theme` is an object that maps from
 import React from 'react';
 
 function Component(props) {
-  { theme } = props.theme;
+  const { theme } = props;
   return (
     <div className={theme.component}>
       <h1 className={theme.title}>Hello, world!</h1>
@@ -331,4 +331,4 @@ Each component will have a default theme and a matching CSS style sheet using th
 
 # Next Time
 
-Next time, I'll let you know how the grand plan works out when I try to implement it for `react-spreadsheet`. 
+[Next time]({% link _posts/2024-09-09-react-spreadsheet.md %}), I'll let you know how the grand plan works out when I try to implement it for `react-spreadsheet`. 
