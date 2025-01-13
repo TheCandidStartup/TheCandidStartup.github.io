@@ -185,4 +185,4 @@ This all seems like a really convoluted way of recreating the sample app I alrea
 
 I think I'll pass on Playwright component testing. However, it did get me thinking. Is there a better way of creating apps that are simple wrappers around components for testing purposes? Playwright's "component stories" reminded me of another tool I've been meaning to take a look at.
 
-Next time we'll take a look at [Storybook](https://storybook.js.org/). Maybe it will hit the sweet spot for component testing.
+[Next time]({% link _posts/2025-01-13-bootstrapping-storybook.md %}) we'll take a look at [Storybook](https://storybook.js.org/). Maybe it will hit the sweet spot for component testing.

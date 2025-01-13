@@ -50,7 +50,7 @@ found 0 vulnerabilities
 ✔ Do you want to manually choose a Storybook project type to install? … yes
 ```
 
-I'm running this in the root of a monorepo, so not surprising that there's nothing in `package.json` for the installer to go on. I thought it would just be a case of picking `react` from a list of frameworks. 
+I'm running this in the root of a monorepo, so not surprising that there's nothing in `package.json` for the installer to go on. Should be simple enough to pick "React" from a list of project types. 
 
 There's a long list of choices including `react`, `react_scripts`, `react_native`, `react_project` and `webpack_react`. There's nothing in the Storybook documentation to explain the differences. The best thing I could find was a [stack overflow question](https://stackoverflow.com/questions/71074658/whats-the-difference-react-vs-react-project-vs-webpack-react-for-storybook) which suggests the difference is in what dependencies are added to `package.json`.
 
@@ -100,7 +100,7 @@ I checked the changes made to `package.json` and didn't see anything too weird. 
 }
 ```
 
-I'll integrate the eslint config into my main eslint config later. As well as installing Storybook, the setup script adds some configuration files in `.storybook` and a complete set of example components and stories in `stories`.
+I'll integrate the eslint config into my main eslint config later. As well as installing Storybook, the setup script adds some configuration files in `.storybook` and a complete set of example components and stories in `stories`. This is the `main.ts` config file.
 
 ```ts
 import type { StorybookConfig } from "@storybook/react-vite";
@@ -309,29 +309,11 @@ http-server@14.1.1
 Ok to proceed? (y) y
 
 Starting up http-server, serving /Users/tim/GitHub/infinisheet/storybook-static
-
-http-server version: 14.1.1
-
-http-server settings: 
-CORS: disabled
-Cache: 3600 seconds
-Connection Timeout: 120 seconds
-Directory Listings: visible
-AutoIndex: visible
-Serve GZIP Files: false
-Serve Brotli Files: false
-Default File Extension: none
-
-Available on:
-  http://127.0.0.1:8080
-  http://192.168.1.94:8080
-  http://192.168.1.190:8080
-Hit CTRL-C to stop the server
 ```
 
 That worked. Looks and behaves just like the dev server.
 
-There are instructions on how to [deploy the built app using GitHub Pages](https://storybook.js.org/docs/sharing/publish-storybook#github-pages) which would allow me to include the Storybook as part of my online documentation.
+There are instructions on how to [deploy the built app using GitHub Pages](https://storybook.js.org/docs/sharing/publish-storybook#github-pages) which would allow me to include storybook as part of my online documentation.
 
 There's no obvious option for specifying the base path that the static app will be served from. Vite has a [base config option](https://vite.dev/guide/build#public-base-path) for this. There's a Storybook [discussion](https://github.com/storybookjs/storybook/discussions/17433) that suggests you can [dynamically adjust the Vite config](https://storybook.js.org/docs/api/main-config/main-config-vite-final) that Storybook uses to build. 
 
@@ -489,7 +471,7 @@ If you click on the icon next to the drop down you can multi-select configs so t
 
 # ESLint
 
-The final, and most time consuming step, was setting up ESLint to use the storybook plugin. I removed the old style eslint config that `storybook init` added to the root `package.json`, then attempted to merge the Storybook plugin config into my usual per app `eslint.config.mjs. 
+The final, and most time consuming step, was setting up ESLint to use the storybook plugin. I removed the old style eslint config that `storybook init` added to the root `package.json`, then attempted to merge the Storybook plugin config into my usual per app `eslint.config.mjs`. 
 
 ```ts
 import configs from "../../eslint.config.mjs";
