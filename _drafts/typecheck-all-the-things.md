@@ -58,7 +58,7 @@ In my case, I'm mocking a scroll handler passed to the `VirtualList` `onScroll` 
 
 My first attempt was `vi.fn<VirtualListProps.onScroll>`. That doesn't work because you can't use `.` syntax to access the member of a type. However, the error message very helpfully explains I should use `VirtualListProps['onScroll']` instead.
 
-Which doesn't work either. This time the error message tells me that `((offset: number, newScrollState: ScrollState) => void) | undefined` does not satisfy the constraint 'Procedure'. Not quite as helpful but I can see what the problem is. The `onScroll` prop is optional so has a type signature that's the union of the function I want and `undefined`. 
+Which doesn't work either. This time the error message tells me that `((offset: number, newScrollState: ScrollState) => void) | undefined` does not satisfy the constraint 'Procedure'. Not quite as helpful but I can see what the problem is. The `onScroll` prop is optional so has a type signature that's the union of the function type I want and `undefined`. 
 
 Some light Googling leads me to the TypeScript utility function [Exclude](https://www.typescriptlang.org/docs/handbook/utility-types.html#excludeuniontype-excludedmembers) which constructs a type by excluding types from an existing union. Which gets me to the final solution that does work.
 
