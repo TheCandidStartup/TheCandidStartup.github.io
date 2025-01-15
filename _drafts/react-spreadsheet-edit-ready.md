@@ -17,11 +17,62 @@ I've been working towards this point for a while and I'm pretty close. Selection
 
 # Data Interface for Cell Size
 
-* Get item offset mapping for row/column given snapshot
+* Currently cell width/height hardcoded in `VirtualSpreadsheet`
+* Correct cell size depends on the data in that cell
+* Cell size should eventually be editable
+* Should be part of the data interface
+
+```ts
+export interface SpreadsheetData<Snapshot> {
+  subscribe(onDataChange: () => void): () => void,
+  getSnapshot(): Snapshot,
+
+  getRowCount(snapshot: Snapshot): number,
+  getRowItemOffsetMapping(snapshot: Snapshot): ItemOffsetMapping,
+  getColumnCount(snapshot: Snapshot): number,
+  getColumnItemOffsetMapping(snapshot: Snapshot): ItemOffsetMapping,
+  getCellValue(snapshot: Snapshot, row: number, column: number): CellValue;
+  getCellFormat(snapshot: Snapshot, row: number, column: number): string | undefined;
+}
+```
+
+* Added two new methods that return an `ItemOffsetMapping` object that describes sizes and offsets in one dimension
+* Replaced hardcoded mapping objects created in `VirtualSpreadsheet` with calls to new data interface methods
+* Needed to update all implementations of SpreadsheetData to add the new methods
+* I have an `EmptySpreadsheetData` implementation which has appropriate defaults for all methods
+* I avoided pointless copying for my test implementations of the interface by starting from `TestData extends EmptySpreadsheetData` rather than `TestData implements SpreadsheetData<number>`
+* The `ItemOffsetMapping` interface is defined in `react-virtual-scroll` so needed to be imported
+* [API Extractor]({% link _posts/2024-07-19-bootstrapping-api-extractor.md %}) reminded me that I needed to re-export it from `react-spreadsheet` to have a complete public API.
+
+```
+Error: dist/index.d.ts:24:5 - (ae-forgotten-export)
+  The symbol "ItemOffsetMapping" needs to be exported by the entry point index.d.ts
+```
+
+* Once I did that I got a load of new errors
+
+```
+Warning: react-virtual-scroll/src/VirtualBase.ts:109:1 - (ae-unresolved-link)
+  The @link reference could not be resolved: 
+  The package "@candidstartup/react-spreadsheet" does not have an export "VirtualList"
+Warning: react-virtual-scroll/src/VirtualBase.ts:109:1 - (ae-unresolved-link)
+  The @link reference could not be resolved: 
+  The package "@candidstartup/react-spreadsheet" does not have an export "VirtualGrid"
+Error: react-virtual-scroll/src/VirtualContainer.tsx:1:1 - (ae-wrong-input-file-type)
+  Incorrect file type; API Extractor expects to analyze compiler outputs with .d.ts extension
+  Troubleshooting tips: https://api-extractor.com/link/dts-error
+```
+
+* This took me a while to work out
+* Importing and exporting `ItemOffsetMapping` resulted in `import { ItemOffsetMapping } from '@candidstartup/react-virtual-scroll'` being added to the `index.d.ts` file for `react-spreadsheet`. Makes sense.
+* The import was being resolved by parsing the source code within `react-virtual-scroll` rather than using its `index.d.ts`.
+* Turns out that this is the first time I've used a type defined in one package as part of the API of another. By default API Extractor uses the default `tsconfig.json` which does indeed [resolve inter-package references within the monorepo]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}) by reading source code.
+* I just needed to add the `tsconfigFilePath: "tsconfig.build.json"` option to `api-extractor.json`
 
 # Data Interface for Cell Edit
 
 * Set value and format
+* Naive error handling for now - return true/false. Existing implementations of interface return false.
 
 # Content Alignment
 
