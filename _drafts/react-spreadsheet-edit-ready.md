@@ -72,13 +72,69 @@ Error: react-virtual-scroll/src/VirtualContainer.tsx:1:1 - (ae-wrong-input-file-
 # Data Interface for Cell Edit
 
 * Set value and format
+* When typing text into Excel, the input is parsed to try and determine the format. The end result is that both value and format are set for the cell.
 * Naive error handling for now - return true/false. Existing implementations of interface return false.
+
+```ts
+export interface SpreadsheetData<Snapshot> {
+  ...
+  setCellValueAndFormat(row: number, column: number, value: CellValue, 
+    format: string | undefined): boolean;
+}
+```
 
 # Content Alignment
 
-* Numbers align right in each cell
-* Text aligns left
-* Logicals and errors align in the center
+* Excel and Google Sheets align content in cell based on type
+  * Numbers (including dates) align right in each cell
+  * Text aligns left
+  * Logicals and errors align in the center
+* Seems like a minor feature but adds a lot of power
+* Implement by adding modifier classnames to each cell based on type
+* Now you can do all kinds of interesting presentational things based on type - alignment just tip of the iceberg
+
+```ts
+export interface VirtualSpreadsheetTheme {
+  ...
+  VirtualSpreadsheet_Cell__Type_string: string,
+  VirtualSpreadsheet_Cell__Type_number: string,
+  VirtualSpreadsheet_Cell__Type_boolean: string,
+  VirtualSpreadsheet_Cell__Type_null: string,
+  VirtualSpreadsheet_Cell__Type_undefined: string,
+  VirtualSpreadsheet_Cell__Type_CellError: string,
+}
+```
+
+* Added the new class names to the spreadsheet theme object and updated `VirtualSpreadsheet.css`
+
+```css
+.VirtualSpreadsheet_Cell__Type_string {
+  text-align: left;
+  padding-left: 2px;
+}
+
+.VirtualSpreadsheet_Cell__Type_number {
+  text-align: right;
+  padding-right: 2px;
+}
+
+.VirtualSpreadsheet_Cell__Type_boolean {
+  text-align: center;
+}
+
+.VirtualSpreadsheet_Cell__Type_null {
+  text-align: center;
+}
+
+.VirtualSpreadsheet_Cell__Type_undefined {
+  text-align: center;
+  background-color: whitesmoke;
+}
+
+.VirtualSpreadsheet_Cell__Type_CellError {
+  text-align: center;
+}
+```
 
 # Keyboard Behavior
 
