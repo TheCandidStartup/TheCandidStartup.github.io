@@ -5,11 +5,13 @@ tags: frontend
 
 Something weird happened the other day.  I opened up one of my unit tests in VS Code to refresh my memory on how a component worked. VS Code reported that the test file had four TypeScript errors. I checked another unit test. That had errors too.
 
-The tests are in my `react-virtual-scroll` package which I haven't touched for a few weeks. I've made other changes that triggered my Build CI workflow several times. All succeeded without errors. I run all my unit tests locally. No problems reported.
+The tests are in my `react-virtual-scroll` package which I haven't touched for a few weeks. I've made other changes that triggered my Build CI workflow several times. All succeeded without errors. 
+
+I run all my unit tests locally. No problems reported.
 
 # Working it out
 
-What's going on? The errors are all when I'm trying to call Vitest's [mocking API](https://vitest.dev/api/vi.html#mocking-functions-and-objects). Long story short, it turns out that these APIs [changed](https://vitest.dev/guide/migration.html#simplified-generic-types-of-mock-functions-e-g-vi-fn-t-mock-t) when I [upgraded to Vitest 2](https://www.thecandidstartup.org/2024/12/09/infinisheet-chore-updates.html). 
+What's going on? The errors all occur when I'm trying to call Vitest's [mocking API](https://vitest.dev/api/vi.html#mocking-functions-and-objects). Long story short, it turns out that these APIs [changed](https://vitest.dev/guide/migration.html#simplified-generic-types-of-mock-functions-e-g-vi-fn-t-mock-t) when I [upgraded to Vitest 2](https://www.thecandidstartup.org/2024/12/09/infinisheet-chore-updates.html). 
 
 I didn't notice. 
 
