@@ -136,32 +136,51 @@ export interface VirtualSpreadsheetTheme {
 }
 ```
 
-# Keyboard Behavior
+# Name and Formula Bar
 
-Looking in detail at Google Sheets behavior
-
-* Click on cell -> selected
-
-  * Return moves down a cell unless row is selected in which case it moves right a cell
-* Click on row header -> row selected
-  * Can move cell within selection using tab, shift-tab, return, shift-return. Arrow keys move cell and select it, deselecting row
-
-# Name Field
-
+* A proper spreadsheet has a formula input field at the top
+* Laid out Name and Formula input fields as you'd expect to see them - as an input bar across the top of the spreadsheet
 * Get rid of Scroll To prompt
-* Ends up positioned to left of formula bar
-* Row and Column names
-  * A single column or row is not a valid name. Standard is to use a range containing single row or column.
-  * I'm going to support both `A` and `A:A`
-  * Name field shows row range selection for single row, e.g. 10:10 if you selected row 10
-* Click on column header -> column selected
-  * Same as for row with first cell in column selected, name shows column range, e.g. E:E
-
-# Formula Bar
-
-* Displays text in cell with focus
+* Name positioned to left of formula bar
+* Formula displays text in cell with focus
 * Can edit the text
+* Real implementation has all kinds of complex and subtle behavior where formatting in formula field may not be same as cell to ensure value can be reliably round tripped, existing format retained unless edited value no longer compatible.
+* Not going to explore all of that now, just simplest thing to be edit ready
+* Formula field shows value as formatted in cell, when you edit use `parseValue` to determine value and format from scratch
 * Return to save changes back, Escape to go back to original content
+
+```ts
+function onFormulaKeyUp(event: React.KeyboardEvent<HTMLInputElement>) {
+  if (!focusCell)
+    return;
+
+  const rowIndex = focusCell[0];
+  const colIndex = focusCell[1];
+
+  if (event.key === 'Escape') {
+    updateFormula(rowIndex, colIndex);
+  }
+
+  if (event.key !== 'Enter')
+    return; 
+
+  let value: CellValue = undefined;
+  let format: string | undefined = undefined;
+  const parseData =  numfmt.parseValue(formula);
+  if (parseData) {
+    // number or boolean
+    value = parseData.v;
+    format = parseData.z;
+  } else {
+    // string
+    value = formula;
+  }
+
+  data.setCellValueAndFormat(rowIndex, colIndex, value, format);
+}
+```
+
+* Deal with error handling later
 
 # Cell Edit Mode
 
@@ -176,5 +195,41 @@ Looking in detail at Google Sheets behavior
 
 * When typing text into Excel, the input is parsed to try and determine the format. The end result is that both value and format are set for the cell.
 * If you type into a cell with a pure text format, the string is [left as is](https://support.microsoft.com/en-gb/office/stop-automatically-changing-numbers-to-dates-452bd2db-cc96-47d1-81e4-72cec11c4ed8).
-* Not clear if there are special cases when typing into cells with other kinds of format already applied.
+* See above for examples of similar rules
 * From StackOverflow questions it looks like Excel will parse general date input and set value and format regardless of any existing format
+
+# Keyboard Behavior
+
+Looking in detail at Google Sheets behavior
+
+* If no row/column selected
+  * Return puts cell into edit mode with caret at end of existing content, second return commits and moves down a cell
+  * Tab moves right a cell (no change in edit mode)
+  * Shift + Tab/Return does the same thing except moving in opposite direction
+  * Arrow keys move focus as expected
+* If row or column selected
+  * Arrow keys move focus and select cell
+  * Tab/Return move within the selection
+    * return moves across if row selected, no change in edit mode
+    * Tab moves down if column selected
+
+# TODO
+
+* Row and Column names
+  * A single column or row is not a valid name. Standard is to use a range containing single row or column.
+  * I'm going to support both `A` and `A:A`
+  * Name field shows row range selection for single row, e.g. 10:10 if you selected row 10
+* Click on column header -> column selected
+  * Same as for row with first cell in column selected, name shows column range, e.g. E:E
+
+* Formula round trip
+* Google Sheets displayed normalized value - formatted but with a hardcoded format rather than cell format
+  * Date: YYYY-MM-DD
+  * Time: hh:mm:ss
+  * Date Time: YYYY-MM-DD hh:mm:ss
+  * Currency: As number with two decimal digits, no currency symbol
+  * Percentage: Full fidelity number as percentage with % symbol
+  * boolean: TRUE or FALSE
+  * Other number: Full fidelity number (as many decimals as needed, scientific notation if too large or small)
+* Ensures value can be round tripped without loss
+* On update, format stays unchanged if parsed value is of same general class
