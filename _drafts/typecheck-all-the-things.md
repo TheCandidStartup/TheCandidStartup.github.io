@@ -1,6 +1,7 @@
 ---
 title: Typecheck All The Things
 tags: frontend
+thumbnail: /assets/images/frontend/ts-logo-128.png
 ---
 
 Something weird happened the other day.  I opened up one of my unit tests in VS Code to refresh my memory on how a component worked. VS Code reported that the test file had four TypeScript errors. I checked another unit test. That had errors too.
@@ -54,7 +55,7 @@ src/VirtualList.test.tsx:488:30 - error TS2558: Expected 0-1 type arguments, but
                                  ~~~~~~~~~~~~~~~~~~~~~~~~~
 ```
 
-In Vitest 1, `vi.fn` creates a mock function that accepts the specified array of parameter types and has the specified return type. In Vitest 2, it takes a single argument which is simply the type of the function you want to mock. 
+In Vitest 1, `vi.fn` creates a mock function that accepts the specified array of parameter types and has the specified return type. In Vitest 2, it takes a single argument which is simply the type of the function you want to mock. There's no change in runtime behavior. 
 
 In my case, I'm mocking a scroll handler passed to the `VirtualList` `onScroll` prop. The props are typed as `VirtualListProps`, so I should be able to extract the required type from `VirtualListProps.onScroll`, rather than writing it out by hand.
 
