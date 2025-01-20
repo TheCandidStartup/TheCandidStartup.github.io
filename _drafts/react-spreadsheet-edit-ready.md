@@ -191,12 +191,67 @@ function onFormulaKeyUp(event: React.KeyboardEvent<HTMLInputElement>) {
 * Escape removes caret/light blue outline and goes back to basic selection
 * Double click on cell -> edit mode
   * Cell outlined with both dark blue and light blue highlights immediately, caret appears
-  * Left-right arrow keys move within text, all other keys work the same way as selected mode
+  * arrow keys move within text, all other keys work the same way as selected mode
+* Added `cellValue` and `editMode` state
 
-* When typing text into Excel, the input is parsed to try and determine the format. The end result is that both value and format are set for the cell.
-* If you type into a cell with a pure text format, the string is [left as is](https://support.microsoft.com/en-gb/office/stop-automatically-changing-numbers-to-dates-452bd2db-cc96-47d1-81e4-72cec11c4ed8).
-* See above for examples of similar rules
-* From StackOverflow questions it looks like Excel will parse general date input and set value and format regardless of any existing format
+```ts
+const [cellValue, setCellValue] = React.useState("");
+const [editMode, setEditMode] = React.useState(false);
+```
+
+* Edit mode controls whether focus sink input is hidden below cell or placed on top for in place editing of content
+* Added opaque background to cells as seeing text caret underneath cell contents when not in edit mode got confusing
+* Cell value is the string in the focus sink input
+* Value is empty string when not in edit mode, same as formula when in edit mode
+* Existing spreadsheets, like Google Sheets, flip a cell into edit mode when you start typing, overwriting existing content
+* Having cell empty to start means we can use changed event as trigger for edit mode and naturally get overwrite behavior
+
+{% raw %}
+
+```tsx
+focusSink = <input
+  value={cellValue}
+  onChange={(event) => {
+    setCellValue(event.target?.value);
+    setEditMode(true);
+    setFormula(event.target?.value);
+  }}
+  style={{ zIndex: editMode ? 1 : -1, {...position} }}
+  {...rest}
+/>
+```
+
+{% endraw %}
+
+* You can get into edit mode without overwriting the cell contents by double clicking on the cell.
+* The other main trigger for entering edit mode is giving focus to the formula bar. Any changes made there are echoed to the cell value.
+
+{% raw %}
+
+```tsx
+<input className={theme?.VirtualSpreadsheet_Formula}
+  value={formula}
+  onChange={(event) => {
+    setFormula(event.target?.value);
+    if (focusCell)
+      setCellValue(event.target?.value);
+  }}
+  onFocus={() => {
+      if (focusCell) {
+        setCellValue(formula);
+        setEditMode(true);
+      }
+  }}
+  {...rest}
+/>
+```
+
+* After that there was a lot of fiddling around to make sure that everything fit together well
+  * Reset formula to stored value when switching to new cell or using `Escape` key
+  * Changing the behavior of the arrow keys in edit mode to move within the cell value being edited
+  * Surprisingly complex to make repeated click on same cell work properly. Don't want to reset in progress edited value but do need to change some state as a trigger for effect that gives the input box focus. 
+
+{% endraw %}
 
 # Keyboard Behavior
 
@@ -231,5 +286,6 @@ Looking in detail at Google Sheets behavior
   * Percentage: Full fidelity number as percentage with % symbol
   * boolean: TRUE or FALSE
   * Other number: Full fidelity number (as many decimals as needed, scientific notation if too large or small)
+  * If you type into a cell with a pure text format, the string is [left as is](https://support.microsoft.com/en-gb/office/stop-automatically-changing-numbers-to-dates-452bd2db-cc96-47d1-81e4-72cec11c4ed8).
 * Ensures value can be round tripped without loss
 * On update, format stays unchanged if parsed value is of same general class
