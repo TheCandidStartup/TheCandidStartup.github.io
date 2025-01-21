@@ -142,28 +142,17 @@ export interface VirtualSpreadsheetTheme {
 * Laid out Name and Formula input fields as you'd expect to see them - as an input bar across the top of the spreadsheet
 * Get rid of Scroll To prompt
 * Name positioned to left of formula bar
-* Formula displays text in cell with focus
+* Formula displays same text as cell with focus
+
+{% include candid-image.html src="/assets/images/react-spreadsheet/name-formula-layout.png" alt="Name Formula Bar Layout" %}
+
 * Can edit the text
 * Real implementation has all kinds of complex and subtle behavior where formatting in formula field may not be same as cell to ensure value can be reliably round tripped, existing format retained unless edited value no longer compatible.
 * Not going to explore all of that now, just simplest thing to be edit ready
 * Formula field shows value as formatted in cell, when you edit use `parseValue` to determine value and format from scratch
-* Return to save changes back, Escape to go back to original content
 
 ```ts
-function onFormulaKeyUp(event: React.KeyboardEvent<HTMLInputElement>) {
-  if (!focusCell)
-    return;
-
-  const rowIndex = focusCell[0];
-  const colIndex = focusCell[1];
-
-  if (event.key === 'Escape') {
-    updateFormula(rowIndex, colIndex);
-  }
-
-  if (event.key !== 'Enter')
-    return; 
-
+function CommitFormulaChange(rowIndex: number, colIndex: number) {
   let value: CellValue = undefined;
   let format: string | undefined = undefined;
   const parseData =  numfmt.parseValue(formula);
@@ -180,13 +169,11 @@ function onFormulaKeyUp(event: React.KeyboardEvent<HTMLInputElement>) {
 }
 ```
 
-* Deal with error handling later
+* Deal with error handling and round tripping another time
 
 # Cell Edit Mode
 
 * Once cell has focus, any text you type overwrites existing cell content, caret appears and cell gets additional outer outline in light blue (outside boundaries of cell)
-* Backspace to delete
-* Text echoed in formula bar
 * Text saved when you move to another cell
 * Escape removes caret/light blue outline and goes back to basic selection
 * Double click on cell -> edit mode
@@ -203,6 +190,22 @@ const [editMode, setEditMode] = React.useState(false);
 * Added opaque background to cells as seeing text caret underneath cell contents when not in edit mode got confusing
 * Cell value is the string in the focus sink input
 * Value is empty string when not in edit mode, same as formula when in edit mode
+
+```ts
+function updateFormula(rowIndex: number, colIndex: number, editMode: boolean) {
+  if (rowIndex < dataRowCount && colIndex < dataColumnCount) {
+    const dataValue = data.getCellValue(snapshot, rowIndex, colIndex);
+    const format = data.getCellFormat(snapshot, rowIndex, colIndex);
+    const value = formatContent(dataValue, format);
+    setFormula(value);
+    setCellValue(editMode ? value : "");
+  } else {
+    setFormula("");
+    setCellValue("");
+  }
+}
+```
+
 * Existing spreadsheets, like Google Sheets, flip a cell into edit mode when you start typing, overwriting existing content
 * Having cell empty to start means we can use changed event as trigger for edit mode and naturally get overwrite behavior
 
@@ -217,6 +220,7 @@ focusSink = <input
     setFormula(event.target?.value);
   }}
   style={{ zIndex: editMode ? 1 : -1, {...position} }}
+  onKeyDown={onEditValueKeyDown}
   {...rest}
 />
 ```
@@ -224,7 +228,7 @@ focusSink = <input
 {% endraw %}
 
 * You can get into edit mode without overwriting the cell contents by double clicking on the cell.
-* The other main trigger for entering edit mode is giving focus to the formula bar. Any changes made there are echoed to the cell value.
+* The other main trigger for entering edit mode is giving focus to or changing the value in the formula bar. Any changes made there are echoed to the cell value.
 
 {% raw %}
 
@@ -233,6 +237,7 @@ focusSink = <input
   value={formula}
   onChange={(event) => {
     setFormula(event.target?.value);
+    setEditMode(true);
     if (focusCell)
       setCellValue(event.target?.value);
   }}
@@ -242,21 +247,79 @@ focusSink = <input
         setEditMode(true);
       }
   }}
+  onKeyDown={onEditValueKeyDown}
   {...rest}
 />
 ```
 
-* After that there was a lot of fiddling around to make sure that everything fit together well
-  * Reset formula to stored value when switching to new cell or using `Escape` key
-  * Changing the behavior of the arrow keys in edit mode to move within the cell value being edited
-  * Surprisingly complex to make repeated click on same cell work properly. Don't want to reset in progress edited value but do need to change some state as a trigger for effect that gives the input box focus. 
-
 {% endraw %}
 
-# Keyboard Behavior
+# Key Down Handler
+
+* Key down handling is what makes this component feel like a spreadsheet rather than a grid in fancy dress
+* There's lots of subtle behavior changes depending on whether the component is in edit mode, or whether a cell, row or column is selected
+* Once you're in edit mode there's no difference in behavior between the formula and cell edit inputs
+* I use the same input handler for both
+
+```ts
+function onEditValueKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  if (!focusCell)
+    return;
+
+  const row = focusCell[0];
+  const col = focusCell[1];
+
+  if (editMode) {
+    switch (event.key) {
+      case "Escape": { 
+        updateFormula(row, col, false); 
+        setEditMode(false); 
+        setFocusCell([row, col]); 
+      } 
+      break;
+
+      case "Enter": { 
+        CommitFormulaChange(row, col); 
+        updateFormula(row, col, false); 
+        setEditMode(false);
+        nextCell(row,col,true,event.shiftKey);
+      } 
+      break;
+
+      case "Tab": { 
+        CommitFormulaChange(row, col); 
+        updateFormula(row, col, false); 
+        setEditMode(false);
+        nextCell(row,col,false,event.shiftKey);
+        event.preventDefault();
+      } 
+      break;
+    }
+  } else {
+    switch (event.key) {
+      case "ArrowDown": { selectItem(row+1,col); event.preventDefault(); } break;
+      case "ArrowUp": { selectItem(row-1,col); event.preventDefault(); } break;
+      case "ArrowLeft": { selectItem(row,col-1); event.preventDefault(); } break;
+      case "ArrowRight": { selectItem(row,col+1); event.preventDefault(); } break;
+      case "Tab": { nextCell(row,col,false,event.shiftKey); event.preventDefault(); } break;
+      case "Enter": { 
+        if (isInSelection(row,col)) {
+          nextCell(row,col,true,event.shiftKey);
+        } else {
+          updateFormula(row, col, true); 
+          setEditMode(true);
+        }
+      } 
+      break;
+    }
+  }
+}
+```
+
+* Reset formula to stored value when switching to new cell or using `Escape` key
+* Use default behavior for arrow keys in edit mode to move within the cell value being edited
 
 Looking in detail at Google Sheets behavior
-
 * If no row/column selected
   * Return puts cell into edit mode with caret at end of existing content, second return commits and moves down a cell
   * Tab moves right a cell (no change in edit mode)
@@ -267,6 +330,36 @@ Looking in detail at Google Sheets behavior
   * Tab/Return move within the selection
     * return moves across if row selected, no change in edit mode
     * Tab moves down if column selected
+
+* Added `isInSelection` utility function to determine whether cell is within a selected row or column
+* Added `nextCell` utility function to determine appropriate cell to move to for `Tab` or `Return` and whether selection or just focus cell needs to change
+
+```ts
+  function nextCell(row: number, col: number, isVertical: boolean, isBackwards: boolean) {
+    if (selection[0] === undefined && selection[1] === undefined)
+      return;
+
+    const offset = isBackwards ? -1 : 1;
+
+    if (selection[0] === undefined) {
+      // Column selected - move vertically within existing selection
+      selectItem(row+offset, col, true);
+    } else if (selection[1] === undefined) {
+      // Row selected - move horizontally within existing selection
+      selectItem(row, col+offset, true);
+    } else {
+      // Cell selected
+      if (isVertical)
+        selectItem(row+offset,col);
+      else
+        selectItem(row,col+offset);
+    }
+  }
+  ```
+
+# Focus
+
+  * Surprisingly complex to make repeated click on same cell work properly. Don't want to reset in progress edited value but do need to change some state as a trigger for effect that gives the input box focus. 
 
 # TODO
 
