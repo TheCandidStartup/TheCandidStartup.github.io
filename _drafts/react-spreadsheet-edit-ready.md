@@ -17,10 +17,7 @@ I've been working towards this point for a while and I'm pretty close. Selection
 
 # Data Interface for Cell Size
 
-* Currently cell width/height hardcoded in `VirtualSpreadsheet`
-* Correct cell size depends on the data in that cell
-* Cell size should eventually be editable
-* Should be part of the data interface
+Currently cell width and height are hardcoded in the `VirtualSpreadsheet` component. The correct cell size to use depends on the data in that cell. Eventually, the cell size will need to be editable. It should definitely be part of the data interface.
 
 ```ts
 export interface SpreadsheetData<Snapshot> {
@@ -36,20 +33,20 @@ export interface SpreadsheetData<Snapshot> {
 }
 ```
 
-* Added two new methods that return an `ItemOffsetMapping` object that describes sizes and offsets in one dimension
-* Replaced hardcoded mapping objects created in `VirtualSpreadsheet` with calls to new data interface methods
-* Needed to update all implementations of SpreadsheetData to add the new methods
-* I have an `EmptySpreadsheetData` implementation which has appropriate defaults for all methods
-* I avoided pointless copying for my test implementations of the interface by starting from `TestData extends EmptySpreadsheetData` rather than `TestData implements SpreadsheetData<number>`
-* The `ItemOffsetMapping` interface is defined in `react-virtual-scroll` so needed to be imported
-* [API Extractor]({% link _posts/2024-07-19-bootstrapping-api-extractor.md %}) reminded me that I needed to re-export it from `react-spreadsheet` to have a complete public API.
+I've added two new methods that return an `ItemOffsetMapping` object that describes sizes and offsets in one dimension. Calls to these methods replace the hardcoded mapping objects currently used by `VirtualSpreadsheet`.
+
+I needed to update all my existing implementations of `SpreadsheetData` to add the new methods. I was surprised how many I had. Given that I'll be making lots of other changes in future, I want to minimize the pointless busy work of adding default implementations for new methods.
+
+I have an `EmptySpreadsheetData` implementation which has appropriate defaults for all methods. I changed my other implementations to start from  `TestData extends EmptySpreadsheetData` rather than `TestData implements SpreadsheetData<number>`.
+
+The `ItemOffsetMapping` interface is defined in `react-virtual-scroll` so needed to be imported. [API Extractor]({% link _posts/2024-07-19-bootstrapping-api-extractor.md %}) reminded me that I needed to re-export it from `react-spreadsheet` to have a complete public API.
 
 ```
 Error: dist/index.d.ts:24:5 - (ae-forgotten-export)
   The symbol "ItemOffsetMapping" needs to be exported by the entry point index.d.ts
 ```
 
-* Once I did that I got a load of new errors
+Once I did that I got a load of new errors.
 
 ```
 Warning: react-virtual-scroll/src/VirtualBase.ts:109:1 - (ae-unresolved-link)
@@ -63,17 +60,17 @@ Error: react-virtual-scroll/src/VirtualContainer.tsx:1:1 - (ae-wrong-input-file-
   Troubleshooting tips: https://api-extractor.com/link/dts-error
 ```
 
-* This took me a while to work out
-* Importing and exporting `ItemOffsetMapping` resulted in `import { ItemOffsetMapping } from '@candidstartup/react-virtual-scroll'` being added to the `index.d.ts` file for `react-spreadsheet`. Makes sense.
-* The import was being resolved by parsing the source code within `react-virtual-scroll` rather than using its `index.d.ts`.
-* Turns out that this is the first time I've used a type defined in one package as part of the API of another. By default API Extractor uses the default `tsconfig.json` which does indeed [resolve inter-package references within the monorepo]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}) by reading source code.
-* I just needed to add the `tsconfigFilePath: "tsconfig.build.json"` option to `api-extractor.json`
+This took me a while to work out. Importing and exporting `ItemOffsetMapping` resulted in `import { ItemOffsetMapping } from '@candidstartup/react-virtual-scroll'` being added to the `index.d.ts` file for `react-spreadsheet`. Makes sense.
+
+The import was being resolved by parsing the source code within `react-virtual-scroll` rather than using its `index.d.ts`. It turns out that this is the first time I've used a type defined in one package as part of the API of another. By default API Extractor uses the default `tsconfig.json` which does indeed [resolve inter-package references within the monorepo]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}) by reading source code.
+
+I needed to add `tsconfigFilePath: "tsconfig.build.json"` to `api-extractor.json` to force it to use built packages when resolving dependencies.
 
 # Data Interface for Cell Edit
 
-* Set value and format
-* When typing text into Excel, the input is parsed to try and determine the format. The end result is that both value and format are set for the cell.
-* Naive error handling for now - return true/false. Existing implementations of interface return false.
+The data interface also needs a method for changing the contents of a cell. I decided to use a single method that sets both value and format. When typing text into a spreadsheet, the input is parsed to try and determine the format. The end result is that both value and format need to be set for the cell.
+
+Cell values, particularly numbers, depend on the format for correct interpretation. It seems safest to require value and format to be set together, even when editing.
 
 ```ts
 export interface SpreadsheetData<Snapshot> {
@@ -83,15 +80,16 @@ export interface SpreadsheetData<Snapshot> {
 }
 ```
 
+I'm going with naive error handling for now, returning true or false. Existing read only implementations return false. I'll revisit error handling when I better understand the sort of errors that might be encountered with a real implementation.
+
 # Content Alignment
 
-* Excel and Google Sheets align content in cell based on type
-  * Numbers (including dates) align right in each cell
-  * Text aligns left
-  * Logicals and errors align in the center
-* Seems like a minor feature but adds a lot of power
-* Implement by adding modifier classnames to each cell based on type
-* Now you can do all kinds of interesting presentational things based on type - alignment just tip of the iceberg
+Excel and Google Sheets align content in a cell based on type.
+* Numbers (including dates) align right in each cell
+* Text aligns left
+* Booleans and errors align in the center
+
+This might seem like a minor feature but the way I've implemented it adds a lot of power. Each cell has an extra modifier CSS classname based on type. Now you can do all kinds of interesting presentational things based on type. Alignment is just the tip of the iceberg.
 
 ```ts
 export interface VirtualSpreadsheetTheme {
@@ -105,7 +103,7 @@ export interface VirtualSpreadsheetTheme {
 }
 ```
 
-* Added the new class names to the spreadsheet theme object and updated `VirtualSpreadsheet.css`
+I added the new class names to the spreadsheet theme object and updated `VirtualSpreadsheet.css`.
 
 ```css
 .VirtualSpreadsheet_Cell__Type_string {
@@ -138,18 +136,13 @@ export interface VirtualSpreadsheetTheme {
 
 # Name and Formula Bar
 
-* A proper spreadsheet has a formula input field at the top
-* Laid out Name and Formula input fields as you'd expect to see them - as an input bar across the top of the spreadsheet
-* Get rid of Scroll To prompt
-* Name positioned to left of formula bar
-* Formula displays same text as cell with focus
+A proper spreadsheet has a *Formula* input field at the top. I laid out *Name* and *Formula* input fields as you'd expect to see them - as an input bar across the top of the spreadsheet with *Name* on the left and *Formula* on the right. I got rid of the `Scroll To` label that was left over from the original grid control sample app. 
 
 {% include candid-image.html src="/assets/images/react-spreadsheet/name-formula-layout.png" alt="Name Formula Bar Layout" %}
 
-* Can edit the text
-* Real implementation has all kinds of complex and subtle behavior where formatting in formula field may not be same as cell to ensure value can be reliably round tripped, existing format retained unless edited value no longer compatible.
-* Not going to explore all of that now, just simplest thing to be edit ready
-* Formula field shows value as formatted in cell, when you edit use `parseValue` to determine value and format from scratch
+For now, *Formula* displays the same text as the cell with the focus. Real spreadsheet implementations have all kinds of complex and subtle behavior where the formatting in the formula field may not be same as the cell display format. For example, you need to ensure that the value can be reliably round tripped without losing precision. 
+
+I'm not going to explore all of that now, just start with the simplest thing that lets users enter new data. Whatever text is present when the user hits `Enter` is parsed using the [numfmt](https://github.com/borgar/numfmt) package [parseValue](https://github.com/borgar/numfmt/blob/master/API.md#-parsevaluevalue--parsedata--null) method.
 
 ```ts
 function CommitFormulaChange(rowIndex: number, colIndex: number) {
@@ -169,27 +162,24 @@ function CommitFormulaChange(rowIndex: number, colIndex: number) {
 }
 ```
 
-* Deal with error handling and round tripping another time
+The parsed value and format are applied to the cell, again ignoring error handling for now. 
 
 # Cell Edit Mode
 
-* Once cell has focus, any text you type overwrites existing cell content, caret appears and cell gets additional outer outline in light blue (outside boundaries of cell)
-* Text saved when you move to another cell
-* Escape removes caret/light blue outline and goes back to basic selection
-* Double click on cell -> edit mode
-  * Cell outlined with both dark blue and light blue highlights immediately, caret appears
-  * arrow keys move within text, all other keys work the same way as selected mode
-* Added `cellValue` and `editMode` state
+Real spreadsheets also allow you to edit cell content in place. The focused cell is either in display mode or edit mode. If you start typing text into a cell in display mode, it switches into edit mode with the new text overwriting the existing value. You can switch into edit mode and preserve the existing value by pressing `Enter`, double clicking or by using the *Formula* field.
+
+The changes are saved when you press `Enter` or move to another cell. Alternatively, press `Escape` to revert your changes. 
+
+The implementation uses new `cellValue` and `editMode` state.
 
 ```ts
 const [cellValue, setCellValue] = React.useState("");
 const [editMode, setEditMode] = React.useState(false);
 ```
 
-* Edit mode controls whether focus sink input is hidden below cell or placed on top for in place editing of content
-* Added opaque background to cells as seeing text caret underneath cell contents when not in edit mode got confusing
-* Cell value is the string in the focus sink input
-* Value is empty string when not in edit mode, same as formula when in edit mode
+The `editMode` state controls whether the focus sink input field is hidden below the focused cell (display mode) or placed on top (edit mode). I changed the grid styling so that cells have an opaque background. It was too confusing seeing the text caret underneath the cell contents when in display mode.
+
+The `cellValue` state controls the value shown in the focus sink input field. The value is an empty string when in display mode and the same as *Formula* when in edit mode. 
 
 ```ts
 function updateFormula(rowIndex: number, colIndex: number, editMode: boolean) {
@@ -206,8 +196,7 @@ function updateFormula(rowIndex: number, colIndex: number, editMode: boolean) {
 }
 ```
 
-* Existing spreadsheets, like Google Sheets, flip a cell into edit mode when you start typing, overwriting existing content
-* Having cell empty to start means we can use changed event as trigger for edit mode and naturally get overwrite behavior
+Existing spreadsheets, like Google Sheets, flip a cell into edit mode when you start typing, overwriting existing content. Having the input field empty to start with means we can use the `onChange` event as a trigger to switch to edit mode and naturally get overwrite behavior.
 
 {% raw %}
 
@@ -227,8 +216,7 @@ focusSink = <input
 
 {% endraw %}
 
-* You can get into edit mode without overwriting the cell contents by double clicking on the cell.
-* The other main trigger for entering edit mode is giving focus to or changing the value in the formula bar. Any changes made there are echoed to the cell value.
+Interacting with *Formula* also enables edit mode. 
 
 {% raw %}
 
@@ -256,10 +244,9 @@ focusSink = <input
 
 # Key Down Handler
 
-* Key down handling is what makes this component feel like a spreadsheet rather than a grid in fancy dress
-* There's lots of subtle behavior changes depending on whether the component is in edit mode, or whether a cell, row or column is selected
-* Once you're in edit mode there's no difference in behavior between the formula and cell edit inputs
-* I use the same input handler for both
+The details of key down handling are what makes `VirtualSpreadsheet` feel like a spreadsheet rather than a grid in fancy dress. There's lots of subtle behavior changes depending on edit mode, and whether a cell, row or column is selected.
+
+Once you're in edit mode there's no difference in behavior between the formula and focus sink inputs. I use the same input handler for both.
 
 ```ts
 function onEditValueKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -316,23 +303,13 @@ function onEditValueKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
 }
 ```
 
-* Reset formula to stored value when switching to new cell or using `Escape` key
-* Use default behavior for arrow keys in edit mode to move within the cell value being edited
+You can use `Enter` and `Tab` to navigate around the grid in both display and edit modes. Hold down the shift key to move backwards. When a cell is selected, `Enter` moves up and down while `Tab` moves right and left. When a row or column is selected, `Enter` and `Tab` both move the focus cell backwards and forwards within the selection. 
 
-Looking in detail at Google Sheets behavior
-* If no row/column selected
-  * Return puts cell into edit mode with caret at end of existing content, second return commits and moves down a cell
-  * Tab moves right a cell (no change in edit mode)
-  * Shift + Tab/Return does the same thing except moving in opposite direction
-  * Arrow keys move focus as expected
-* If row or column selected
-  * Arrow keys move focus and select cell
-  * Tab/Return move within the selection
-    * return moves across if row selected, no change in edit mode
-    * Tab moves down if column selected
+In contrast, the arrow keys can only be used to navigate in display mode. In edit mode they work as normal for moving around within the text being edited.
 
-* Added `isInSelection` utility function to determine whether cell is within a selected row or column
-* Added `nextCell` utility function to determine appropriate cell to move to for `Tab` or `Return` and whether selection or just focus cell needs to change
+We go back to display mode and reset the content of *Formula* to the stored value when moving to a new cell or using the `Escape` key.
+
+The `isInSelection` utility function is used to determine whether a cell is within a selected row or column. The `nextCell` utility function determines the appropriate cell to move to for `Enter` and `Tab`.
 
 ```ts
   function nextCell(row: number, col: number, isVertical: boolean, isBackwards: boolean) {
