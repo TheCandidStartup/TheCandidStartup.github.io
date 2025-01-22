@@ -359,26 +359,16 @@ Looking in detail at Google Sheets behavior
 
 # Focus
 
-  * Surprisingly complex to make repeated click on same cell work properly. Don't want to reset in progress edited value but do need to change some state as a trigger for effect that gives the input box focus. 
+* Surprisingly complex to make repeated click on same cell work properly. Don't want to reset in progress edited value but do need to change some state as a trigger for effect that gives the input box focus. 
 
-# TODO
+# Try It!
 
-* Row and Column names
-  * A single column or row is not a valid name. Standard is to use a range containing single row or column.
-  * I'm going to support both `A` and `A:A`
-  * Name field shows row range selection for single row, e.g. 10:10 if you selected row 10
-* Click on column header -> column selected
-  * Same as for row with first cell in column selected, name shows column range, e.g. E:E
+Start by selecting something and then moving around the grid using arrow keys, tab, shift-tab, return and shift-return. See how things change depending on whether you select a cell, row or column to start. 
 
-* Formula round trip
-* Google Sheets displayed normalized value - formatted but with a hardcoded format rather than cell format
-  * Date: YYYY-MM-DD
-  * Time: hh:mm:ss
-  * Date Time: YYYY-MM-DD hh:mm:ss
-  * Currency: As number with two decimal digits, no currency symbol
-  * Percentage: Full fidelity number as percentage with % symbol
-  * boolean: TRUE or FALSE
-  * Other number: Full fidelity number (as many decimals as needed, scientific notation if too large or small)
-  * If you type into a cell with a pure text format, the string is [left as is](https://support.microsoft.com/en-gb/office/stop-automatically-changing-numbers-to-dates-452bd2db-cc96-47d1-81e4-72cec11c4ed8).
-* Ensures value can be round tripped without loss
-* On update, format stays unchanged if parsed value is of same general class
+Use one of the three different ways to go into edit mode and try to make some changes. Do you use the formula bar or the in-cell input?
+
+{% include candid-iframe.html src="/assets/dist/react-spreadsheet-edit-ready/index.html" width="100%" height="fit-content" %}
+
+# Next Time
+
+`VirtualSpreadsheet` is edit ready but changes don't stick. Before I address that, I'm going to go back and build out a [Storybook]({% link _posts/2025-01-13-bootstrapping-storybook.md %}) containing `VirtualSpreadsheet` and all the other [Infinisheet]({% link _topics/infinisheet.md %}) components.
