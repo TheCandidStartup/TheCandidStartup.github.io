@@ -336,7 +336,21 @@ The `isInSelection` utility function is used to determine whether a cell is with
 
 # Focus
 
-* Surprisingly complex to make repeated click on same cell work properly. Don't want to reset in progress edited value but do need to change some state as a trigger for effect that gives the input box focus. 
+The most difficult thing was making repeated clicks on the same cell work properly. I don't want to reselect the cell and reset any in progress edited value. Easy, I thought, add an early out to `selectItem` that does nothing if the selection hasn't changed. However, I then found that the cell would lose focus on repeated clicks. 
+
+There's a grid level mouse click handler that determines which cell has been hit and makes that the focused cell, moving the focus sink input underneath it. A React effect is used to give [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) to the focus sink. We need an effect as the focus sink isn't created until the first time a cell is selected. As we don't want to steal focus from other elements on the page, the effect is dependent on the `focusCell` state. Which neatly also handles the case when moving from cell to cell. When `focusCell` changes, make sure the cell has focus.
+
+So, if you click the focus cell again in display mode, the browser removes focus from the focus sink, invokes the grid mouse click handler which sees that the same cell has been clicked again and does nothing. The `focusCell` state doesn't change, the effect doesn't run and we've lost focus.
+
+After a few false tries I ended up arranging the code so that repeated clicks don't change the selection, don't apply any side effects associated with a change in focus cell but do set the `focusCell` state. 
+
+You might think that won't do anything because React compares old and new state so that it can optimize for the case where a state value hasn't changed. We get away with it because `focusCell` is an array of `[row, column]` and React uses a shallow compare.
+
+I'm not happy with this solution. It feels fragile and "too clever". 
+
+I later realized that I could handle this case more directly by [explicitly giving focus in the click handler](https://react.dev/learn/manipulating-the-dom-with-refs#example-focusing-a-text-input). However, I would still need the effect to handle focus when the focus sink is first created. In the end I would just be replacing seemingly redundant calls to `setFocusCell([row, column])` with `focusSinkRef.current?.focus()`.
+
+I'm not sure which I dislike more, so left things as they are for now.
 
 # Try It!
 
