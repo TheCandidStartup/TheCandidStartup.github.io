@@ -5,7 +5,7 @@ tags: react-spreadsheet
 thumbnail: /assets/images/boring-spreadsheet.png
 ---
 
-It's been a couple of months since I last worked on features for my scalable React spreadsheet component. I got distracted by adding [Playwright]({% link _posts/2024-12-16-bootstrapping-playwright.md %}) and [Storybook]({% link _posts/2025-01-13-bootstrapping-storybook.md %}) to my arsenal of development tools. The next step is to add all my components to Storybook and publish it as part of my documentation set. 
+It's been a couple of months since I [last worked]({% link _posts/2024-11-25-react-spreadsheet-decoupled-rendering.md %}) on features for my scalable [React spreadsheet]({% link _topics/react-spreadsheet.md %}) component. I got distracted by adding [Playwright]({% link _posts/2024-12-16-bootstrapping-playwright.md %}) and [Storybook]({% link _posts/2025-01-13-bootstrapping-storybook.md %}) to my arsenal of development tools. The next step is to add all my components to Storybook and publish it as part of my documentation set. 
 
 Before I do that, I want to get my spreadsheet component into a good place. I want it to be *Edit Ready*. 
 
@@ -13,7 +13,7 @@ Before I do that, I want to get my spreadsheet component into a good place. I wa
 
 I'm building a scalable spreadsheet frontend component because ultimately I want to build a scalable spreadsheet backend. So far, I have a [data interface]({% link _posts/2024-09-30-react-spreadsheet-data-interface.md %}) and some [fake data]({% link _posts/2024-10-07-react-spreadsheet-data-model.md %}). I'll need a real implementation once I have a frontend that can edit data. 
 
-I've been working towards this point for a while and I'm pretty close. Selection is supported with an input box positioned under the focus cell ready to receive changes. It's mostly a matter of tidying up at this point.
+I've been working towards this for a while and I'm pretty close. [Selection is supported]({% link _posts/2024-10-14-react-spreadsheet-selection-focus.md %}) with an [input box positioned under the focus cell]({% link _posts/2024-10-28-react-spreadsheet-event-handling.md %}) ready to receive changes. It's mostly a matter of tidying up at this point.
 
 # Data Interface for Cell Size
 
@@ -62,13 +62,13 @@ Error: react-virtual-scroll/src/VirtualContainer.tsx:1:1 - (ae-wrong-input-file-
 
 This took me a while to work out. Importing and exporting `ItemOffsetMapping` resulted in `import { ItemOffsetMapping } from '@candidstartup/react-virtual-scroll'` being added to the `index.d.ts` file for `react-spreadsheet`. Makes sense.
 
-The import was being resolved by parsing the source code within `react-virtual-scroll` rather than using its `index.d.ts`. It turns out that this is the first time I've used a type defined in one package as part of the API of another. By default API Extractor uses the default `tsconfig.json` which does indeed [resolve inter-package references within the monorepo]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}) by reading source code.
+The import was being resolved by parsing the source code within `react-virtual-scroll` rather than using its `index.d.ts`. It turns out that this is the first time I've used a type defined in one package as part of the API of another. By default, API Extractor uses `tsconfig.json` which does indeed [resolve inter-package references within the monorepo]({% link _posts/2024-05-13-bootstrapping-npm-package-build.md %}) by reading source code.
 
 I needed to add `tsconfigFilePath: "tsconfig.build.json"` to `api-extractor.json` to force it to use built packages when resolving dependencies.
 
 # Data Interface for Cell Edit
 
-The data interface also needs a method for changing the contents of a cell. I decided to use a single method that sets both value and format. When typing text into a spreadsheet, the input is parsed to try and determine the format. The end result is that both value and format need to be set for the cell.
+The data interface also needs a method for changing the contents of a cell. I decided to use a single method that sets both value and format. When typing new text into a cell, the input is parsed to try and determine the format. The end result is that both value and format need to be set for the cell.
 
 Cell values, particularly numbers, depend on the format for correct interpretation. It seems safest to require value and format to be set together, even when editing.
 
@@ -140,7 +140,7 @@ A proper spreadsheet has a *Formula* input field at the top. I laid out *Name* a
 
 {% include candid-image.html src="/assets/images/react-spreadsheet/name-formula-layout.png" alt="Name Formula Bar Layout" %}
 
-For now, *Formula* displays the same text as the cell with the focus. Real spreadsheet implementations have all kinds of complex and subtle behavior where the formatting in the formula field may not be same as the cell display format. For example, you need to ensure that the value can be reliably round tripped without losing precision. 
+For now, *Formula* displays the same text as the cell with the focus. Real spreadsheet implementations have all kinds of complex and subtle behavior, where the formatting in the formula field may not be the same as the cell display format. For example, you need to ensure that the value can be reliably round tripped without losing precision. 
 
 I'm not going to explore all of that now, just start with the simplest thing that lets users enter new data. Whatever text is present when the user hits `Enter` is parsed using the [numfmt](https://github.com/borgar/numfmt) package [parseValue](https://github.com/borgar/numfmt/blob/master/API.md#-parsevaluevalue--parsedata--null) method.
 
@@ -336,7 +336,7 @@ The `isInSelection` utility function is used to determine whether a cell is with
 
 # Focus
 
-The most difficult thing was making repeated clicks on the same cell work properly. I don't want to reselect the cell and reset any in progress edited value. Easy, I thought, add an early out to `selectItem` that does nothing if the selection hasn't changed. However, I then found that the cell would lose focus on repeated clicks. 
+The most difficult thing was making repeated clicks on the same cell work properly. I don't want to reselect the cell and reset any in-progress edited value. Easy, I thought, add an early out to `selectItem` that does nothing if the selection hasn't changed. However, I then found that the cell would lose focus on repeated clicks. 
 
 There's a grid level mouse click handler that determines which cell has been hit and makes that the focused cell, moving the focus sink input underneath it. A React effect is used to give [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) to the focus sink. We need an effect as the focus sink isn't created until the first time a cell is selected. As we don't want to steal focus from other elements on the page, the effect is dependent on the `focusCell` state. Which neatly also handles the case when moving from cell to cell. When `focusCell` changes, make sure the cell has focus.
 
@@ -356,7 +356,7 @@ I'm not sure which I dislike more, so left things as they are for now.
 
 Start by selecting something and then moving around the grid using arrow keys, tab, shift-tab, return and shift-return. See how things change depending on whether you select a cell, row or column to start. 
 
-Use one of the three different ways to go into edit mode and try to make some changes. Do you use the formula bar or the in-cell input?
+Use one of the four different ways to go into edit mode and try to make some changes. Do you use the formula bar or the in-cell input?
 
 {% include candid-iframe.html src="/assets/dist/react-spreadsheet-edit-ready/index.html" width="100%" height="fit-content" %}
 
