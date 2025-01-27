@@ -15,7 +15,7 @@ For now I'll post to all three accounts, so follow me wherever suits you best.
 
 Signing up is easy, if tedious. You find yourself stepping through a seemingly interminable wizard, each step asking for just a little more. 
 1. Provide your email address, password and date of birth. 
-2. Pick a username. I didn't run into any limits with length, unlike Twitter, so was able to use "@thecandidstartup". Whatever you pick gets a ".bsky.social" suffix. 
+2. Pick a handle. I didn't run into any limits with length, unlike Twitter, so was able to use "@thecandidstartup". Whatever you pick gets a ".bsky.social" suffix. 
 3. Complete a Captcha.
 4. Do it again.
 5. Upload a profile image. Bluesky decided to chop my head off when I uploaded my standard profile pic. I kind of like the end result. 
@@ -26,7 +26,7 @@ Signing up is easy, if tedious. You find yourself stepping through a seemingly i
 
 Weirdly, there's no "email you a link" to validate your email address between step 1 and 2. While poking around in account settings I found you can manually choose to verify. That gives you a reassuring blue tick in the settings UI (which only you can see). Apparently, it also adds a basic form of two factor authentication by emailing you a confirmation code when you try to change other settings. 
 
-# Website as username
+# Domain Name as Handle
 
 You may have noticed that my handle is `@thecandidstartup.org`, not `@thecandidstartup.bsky.social`. How did I manage that?
 
