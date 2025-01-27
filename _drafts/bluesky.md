@@ -30,7 +30,7 @@ Weirdly, there's no "email you a link" to validate your email address between st
 
 You may have noticed that my handle is `@thecandidstartup.org`, not `@thecandidstartup.bsky.social`. How did I manage that?
 
-Bluesky has it's own version of the original Twitter blue tick that ensures you're following who you think you are. Bluesky's system is a clever hack (in the original sense of the term). Instead of implementing a whole new identity verification system, it piggy backs on the domain name system (DNS). 
+Bluesky has it's own version of the original Twitter blue tick, that ensures you're following who you think you are. Bluesky's system is a clever hack (in the original sense of the term). Instead of implementing a whole new identity verification system, it piggy backs on the domain name system (DNS). 
 
 If you can [demonstrate that you control a domain](https://bsky.social/about/blog/4-28-2023-domain-handle-tutorial), you can use that domain as your handle. If you see a handle like `@laura.kuenssberg.bbc.co.uk`, you can be confident that they're the BBC journalist [Laura Kuenssberg](https://en.wikipedia.org/wiki/Laura_Kuenssberg), or at least someone of that name that works for the BBC.
 
@@ -48,7 +48,7 @@ On dear. I reached for the all purpose web app fix, and refreshed the page. That
 
 Follow me at [@thecandidstartup.org](https://bsky.app/profile/thecandidstartup.org). 
 
-There's nothing much there yet. I briefly thought about porting my posts from Twitter over. However, as all of them are links to content you can find [right here]({{ blog_page.url | absolute_url }}), there's not much point. 
+There's nothing much there yet. I briefly thought about porting my posts from Twitter over. However, as all of them are links to content you can find [right here]({{ '/blog/' | absolute_url }}), there's not much point. 
 
 There aren't any official tools for migrating content and the third party tools I found seem to have mixed reviews.
 
