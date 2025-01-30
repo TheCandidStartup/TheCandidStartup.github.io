@@ -28,3 +28,6 @@ wise words
   * If you type into a cell with a pure text format, the string is [left as is](https://support.microsoft.com/en-gb/office/stop-automatically-changing-numbers-to-dates-452bd2db-cc96-47d1-81e4-72cec11c4ed8).
 * Ensures value can be round tripped without loss
 * On update, format stays unchanged if parsed value is of same general class
+
+* OnScroll, OnEditValue, etc. handlers
+* Shouldn't allow spreadsheet to grow beyond max sizes - bug when max size == data size
