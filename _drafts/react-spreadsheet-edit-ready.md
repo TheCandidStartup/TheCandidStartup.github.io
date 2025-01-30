@@ -2,7 +2,6 @@
 title: >
   React Spreadsheet: Edit Ready
 tags: react-spreadsheet
-thumbnail: /assets/images/boring-spreadsheet.png
 ---
 
 It's been a couple of months since I [last worked]({% link _posts/2024-11-25-react-spreadsheet-decoupled-rendering.md %}) on features for my scalable [React spreadsheet]({% link _topics/react-spreadsheet.md %}) component. I got distracted by adding [Playwright]({% link _posts/2024-12-16-bootstrapping-playwright.md %}) and [Storybook]({% link _posts/2025-01-13-bootstrapping-storybook.md %}) to my arsenal of development tools. The next step is to add all my components to Storybook and publish it as part of my documentation set. 
