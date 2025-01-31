@@ -130,7 +130,7 @@ export const TrillionRows: Story = {
 
 * Notice that the "TrillionRows" story is displayed as "Trillion Rows"
 
-{% include candid-image.html src="/assets/images/infinisheet/virtual-list-stories.png" alt="Name Formula Bar Layout" %}
+{% include candid-image.html src="/assets/images/infinisheet/virtual-list-stories.png" alt="VirtualList Stories" %}
 
 # Custom Args
 
