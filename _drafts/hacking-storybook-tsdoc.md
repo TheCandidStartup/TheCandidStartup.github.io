@@ -103,3 +103,7 @@ type ExtractComponentDescription = (component: Component) => string || null;
 * Looks like everything needed to populate the UI after I've handled the TSDoc tags
 * Took a while to find a definition of the `StrictArgTypes` return value. Defined in the separate [ComponentDriven/csf](https://github.com/ComponentDriven/csf) repo.
 * Basically, `StrictArgTypes` is the same as Storybook's [ArgTypes](https://storybook.js.org/docs/api/arg-types).
+* How much of existing conversion code can we reuse rather than writing from scratch
+* Implementation of `extractArgTypes` that I'm overriding is defined [deep inside](https://github.com/storybookjs/storybook/blob/next/code/renderers/react/src/docs/extractArgTypes.ts) React framework support and not exported
+* Most framework support, including React, makes use of common [docs-tools](https://github.com/storybookjs/storybook/blob/next/code/core/src/docs-tools/README.md) library which is exported
+* Weird stuff with `jsDocTags` - passed through as side channel?
