@@ -306,7 +306,7 @@ You can use `Enter` and `Tab` to navigate around the grid in both display and ed
 
 In contrast, the arrow keys can only be used to navigate in display mode. In edit mode they work as normal for moving around within the text being edited.
 
-We go back to display mode and reset the content of *Formula* to the stored value when moving to a new cell or using the `Escape` key.
+Any changes made in edit mode are applied by pressing `Enter` or `Tab`. We go back to display mode and reset the content of *Formula* to the stored value when moving to a new cell or using the `Escape` key.
 
 The `isInSelection` utility function is used to determine whether a cell is within a selected row or column. The `nextCell` utility function determines the appropriate cell to move to for `Enter` and `Tab`.
 
@@ -361,4 +361,4 @@ Use one of the four different ways to go into edit mode and try to make some cha
 
 # Next Time
 
-`VirtualSpreadsheet` is edit ready but changes don't stick. Before I address that, I'm going to go back and build out a [Storybook]({% link _posts/2025-01-13-bootstrapping-storybook.md %}) containing `VirtualSpreadsheet` and all the other [Infinisheet]({% link _topics/infinisheet.md %}) components.
+`VirtualSpreadsheet` is edit ready. Now I need to make the changes stick. Before I address that, I'm going to go back and build out a [Storybook]({% link _posts/2025-01-13-bootstrapping-storybook.md %}) containing `VirtualSpreadsheet` and all the other [Infinisheet]({% link _topics/infinisheet.md %}) components.
