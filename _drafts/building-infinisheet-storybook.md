@@ -1,9 +1,12 @@
 ---
-title: Publishing the Infinisheet Storybook
+title: Building the Infinisheet Storybook
 tags: frontend infinisheet
 ---
 
 wise words
+* Now that Storybook bootstrapped, going through all components creating stories.
+* Mostly straightforward to implement and dull to read about
+* Instead of detailing everything, calling out the cases where new Storybook features were needed
 
 # CSS
 
@@ -131,6 +134,64 @@ export const TrillionRows: Story = {
 * Notice that the "TrillionRows" story is displayed as "Trillion Rows"
 
 {% include candid-image.html src="/assets/images/infinisheet/virtual-list-stories.png" alt="VirtualList Stories" %}
+
+# Full Screen
+
+* `AutoSizer` Component that expands to fill available width and height
+* Only works if parent component allows child to expand
+* With default Storybook settings `AutoSizer` gets squashed.
+* Helpful discussion in Storybook [issue](https://github.com/storybookjs/storybook/issues/2264)
+* Needs two things. First, override the layout parameter to `fullscreen` to allow component to use full width. Next, add a [decorator](https://storybook.js.org/docs/writing-stories/decorators) which wraps the component in a `div` with a height set to 100% of the viewport height.
+
+{% raw %}
+
+```ts
+const meta: Meta<AutoSizerProps> = {
+  decorators: 
+    (Story) => (
+      <div style={{ height: '100vh' }}>
+        <Story/>
+      </div>
+    )
+  ],
+  parameters: {
+    layout: 'fullscreen'
+  }
+};
+```
+
+{% endraw %}
+
+* Storybook auto-generates code from the rendered JSX. Most of the time this gives a good impression of how to use the component.
+* Not useful for `AutoSizer` as it expects a render function as a child. Need to override displayed code to be more useful.
+
+```ts
+const displayCode = `
+<AutoSizer style={{ width: '100%', height: '100%', minWidth: 100, minHeight: 100 }}>
+  {({width, height}) => (
+    <div style={{ width: width, height: height }}>
+      width: {width} <br/>
+      height: {height} <br/>
+    </div>
+  )}
+</AutoSizer>`
+
+const meta: Meta<AutoSizerProps> = {
+  parameters: {
+    docs: {
+      source: {
+        type: 'code',
+        code: displayCode
+      }
+    }
+  }
+};
+```
+
+# HMR
+
+* As you incrementally add new components and stories often find that the HMR doesn't work correctly. New component/story appears in the menu but when selected displays an incomprehensible error message.
+* Restarting the server sorts it out
 
 # Custom Args
 
