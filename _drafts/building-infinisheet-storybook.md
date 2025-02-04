@@ -51,7 +51,6 @@ const meta = {
 * https://storybook.js.org/docs/writing-stories/args#args-can-modify-any-aspect-of-your-component
 * Need larger spacing between items in list with horizontal layout
 * With custom render function you can rewrite args before passing them as props to your component
-* Can also add custom args if needed
 
 ```tsx
 function rewriteMapping(mapping: ItemOffsetMapping, layout: ScrollLayout = 'vertical'): ItemOffsetMapping {
@@ -90,6 +89,7 @@ const meta: Meta<VirtualListProps> = {
   )
 };
 ```
+
 
 # Three Stories
 
@@ -134,6 +134,114 @@ export const TrillionRows: Story = {
 * Notice that the "TrillionRows" story is displayed as "Trillion Rows"
 
 {% include candid-image.html src="/assets/images/infinisheet/virtual-list-stories.png" alt="VirtualList Stories" %}
+
+# Custom Args
+
+* `VirtualScroll` has imperative `scrollTo` and `scrollToItem` methods accessible via a ref to a `VirtualScrollProxy` imperative handle
+* Sample app lets you try them out. Can I do the same in Storybook.
+* You don't need to have a 1:1 mapping of args to props. You can create whatever additional args you want for your own purposes.
+* First define a type that describes the extended set of args
+
+```ts
+type VirtualListPropsAndCustomArgs = VirtualListProps & { 
+  scrollToOffset?: number,
+  scrollToItem?: number
+};
+```
+
+* Next add definitions for the new args so the Storybook UI knows how to display them
+
+```ts
+const meta: Meta<VirtualListPropsAndCustomArgs> = {
+  argTypes: {
+    scrollToItem: {
+      description: "Scrolls to item using `VirtualListProxy.scrollToItem`",
+      table: {
+        category: "Interactive",
+      },
+      control: {
+        type: 'number'
+      }
+    },
+    scrollToOffset: {
+      description: "Scrolls to offset (in pixels) using `VirtualListProxy.scrollTo`",
+      table: {
+        category: "Interactive",
+      },
+      control: {
+        type: 'number'
+      }
+    },
+  }
+}
+```
+
+* Put them in a separate category so user won't confuse them with normal component props
+* Finally update the render function to intercept the custom args
+
+```ts
+const meta: Meta<VirtualListPropsAndCustomArgs> = {
+  render: ( { scrollToItem, scrollToOffset, ...rest }) => {
+    const listProxy = React.useRef<VirtualListProxy>(null);
+
+    React.useEffect(() => { 
+      if (scrollToItem !== undefined) {
+        listProxy.current?.scrollToItem(scrollToItem)
+      }
+    }, [scrollToItem])
+
+    React.useEffect(() => { 
+      if (scrollToOffset !== undefined) {
+        listProxy.current?.scrollTo(scrollToOffset)
+      }
+    }, [scrollToOffset])
+
+    return <VirtualList ref={listProxy} {...args}/>
+  }
+}
+```
+
+* Render method is just like a React component render method, can use React hooks
+* Need a `useRef` hook for the `VirtualListProxy` and `useEffect` hooks to call the imperative methods
+* The hooks take the arg values as dependencies so that they're only triggered if the user updated the custom arg controls since the last render
+
+# Updating Args
+
+* Storybook provides a `useArgs` hook that allows you to update the value of args from event handlers
+* Can use this to display current state reported by the event handlers. Raw event data is available in the actions tab, but this is easier to consume.
+* Added new custom args and arg definitions for `currentOffset` and `currentItem`. Args defined as read only.
+* Updated render method to add `onScroll` handler that updates new args
+
+```ts
+const meta: Meta<VirtualListPropsAndCustomArgs> = {
+  render: ( { layout, itemOffsetMapping, onScroll, currentItem, currentOffset, ...rest}) => {
+    const [_, updateArgs] = useArgs();
+
+    const currentMapping = rewriteMapping(itemOffsetMapping, layout);
+
+    function ScrollHandler(offset: number, newScrollState: ScrollState): void {
+      if (onScroll)
+        onScroll(offset, newScrollState);
+    
+      if (offset != currentOffset)
+        updateArgs({ currentOffset: offset });
+
+      const [item] = currentMapping.offsetToItem(offset);
+      if (item != currentItem)
+        updateArgs({ currentItem: item });
+    }
+
+    return <VirtualList layout={layout} itemOffsetMapping={currentMapping} onScroll={ScrollHandler} {...args}>
+      {layout === 'horizontal' ? Column : Row}
+    </VirtualList>
+  },
+```
+
+* As normal for modern React, `ScrollHandler` is defined as a nested function within the render function so that it has access to props and state
+* Need to make sure we call any handler passed through as an arg. This is how content is added to the "Actions" tab
+* Conversion from offset to item needs access to the current `itemOffsetMapping`
+
+{% include candid-image.html src="/assets/images/infinisheet/virtual-list-storybook-custom-args.png" alt="VirtualList Stories" %}
 
 # Full Screen
 
@@ -192,10 +300,6 @@ const meta: Meta<AutoSizerProps> = {
 
 * As you incrementally add new components and stories often find that the HMR doesn't work correctly. New component/story appears in the menu but when selected displays an incomprehensible error message.
 * Restarting the server sorts it out
-
-# Custom Args
-
-* VirtualSpreadsheet auto size
 
 # Interactions
 
