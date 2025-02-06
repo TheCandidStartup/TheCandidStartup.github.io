@@ -103,7 +103,42 @@ type ExtractComponentDescription = (component: Component) => string || null;
 * Looks like everything needed to populate the UI after I've handled the TSDoc tags
 * Took a while to find a definition of the `StrictArgTypes` return value. Defined in the separate [ComponentDriven/csf](https://github.com/ComponentDriven/csf) repo.
 * Basically, `StrictArgTypes` is the same as Storybook's [ArgTypes](https://storybook.js.org/docs/api/arg-types).
-* How much of existing conversion code can we reuse rather than writing from scratch
+* Let's try returning some real data. Descriptions seem to support Markdown, so let's test that.
+
+```ts
+const preview: Preview = {
+  parameters: {
+    docs: {
+      extractComponentDescription: (component) => { 
+        console.log("extractComponentDescription ", component); 
+        return "This is a *description* including `Markdown` syntax with [link](https://www.thecandidstartup.org/)" 
+      },
+      extractArgTypes: (component) => { 
+        console.log("extractArgTypes ", component); 
+        return {
+          onScroll: {
+            description: "It may look like an event handler but I'm claiming it's a magic number instead.",
+            table: {
+              defaultValue: {
+                summary: "42"
+              },
+              type: {
+                summary: "Magic Number"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+* Now Storybook looks like this
+
+{% include candid-image.html src="/assets/images/frontend/storybook-autodocs-overridden.png" alt="Storybook Autodocs Overridden" %}
+
+* How much of existing conversion code can we reuse rather than writing from scratch?
 * Implementation of `extractArgTypes` that I'm overriding is defined [deep inside](https://github.com/storybookjs/storybook/blob/next/code/renderers/react/src/docs/extractArgTypes.ts) React framework support and not exported
 * Most framework support, including React, makes use of common [docs-tools](https://github.com/storybookjs/storybook/blob/next/code/core/src/docs-tools/README.md) library which is exported
 * Weird stuff with `jsDocTags` - passed through as side channel?
