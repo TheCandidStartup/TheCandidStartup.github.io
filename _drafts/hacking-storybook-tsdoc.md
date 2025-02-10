@@ -306,5 +306,97 @@ However, now we can start changing things.
 
 {% include candid-image.html src="/assets/images/frontend/storybook-autodocs-enhanced-enum.png" alt="Storybook Autodocs with enhanced enum" %}
 
+# The Right Way
+
+* Use the TSDoc parsing library to parse the description
+* TSDoc comments can use the full power of Markdown and Markdown isn't a regular language, regular expressions won't cut it
+* Seems like overkill for my simple comments
+* Need to reformat description so that it looks like a source code comment (wrapped in "/**" and "*/" with "*" prefix on each line)
+* Configure the parser to understand the Typedoc custom tags I'm using
+* Run the parser which produces an incredibly verbose output structure
+* Apply transforms to manipulate the structure
+* Stringify the structure to reassemble everything.
+* `docs-tools` has already done the equivalent using the `comment-parser` JSDoc parser
+* This also explains why `@defaultValue` tags are removed. `comment-parser` extracts all the tags it supports. `docs-tools` doesn't do anything with `@defaultValue`.
+* I'm just fixing a few things up, surely a few quick regular expressions can't hurt?
+
 # Default Values
 
+* Simplest case as tag has already been removed from description by docs-tools. All I have to do is fish any default value out of the original description in docgenInfo.
+* Default value is a [block tag](https://tsdoc.org/pages/spec/tag_kinds/#block-tags) and usually gets a line to itself.
+
+```ts
+  const result = prop.docgenInfo.description.match(/\n\s*@defaultValue\s+`*([^\n`]+)`*(\n|$)/);
+  console.log("Result", result);
+  if (result)
+    defaultValue = { summary: result[1] }
+```
+
+* The regexp looks for a newline followed by optional white space then the `@defaultValue` tag. There's more white space, then we capture the value until we hit another newline or the end of the string. 
+* Typedoc formats default values using the normal Markdown rules. If you want to use a code style, you have to use the relevant markup. I do this for function defaults. 
+* Storybook appears to always format default values using code styles. If you include the backtick markup it comes through as a literal character. 
+* I fixed this in the regular expression by ignoring any backticks that wrap the value.
+
+{% include candid-image.html src="/assets/images/frontend/storybook-autodocs-overridden-defaults.png" alt="Storybook Autodocs with default values" %}
+
+* Unfortunately, I'd forgotten about this more complex case
+
+```ts
+/**
+ * Function that defines the key to use for each item given row and column index and value of {@link DisplayBaseProps.itemData}.
+ * @defaultValue
+ * ```ts
+ * (rowIndex, columnIndex, _data) => `${rowIndex}:${columnIndex}`
+ * ```
+ */
+itemKey?: (rowIndex: number, columnIndex: number, data: unknown) => React.Key
+```
+
+* Default value is a block tag so includes everything until the start of the next tag or the end of the comment. You can have multiline default values. I had to do it this way because the function definition makes use of backticks and this was the only way of escaping them that worked with Typedoc.
+* I considered going back to the right way for all of 30 seconds, then changed the definition.
+
+```ts
+ /**
+  * @defaultValue `(rowIndex, columnIndex, _data) => '${rowIndex}:${columnIndex}'`
+```
+
+* This code isn't literally correct but still does its job of explaining what the default `itemKey` function does.
+* It turns out that squashing a function definition into the limited space provided for the "Default" column isn't very readable. If the value string is longer than 10 characters I return it as detail and use `sbType.name` as the summary.
+
+{% include candid-image.html src="/assets/images/frontend/storybook-autodocs-default-detail.png" alt="Storybook Autodocs large default as detail" %}
+
+# Group Tag
+
+* Custom tag used by TypeDoc to group component docs together
+* No equivalent in Storybook plus everything is a component. 
+* Just need to strip it out
+
+```ts
+  const noGroup = description.replace(/\n\s*@group\s+([^\n`]+)(\n|$)/, "");
+```
+
+* No drama. This one just worked. 
+
+# Links
+
+* Most links in the docs are to interfaces and properties of interfaces.
+* Most appropriate default is to format as code.
+* Can look at putting actual Markdown links when I add Storybook to published documentation. Could try and cross-link to the Typedoc API docs.
+
+```ts
+function replaceLinks(description: string): string {
+  return description.replaceAll(/{@link\s+([^}]+)}/g, (_substring, p1) => {
+    const value = p1 as string;
+    return "`" + value + "`";
+  })
+}
+```
+
+* Call `replaceLinks` on component, arg and param descriptions.
+* Param descriptions are treated as simple text rather than Markdown so the backtick markup comes through. Looks reasonable enough if I can't use code style.
+
+{% include candid-image.html src="/assets/images/frontend/storybook-autodocs-overridden-links.png" alt="Storybook Autodocs Overridden Links" %}
+
+# Next Time
+
+* Publishing!
