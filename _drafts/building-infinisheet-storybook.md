@@ -1,6 +1,7 @@
 ---
 title: Building the Infinisheet Storybook
 tags: frontend infinisheet
+thumbnail: /assets/images/infinisheet/virtual-list-stories.png
 ---
 
 Now that I have Storybook [bootstrapped]({% link _posts/2025-01-13-bootstrapping-storybook.md %}), I'm going through all my [Infinisheet]({% link _topics/infinisheet.md %}) components creating stories. The process is mostly really straightforward. However, I am finding cases where I need to use additional Storybook features. 
@@ -54,7 +55,7 @@ const meta = {
 
 Sometimes the complex prop is dependent on values of other props. By using a custom render function, you can [intercept and modify](https://storybook.js.org/docs/writing-stories/args#args-can-modify-any-aspect-of-your-component) any arg before it gets passed as a prop to the component. 
 
-My `VirtualList` component can be used with a `horizontal` or `vertical` layout. Items in a horizontal list need more space. Instead of making the user esure they pick a reasonable combination of `layout` and `itemOffsetMapping`, I choose the most appropriate value for the current combination of *Fixed/Variable* and *Horizontal/Vertical*. 
+My `VirtualList` component can be used with a `horizontal` or `vertical` layout. Items in a horizontal list need more space. Instead of making the user ensure they pick a reasonable combination of `layout` and `itemOffsetMapping`, I choose the most appropriate value for the current combination of *Fixed/Variable* and *Horizontal/Vertical*. 
 
 ```tsx
 const meta = {
@@ -131,7 +132,7 @@ Notice the nice touch where Storybook automatically displays the "TrillionRows" 
 
 # Custom Args
 
-`VirtualScroll` has imperative `scrollTo` and `scrollToItem` [methods]({% link _posts/2024-04-08-modern-react-virtual-scroll-grid-6.md %}) accessible via a ref to a `VirtualScrollProxy` imperative handle. My existing sample app let's you try them out. I want to do the same in Storybook. 
+`VirtualScroll` has imperative `scrollTo` and `scrollToItem` [methods]({% link _posts/2024-04-08-modern-react-virtual-scroll-grid-6.md %}) accessible via a ref to a `VirtualScrollProxy` imperative handle. My existing sample app lets you try them out. I want to do the same in Storybook. 
 
 You don't need to have a 1:1 mapping of args to props. You can create whatever additional args you want [for your own purposes](https://storybook.js.org/docs/writing-stories/args#args-can-modify-any-aspect-of-your-component) and make use of them in your rendering method. 
 
@@ -349,4 +350,4 @@ I now have a full set of stories covering all my components. I'd love to let you
 
 The autodocs generated documentation is full of TSDoc markup that hasn't been handled properly. Surely there's some addon that can interpret it properly or at least filter it out? 
 
-It turns out to be quite the rabbit hole, which will have to wait until next time.
+It turns out to be quite the rat hole, which will have to wait until next time.
