@@ -1,10 +1,10 @@
 ---
-title: Building the Infinisheet Storybook
+title: Building the InfiniSheet Storybook
 tags: frontend infinisheet
 thumbnail: /assets/images/infinisheet/virtual-list-stories.png
 ---
 
-Now that I have Storybook [bootstrapped]({% link _posts/2025-01-13-bootstrapping-storybook.md %}), I'm going through all my [Infinisheet]({% link _topics/infinisheet.md %}) components creating stories. The process is mostly really straightforward. However, I am finding cases where I need to use additional Storybook features. 
+Now that I have Storybook [bootstrapped]({% link _posts/2025-01-13-bootstrapping-storybook.md %}), I'm going through all my [InfiniSheet]({% link _topics/infinisheet.md %}) components creating stories. The process is mostly really straightforward. However, I am finding cases where I need to use additional Storybook features. 
 
 You'll probably need them too.
 
@@ -275,6 +275,8 @@ const meta: Meta<AutoSizerProps> = {
 
 Storybook auto-generates code from the rendered JSX. Most of the time this gives a good impression of how to use the component. This isn't useful for `AutoSizer` as it expects a render function as a child. I provided explicit code to display instead.
 
+{% raw %}
+
 ```ts
 const displayCode = `
 <AutoSizer style={{ width: '100%', height: '100%', minWidth: 100, minHeight: 100 }}>
@@ -297,6 +299,8 @@ const meta: Meta<AutoSizerProps> = {
   }
 };
 ```
+
+{% endraw %}
 
 # Interactions
 

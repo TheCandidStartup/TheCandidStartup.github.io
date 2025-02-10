@@ -499,4 +499,4 @@ My [GitHub Actions]({% link _posts/2024-06-03-bootstrapping-github-actions.md %}
 
 # Next Time
 
-All that's left is to write those Storybook test utility functions, add some CSS for basic styling, add stories for each component, and flesh out the Playwright tests.
+All that's left is to write those Storybook test utility functions, add some CSS for basic styling, [add stories for each component]({% link _posts/2025-02-10-building-infinisheet-storybook.md %}), and flesh out the Playwright tests.
