@@ -7,7 +7,7 @@ tags: frontend
 
 {% include candid-image.html src="/assets/images/frontend/storybook-autodocs.png" alt="Storybook Autodocs" %}
 
-The [Autodocs](https://storybook.js.org/docs/writing-docs/autodocs) generated interactive reference documentation is riddled with [TSDoc]({% link _posts/2024-07-08-bootstrapping-tsdoc.md %}) markup that Storybook doesn't understand. Storybook uses reflection to determine the arguments for each component and extracts comments from the source code. It generally does a decent job, it just needs a little help with the last ten percent.
+The [Autodocs](https://storybook.js.org/docs/writing-docs/autodocs) generated interactive reference documentation is riddled with [TSDoc]({% link _posts/2024-07-08-bootstrapping-tsdoc.md %}) markup that Storybook doesn't understand. Storybook uses source code static analysis to determine the arguments for each component and extract comments. It generally does a decent job, it just needs a little help with the last ten percent.
 
 # TSDoc Markup
 
