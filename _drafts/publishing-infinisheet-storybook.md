@@ -42,6 +42,82 @@ wise words
 * I'll have to run more complex tests that need to interact with the controls against the regular build. 
 * Not ideal but better than nothing.
 
+# Theming
+
+Storybook has a simple [theming API](https://storybook.js.org/docs/configure/user-interface/theming). You can create a new theme by using one of the existing themes as a base and then overriding theme properties. There's not much in the way of fine grained control. You can change the branding (Storybook icon), fonts and some of the colors. 
+
+There's no detailed documentation for the theme properties so you'll need to experiment. I added Candid Startup branding and matched fonts and selected colors with the rest of the site.
+
+```ts
+import { create } from '@storybook/theming';
+ 
+export default create({
+  base: 'light',
+
+  brandTitle: 'The Candid Startup',
+  brandUrl: 'https://thecandidstartup.org',
+  brandImage: undefined,
+  brandTarget: '_self',
+
+  fontBase:  '"Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif',
+  appBg: '#fdfdfd',
+  colorSecondary: '#159957',
+  barHoverColor: '#606060',
+});
+```
+
+To apply the theme you need to create a new configuration file, `manager.ts`.
+
+```ts
+import { addons } from '@storybook/manager-api';
+import theme from './theme';
+ 
+addons.setConfig({
+  theme: theme,
+});
+```
+
+For some reason, you have to apply the theme separately to the "Docs" pages in `preview.ts`.
+
+```ts
+import theme from './theme';
+
+const preview: Preview = {
+  parameters: {
+    docs: {
+      theme: theme,
+    }
+  }
+}
+```
+
+{% include candid-image.html src="/assets/images/infinisheet/storybook-candid-theme.png" alt="InfiniSheet Storybook with Candid Startup theme" %}
+
+# Landing Pages
+
+* Theme branding is the only way to add a (single) link into the Storybook navigation bar
+* Want to show where the InfiniSheet storybook sits within the overall site information architecture
+* You can add [pure documentation pages](https://storybook.js.org/docs/writing-docs/mdx) to Storybook
+* Simplest thing is to add handwritten documentation landing pages for each package with links back into the main site.
+
+# Favicon
+
+There's no direct support for customizing the Storybook favicon. However, you can get it done using a couple of low level customization features.
+
+You can add static assets to your Storybook using the [staticDirs](https://storybook.js.org/docs/api/main-config/main-config-static-dirs) configuration option. Files in these directories are copied into the root of your Storybook build, or to a subdir of your choice.
+
+I added an `assets` directory to my storybook project, copied the Candid Startup `favicon.ico` into it and added it to `staticDirs`. Now I just need to reference it by adding a link to the app's `head` section.
+
+The simplest way of doing this is to add `manager-head.html` to the set of Storybook config files. Whatever you put in here is appended to the end of the `head` section when the app is built.
+
+```html
+<link rel="icon" href="favicon.ico">
+```
+
+The app still includes the standard Storybook head section with its link to the Storybook `favicon.svg`. It's up to the browser to decide which link to use. In my testing with Chrome, Firefox and Safari, they all picked the Candid Startup favicon. I've seen reports of cases where browsers picked the wrong one. 
+
+There's also a more complex approach that gives you programmatic access to the `head` section. The [managerHead](https://storybook.js.org/docs/api/main-config/main-config-manager-head) configuration option takes a function which is called with the standard `head` section and returns a customized version. You could use this to remove the standard favicon link if it's causing problems.
+
 # Publishing
 
 * I already use GitHub pages to [publish Typedoc documentation]({% link _posts/2024-08-12-publish-api-documentation.md %}) to the Candid Startup site.
@@ -53,14 +129,6 @@ wise words
 # GitHub Actions
 
 * I need to publish all the pages for Infinisheet in a single deployment step. The easiest way to achieve that is to add Storybook to the existing `docs.yml` workflow. 
-
-# Theming Storybook
-
-# Landing Pages
-
-* I was able to make Typedoc output fit into the overall information architecture. It was easy to customize the output to use the CS favicon and a similar navigation header.
-* Doesn't seem like any easy way to do that with Storybook. It's very much it's own monolithic thing. 
-* Simplest thing is to add handwritten documentation landing pages for each package with links back into the main site.
 
 # Blog Updates
 
