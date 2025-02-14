@@ -60,7 +60,7 @@ Now that I know what I'm looking for, I found a [couple](https://github.com/stor
 
 ```ts
 type ArgTypesExtractor = (component: Component) => StrictArgTypes | null;
-type ExtractComponentDescription = (component: Component) => string || null;
+type ExtractComponentDescription = (component: Component) => string | null;
 ```
 
 # Logging Extraction Functions
@@ -116,7 +116,7 @@ I updated my hooks and logged the `component` object to the console. Here's the 
 }
 ```
 
-It looks like it includes everything needed to populate the UI. After I've handled the TSDoc tags.
+It looks like it includes everything needed to populate the UI, after I've handled the TSDoc tags.
 
 # Returning Fake Data
 
@@ -249,7 +249,7 @@ Let's look at something more complex. Here's the `onScroll` handler.
 ]
 ```
 
-In this case, `docs-tools` has summarized the type using the `raw` type signature, the opposite approach to what it did with `layout`. The TSDoc `param` tags from the original description have been extracted and returned in a `jsDocTags` object. This isn't mentioned in the public ArgTypes documentation. 
+In this case, `docs-tools` has summarized the type using the `raw` type signature, the opposite approach to what it did with `layout`. The TSDoc `param` tags from the original description have been extracted and returned in a `jsDocTags` object. There's no mention of `jsDocTags` in the public ArgTypes documentation. 
 
 # Returning Extracted Component Props
 
@@ -318,7 +318,7 @@ Running the parser produces an incredibly verbose abstract syntax tree output st
 
 It turns out that `docs-tools` has already done the equivalent using the `comment-parser` JSDoc parser. This also explains why `@defaultValue` tags are removed. `comment-parser` extracts all the tags it supports, but `docs-tools` doesn't do anything with `@defaultValue`.
 
-I'm just fixing a few things up, surely a few quick regular expressions can't hurt?
+I'm just fixing a few things up, surely a couple of quick regular expressions can't hurt?
 
 # Default Values
 
@@ -370,7 +370,7 @@ It turns out that squashing a function definition into the limited space provide
 
 # Group Tag
 
-This is a custom TypeDoc tag that I use to group components together in the generated documentation. There's no equivalent in Storybook and no need for one as everything is a component. All I need to do is strip the tag out.  
+This is a custom TypeDoc tag that I use to group components together in the generated documentation. There's no equivalent in Storybook and no need for one as everything in Storybook is a component. All I need to do is strip the tag out.  
 
 ```ts
   const noGroup = description.replace(/\n\s*@group\s+([^\n`]+)(\n|$)/, "");
