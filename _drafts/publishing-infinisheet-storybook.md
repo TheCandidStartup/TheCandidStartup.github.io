@@ -91,7 +91,7 @@ const preview: Preview = {
 }
 ```
 
-{% include candid-image.html src="/assets/images/infinisheet/storybook-candid-theme.png" alt="InfiniSheet Storybook with Candid Startup theme" %}
+{% include candid-image.html src="/assets/images/frontend/storybook-test-missing-controls.png" alt="Storybook --test mode missing Controls" %}
 
 # Landing Pages
 
@@ -99,6 +99,12 @@ const preview: Preview = {
 * Want to show where the InfiniSheet storybook sits within the overall site information architecture
 * You can add [pure documentation pages](https://storybook.js.org/docs/writing-docs/mdx) to Storybook
 * Simplest thing is to add handwritten documentation landing pages for each package with links back into the main site.
+* Documentation pages are written in MDX, which is a mashup of Markdown and JSX. You can include Storybook Doc Blocks as well as any React component.
+* Each page should include a `Meta` Doc block which controls how the page is integrated into the navigation hierarchy.
+* For standalone pages like these, you use the `title` property to specify a path in the hierarchy.
+* The `Story` and `Canvas` blocks allow you to include stories embedded in the page. I used this to showcase examples of `react-virtual-scroll` components.
+
+{% include candid-image.html src="/assets/images/infinisheet/react-virtual-scroll-storybook-landing.png" alt="react-virtual-scroll Landing Page" %}
 
 # Favicon
 
@@ -125,6 +131,10 @@ There's also a more complex approach that gives you programmatic access to the `
 * One of the drawbacks of using a monorepo is that everything I want to publish has to live under the same root. 
 * I can put the built Storybook into `infinisheet/storybook` without interfering with the Typedoc output.
 * I initially thought I'd need to do a special build with a different base path. However, Storybook is a single page app with a single route. You can put the build output under whatever path you like and it still works. 
+* Added a `build-docs` script that puts the output into the Typedoc build directory: `storybook build -o ../../temp/storybook`
+* Can then build a combined set of documentation in the root directory using `npx typedoc && npm run build-docs --workspace=@candidstartup/storybook`
+* Thought I would be able to use relative links between Typedoc and Storybook documentation so I can test locally. Doesn't work from Storybook to Typedoc because Storybook is a Single Page App with a router that intercepts local links. Had to use fully qualified URLs which will work when deployed but not ideal for local testing. 
+* Hard won wisdom. When running a workspace script using npm, you have to use the name in the corresponding `package.json`. Not the folder name you used to define what workspaces you have. The npm [documentation](https://docs.npmjs.com/cli/v7/using-npm/workspaces#running-commands-in-the-context-of-workspaces) is completely misleading. 
 
 # GitHub Actions
 
