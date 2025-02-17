@@ -135,13 +135,18 @@ There's also a more complex approach that gives you programmatic access to the `
 * Can then build a combined set of documentation in the root directory using `npx typedoc && npm run build-docs --workspace=@candidstartup/storybook`
 * Thought I would be able to use relative links between Typedoc and Storybook documentation so I can test locally. Doesn't work from Storybook to Typedoc because Storybook is a Single Page App with a router that intercepts local links. Had to use fully qualified URLs which will work when deployed but not ideal for local testing. 
 * Hard won wisdom. When running a workspace script using npm, you have to use the name in the corresponding `package.json`. Not the folder name you used to define what workspaces you have. The npm [documentation](https://docs.npmjs.com/cli/v7/using-npm/workspaces#running-commands-in-the-context-of-workspaces) is completely misleading. 
+* As I'm going to be republishing my documentation I took the opportunity to upgrade Typedoc and TypeScript to the latest versions and applied all other pending minor upgrades. It went a lot more smoothly than the [last time]({% link _posts/2024-12-09-infinisheet-chore-updates.md %}) I tried to upgrade anything.
+* Permalinks broke as Typedoc changed format
+  * Storybook -> Typedoc links
+  * Documentation links on corresponding blog project page 
 
 # GitHub Actions
 
-* I need to publish all the pages for Infinisheet in a single deployment step. The easiest way to achieve that is to add Storybook to the existing `docs.yml` workflow. 
+* I need to publish all the pages for Infinisheet in a single deployment step. The easiest way to achieve that is to replace `npx typedoc` with `npm run build-docs` in the existing `docs.yml` workflow. 
 
 # Blog Updates
 
 * Adds links to Storybook
+* Fix broken Typedoc links
 
 # Try It!
