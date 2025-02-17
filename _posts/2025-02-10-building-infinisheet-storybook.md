@@ -354,4 +354,4 @@ I now have a full set of stories covering all my components. I'd love to let you
 
 The autodocs generated documentation is full of TSDoc markup that hasn't been handled properly. Surely there's some addon that can interpret it properly or at least filter it out? 
 
-It turns out to be quite the rat hole, which will have to wait until next time.
+It turns out to be quite the rat hole, which will have to wait until [next time]({% link _posts/2025-02-17-hacking-storybook-tsdoc.md %}).
