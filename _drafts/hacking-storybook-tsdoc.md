@@ -23,7 +23,7 @@ Surely there must be some addon or customization that I can use to fix this. I t
 
 The generated documentation is created from a set of [Doc Blocks](https://storybook.js.org/docs/writing-docs/doc-blocks) using a [template](https://storybook.js.org/docs/writing-docs/autodocs#write-a-custom-template) which you can customize. The [Description](https://storybook.js.org/docs/writing-docs/doc-blocks#description) and [Controls](https://storybook.js.org/docs/writing-docs/doc-blocks#controls) doc blocks display descriptions extracted from my TSDoc comments.
 
-You can [customize doc blocks](https://storybook.js.org/docs/writing-docs/doc-blocks#customizing-doc-blocks) using the Storybook [parameters](https://storybook.js.org/docs/writing-stories/parameters) mechanism. Unfortunately, there's nothing that would let me hook in and handle the TSDoc tags myself.
+You can [customize doc blocks](https://storybook.js.org/docs/writing-docs/doc-blocks#customizing-doc-blocks) using the Storybook [parameters](https://storybook.js.org/docs/writing-stories/parameters) mechanism. Unfortunately, there's nothing documented that would let me hook in and handle the TSDoc tags myself.
 
 You can [write your own Doc blocks](https://storybook.js.org/docs/api/doc-blocks/doc-block-useof) which have access to the annotated component data including args and description. However, it seems like overkill to reimplement the `Controls` UI from scratch just to manipulate the extracted descriptions first.
 
@@ -157,7 +157,7 @@ Now Storybook looks like this.
 
 # Reusing Existing Conversion Code
 
-How much of existing conversion code can we reuse rather than rewriting it from scratch? The implementation of `extractArgTypes` that I'm overriding is defined [deep inside](https://github.com/storybookjs/storybook/blob/next/code/renderers/react/src/docs/extractArgTypes.ts) React framework support and not exported.
+How much of the existing conversion code can we reuse rather than rewriting it from scratch? The implementation of `extractArgTypes` that I'm overriding is defined [deep inside](https://github.com/storybookjs/storybook/blob/next/code/renderers/react/src/docs/extractArgTypes.ts) React framework support and not exported.
 
 Most framework support, including React, makes use of a common [docs-tools](https://github.com/storybookjs/storybook/blob/next/code/core/src/docs-tools/README.md) library which is exported. The code calls `extractComponentProps` from `docs-tools`, performs some React specific "enhancements" and then reformats the data as `StrictArgTypes`.
 
@@ -287,7 +287,7 @@ export const extractArgTypes: ArgTypesExtractor = (component) => {
 };
 ```
 
-Which gets us back to where we started. Looks like the React enhancements were doing nothing for me.
+Which gets us back to where we started, confirming that the React enhancements were doing nothing for me.
 
 {% include candid-image.html src="/assets/images/frontend/storybook-autodocs.png" alt="Storybook Autodocs without React enhancements" %}
 
