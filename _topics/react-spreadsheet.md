@@ -6,7 +6,7 @@ tagline: All about the "@candidstartup/react-spreadsheet" package
 project: true
 up: infinisheet
 github: https://github.com/TheCandidStartup/infinisheet/tree/main/packages/react-spreadsheet
-docs: /infinisheet/modules/_candidstartup_react_spreadsheet.html
+docs: /infinisheet/modules/_candidstartup_react-spreadsheet.html
 also: frontend
 ---
 

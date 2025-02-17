@@ -7,7 +7,7 @@ project: true
 up: infinisheet
 github: https://github.com/TheCandidStartup/infinisheet/tree/main/packages/react-virtual-scroll
 npm: https://www.npmjs.com/package/@candidstartup/react-virtual-scroll
-docs: /infinisheet/modules/_candidstartup_react_virtual_scroll.html
+docs: /infinisheet/modules/_candidstartup_react-virtual-scroll.html
 also: frontend
 ---
 
