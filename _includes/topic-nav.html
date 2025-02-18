@@ -1,4 +1,4 @@
-{% if page.up or page.github or page.npm or page.docs or page.also %}
+{% if page.up or page.github or page.npm or page.docs or page.storybook or page.also %}
 <div class="candid-header-nav">
 {% if page.up %}
   {% assign topic-page = site.topics | where: "topic", page.up | first %}
@@ -11,7 +11,10 @@
   <a class="candid-header-link candid-header-external" href="{{ page.npm }}">NPM</a>
 {% endif %}
 {% if page.docs %}
-  <a class="candid-header-link candid-header-external" href="{{ page.docs | absolute_url }}">Documentation</a>
+  <a class="candid-header-link candid-header-external" href="{{ page.docs | absolute_url }}">API</a>
+{% endif %}
+{% if page.storybook %}
+  <a class="candid-header-link candid-header-external" href="{{ page.storybook | absolute_url }}">Storybook</a>
 {% endif %}
 {% assign tags = page.also | split: " " %}
 {% for tag in tags %}

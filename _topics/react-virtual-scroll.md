@@ -8,6 +8,7 @@ up: infinisheet
 github: https://github.com/TheCandidStartup/infinisheet/tree/main/packages/react-virtual-scroll
 npm: https://www.npmjs.com/package/@candidstartup/react-virtual-scroll
 docs: /infinisheet/modules/_candidstartup_react-virtual-scroll.html
+storybook: /infinisheet/storybook/?path=/docs/react-virtual-scroll--docs
 also: frontend
 ---
 

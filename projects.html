@@ -7,7 +7,7 @@ ref: projects
 
 <ul class="post-list">
 {% for topic in site.topics %}
-{% if topic.github or topic.npm or topic.docs %}
+{% if topic.github or topic.npm or topic.docs or topic.storybook %}
 <li>
     {% if topic.github %}
       <a class="candid-topic-tag" href="{{ topic.github }}" title="GitHub">GitHub</a>
@@ -16,8 +16,11 @@ ref: projects
       <a class="candid-topic-tag" href="{{ topic.npm }}" title="NPM">NPM</a>
     {% endif %}
     {% if topic.docs %}
-      <a class="candid-topic-tag" href="{{ topic.docs }}" title="Documentation">Documentation</a>
+      <a class="candid-topic-tag" href="{{ topic.docs }}" title="API">API</a>
     {% endif %}
+    {% if topic.storybook %}
+    <a class="candid-topic-tag" href="{{ topic.storybook }}" title="Storybook">Storybook</a>
+  {% endif %}
 
     <a class="candid-topic-link" href="{{ topic.url | absolute_url }}" title="{{ topic.title }}">{{ topic.title | escape }}</a>
 

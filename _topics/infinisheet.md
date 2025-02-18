@@ -6,6 +6,7 @@ tagline: All about the "infinisheet" monorepo
 up: spreadsheets
 github: https://github.com/TheCandidStartup/infinisheet
 docs: /infinisheet
+storybook: /infinisheet/storybook/
 also: react-virtual-scroll
 ---
 
