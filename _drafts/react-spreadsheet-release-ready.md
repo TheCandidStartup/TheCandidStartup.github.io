@@ -87,6 +87,7 @@ export const FullWidth: Story = {
 * Need to use a Storybook "fullscreen" `layout` to have access to the full width
 * Custom render method that wraps `VirtualSpreadsheet` with an `AutoSizer` set up to fill the available width while using a fixed height
 * "Full Screen" is the same but with both width and height controlled by the `AutoSizer`
+* I switched to using the "Full Width" story for the `react-spreadsheet` landing page
 
 {% include candid-image.html src="/assets/images/infinisheet/storybook-full-width-spreadsheet.png" alt="Storybook with Full Width Spreadsheet" %}
 
@@ -96,11 +97,84 @@ export const FullWidth: Story = {
 * Only useful scenario I can think of is as a viewer of large spreadsheet data
 * Need to provide a `readOnly` mode that disables the edit functionality
 
+```ts
+export interface VirtualSpreadsheetProps<Snapshot> {
+  readOnly?: boolean;
+}
+```
+
+* Implementation is simple. Mostly replacing calls to `setEditMode(true)` with `setEditMode(!readOnly)`
+* Also set `read-only` attribute on formula and focus sink inputs 
+
 # Infinisheet Types
+
+{% include candid-image.html src="/assets/images/infinisheet/module-architecture.svg" alt="InfiniSheet Architecture" %}
+
+If I'm going to achieve the full InfiniSheet vision, I need to extract common types like `SpreadsheetData` and move them into a common interface package. `SpreadsheetData` has a dependency on `ItemOffsetMapping` which is defined in `react-virtual-scroll`. That will need to move too. To keep things simple, I'm going to define a single `infinisheet-types` package for all common interfaces.
+
+If I know I need to do a major refactor of the API surface area, I should do it before I release rather than after.
+
+## ItemOffsetMapping
+
+* Create stub package following same recipe as [react-spreadsheet]({% link _posts/2024-09-09-react-spreadsheet.md %})
+* Lot more stub config files now
+* Moved `ItemOffsetMapping`, `FixedSizeItemOffsetMapping` and `VariableSizeItemOffsetMapping` there from `react-virtual-scroll`
+* Not limiting myself entirely to interfaces. Small bits of support code where they make sense.
+* Want to minimize complexity for those using `react-virtual-scroll` stand alone
+* Having some real code there also avoids special cases. Same config as any other library package with unit tests and transpiled and bundled output.
+* At first I thought I would have to replace `{@link ItemOffsetMapping}` with `{@link @candidstartup/infinisheet-types!ItemOffsetMapping | ItemOffsetMapping}` when referencing `ItemOffsetMapping` in `react-virtual-scroll` TSDoc comments. Clumsy to use. Typedoc and API Extractor handle it correctly, VS Code removes the `{@link}` wrapper but fails to format as clickable link.
+* It turns out that both VS Code and Typedoc will handle `{@link ItemOffsetMapping}` as long as it's in a context where the TypeScript compiler can resolve the reference. Which is pretty much all cases apart from package documentation comments in `index.ts`. Annoyingly API Extractor doesn't do the same, and warns about broken links. Typedoc already tells me about links that can't be resolved so I turned the API Extractor warning off. 
+* Started out as I mean to go on by ensuring unit tests and TSDoc comments have 100% coverage.
+
+## SpreadsheetData
+
+* Moved `SpreadsheetData` and `EmptySpreadsheetData` from `react-spreadsheet` to `infinisheet-types`
+* 100% unit test and documentation coverage
 
 # Documentation
 
+* Was mostly there already. Took 10 minutes to complete documentation for what's left in `react-spreadsheet`
+
 # Unit Tests
+
+* Only have stub unit tests in `react-spreadsheet`
+* Render a spreadsheet with test data and check that expected values appear
+* No interaction of any sort
+* Miserable 20% code coverage
+* Have improved things slightly by getting to 100% coverage on code moved to `infinisheet-types`
+* Suspect I'm not going to get to 100% coverage in a hurry but will hit the low hanging fruit
+* Invested a couple of hours and got up to 85% statement coverage, 75% branch coverage
+* Straightforward to cover logical behavior on click to select, use of keyboard navigation and modifying inputs
+
+```ts
+    // Got to cell A2 by changing the Name input
+    const name = screen.getByTitle("Name");
+    const formula = screen.getByTitle("Formula");
+    {act(() => {
+      fireEvent.change(name, { target: { value: "A2" }})
+      fireEvent.keyUp(name, { key: 'Enter'})
+    })}
+
+    // Cell content should be reflected in Formula input
+    expect(formula).toHaveProperty("value", "A2");
+
+    // Send cursor down event to focus sink to move to cell A3
+    const focusSink = screen.getByTitle("Edit");
+    {act(() => { fireEvent.keyDown(focusSink, { key: 'ArrowDown' }) })}
+    expect(focusSink).toHaveProperty("value", "");
+    expect(name).toHaveProperty("value", "A3");
+    expect(formula).toHaveProperty("value", "A3");
+
+    // Go into edit mode by hitting enter on focus cell
+    const focusSink = screen.getByTitle("Edit");
+    {act(() => { fireEvent.keyDown(focusSink, { key: 'Enter' }) })}
+    expect(focusSink).toHaveProperty("value", "A3");
+```
+
+* White box testing because I know which events code listens too and don't have to simulate full sequence of events from real user input
+* Testing logic triggered by events rather than full browser interaction
+* Remaining code becomes increasingly impractical to test because it relies on layout. Could mock that for `react-virtual-scroll` components but too much effort for a complex component like `VirtualSpreadsheet` for too little return.
+* Cover those cases with component tests
 
 # Component Tests
 
