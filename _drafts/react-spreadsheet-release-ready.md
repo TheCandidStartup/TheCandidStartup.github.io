@@ -178,8 +178,58 @@ If I know I need to do a major refactor of the API surface area, I should do it 
 
 # Component Tests
 
+* Last time set things up ready for component testing. Two production builds - one fully functional but built against component source code rather than released packages, one built against released packages but with a stripped down set of features.
+* Start off by adding a set of smoke tests, checking that each story loads and renders correctly. Can then extend to cover the cases not addressed by unit tests.
+* Started by putting together some utility functions to hide the details of Storybook URLs and test vs full build.
+
+```ts
+export function storyUrl(iframe: boolean, packageName: string, component: string, story: string): string {
+  const base = packageName + "-" + component.toLowerCase() + "--" + pascalCaseToStorybookUrl(story);
+  return (iframe ? "/iframe.html?id=" : "/?path=/story/") + base;
+}
+
+export function testUrl(url: string): string {
+  return (process.env.CI || process.env.PROD) ? "/test" + url : url;
+}
+```
+
+* The `storyUrl` function handles the details of creating the URL for a component story, depending on whether you want the full Storybook functionality or just the content of the iframe that renders the component.
+* The `testUrl` function converts a URL for the full build into one for the test build if the test build is available. That allows me to write tests that will work in both test and dev environments.
+* Each component gets its own Playwright `spec` test file. Each has a local function that defines smoke test URLs.
+
+```ts
+function smoke(story: string) {
+  return testUrl(storyUrl(true, "react-spreadsheet", "VirtualSpreadsheet", story));
+}
+```
+
+* The smoke tests are really simple.
+
+```ts
+test('CellSelected Loads', async ({ page }) => {
+  await page.goto(smoke("CellSelected"));
+  await expect(page.getByText('A3', { exact: true })).toBeInViewport();
+  const cell = page.locator('div.VirtualSpreadsheet_Cell__Focus');
+  await expect(cell).toHaveText("1899-12-22");
+  await expect(page.getByTitle("Name")).toHaveValue("C3");
+  await expect(page.getByTitle("Formula")).toHaveValue("1899-12-22");
+});
+```
+
 # Publish
 
+* With that I think I have the bare minimum in place to publish `react-spreadsheet`, `react-virtual-scroll`, and `infinisheet-types` to npm. 
+* Made sure all three packages have `private: false` flag
+* Cross fingers and run my publishing pipeline
+* Update blog to add npm links
+* Decided not worth adding a separate project page for `infinisheet-types`
+
 # Try It!
+
+* Packages on NPM
+* Updated Storybook
+* Embed auto-size VirtualSpreadsheet story?
+
+{% include candid-iframe.html src="https://thecandidstartup.org/infinisheet/storybook/iframe?id=react-spreadsheet-virtualspreadsheet--empty" width="100%" height="420px" %}
 
 # Next Time
