@@ -399,4 +399,4 @@ I think the end result is well worth the minimal level of effort that I put in t
 
 # Next Time
 
-Time to get this thing published so you can play around with it yourselves. 
+Time to [get this thing published]({% link _posts/2025-02-24-publishing-infinisheet-storybook.md %}) so you can play around with it yourselves. 
