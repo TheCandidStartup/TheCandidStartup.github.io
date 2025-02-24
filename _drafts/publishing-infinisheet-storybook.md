@@ -156,7 +156,7 @@ I need to publish all the pages for Infinisheet in a single deployment step. All
 
 # Blog Updates
 
-Apart from fixing the broken Typedoc links, all I had to do was add additional links to the Storybook landing pages. I extended the [system I built](https://www.thecandidstartup.org/2024/08/12/publish-api-documentation.html) for GitHub, NPM and API documentation links.
+As well as fixing the broken Typedoc links, I added additional links to take you to the Storybook landing pages. I extended the [system I built](https://www.thecandidstartup.org/2024/08/12/publish-api-documentation.html) for GitHub, NPM and API documentation links.
 
 {% include candid-image.html src="/assets/images/infinisheet/blog-storybook-links.png" alt="Storybook links on the blog" %}
 
