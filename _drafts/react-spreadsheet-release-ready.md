@@ -220,16 +220,21 @@ test('CellSelected Loads', async ({ page }) => {
 
 * With that I think I have the bare minimum in place to publish `react-spreadsheet`, `react-virtual-scroll`, and `infinisheet-types` to npm. 
 * Made sure all three packages have `private: false` flag
+* Remembered at the last minute that I'd forgotten to mark commits that moved interfaces to `infinisheet-types` as breaking changes so added a `BREAKING CHANGE` footer to my final package commit
 * Cross fingers and run my publishing pipeline
-* Update blog to add npm links
+* To my great surprise it works first time, updating the existing `react-virtual-scroll` package and publishing `react-spreadsheet` and `infinisheet-types` for the first time
+* As soon as I looked at the packages on npm realized I'd forgotten to update my placeholder README for `react-spreadsheet`
+* Which is why I'm already up to v0.7.1
+* Updated blog to add npm links
 * Decided not worth adding a separate project page for `infinisheet-types`
 
 # Try It!
 
-* Packages on NPM
-* Updated Storybook
-* Embed auto-size VirtualSpreadsheet story?
+* Latest [react-spreadsheet](https://www.npmjs.com/package/@candidstartup/react-spreadsheet), [react-virtual-scroll](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll) and [infinisheet-types](https://www.npmjs.com/package/@candidstartup/infinisheet-types) packages are available on [npm](https://www.npmjs.com/)
+* Republished documentation including Storybook updated with [FullWidth](https://www.thecandidstartup.org/infinisheet/storybook/?path=/story/react-spreadsheet-virtualspreadsheet--full-width) and [FullScreen](https://www.thecandidstartup.org/infinisheet/storybook/?path=/story/react-spreadsheet-virtualspreadsheet--full-screen) stories
 
-{% include candid-iframe.html src="https://thecandidstartup.org/infinisheet/storybook/iframe?id=react-spreadsheet-virtualspreadsheet--empty" width="100%" height="420px" %}
+{% include candid-iframe.html src="https://thecandidstartup.org/infinisheet/storybook/iframe?id=react-spreadsheet-virtualspreadsheet--full-screen" width="100%" height="600px" %}
 
 # Next Time
+
+* We're finally ready to start building out some more full featured `SpreadsheetData` implementations. Time to make that spreadsheet editable.
