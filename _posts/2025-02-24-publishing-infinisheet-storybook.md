@@ -170,4 +170,4 @@ So much left to do. Do I finish documenting and unit testing `react-spreadsheet`
 
 Or do I switch focus and factor out common interfaces like `SpreadsheetData` ready to start implementing a spreadsheet backend?
 
-As always, you'll find out next time.
+As always, you'll find out [next time]({% link _posts/2025-03-03-react-spreadsheet-release-ready.md %}).
