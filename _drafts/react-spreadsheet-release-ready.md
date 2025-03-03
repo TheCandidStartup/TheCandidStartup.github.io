@@ -4,11 +4,11 @@ title: >
 tags: react-spreadsheet
 ---
 
-[Last time]({% link _posts/2025-02-24-publishing-infinisheet-storybook.md %}), I left you with a laundry list of things to do next. In the end I decided to try and do all of them, with the unifying theme of getting `react-spreadsheet` ready to release.
+[Last time]({% link _posts/2025-02-24-publishing-infinisheet-storybook.md %}), I left you with a laundry list of things to do next. In the end, I decided to try and do all of them, with the unifying theme of getting `react-spreadsheet` ready to release.
 
 # Constant Propagation
 
-I still have a few hard coded constants in `VirtualSpreadsheet` that should really be props. They're all related to layout of the different sub-components within `VirtualSpreadsheet`.
+I still had a few hard coded constants in `VirtualSpreadsheet` that should really be props. They're all related to layout of the different sub-components within `VirtualSpreadsheet`.
 
 ```ts
 export interface VirtualSpreadsheetProps<Snapshot> {
@@ -106,15 +106,17 @@ The implementation is simple. It's mostly replacing calls to `setEditMode(true)`
 
 # Infinisheet Types
 
-{% include candid-image.html src="/assets/images/infinisheet/module-architecture.svg" alt="InfiniSheet Architecture" %}
+{% include candid-image.html src="/assets/images/infinisheet/infinisheet-types-architecture.svg" alt="InfiniSheet Architecture" %}
 
-If I'm going to achieve the full InfiniSheet vision, I need to extract common types like `SpreadsheetData` and move them into a common interface package. `SpreadsheetData` has a dependency on `ItemOffsetMapping` which is defined in `react-virtual-scroll`. That will need to move too. To keep things simple, I'm going to define a single `infinisheet-types` package for all common interfaces.
+If I'm going to achieve the full InfiniSheet vision, I need to extract common types like `SpreadsheetData` and move them into a common interface package.
+
+`SpreadsheetData` has a dependency on `ItemOffsetMapping` which is defined in `react-virtual-scroll`. That will need to move too. To keep things simple, I'm going to define a single `infinisheet-types` package for all common interfaces.
 
 If I know I need to do a major refactor of the API surface area, I should do it before I release rather than after.
 
 ## ItemOffsetMapping
 
-I created a stub `infinisheet-types` package following the [same recipe]({% link _posts/2024-09-09-react-spreadsheet.md %}) as `react-spreadsheet`. Although, there are lots more stub config files to copy now. 
+I created a stub `infinisheet-types` package following the [same recipe]({% link _posts/2024-09-09-react-spreadsheet.md %}) as `react-spreadsheet`. Although there are lots more stub config files to copy now. 
 
 I moved `ItemOffsetMapping`, `FixedSizeItemOffsetMapping` and `VariableSizeItemOffsetMapping` there from `react-virtual-scroll`. I'm not limiting myself entirely to interfaces. I'm also including small bits of support code where they make sense. I want to minimize complexity for those using `react-virtual-scroll` stand alone.
 
@@ -154,7 +156,7 @@ I invested a couple of hours and was delighted to get up to 85% statement covera
     // Cell content should be reflected in Formula input
     expect(formula).toHaveProperty("value", "A2");
 
-    // Send cursor down event to focus sink to move to cell A3
+    // Send arrow down event to focus sink to move to cell A3
     const focusSink = screen.getByTitle("Edit");
     {act(() => { fireEvent.keyDown(focusSink, { key: 'ArrowDown' }) })}
     expect(focusSink).toHaveProperty("value", "");
@@ -192,7 +194,7 @@ export function testUrl(url: string): string {
 
 The `storyUrl` function handles the details of creating the URL for a component story, depending on whether you want the full Storybook functionality or just the content of the iframe that renders the component.
 
-The `testUrl` function converts a URL for the full build into one for the test build if the test build is available. That allows me to write tests that will work in both production and dev environments.
+The `testUrl` function converts a URL for the full build into one for the test build, if the test build is available. That allows me to write tests that will work in both production and dev environments.
 
 Each component gets its own Playwright `spec` test file. Each test file has a local function that defines smoke test URLs.
 
@@ -233,7 +235,7 @@ I updated the `react-spreadsheet` [project page]({% link _topics/react-spreadshe
 
 The latest [react-spreadsheet](https://www.npmjs.com/package/@candidstartup/react-spreadsheet), [react-virtual-scroll](https://www.npmjs.com/package/@candidstartup/react-virtual-scroll) and [infinisheet-types](https://www.npmjs.com/package/@candidstartup/infinisheet-types) packages are available on [npm](https://www.npmjs.com/).
 
-The release process republished all the documentation, including all the [new props](/infinisheet/storybook/?path=/docs/react-spreadsheet-virtualspreadsheet--docs). Storybook has been updated to add [FullWidth](https://www.thecandidstartup.org/infinisheet/storybook/?path=/story/react-spreadsheet-virtualspreadsheet--full-width) and [FullScreen](https://www.thecandidstartup.org/infinisheet/storybook/?path=/story/react-spreadsheet-virtualspreadsheet--full-screen) stories.
+The release process republished all the documentation, including all the [new props](https://www.thecandidstartup.org/infinisheet/storybook/?path=/docs/react-spreadsheet-virtualspreadsheet--docs). Storybook has been updated to add [FullWidth](https://www.thecandidstartup.org/infinisheet/storybook/?path=/story/react-spreadsheet-virtualspreadsheet--full-width) and [FullScreen](https://www.thecandidstartup.org/infinisheet/storybook/?path=/story/react-spreadsheet-virtualspreadsheet--full-screen) stories.
 
 {% include candid-iframe.html src="https://thecandidstartup.org/infinisheet/storybook/iframe?id=react-spreadsheet-virtualspreadsheet--full-screen" width="100%" height="600px" %}
 
