@@ -5,7 +5,7 @@ tags: react-spreadsheet infinisheet
 thumbnail: /assets/images/react-spreadsheet/name-formula-layout.png
 ---
 
-We're on a roll, steadily filling out the [Infinisheet architecture diagram]({% link _posts/2024-07-29-infinisheet-architecture.md %}) with actual implementations. I have a [React based spreadsheet frontend]({% link _posts/2025-03-03-react-spreadsheet-release-ready.md %}) that reads data via a common [spreadsheet data interface]({% link _posts/2024-09-30-react-spreadsheet-data-interface.md %}).
+We're on a roll, steadily filling out the [Infinisheet architecture diagram]({% link _posts/2024-07-29-infinisheet-architecture.md %}) with actual implementations. I've created a [React based spreadsheet frontend]({% link _posts/2025-03-03-react-spreadsheet-release-ready.md %}) that reads data via a common [spreadsheet data interface]({% link _posts/2024-09-30-react-spreadsheet-data-interface.md %}).
 
 So far, all my implementations of that interface have served up [fake data]({% link _posts/2024-10-07-react-spreadsheet-data-model.md %}). Now I'm going to build my first real implementation with data you can edit.
 
@@ -15,7 +15,9 @@ So far, all my implementations of that interface have served up [fake data]({% l
 
 I'm starting with a *reference implementation* of the `SpreadsheetData` interface. A reference implementation should be functionally correct, simple to build and easy to understand. There's no attempt at optimization.
 
-You can use a reference implementation for mocks, checking behavior compared with an optimized implementation and for sample code. Most importantly, it helps validate that an interface makes sense before you invest a lot of effort into an optimized, production quality implementation.
+You can use a reference implementation for mocks, checking behavior compared with an optimized implementation and for sample code. Most importantly, it helps validate that an interface makes sense before you invest a lot of effort into an optimized, production quality implementation. 
+
+You can test that the interface works for consuming code. I can plug `SimpleSpreadsheetData` into `VirtualSpreadsheet` and test the editing workflow.
 
 This is a new package, filling out the `simple-spreadsheet-data` box on the architecture diagram. We start with `EmptySpreadsheetData`, implement `setCellValueAndFormat` then see what has to happen to make the rest of it work.
 
@@ -25,7 +27,7 @@ The snapshot semantics used in `SpreadsheetData` come from the React [`useSyncEx
 
 The key requirements are :
   1. If nothing changes, successive calls to `getSnapshot` must return the same value (compared using `Object.is`).
-  2. If something changes, values read using an existing snapshot must not change.
+  2. If something changes, data read using an existing snapshot must not change.
   3. If something changes, the next call to `getSnapshot` must return a different value.
 
 It's not clear how long a snapshot must continue to be valid. Obviously, until React stops using it, but when is that? And can you rely on that behavior?
@@ -208,11 +210,11 @@ I ended up having to use explicit functions and interfaces rather than aliases s
 
 By default, the TypeScript eslint plugin complains when you [define an empty interface](https://typescript-eslint.io/rules/no-empty-object-type/). Luckily, you can [configure the rule](https://typescript-eslint.io/rules/no-empty-object-type/#allowinterfaces) to allow empty interfaces that extend other interfaces.
 
-Bingo. No need for generic types in any of my `VirtualSpreadsheet` sample code. Select a cell, type something, hit `Enter`. 
+Bingo. No need for generic types in any of my `VirtualSpreadsheet` sample code. 
 
 # Try It!
 
-Visit the [Empty](https://www.thecandidstartup.org/infinisheet/storybook/?path=/story/react-spreadsheet-virtualspreadsheet--empty) Virtual Spreadsheet story. Also embedded right here for your convenience.
+Visit the [Empty](https://www.thecandidstartup.org/infinisheet/storybook/?path=/story/react-spreadsheet-virtualspreadsheet--empty) Virtual Spreadsheet story. Also embedded right here for your convenience. Select a cell, type something, hit `Enter`. 
 
 {% include candid-iframe.html src="https://thecandidstartup.org/infinisheet/storybook/iframe?id=react-spreadsheet-virtualspreadsheet--empty" width="100%" height="420px" %}
 
