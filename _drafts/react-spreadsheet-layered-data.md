@@ -5,7 +5,7 @@ tags: react-spreadsheet
 thumbnail: /assets/images/react-spreadsheet/name-formula-layout.png
 ---
 
-Last time, I created a reference implementation of the `SpreadsheetData` interface, including support for editing. Connect it to my `VirtualSpreadsheet` front end and boom, you have an editable empty spreadsheet.
+[Last time]({% link _posts/2025-03-10-react-spreadsheet-editable-data.md %}), I created a reference implementation of the `SpreadsheetData` interface, including support for editing. Connect it to my `VirtualSpreadsheet` front end and boom, you have an editable empty spreadsheet.
 
 I want to do the same for the "fake" data sources in my [Storybook](https://www.thecandidstartup.org/infinisheet/storybook/?path=/docs/react-spreadsheet--docs) and sample code. Fortunately, I have a cunning plan. I'm going to layer an editable empty data source on top of my existing data sources. 
 

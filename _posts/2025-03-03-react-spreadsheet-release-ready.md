@@ -241,4 +241,4 @@ The release process republished all the documentation, including all the [new pr
 
 # Next Time
 
-We're finally ready to start building out some more full featured `SpreadsheetData` implementations. Time to make that spreadsheet editable.
+We're finally ready to start building out some more full featured `SpreadsheetData` implementations. Time to make that spreadsheet [editable]({% link _posts/2025-03-10-react-spreadsheet-editable-data.md %}).
