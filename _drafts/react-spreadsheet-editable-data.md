@@ -19,7 +19,7 @@ You can use a reference implementation for mocks, checking behavior compared wit
 
 You can test that the interface works for consuming code. I can plug `SimpleSpreadsheetData` into `VirtualSpreadsheet` and test the editing workflow.
 
-This is a new package, filling out the `simple-spreadsheet-data` box on the architecture diagram. We start with `EmptySpreadsheetData`, implement `setCellValueAndFormat` then see what has to happen to make the rest of it work.
+This is a new package, filling out the `simple-spreadsheet-data` box on the architecture diagram. We start with `EmptySpreadsheetData`, implement `setCellValueAndFormat`, then see what has to happen to make the rest of it work.
 
 # Snapshot Semantics
 
@@ -32,7 +32,9 @@ The key requirements are :
 
 It's not clear how long a snapshot must continue to be valid. Obviously, until React stops using it, but when is that? And can you rely on that behavior?
 
-React calls `getSnapshot` to see if anything has changed since the last snapshot and schedule a render if needed. The render will use the same snapshot throughout, retrieving data from the store. This implies that a snapshot must remain valid at least until data starts being retrieved using a more recent snapshot. There doesn't seem to be any reason why React would need to hang on to the previous snapshot after that. 
+React calls `getSnapshot` to see if anything has changed since the last snapshot and schedule a render if needed. The render method calls `getSnapshot` again via `useSyncExternalStore` and then uses the same snapshot throughout.
+
+ This implies that a snapshot must remain valid at least until data starts being retrieved using a more recent snapshot. There doesn't seem to be any reason why React would need to hang on to the previous snapshot after that. 
 
 Luckily, we don't need to worry about any of that for a reference implementation. The simplest and most obviously correct approach is for a snapshot to be a literal snapshot - a self contained copy of the data. However, you can't create a new copy every time `getSnapshot` is called as it has to return the same object if nothing's changed. 
 
@@ -67,7 +69,7 @@ export class SimpleSpreadsheetData implements SpreadsheetData<SimpleSnapshot> {
 }
 ```
 
-The spreadsheet values are stored as a simple map from cell name to cell content. I keep track of the current extent of the data separately so that I don't have to search through the whole thing to work out how big it is. I use a `Record` rather than a `Map` as records support spread syntax, making it easy to implement `setCellValueAndFormat` in an immutable way.
+The spreadsheet values are stored as a map from cell name to cell content. I keep track of the current extent of the data separately so that I don't have to search through the whole thing to work out how big it is. I use a `Record` rather than a `Map` as records support spread syntax, making it easy to implement `setCellValueAndFormat` in an immutable way.
 
 ```ts
 setCellValueAndFormat(row: number, column: number, value: CellValue, format: string | undefined): boolean {
@@ -79,6 +81,7 @@ setCellValueAndFormat(row: number, column: number, value: CellValue, format: str
     rowCount: Math.max(curr.rowCount, row+1),
     colCount: Math.max(curr.colCount, column+1)
   }
+  this.#notifyListeners();
 
   return true;
 }
@@ -123,17 +126,17 @@ This has all gone smoothly so far. Time to dive down a rat hole.
 
 I want to hide the details of how `SimpleSnapshot` is implemented. Callers don't need to know anything about the internal structure. I want to be free to change the implementation without it being a breaking change for the API.
 
-My initial attempt was to not export the `SimpleSnapshot` type. 
+My initial attempt was to not export the `SimpleSnapshot` type. It didn't work.
 
-It doesn't work as I expected. The type is still copied into the built `.d.ts` typing file. Consuming code can see the structure of `SimpleSnapshot` in VS Code intellisense and access the data directly. You can't explicitly import the type, but you can still make use of it. I also get errors from API Extractor because I'm using a type in the API that hasn't been exported. 
+The type is still copied into the built `.d.ts` typing file. Consuming code can see the structure of `SimpleSnapshot` in VS Code intellisense and access the data directly. You can't explicitly import the type, but you can still make use of it. I also get errors from API Extractor because I'm using a type in the API that hasn't been exported. 
 
 My next thought was to define `SimpleSnapshot` as an alias for `unknown` in the API and then cast to the actual interface in the implementation. The problem with that is that everything is assignable to `unknown`, so the caller could pass anything in as a snapshot without triggering a type error.
 
-How about using an empty `interface` and having the internal implementation extend from that? The problem there is that TypeScript uses [structural typing](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html#structural-type-system). I can declare `interface SimpleSnapshot {}` but the API would accept anything structurally compatible, which is [actually anything](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-oop.html#empty-types) apart from `null` or `undefined`.
+How about using an empty `interface` and having the internal implementation extend from that? The problem there is that TypeScript uses [structural typing](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html#structural-type-system). I can declare `interface SimpleSnapshot {}` but the API would accept anything structurally compatible, which is actually [anything apart from `null` or `undefined`](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-oop.html#empty-types).
 
 # Nominal Typing
 
-Ideally you want a public type that is compatible only with a type that has the same name, that is, itself. This is [nominal typing](https://basarat.gitbook.io/typescript/main-1/nominaltyping#nominal-typing). Typescript doesn't directly support nominal typing but there [are](https://basarat.gitbook.io/typescript/main-1/nominaltyping#using-literal-types) [several](https://basarat.gitbook.io/typescript/main-1/nominaltyping#using-enums) [common](https://basarat.gitbook.io/typescript/main-1/nominaltyping#using-interfaces) [patterns](https://github.com/kourge/ts-brand) used to get a similar effect. 
+Ideally you want a public type that is compatible only with a type that has the same name, that is, itself. This is [nominal typing](https://basarat.gitbook.io/typescript/main-1/nominaltyping#nominal-typing). Typescript doesn't directly support nominal typing for interfaces but there [are](https://basarat.gitbook.io/typescript/main-1/nominaltyping#using-literal-types) [several](https://basarat.gitbook.io/typescript/main-1/nominaltyping#using-enums) [common](https://basarat.gitbook.io/typescript/main-1/nominaltyping#using-interfaces) [patterns](https://github.com/kourge/ts-brand) used to get a similar effect. 
 
 They all resolve around adding an unused *brand* property with a type that is highly unlikely to match. This process is known as [type branding](https://www.learningtypescript.com/articles/branded-types). The pattern I went with uses a string enum as the type of the brand. Non-empty string enums are unusual as they are actually nominally typed in TypeScript. Two enums with identical values are treated as separate types.
 
@@ -181,7 +184,7 @@ There's no issue at runtime because `VirtualSpreadsheet` doesn't care what type 
 
 Didn't we just tie ourselves in knots to avoid using `unknown` as the public snapshot type for `SimpleSnapshot`? Have I just thrown all that hard won type safety away?
 
-Surprisingly, no. When `VirtualSpreadsheet` is type checked, TypeScript has to make sure that the code will work for every possible value of the `Snapshot` type parameter. It doesn't matter if we later use `VirtualSpreadsheet<unknown>`, the code still has to be safe to use for `VirtualSpreadsheet<number>` and `VirtualSpreadsheet<SimpleSnapshot>` and every other type.
+Surprisingly, no. When `VirtualSpreadsheet` is type checked, TypeScript has to make sure that the code will work for every possible value of the `Snapshot` type parameter. It doesn't matter if we later use `VirtualSpreadsheet<unknown>`, the code still has to be safe to use for `VirtualSpreadsheet<number>`, and `VirtualSpreadsheet<SimpleSnapshot>`, and every other type.
 
 If I hardcoded `VirtualSpreadsheet` so that the snapshot type is always `unknown` it wouldn't be type safe. I could accidentally pass the wrong argument to `SpreadsheetData` without a type error to catch my mistake. Making `VirtualSpreadsheet` generic makes it type safe, even if I only ever use `VirtualSpreadsheet<unknown>`.
 
@@ -221,6 +224,6 @@ Visit the [Empty](https://www.thecandidstartup.org/infinisheet/storybook/?path=/
 
 # Next Time
 
-The empty spreadsheet is editable, but what about the other data sources? How do I make "fake" data sources that programmatically generate content for trillions of cells editable? 
+The empty spreadsheet is editable, but what about the other data sources? How do I make "fake" data sources, that programmatically generate content for trillions of cells, editable? 
 
 Don't worry, I have a cunning plan.
