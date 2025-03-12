@@ -162,5 +162,34 @@ npm warn   4 more (@testing-library/react, @types/react-dom, ...)
 * [Old article](https://medium.com/welldone-software/two-ways-to-run-tests-on-different-versions-of-the-same-library-f-e-react-17-react-16-afb7f861d1e9) showing three ways of doing it. Based on installing multiple versions of React in repo and then different ways of getting unit tests to resolve to desired version.
 * Seems fiddly and error prone. Also need to test full build and Playwright tests.
 * With GitHub workflows can do it the brute force way
-* Add a new worfklow that's a clone of `Build CI` and insert a step to upgrade to React 19
+* Added React version to my build matrix
 
+{% raw %}
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+        react-version: [18, 19]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm ci
+    - name: Use React ${{ matrix.react-version }}
+      if: ${{ matrix.react-version == 19 }}
+      run: npm install -D react@19 react-dom@19 @types/react@19 @types/react-dom@19
+    ...
+```
+
+{% endraw %}
+
+* GitHub workflows will run four build CI jobs, one for each combination of NodeJS and React version.
+* If a job wants React 19, install it over the default React 18 that `npm ci` put on. 
