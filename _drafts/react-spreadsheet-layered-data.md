@@ -5,7 +5,7 @@ tags: react-spreadsheet
 thumbnail: /assets/images/react-spreadsheet/name-formula-layout.png
 ---
 
-[Last time]({% link _posts/2025-03-10-react-spreadsheet-editable-data.md %}), I created a reference implementation of the `SpreadsheetData` interface, including support for editing. Connect it to my `VirtualSpreadsheet` front end and boom, you have an editable empty spreadsheet.
+[Last time]({% link _posts/2025-03-10-react-spreadsheet-editable-data.md %}), I created a reference implementation of the `SpreadsheetData` interface, including support for editing. Connect it to my `VirtualSpreadsheet` front end, and boom, you have an editable empty spreadsheet.
 
 I want to do the same for the "fake" data sources in my [Storybook](https://www.thecandidstartup.org/infinisheet/storybook/?path=/docs/react-spreadsheet--docs) and sample code. Fortunately, I have a cunning plan. I'm going to layer an editable empty data source on top of my existing data sources. 
 
@@ -262,7 +262,7 @@ getColumnCount(snapshot: LayeredSnapshot<BaseSnapshot, EditSnapshot>): number {
 }
 ```
 
-The `ItemOffsetMapping` getters are complicated to do in a general way. For now I just forward on to the base layer. That works perfectly for the current use case where I have fake data in the base layer and an empty edit layer. I haven't exposed a way of changing the extent of a row or column so no need to worry about merging the layers together for now. 
+The `ItemOffsetMapping` getters are complicated to do in a general way. For now, I just forward on to the base layer. That works perfectly for the current use case where I have fake data in the base layer and an empty edit layer. I haven't exposed a way of changing the extent of a row or column so no need to worry about merging the layers together for now. 
 
 ```ts
 getColumnItemOffsetMapping(snapshot: LayeredSnapshot<BaseSnapshot, EditSnapshot>): ItemOffsetMapping {
@@ -286,5 +286,5 @@ I spent a lot more time on typing than the actual implementation. Was it worth i
 
 I learned a lot more about the TypeScript type system. Learning new things is always worthwhile. 
 
-The strict typing actually helped me during implementation. As I figured out which layers to forward calls on to, I often ended up changing the `SpreadsheetData` instance I was calling. VS Code intellisense immediately reminded me that I needed to change the snapshot I was passing in too.
+The strict typing actually helped me during implementation. As I figured out which layers to forward calls on to, I often ended up changing the `SpreadsheetData` instance I was calling. VS Code Intellisense immediately reminded me that I needed to change the snapshot I was passing in too.
 
