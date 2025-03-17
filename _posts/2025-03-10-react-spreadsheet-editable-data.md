@@ -226,4 +226,4 @@ Visit the [Empty](https://www.thecandidstartup.org/infinisheet/storybook/?path=/
 
 The empty spreadsheet is editable, but what about the other data sources? How do I make "fake" data sources, that programmatically generate content for trillions of cells, editable? 
 
-Don't worry, I have a cunning plan.
+Don't worry, I have a [cunning plan]({% link _posts/2025-03-17-react-spreadsheet-layered-data.md %}).
