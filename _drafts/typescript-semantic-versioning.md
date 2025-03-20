@@ -10,7 +10,7 @@ wise words
 * TypeScript compiler [doesn't follow semantic versioning](https://www.learningtypescript.com/articles/why-typescript-doesnt-follow-strict-semantic-versioning)
 * Or at least has an interesting interpretation of semantic versioning
 * Major updates are for changes in API and command line flags. i.e. Breaking changes in how you run the compiler.
-* Minor updates are for changes in compiler output that might cause breaking changes in your code. i.e. Type errors in code that used to compiler OK, no type errors for things that would previously be found.
+* Minor updates are for changes in compiler output that might cause breaking changes in your code. i.e. Type errors in code that used to compile OK, no type errors for things that would previously be found.
 * Explains why so many projects are pinned to specific versions of TypeScript compiler
 
 # Semantic Versioning for TypeScript Types
@@ -22,7 +22,9 @@ wise words
 * Bugs in types (even if breaking for those relying on buggy behavior) can be fixed in patch release
 * Changes in supported TypeScript versions are major changes. That is, changes in the version of TypeScript your consumer has to use.
 * Advice on TypeScript compiler options to use. Want to avoid forcing your clients to use particular options. In general, compile your code using the strictest settings. Then should work for client using equally or less strict settings.
-* Document policy
+* Document policy, including which TypeScript versions you support
+* Use `peerDependencies` in each package to define supported versions, with `peerDependenciesMeta` to make TypeScript optional
+* Use a [Dynamic JSON badge](https://shields.io/badges/dynamic-json-badge) to pull the dependencies out and document them in README
 
 #  Rules of Thumb
 
@@ -31,6 +33,8 @@ wise words
 * If API contract changes, review against rules to see if should be considered breaking. If in doubt make it a major release.
 * If TypeScript compiler changes - review release notes for potential issues, check if build with new compiler changes API contract, build CI includes component level testing consuming built packages. Ideally would run these using previous version of compiler as well
 * [Testing Types](https://vitest.dev/guide/testing-types.html) in Vitest
+* If client uses TypeScript compiler outside the tested range, it may work, or they may encounter typing errors.
+* Packages are supplied as bundled JS + `.d.ts` typings. Much smaller surface area in amount of code and number of TypeScript features it relies on. 
 
 # Strictness
 
