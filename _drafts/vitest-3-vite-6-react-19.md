@@ -3,12 +3,12 @@ title: Upgrading to Vitest 3, Vite 6 and React 19
 tags: frontend infinisheet
 ---
 
-There are three big outstanding updates that have been hanging over me for a while. React 19, Vite 6 and Vitest 3. Vite and Vitest are at the heart of my development process. React is *the* dependency for my frontend packages. Understandably I'm nervous given [my experience]({% link _posts/2024-12-09-infinisheet-chore-updates.md %}) the last time I did a round of major updates.
+There are three big outstanding updates that have been hanging over me for a while. React 19, Vite 6 and Vitest 3. Vite and Vitest are at the heart of my development process. React is *the* dependency for my front-end packages. Understandably, I'm nervous given [my experience]({% link _posts/2024-12-09-infinisheet-chore-updates.md %}) the last time I did a round of major updates.
 
 
 # Vitest 3
 
-According to `npm ls vitest` there are no other dependencies on Vitest apart from Vitest addon packages. Vitest 3 is the first version of Vitest that supports Vite 6. It also supports Vite 5, so it makes sense to update Vitest first.
+According to `npm ls vitest` there are no other dependencies on Vitest apart from Vitest add-on packages. Vitest 3 is the first version of Vitest that supports Vite 6. It also supports Vite 5, so it makes sense to update Vitest first.
 
 ```
 % npm install -D vitest@3 @vitest/ui@3 @vitest/coverage-istanbul@3 @vitest/coverage-v8@3
@@ -16,7 +16,7 @@ According to `npm ls vitest` there are no other dependencies on Vitest apart fro
 added 13 packages, changed 13 packages, and audited 1146 packages in 6s
 ```
 
-None of the breaking changes listed in the [migration guide](https://vitest.dev/guide/migration.html#vitest-3) look like they apply to me. I tried running my test suite and had a couple of tests fail that depend on Vitest support for fake timers.
+None of the breaking changes listed in the [migration guide](https://vitest.dev/guide/migration.html#vitest-3) look like they apply to me. However, when I tried running my test suite, I had a couple of tests fail that depend on Vitest support for fake timers.
 
 ## Fake Timers
 
@@ -124,19 +124,19 @@ npm warn   4 more (@testing-library/react, @types/react-dom, ...)
 
 There's the same sort of Storybook related warnings. However, this time when I run the build I get lots of type errors from TypeScript.
 
-There's a long [list of TypeScript related changes](https://react.dev/blog/2024/04/25/react-19-upgrade-guide#typescript-changes) in the migration guide. There's clearly no runtime impact. Everything ran OK when I built with the old types. Hopefully I can tweak my code so that it passes type checking with both React 18 and 19.
+There's a long [list of TypeScript related changes](https://react.dev/blog/2024/04/25/react-19-upgrade-guide#typescript-changes) in the migration guide. There's clearly no runtime impact. Everything ran OK when I built with the old types. Hopefully, I can tweak my code so that it passes type checking with both React 18 and 19.
 
 ## JSX
 
-JSX is nNo longer](https://react.dev/blog/2024/04/25/react-19-upgrade-guide#the-jsx-namespace-in-typescript) part of the global namespace. I need to use `React.JSX` instead of `JSX`.
+JSX is [no longer](https://react.dev/blog/2024/04/25/react-19-upgrade-guide#the-jsx-namespace-in-typescript) part of the global namespace. I need to use `React.JSX` instead of `JSX`.
 
 ## useRef
 
-The `useRef()` function now always requires an argument. Previously it would create a ref with an `undefined` initial value if no argument was given. I had to replace `useRef()` with `useRef(undefined)` in a few places.
+The `useRef()` function now always requires an argument. Previously, it would create a ref with an `undefined` initial value if no argument was given. I had to replace `useRef()` with `useRef(undefined)` in a few places.
 
-The type returned by `useRef<T>(null)` has changed from `RefObject<T>` to `RefObject<T|null>`. The type of `RefObject.current` stays as `T|null`. In contrast, the type `useRef<T>(someValueOfT)` stays as `RefObject<T>` but the type of `RefObject.current` is now `T` rather than `T|null`.
+The type returned by `useRef<T>(null)` has changed from `RefObject<T>` to `RefObject<T|null>`. The type of `RefObject.current` stays as `T|null`. In contrast, the type returned by `useRef<T>(someValueOfT)` stays as `RefObject<T>` but the type of `RefObject.current` is now `T` rather than `T|null`.
 
-Basically the types are more explicit and predictable now. No magic addition of `null`. I needed to add explicit `|null` to a few types, including some exposed in the API.
+Basically, the types are more explicit and predictable now. No magic addition of `null`. I needed to add explicit `|null` to a few types, including some exposed in the API.
 
 I have one place that uses `RefObject<T>(someValueOfT)`. With the React 18 typings I had to handle the possibility of `null` when accessing `ref.current`, even though I never set it to `null`. 
 
@@ -154,7 +154,7 @@ I ran a full build with no type check or lint errors. Looks like we can have cod
 
 I want to make sure we maintain React 19 compatibility while developing against React 18. How do I test that everything works on both?
 
-I found an [Old article](https://medium.com/welldone-software/two-ways-to-run-tests-on-different-versions-of-the-same-library-f-e-react-17-react-16-afb7f861d1e9) that shows three ways of running the same test suite against two different versions of React. They're all based on installing multiple versions of React in the repo and then different ways of getting unit tests to resolve to the desired package versions.
+I found an [old article](https://medium.com/welldone-software/two-ways-to-run-tests-on-different-versions-of-the-same-library-f-e-react-17-react-16-afb7f861d1e9) that shows three ways of running the same test suite against two different versions of React. They're all based on installing multiple versions of React in the repo and then different ways of getting unit tests to resolve to the desired package versions.
 
 It seems fiddly and error prone. I'd also need to do the same thing for the full build and Playwright tests.
 
@@ -192,7 +192,7 @@ GitHub actions will run four build CI jobs for me, one for each combination of N
 
 # Conclusion
 
-That all went better than I dared to hope. I'm *almost* completely up to date now. Unfortunately, TypeScript 5.8 was released and Storybook doesn't support it yet. 
+That all went better than I dared to hope. I'm *almost* completely up to date now. Unfortunately, TypeScript 5.8 was recently released and Storybook doesn't support it yet. 
 
 Oh, well. There's always next time. 
 
