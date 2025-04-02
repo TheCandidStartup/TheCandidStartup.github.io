@@ -1,28 +1,34 @@
 ---
 title: TypeScript Semantic Versioning
-tags: frontend typescript
+tags: typescript
+thumbnail: /assets/images/frontend/ts-logo-128.png
 ---
 
-wise words
+The JavaScript NPM ecosystem is built on the foundation of [semantic versioning](https://docs.npmjs.com/about-semantic-versioning). Without semantic versioning, how could you possibly manage upgrades to the hundreds of dependencies accumulated by any real world project? 
+
+Which makes things a little awkward when you discover how TypeScript handles semantic versioning. 
 
 # TypeScript Compiler
 
-* TypeScript compiler [doesn't follow semantic versioning](https://www.learningtypescript.com/articles/why-typescript-doesnt-follow-strict-semantic-versioning)
-* Or at least has an interesting interpretation of semantic versioning
-* Major updates are for changes in API and command line flags. i.e. Breaking changes in how you run the compiler.
-* Minor updates are for changes in compiler output that might cause breaking changes in your code. i.e. Type errors in code that used to compile OK, no type errors for things that would previously be found.
-* Explains why so many projects are pinned to specific versions of TypeScript compiler
+The TypeScript compiler [doesn't follow semantic versioning](https://www.learningtypescript.com/articles/why-typescript-doesnt-follow-strict-semantic-versioning). Or at least it has an *interesting* interpretation of semantic versioning.
+
+Major updates are for changes in the TypeScript compiler's API, config file and command line flags. i.e. Breaking changes in how you run the compiler.
+
+Minor updates are for changes in compiler output that might cause breaking changes in your code. i.e. Type errors in code that used to compile OK, no type errors for things that would previously be found.
+
+Upgrading to a new minor version of the TypeScript compiler can result in your package failing to compile. Even worse, new minor versions of the TypeScript compiler can result in type errors when clients consume your package. 
+
+Which explains why so many packages are pinned to specific minor versions of the TypeScript compiler.
 
 # Semantic Versioning for TypeScript Types
 
-* [Spec](https://www.semver-ts.org/index.html) for managing changes to TypeScript types in library code
-* Aim is to ensure no new TypeScript type errors (whether from your changes or upgrade of TypeScript compiler) in minor version releases
-* Tricky because of TypeScript's structural typing and possibility of breaking changes in compiler
-* Detailed rules for which changes to your types are breaking vs non-breaking
-* Bugs in types (even if breaking for those relying on buggy behavior) can be fixed in patch release
-* Changes in supported TypeScript versions are major changes. That is, changes in the version of TypeScript your consumer has to use.
-* Advice on TypeScript compiler options to use. Want to avoid forcing your clients to use particular options. In general, compile your code using the strictest settings. Then should work for client using equally or less strict settings.
-* Document policy, including which TypeScript versions you support
+While researching this problem I came across a [spec](https://www.semver-ts.org/index.html) for managing changes to TypeScript types in library code. The aim is to ensure no new TypeScript type errors (whether from your changes or upgrade of the TypeScript compiler) in minor version releases.
+
+Great in principle but tricky in practice because of TypeScript's structural typing and the possibility of breaking changes in the compiler. The spec includes [detailed rules](https://www.semver-ts.org/formal-spec/2-breaking-changes.html) for which changes to your types are breaking vs non-breaking. Changes in supported TypeScript versions are considered to be major updates. That is, changes in the version of TypeScript your consumer has to use. Bugs in types (even if breaking for those relying on buggy behavior) can be fixed in patch releases.
+
+The spec also includes requirements for which TypeScript compiler options to use. You want to avoid forcing your clients to use particular options. In general, you should compile your code using the strictest settings. The resulting package should work for any client using equally or less strict settings.
+
+The final requirements are to document your versioning policy, including which TypeScript versions you support. 
 * Could use `peerDependencies` in each package to define supported versions, with `peerDependenciesMeta` to make TypeScript optional
 * Use a [Dynamic JSON badge](https://shields.io/badges/dynamic-json-badge) to pull the dependencies out and document them in README
 * Decided to document rather than enforce. In most cases newer TypeScript compiler will be fine because published types have a much smaller surface area than source code. Also means I can define TypeScript versions once in monorepo root and reference from all package READMEs.
