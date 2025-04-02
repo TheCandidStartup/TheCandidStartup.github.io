@@ -1,7 +1,7 @@
 ---
 title: >
   React Spreadsheet: Layered Data
-tags: react-spreadsheet
+tags: react-spreadsheet typescript
 thumbnail: /assets/images/react-spreadsheet/name-formula-layout.png
 ---
 

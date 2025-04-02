@@ -1,6 +1,6 @@
 ---
 title: Bootstrapping TSDoc
-tags: frontend
+tags: frontend typescript
 ---
 
 [Last time]({% link _posts/2024-07-01-react-virtual-scroll-0-4-0.md %}) I left you with the realization that documentation is a good thing and that I should probably write some. We all know that ["nobody reads documentation"](https://dl.acm.org/doi/pdf/10.1145/105783.105788), so my main focus is on writing documentation that sneaks up on you and jumps out just as you need it.

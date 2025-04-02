@@ -1,6 +1,6 @@
 ---
 title: Spreadsheet Data Interface
-tags: react-spreadsheet
+tags: react-spreadsheet typescript
 thumbnail: /assets/images/boring-spreadsheet.png
 ---
 

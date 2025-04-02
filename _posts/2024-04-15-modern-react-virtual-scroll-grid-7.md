@@ -1,7 +1,7 @@
 ---
 title: >
     Modern React Virtual Scroll Grid 7 : Grid
-tags: react-virtual-scroll
+tags: react-virtual-scroll typescript
 ---
 
 So far I've written six articles in this "Modern React Virtual Scroll Grid" [series]({% link _posts/2024-01-29-modern-react-virtual-scroll-grid.md %}), with a four article detour into [unit testing]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) my work, all without attempting to make a grid. That changes today.

@@ -1,6 +1,6 @@
 ---
 title: Bootstrapping API Extractor
-tags: frontend
+tags: frontend typescript
 ---
 
 I'm using [TSDoc comments]({% link _posts/2024-07-08-bootstrapping-tsdoc.md %}) to provide IntelliSense based documentation for my [open source project]({% link _topics/react-virtual-scroll.md %}). Now I want to do more. Enter API Extractor.

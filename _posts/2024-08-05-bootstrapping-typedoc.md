@@ -1,6 +1,6 @@
 ---
 title: Bootstrapping TypeDoc
-tags: frontend
+tags: frontend typescript
 thumbnail: /assets/images/frontend/typedoc-logo.png
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: TypeScript Semantic Versioning
-tags: frontend
+tags: frontend typescript
 ---
 
 wise words
@@ -23,8 +23,9 @@ wise words
 * Changes in supported TypeScript versions are major changes. That is, changes in the version of TypeScript your consumer has to use.
 * Advice on TypeScript compiler options to use. Want to avoid forcing your clients to use particular options. In general, compile your code using the strictest settings. Then should work for client using equally or less strict settings.
 * Document policy, including which TypeScript versions you support
-* Use `peerDependencies` in each package to define supported versions, with `peerDependenciesMeta` to make TypeScript optional
+* Could use `peerDependencies` in each package to define supported versions, with `peerDependenciesMeta` to make TypeScript optional
 * Use a [Dynamic JSON badge](https://shields.io/badges/dynamic-json-badge) to pull the dependencies out and document them in README
+* Decided to document rather than enforce. In most cases newer TypeScript compiler will be fine because published types have a much smaller surface area than source code. Also means I can define TypeScript versions once in monorepo root and reference from all package READMEs.
 
 #  Rules of Thumb
 

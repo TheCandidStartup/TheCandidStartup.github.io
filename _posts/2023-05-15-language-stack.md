@@ -1,6 +1,6 @@
 ---
 title: Choosing a Language Stack
-tags: cloud-architecture cambridge navisworks autodesk
+tags: cloud-architecture typescript cambridge navisworks autodesk
 ---
 
 First off, let's get our terms straight. What do I mean by [Language Stack](https://medium.com/omio-engineering/why-we-develop-and-use-language-stacks-not-languages-e83fd85c7f05)? Is that the same as a [Tech Stack](https://www.mongodb.com/basics/technology-stack), or is it more like a [Software Stack](https://www.sumologic.com/glossary/software-stack/)? Then again, what's the difference between a Tech Stack and a Software Stack?

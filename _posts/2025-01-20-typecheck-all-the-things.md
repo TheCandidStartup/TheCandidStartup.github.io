@@ -1,6 +1,6 @@
 ---
 title: Typecheck All The Things
-tags: frontend
+tags: frontend typescript
 thumbnail: /assets/images/frontend/ts-logo-128.png
 ---
 

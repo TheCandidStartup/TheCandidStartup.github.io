@@ -1,7 +1,7 @@
 ---
 title: >
   InfiniSheet: Chore Updates
-tags: infinisheet
+tags: infinisheet typescript
 thumbnail: /assets/images/frontend/npm-package.png
 ---
 
