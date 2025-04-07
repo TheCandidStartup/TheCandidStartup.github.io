@@ -4,7 +4,7 @@ tags: typescript
 thumbnail: /assets/images/frontend/ts-logo-128.png
 ---
 
-The JavaScript NPM ecosystem is built on the foundation of [semantic versioning](https://docs.npmjs.com/about-semantic-versioning). Without semantic versioning, how could you possibly manage upgrades to the hundreds of dependencies accumulated by any real world project? 
+The JavaScript npm ecosystem is built on the foundation of [semantic versioning](https://docs.npmjs.com/about-semantic-versioning). Without semantic versioning, how could you possibly manage upgrades to the hundreds of dependencies accumulated by any real world project? 
 
 Which makes things a little awkward when you discover how TypeScript handles semantic versioning. 
 
@@ -32,7 +32,7 @@ The spec also includes requirements for which TypeScript compiler options to use
 
 The final requirements are to document your versioning policy, including which TypeScript versions you support. My first thought was to use `peerDependencies` in each package to define supported versions, with a `peerDependenciesMeta` entry to make TypeScript optional. I can then use a [Dynamic JSON badge](https://shields.io/badges/dynamic-json-badge) to pull the dependencies out and document them in the package README.
 
-In the end I decided to document rather than enforce. In most cases using a newer TypeScript compiler than the one I built the package with will be fine. The package's published types have a much smaller surface area than the source code and use fewer TypeScript features. It's also easier to maintain. I can define TypeScript versions once in the monorepo root `package.json` and reference it from all package READMEs.
+In the end I decided to document rather than enforce. In most cases using a newer TypeScript compiler than the one I built the package with will be fine. The package's published types have a much smaller surface area than the source code and use fewer TypeScript features. This approach is also easier to maintain. I can define TypeScript versions once in the monorepo root `package.json` and reference it from all package READMEs.
 
 {% include candid-image.html src="/assets/images/react-virtual-scroll/dependency-badges.png" alt="Dependency badges in the react-virtual-scroll README" %}
 
@@ -44,7 +44,7 @@ Evaluating whether changes are breaking can be tricky, so I have some rules of t
 
 I use [API Extractor]({% link _posts/2024-07-19-bootstrapping-api-extractor.md %}) to generate a report that defines the public API contract for each package. That makes it easy to see if there have been any changes. If there's no change in the TypeScript compiler or API contract, the change is safe.
 
-I have a checklist than I run through when I update TypeScript.
+I have a checklist that I run through when I update TypeScript.
 1. Review release notes for potential issues
 2. Check if build with new compiler changes API contract
 3. Run full build including component level testing that consumes the built packages
@@ -65,7 +65,7 @@ I already have `strict: true` enabled, which turns on a set of recommended indiv
 
 JavaScript arrays are weird when you think about it. A standard array is indexed by integers `>= 0`. Except there's no integer type to index them with, just the general `number` type. If you pass in a non-natural number it's treated as an object key lookup and for a normal array returns `undefined`.
 
-By default, TypeScript assumes that any access to a `T[]` array using a `number` index will return a `T`. That's clearly wrong, which is where [this option](https://www.typescriptlang.org/tsconfig/#noUncheckedIndexedAccess) comes in. When turned on it assumes that access to a `T[]` array using a `number` index returns `T | undefined`. The same thing applies when querying an unknown property using an [index signature](https://www.typescriptlang.org/docs/handbook/2/objects.html#index-signatures).
+By default, TypeScript assumes that any access to a `T[]` array using a `number` index will return a `T`. That's clearly wrong, which is where [this option](https://www.typescriptlang.org/tsconfig/#noUncheckedIndexedAccess) comes in. When turned on, it assumes that access to a `T[]` array using a `number` index returns `T | undefined`. The same thing applies when querying an unknown property using an [index signature](https://www.typescriptlang.org/docs/handbook/2/objects.html#index-signatures).
 
 Why isn't this on by default, or at least included in `strict`? Try turning it on and you'll see why. Lots of false positives.
 
@@ -184,7 +184,7 @@ This is less verbose (but still not as concise as the original) and has no runti
 
 The Storybook UI doesn't handle optional props with explicit `| undefined` well. The prop gets documented as `union`, hiding the type the user is actually interested in.
 
-The UI already distinguishes between required and optional properties, so at the UI level the `| undefined` is just noise. Luckily I've already [hacked Storybook]({% link _posts/2025-02-17-hacking-storybook-tsdoc.md %}) to add custom processing of prop descriptions and defaults.
+The UI already distinguishes between required and optional properties, so at the UI level the `| undefined` is just noise. Luckily, I've already [hacked Storybook]({% link _posts/2025-02-17-hacking-storybook-tsdoc.md %}) to add custom processing of prop descriptions and defaults.
 
 Storybook's default parsing creates structured representations of types, which makes it easy to spot unions that end with `undefined`.
 
