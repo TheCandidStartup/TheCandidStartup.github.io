@@ -5,6 +5,7 @@ thumbnail: /assets/images/frontend/ts-logo-128.png
 ---
 
 wise words
+
 * All real world code needs error handling
 * Like any common concern, code is easier to understand and maintain if you have a consistent approach
 * The TypeScript language has no opinion on how you should handle errors - try searching the [handbook](https://www.typescriptlang.org/docs/handbook/intro.html) for "error"
@@ -77,7 +78,7 @@ At one end of the scale you have massive libraries like [Effect](https://effect.
 * Some people love functional programming, others hate it. Both agree that using it will change your life.
 * I'm writing a library. I don't want to change my clients lives. I want to make it as easy to adopt my library as possible, minimizing the choices I force onto them.
 
-At the other end of the scale, you have a library like [neverthrow](https://github.com/supermacro/neverthrow). It provides you with a `Result` type, and an async equivalent, `ResultAsync`. The types includes some methods for working with results from multiple operations but that's about it. No shift in thinking required. You can use the Result in a simplistic imperative style like the example above if you want.
+At the other end of the scale, you have a library like [neverthrow](https://github.com/supermacro/neverthrow). It provides you with a `Result` type, and an async equivalent, `ResultAsync`. The types includes some method for working with results from multiple operations but that's about it. No shift in thinking required. You can use the Result in a simplistic imperative style like the example above if you want.
 
 In the middle you have libraries like [true-myth](https://true-myth.js.org/) that act as a gateway into functional programming. You can use it just like `neverthrow` if you want. However, it also provides a pure functional equivalent of the functionality including such classic functional tricks as [auto-curried functions](https://v4.chriskrycho.com/2017/collection-last-auto-curried-functions.html). It goes beyond error handling to include a `Maybe` type too. 
 
