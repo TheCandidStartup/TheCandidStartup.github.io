@@ -93,6 +93,8 @@ export function err<T = never, E = unknown>(err: E): Err<T, E> {
 * Magic of TypeScript structural typing means original and wrapper types interoperate nicely
 * Tweaked TypeDoc `externalPattern` configuration so that we can pull in `neverthrow` documentation for methods on inherited `Ok` and `Err` classes
 
+{% include candid-image.html src="/assets/images/infinisheet/neverthrow-ok-docs.png" alt="NeverThrow Ok integrated into InfiniSheet docs" %}
+
 # True Myth
 
 * Version 8.5.2, 77 versions over 8 years
@@ -119,3 +121,17 @@ import { Unit } from `true-myth/unit`
 * I can re-export all these from `infinisheet-types` to make life simpler for my clients. However, you're still adding conceptual complexity. Need to explain what this wacky `Unit` thing is to someone who just wants to use a React spreadsheet component.
 * Can use same *wrapper* approach we used with `neverthrow` to export our own version of `ok()` which forwards on to `true-myth` while creating `Result<void,never>` when given no arguments.
 * Can't easily get away from all the references to `Unit` in the documentation.
+
+# Best of Both
+
+* Decided to go with `neverthrow`. Get the feeling that I'm fighting against True Myth's desire to reinvent TypeScript with traditional functional programming constructs. 
+* `neverthrow` is more popular, with a large community of contributors.
+* Only real downside is the minimal documentation.
+* Wrapping an re-exporting the main entry points gives me a chance of addressing that.
+* Was wondering where to start with writing my own documentation when I realized that the `true-myth` documentation applied equally well to `neverthrow`. With a few minor tweaks to remove `Unit`.
+
+{% include candid-image.html src="/assets/images/infinisheet/neverthrow-ok-truemyth-docs.png" alt="NeverThrow ok using True Myth doc comments" %}
+
+# Next Time
+
+* Add a proper `SpreadsheetDataError` class, add some failure cases to my sample `SpreadsheetData` implementations and handle failure gracefully in my React spreadsheet component.
