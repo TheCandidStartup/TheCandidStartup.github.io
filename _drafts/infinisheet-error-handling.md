@@ -60,7 +60,7 @@ Note that the `ok()` constructor needs no arguments if the success return is `vo
 
 Replacing the `boolean` return with `Result<void,string>` increased the bundle size for my spreadsheet sample app by 7KB. There are lots of convenience methods that support inter-operation between `Result` and `ResultAsync`. The end result is that the whole of `neverthrow` gets pulled in if you use any part of it. It's a good job it's not that big.
 
-The next question is how to make `neverthrow` feel like a natural part of `infinisheet` rather than something external grafted on. The first step is to re-export the main entry points from `infinisheet-types`. Then clients can import `Result` at the same time they import `SpreadsheetData`. 
+The next question is how to make `neverthrow` feel like a natural part of [InfiniSheet]({% link _topics/infinisheet.md %}) rather than something external grafted on. The first step is to re-export the main entry points from `infinisheet-types`. Then clients can import `Result` at the same time they import `SpreadsheetData`. 
 
 I realized that I could provide my own documentation/intellisense for the main entry points by defining type aliases and wrapper functions. I created my own `Result.ts` source file in `infinisheet-types` and restricted direct access to `neverthrow` to that file. It also means I can change implementation in future with minimal impact.
 
@@ -106,7 +106,7 @@ It turns out that `neverthrow` does have decent embedded JSDoc comments for the 
 
 In contrast to `neverthrow`, the documentation is excellent. The docs are generated from JSDoc comments using TypeDoc, with full Intellisense in VS Code. 
 
-As with `neverthrow`, I declared the return type as `Result<void,string>`. That seemed fine, with no resulting type check errors. Returning an error works as expected, `return err("Invalid value")`. However, `return ok()` results in the incomprehensible error `type Result<Unit,never> is not assignable to type Result<void,string>`. After some experimentation I got it to work by using `return ok(undefined)` but it's hardly intuitive. 
+As with `neverthrow`, I declared the return type as `Result<void,string>`. That seemed fine, with no resulting type check errors. Returning an error works as expected, `return err("Invalid value")`. However, `return ok()` results in the incomprehensible error `"type Result<Unit,never> is not assignable to type Result<void,string>"`. After some experimentation I got it to work by using `return ok(undefined)` but it's hardly intuitive. 
 
 *Unit* is a common concept in functional languages. All functions return a value, so how do you type a function that has nothing to return? You return `Unit`. `Unit` is a type with a single valid value, also called `Unit`. Similarly, `boolean` is a type with two valid values, `true` and `false`.
 
