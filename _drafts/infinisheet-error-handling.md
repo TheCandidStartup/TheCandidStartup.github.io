@@ -121,7 +121,7 @@ import { Result, ok, err} from 'true-myth/result`
 import { Unit } from `true-myth/unit`
 ```
 
-The separation into modules does mean that you only pay for what you use. Adding `true-myth` only increased the bundle size for my Spreadsheet sample app by 2KB. Using `Result` doesn't pull in True Myth's equivalent of `ResultAsync`. The down side is slightly more verbose code when you need to use multiple `true-myth` modules.
+The separation into modules does mean that you only pay for what you use. Adding `true-myth` only increased the bundle size for my Spreadsheet sample app by 2KB. Using `Result` doesn't pull in True Myth's equivalent of `ResultAsync`. The downside is slightly more verbose code when you need to use multiple `true-myth` modules.
 
 As with `neverthrow`, I can use a wrapper to re-export the required types from `infinisheet-types`. However, you're still adding conceptual complexity. I'd need to explain what this wacky `Unit` thing is to someone who just wants to use a React spreadsheet component. 
 
@@ -135,7 +135,7 @@ If I rolled my own implementation, it would end up being a subset of `neverthrow
 
 So, I've decided to go with `neverthrow`. The only real downside is the minimal documentation. Wrapping and re-exporting the main entry points gives me a chance of addressing that. 
 
-I was wondering where to start with writing my own documentation when I realized that the `true-myth` documentation applied equally well to `neverthrow`. After a few minor tweaks to remove mentions of `Unit`.
+I was wondering where to start with writing my own documentation when I realized that the `true-myth` documentation applied equally well to `neverthrow`. That is, after a few minor tweaks to remove all mentions of `Unit`.
 
 {% include candid-image.html src="/assets/images/infinisheet/neverthrow-ok-truemyth-docs.png" alt="NeverThrow ok using True Myth doc comments" %}
 
