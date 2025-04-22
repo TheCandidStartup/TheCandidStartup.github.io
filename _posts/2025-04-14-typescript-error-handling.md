@@ -92,4 +92,4 @@ I'm torn between creating my own `Result` type and using `neverthrow` or `true-m
 
 On the other hand, what a waste of time. Why write my own naive, incomplete version when there are existing battle tested implementations to choose from? Both `neverthrow` and `true-myth` are small packages with zero external dependencies. Maybe I could integrate one of them and have it feel natural.
 
-There's only one way to decide. Let's drag race them.
+There's only one way to decide. Let's [drag race them]({% link _posts/2025-04-22-infinisheet-error-handling.md %}).
