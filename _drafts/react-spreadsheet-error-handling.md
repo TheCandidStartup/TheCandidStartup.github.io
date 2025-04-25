@@ -228,7 +228,7 @@ function validateFocusFormula(formula: string) {
 }}>
 ```
 
-Displaying the Error Tag
+# Displaying the Error Tag
 
 It took a couple of attempts before I was happy with the display of the error tag. 
 
