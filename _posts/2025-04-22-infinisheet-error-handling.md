@@ -141,4 +141,4 @@ I was wondering where to start with writing my own documentation when I realized
 
 # Next Time
 
-All that remains is to use this in anger. I need to add a proper `SpreadsheetDataError` type, add some failure cases to my sample `SpreadsheetData` implementations and then handle failure gracefully in my React spreadsheet component.
+All that remains is to [use this in anger]({% link _posts/2025-04-28-react-spreadsheet-error-handling.md %}). I need to add a proper `SpreadsheetDataError` type, add some failure cases to my sample `SpreadsheetData` implementations and then handle failure gracefully in my React spreadsheet component.
