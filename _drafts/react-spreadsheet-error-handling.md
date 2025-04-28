@@ -46,7 +46,7 @@ My main production implementation will have an http backend. Errors for other im
 
 # Set and Is Valid
 
-I changed `setCellValueAndFormat` to use `Result<void,SpreadsheetDataError>`. I also added an `isValidCellValueAndFormat` method that lets you check whether a value is valid to use without trying to modify the data source. You'll see why it's needed later.
+I changed `setCellValueAndFormat` to return `Result<void,SpreadsheetDataError>`. I also added an `isValidCellValueAndFormat` method that lets you check whether a value is valid to use without trying to modify the data source. You'll see why it's needed later.
 
 ```ts
 export class EmptySpreadsheetData implements SpreadsheetData<number> {
@@ -82,7 +82,7 @@ export class LayeredSpreadsheetData<...> implements SpreadsheetData<...> {
 }
 ```
 
-I could have used an early out if the base call returns an error but decided to try one of the `neverthrow` utility methods instead. If the result of the first call is `ok`, `andThen` will execute the second call and return its result, otherwise it just returns the initial error.
+I could have used an early out if the base call returns an error but decided to try one of the NeverThrow utility methods instead. If the result of the first call is `ok`, [`andThen`](https://www.thecandidstartup.org/infinisheet/interfaces/_candidstartup_infinisheet-types.Ok-1.html#andthen-1) will execute the second call and return its result, otherwise it just returns the initial error.
 
 I'm not yet convinced that the functional style is simpler and more readable than the imperative alternative.
 
