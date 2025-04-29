@@ -15,9 +15,17 @@ wise words
 
 # Refactoring Common Code
 
-# Great Expectations
+# Deeply Equal
+
+{% include candid-image.html src="/assets/images/frontend/deeply-equal-error-display.png" alt="Deeply Equal Error Display" %}
 
 # Custom Matchers
+
+{% include candid-image.html src="/assets/images/frontend/custom-matcher-error-display.png" alt="Custom Matcher Error Display" %}
+
+{% include candid-image.html src="/assets/images/frontend/custom-matcher-detailed-error-vscode.png" alt="Custom Matcher Detailed Error in VSCode" %}
+
+{% include candid-image.html src="/assets/images/frontend/custom-matcher-detailed-error-terminal.png" alt="Custom Matcher Detailed Error in Terminal" %}
 
 # Reusing Tests
 

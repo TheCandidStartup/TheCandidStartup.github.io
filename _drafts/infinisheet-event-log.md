@@ -41,12 +41,22 @@ There are three optional metadata fields. The `snapshot` field contains the id o
 
 A snapshot is a cache of the state of the spreadsheet at the corresponding log entry. It allows clients to load a visible subset of the spreadsheet quickly and efficiently. In contrast, history is just a set of previous log entries serialized into a cheap blob rather than an expensive database.
 
-The `pending` field is used to orchestrate background workflows. Writing the name of the desired workflow into `pending` runs the corresponding workflow and clears the field when complete. The `Snapshot` workflow reads the previous snapshot, applies all the log entries since then and writes a new snapshot. 
+The `pending` field is used to orchestrate background workflows. Writing the name of the desired workflow into `pending` triggers the corresponding workflow and clears the field when complete. The `Snapshot` workflow reads the previous snapshot, applies all the log entries since then and writes a new snapshot. 
 Similarly, the `History` workflow serializes entries since the last history into a blob and records the id in the `history` field.
 
 Clients need to query the log. Initially, they will read entries from the most recent entry with a snapshot to the head of the log. They can then load the snapshot and replay the subsequent log entries. After that, they stay in sync with the current state of the spreadsheet by querying from the most recent entry they have to the head of the log.
 
 Once snapshots have been created and all active clients have synced to a more recent log entry, the section of the log before the snapshot is no longer needed.  The log can be truncated immediately before a snapshot, with history available in the blob store if required.
+
+# Log Entry
+
+# Errors
+
+# Event Log Interface
+
+# Workflows
+
+# Reference Implementation
 
 # Next Time
 
