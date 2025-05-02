@@ -78,7 +78,6 @@ The event log doesn't care how many different types there are or what their payl
 I've cleaned up and extended the error framework I created [last time]({% link _posts/2025-04-28-react-spreadsheet-error-handling.md %}).
 
 ```ts
-/** Common properties for Infinisheet errors */
 export interface InfinisheetError {
     /** Discriminated union tag */
     type: string,
@@ -87,14 +86,8 @@ export interface InfinisheetError {
     message: string,
 }
 
-/** 
- * Attempt to access data that is outside the available range
- * 
- */
 export interface InfinisheetRangeError extends InfinisheetError {
-  /** Discriminated union tag */
   type: 'InfinisheetRangeError',
-
 };
 ```
 
@@ -117,7 +110,7 @@ export interface EventLog<T extends LogEntry> {
 }
 ```
 
-The interface is generic on the types of `LogEntry` that will be stored. It only has four methods to implement.
+The interface is generic on the types of `LogEntry` that will be stored. It has four methods to implement.
 
 ## Add Entry
 
@@ -228,8 +221,9 @@ addEntry(entry: T, sequenceId: SequenceId): Result<void,AddEntryError> {
 
 ## Set Metadata
 
-* Want to assign only the metadata properties that exist in the metadata object passed as an argument. Don't want to end up implicitly setting other metadata properties to `undefined`. 
-* First try is simple iteration over the properties (keys) that exist at runtime
+Weirdly, this turned out to be the trickiest method to implement. The caller passes in an object containing metadata properties that it wants to apply. The complication is that we only want to assign to the metadata properties that exist in the object passed as an argument. If you write the obvious three assignment statements you end up implicitly setting other metadata properties to `undefined`. 
+
+My first try was to iterate over the properties (keys) that exist at runtime.
 
 ```ts
 setMetadata(sequenceId: SequenceId, metadata: LogMetadata): Result<void,MetadataError> {
@@ -239,21 +233,22 @@ setMetadata(sequenceId: SequenceId, metadata: LogMetadata): Result<void,Metadata
   const index = Number(sequenceId - this.#startSequenceId);
   const entry = this.#entries[index]!;
   let key: keyof LogMetadata;
-  for (key in metaData)
-    entry[key] = metaData[key];
+  for (key in metadata)
+    entry[key] = metadata[key];
 
   return ok();
 }
 ```
 
-* Interesting quirk of typescript. Can't specify type for key within the `for .. in` statement. If you don't specify type at all it's inferred as `string` and you get a TypeScript error a key might be something that isn't actually a property. If you explicitly type key as `keyof LogMetadata` it works. 
-* Looks like this is safe, but it isn't. What if you pass an object that is compatible with `LogMetadata` but has additional properties?
+There's an interesting quirk of TypeScript here. You can't specify a type for `key` within the `for .. in` statement. If you don't specify a type at all it's inferred as `string` and you get a TypeScript error when you try to access `metadata[key]`. If you explicitly type the key as `keyof LogMetadata` it works. 
+
+TypeScript makes it look like this is safe, but it isn't. What if you pass an object that is compatible with `LogMetadata` but has additional properties?
 
 ```ts
 log.setMetadata(0n, { snapshot: undefined, index: 42 });
 ```
 
-* This attempt to modify payload properties fails with the TypeScript error `Object literal may only specify known properties, and 'index' does not exist in type 'LogMetadata'`. However, that reference to "Object literal" seems overly precise.
+This attempt to modify payload properties fails with the TypeScript error `Object literal may only specify known properties, and 'index' does not exist in type 'LogMetadata'`. However, that reference to "Object literal" seems overly precise.
 
 ```ts
 class ExtraPropsMetaData implements LogMetadata {
@@ -265,9 +260,9 @@ class ExtraPropsMetaData implements LogMetadata {
 log.setMetadata(0n, new ExtraPropsMetaData);
 ```
 
-* Sure enough, TypeScript is happy with this and the index field does get assigned. The implementation needs to be more paranoid. 
-* You can restrict the copied properties to just those defined directly on the object with `Object.assign(entry,metadata)`. Much simpler. Still wrong.
-* Ideally I'd be able to convert `keyof LogMetadata` into a list of properties names that I can use at runtime. However, runtime metadata conflicts with TypeScript's design goals. In the end I used the clunky, but obviously correct.
+Sure enough, TypeScript is happy with this and the index field does get assigned. The implementation needs to be more paranoid. You can restrict the copied properties to just those defined directly on the object with `Object.assign(entry,metadata)`. Much simpler. Still wrong.
+
+Ideally I'd be able to convert `keyof LogMetadata` into a list of properties names that I can use at runtime. However, runtime metadata conflicts with TypeScript's design goals. In the end I wrote it out by hand. Clunky but obviously correct.
 
 ```ts
 if ("snapshot" in metadata)
@@ -280,14 +275,17 @@ if ("pending" in metadata)
 
 ## Query
 
-* Quite a lot going on. First step is to convert `snapshot`, `start` and `end` into the corresponding sequence ids and validate that query is in range.
-* I wanted to test how the interface behaves when the implementation exercises its right to return partial data. I've implemented a hardcoded maximum page size of 10.
-* Middle section works out how many entries can actually be returned bearing page size and available entries in mind.
+Query is the longest method. There's a few different ways to specify the range you want to query and support for paging. 
+
+The first step is to convert `'snapshot'`, `'start'` and `'end'` into the corresponding sequence ids and validate that the query is in range.
+
+I wanted to test how the interface behaves when the implementation exercises its right to return partial data. I've implemented a hardcoded maximum page size of 10.
 
 ```ts
 const QUERY_PAGE_SIZE = 10;
 
-query(start: SequenceId | 'snapshot' | 'start', end: SequenceId | 'end'): Result<QueryValue<T>,QueryError> {
+query(start: SequenceId | 'snapshot' | 'start', 
+      end: SequenceId | 'end'): Result<QueryValue<T>,QueryError> {
   if (start === 'start')
     start = this.#startSequenceId;
   else if (start === 'snapshot')
@@ -326,34 +324,29 @@ private findSnapshotIndex(): number {
 }
 ```
 
-
 ## Truncate
 
-* Boring error checking and edge cases removed, leaving the core truncation logic.
-* Remove the required number of entries from the array and adjust `startSequenceId` to match.
-* Sequence id for each entry stays the same after truncation.
+I've removed the boring error checking and edge cases, leaving the core truncation logic.
 
 ```ts
-  truncate(start: SequenceId): Result<void,TruncateError> {
-    ...
+truncate(start: SequenceId): Result<void,TruncateError> {
+  ...
 
-    const numToRemove = start - this.#startSequenceId;
-    this.#startSequenceId = start;
-    this.#entries.splice(0, Number(numToRemove));
-    return ok();
-  }
+  const numToRemove = start - this.#startSequenceId;
+  this.#startSequenceId = start;
+  this.#entries.splice(0, Number(numToRemove));
+  return ok();
+}
 ```
 
-## Workflows
-
-* Pass callback function into constructor ...
+We remove the required number of entries from the array and adjust `startSequenceId` to match. The end result is that the sequence id for each remaining entry stays the same after truncation.
 
 # Unit Tests
 
-Unit testing is an important part of the iteration loop. It lets you validate the interface from the callers point of view and validate the reference implementation. After a few rounds of testing corner cases I got to 100% coverage.
+Unit testing is an important part of the iteration loop. It lets you validate the interface from the caller's point of view and validate the reference implementation. After a few rounds of testing and iterating, I ended up with a design I'm happy with and 100% test coverage of my reference implementation.
 
 # Next Time
 
 In my rush to define an elegant interface and validate it with a reference implementation, I've overlooked something vital. Real production implementations will need to persist log entries to a file, or database or over the network. All of which are asynchronous operations. 
 
-My interface needs to be asynchronous too. 
+My interface needs to be asynchronous too. As does the workflow orchestration that I've yet to implement. We'll get into all that next time.
