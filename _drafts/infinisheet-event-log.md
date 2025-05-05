@@ -262,7 +262,7 @@ log.setMetadata(0n, new ExtraPropsMetaData);
 
 Sure enough, TypeScript is happy with this and the index field does get assigned. The implementation needs to be more paranoid. You can restrict the copied properties to just those defined directly on the object with `Object.assign(entry,metadata)`. Much simpler. Still wrong.
 
-Ideally I'd be able to convert `keyof LogMetadata` into a list of properties names that I can use at runtime. However, runtime metadata conflicts with TypeScript's design goals. In the end I wrote it out by hand. Clunky but obviously correct.
+Ideally I'd be able to convert `keyof LogMetadata` into a list of properties names that I can use at runtime. However, runtime metadata conflicts with TypeScript's [design goals](https://github.com/Microsoft/TypeScript/wiki/TypeScript-Design-Goals). In the end I wrote it out by hand. Clunky but obviously correct.
 
 ```ts
 if ("snapshot" in metadata)
@@ -347,6 +347,6 @@ Unit testing is an important part of the iteration loop. It lets you validate th
 
 # Next Time
 
-In my rush to define an elegant interface and validate it with a reference implementation, I've overlooked something vital. Real production implementations will need to persist log entries to a file, or database or over the network. All of which are asynchronous operations. 
+In my rush to define an elegant interface and validate it with a reference implementation, I've overlooked something vital. Real production implementations will need to persist log entries to a file, or a database, or over the network. All of which are asynchronous operations. 
 
 My interface needs to be asynchronous too. As does the workflow orchestration that I've yet to implement. We'll get into all that next time.
