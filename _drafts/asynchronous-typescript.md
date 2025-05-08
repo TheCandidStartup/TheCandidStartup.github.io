@@ -54,8 +54,8 @@ Jobs are added to the end of the queue when events are delivered or asynchronous
 You call an asynchronous API and it returns a `Promise`. Instead of passing callbacks to the API, you attach them to the promise by calling the `then` method. Promises replace the chaotic variety of callback based APIs with a common way of interacting with an asynchronous API. 
 
 ```ts
-type OnFulfilled<T,TResult> = (value: T) => TResult | Promise<TResult>;
-type OnRejected<TResult2> = (reason: any) => TResult | Promise<TResult>;
+type OnFulfilled<T,TResult> = (value: T) => TResult | PromiseLike<TResult>;
+type OnRejected<TResult2> = (reason: any) => TResult | PromiseLike<TResult>;
 
 interface Promise<T> {
     then<TResult1, TResult2>(onfulfilled?: OnFulfilled<T,TResult1>, 
@@ -67,7 +67,7 @@ This is a simplified version of the typing for the `Promise` interface. The inte
 
 Note the lack of strong typing for errors. This is because promises were designed to match the JavaScript exception based error handling model. Any errors thrown by the underlying asynchronous operation are caught and passed as the reason to `onrejected`. Exceptions are not represented in the type system, so rejection reasons can literally be anything. 
 
-Only one of the callbacks will be invoked. If it returns a `Promise`, that becomes the return value from the call to `then`, otherwise the result is wrapped in a new `Promise` which is already either *fulfilled* or *rejected* depending on which callback was invoked. There is special case support for [thenables](https://masteringjs.io/tutorials/fundamentals/thenable), which are objects that are compatible with the `Promise` interface without being instances of the runtime `Promise` class.
+Only one of the callbacks will be invoked. If it returns a `Promise`, that becomes the return value from the call to `then`, otherwise the result is wrapped in a new `Promise` which is already either *fulfilled* or *rejected* depending on which callback was invoked. There is special case support for [thenables](https://masteringjs.io/tutorials/fundamentals/thenable), typed as `PromiseLike` in Typescript. These are objects that have a compatible `then` method but aren't instances of the runtime `Promise` class.
 
 If the required callback is not provided, `then` returns a new `Promise` with the same *fulfilled* or *rejected* state as the current `Promise`. 
 
@@ -86,7 +86,7 @@ doSomething()
 The `Promise` class has a [variety of ways](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise#static_methods) to construct new promises.
 
 ```ts
-type Resolve = (value: T | Promise<T>) => void;
+type Resolve = (value: T | PromiseLike<T>) => void;
 type Reject = (reason?: any) => void
 interface PromiseConstructor {
     new <T>(executor: (resolve: Resolve, reject: Reject) => void): Promise<T>;
@@ -97,7 +97,7 @@ interface PromiseConstructor {
 
 The `reject` static method creates a *rejected* promise with the provided reason. 
 
-The `resolve` static method can take a simple value or an object compatible with the `Promise` interface. It creates either a *fulfilled* promise for the value or a promise that tracks the state of the provided `Promise` or *thenable*. 
+The `resolve` static method can take a simple value or any `PromiseLike` object. It creates either a *fulfilled* promise for the value or a promise that tracks the state of the provided `Promise` or *thenable*. 
 
 The constructor is used when wrapping old asynchronous APIs that don't natively support promises. You provide an *executor* function which invokes the asynchronous operation. The *executor* function is passed *resolve* and *reject* callbacks by the JavaScript runtime. When the operation completes, it calls *resolve* on success or *reject* on failure. That in turn sets the state of the promise appropriately and invokes the `then` method. 
 
@@ -117,8 +117,10 @@ Promise callbacks are added to a [microtask queue](https://developer.mozilla.org
 
 # Async Functions
 
+[Async functions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function) and the associated `await` operator allow you to write more natural, imperative style code when working with promises. You can think of an `async` function as syntactic sugar that is transformed into native promise based code at runtime. The example below implements exactly the same logic as the native promise based version above.
+
 ```ts
-async function foo() {
+(async () => {
   try {
     const result = await doSomething();
     const newResult = await doSomethingElse(result);
@@ -127,10 +129,122 @@ async function foo() {
   } catch (error) {
     failureCallback(error);
   }
-}
+})();
+```
+
+You can only use the `await` operator inside an `async` function. The [Async IIFE](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/async_function#async_iife) pattern can be used to write async code at the top level. Our async sample code is wrapped inside an anonymous async function that is declared and executed immediately.
+
+The [await operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await) is used to wait for a promise or thenable and get its fulfillment value. That is, `await PromiseLike<T>` returns `T`. Behind the scenes, the runtime calls `then` with a callback that resumes execution with the remaining code in the function. If the argument to `await` is not a thenable, a new resolved Promise is created and used. 
+
+The `try ... catch` handles rejected promises, reinforcing the equivalence between exceptions in synchronous code and rejected promises in asynchronous code.
+
+The promise chain is [constructed dynamically](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function#description) as the code executes. This makes it easy to use loops and conditionals that can be awkward to implement with static promise chains.
+
+```ts
+  let response;
+  for (let i = 0; i < NUM_RETRIES; i ++) {
+    response = await fetch(url);
+    if (response.status >= 500 || response.status == 429)
+      await timeoutPromise(backoffAndJitterDelay(i));
+    else
+      break;
+  }
+```
+
+* `async` not part of API contract, implementation detail. Turning `Do` into an API. Interface + different implementations. 
+
+# Promised you a Result
+
+We previously looked at [error handling in TypeScript]({% link _posts/2025-04-14-typescript-error-handling.md %}). I decided to use [Rust style](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html) `Result<T,E>` types. How does that approach extend to asynchronous code?
+
+The idea behind `Result` types is to handle expected failures explicitly, supported by the type system. A `Result<T,E>` is either in an `Ok` state with a `value T` or in an `Err` state with an `error E`. 
+
+You often want to execute a sequence of operations, skipping the remaining operations if there's an error. Implementations of `Result`, like [neverthrow](https://github.com/supermacro/neverthrow), usually provide support for chaining operations together, with errors propagated to the end of the chain. 
+
+Does this synchronous `Result` based code look familiar?
+
+```ts
+doSomething()
+  .andThen((value) => doSomethingElse(value))
+  .andThen((newValue) => doThirdThing(newValue))
+  .map((finalValue) => {
+    console.log(`Got the final result: ${finalValue}`);
+  })
+  .mapErr((error) => failureCallback(error));
+```
+
+The obvious approach for asynchronous APIs is to return a `Promise<Result<T,E>>`. Expected failures are part of the promise's fulfillment value. Rejected promises, like exceptions, are only used for truly exceptional, unexpected errors. The sort that propagate to the top of the callstack where they get logged before blowing up, or restarting the failing sub-system. 
+
+Let's try converting our example to asynchronous code based on `Promise<Result<T,E>>`.
+
+```ts
+doSomething()
+  .then((result) => result.isOk() ? doSomethingElse(result.value) : err(result.error))
+  .then((newResult) => newResult.isOk() ? doThirdThing(newResult.value) : err(newResult.error))
+  .then((finalResult) => {
+    if (finalResult.isOk())
+      console.log(`Got the final result: ${finalResult.value}`);
+    else
+      failureCallback(finalResult.error);
+  })
+```
+
+That looks messy. The problem is that the `Promise` and `Result` chaining methods don't combine well. The `andThen` method expects an expression that returns a `Result` but `doSomethingElse` returns a `Promise<Result>`. You end up having to write the error propagation logic by hand. 
+
+It looks better as an async function. You also have the ability to short circuit the remaining asynchronous operations if there's an error.
+
+```ts
+  const result = await doSomething();
+  const newResult = result.isOk() ? await doSomethingElse(result.value) : err(result.error);
+  const finalResult = newResult.isOk() ? await doThirdThing(newResult.value) : err(newResult.error);
+  if (finalResult.isOk())
+    console.log(`Got the final result: ${finalResult.value}`);
+  else
+    failureCallback(finalResult.error);
 ```
 
 # ResultAsync
 
-* Specialization of `Promise<Result<T,E>>`
-* Can be used wherever a `Promise` can, including as the return value from an async function. The JavaScript spec for async functions [explicitly supports Promise subclassing](https://tc39.es/ecma262/multipage/control-abstraction-objects.html#sec-newpromisecapability).
+NeverThrow also provides a `ResultAsync<T,E>` class which attempts to fix some of the issues with using `Promise<Result<T,E>>`. `ResultAsync` is a wrapper around a `Promise<Result<T,E>>` that provides similar chaining methods to `Result`. Unlike `Result`, these methods combine async chaining and result chaining in a single call. 
+
+The chaining version of our sample code looks exactly the same with asynchronous code using `ResultAsync` as it did with synchronous code using `Result`.
+
+```ts
+doSomething()
+  .andThen((value) => doSomethingElse(value))
+  .andThen((newValue) => doThirdThing(newValue))
+  .map((finalValue) => {
+    console.log(`Got the final result: ${finalValue}`);
+  })
+  .mapErr((error) => failureCallback(error));
+```
+
+You can mix and match asynchronous and synchronous calls with `Result` and `ResultAsync` in the same chain. `ResultAsync` is also a `PromiseLike` so you can use it in most places that expect a `Promise`, including with `await`. 
+
+However, if you use `await` you lose most of the benefits of `ResultAsync`. You're back in a world where you handle the asynchronous completion and error propagation separately. The async function version of this sample is the same as it was when using `Promise<Result<T,E>>` directly.
+
+```ts
+  const result = await doSomething();
+  const newResult = result.isOk() ? await doSomethingElse(result.value) : err(result.error);
+  const finalResult = newResult.isOk() ? await doThirdThing(newResult.value) : err(newResult.error);
+  if (finalResult.isOk())
+    console.log(`Got the final result: ${finalResult.value}`);
+  else
+    failureCallback(finalResult.error);
+```
+
+* Implications for API implementation
+* An `async` function can't return a `ResultAsync`, it always returns a `Promise`.
+* Can use async IIFE pattern. 
+
+```ts
+function delayNumber() { 
+  return new ResultAsync((async () => {
+    await timeoutResult(10);
+    return ok(3);
+  })())
+}
+```
+
+* Whatever `Result` you return from your inner async function is wrapped with a `Promise` by the JavaScript runtime which you in turn wrap in a `ResultAsync`, ending up in the same place as if you'd been able to return a `ResultAsync` directly. Just a lot uglier.
+* Note that you can return a `ResultAsync` too but better if you don't. A `ResultAsync` is thenable, so the JavaScript runtime wraps it with a `Promise` that forwards the `then` method on. Which means you end up with a double wrapped result. `ResultAsync` around a `Promise` around a `ResultAsync` with its own inner `Promise`.
