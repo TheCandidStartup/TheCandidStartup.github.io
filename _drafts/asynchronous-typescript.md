@@ -10,24 +10,15 @@ I'm [about to build](/_posts/2025-05-05-infinisheet-event-log.md) my first, from
 
 # Callbacks
 
-* The original way of exposing asynchronous APIs
-* Part of the JavaScript runtime environment, e.g. browser or NodeJS.
-* Typings for use with TypeScript are straightforward
-* Variety of different styles.
-* `setTimeout`
-  * Simple callback
-* NodeJS `fs.readFile`
-  * Callback passed different values on error and success
-* `XMLHttpRequest`
-  * Create an `XMLHttpRequest`
-  * Configure the request you want to make, e.g. by adding request headers
-  * Define separate `onload` and `onerror` callbacks
-  * Invoke the http request by calling `send()`
-* Synchronous and asynchronous errors handled differently
-  * Errors when configuring `XMLHttpRequest` throw JavaScript `Error` objects
-  * Errors executing the request asynchronously are reported via callback. It's up to you if you want to throw an `Error` in response.
-* Not all callback based APIs are asynchronous. Many, such as [Array.forEach](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach) are completely synchronous. Some APIs invoke the callback synchronously if data is already available and asynchronously if not. This can make code very [difficult to reason about](https://blog.izs.me/2013/08/designing-apis-for-asynchrony/).
-* Invoking a sequence of asynchronous operations can easily lead to [callback hell](http://callbackhell.com/).
+[Callbacks](https://developer.mozilla.org/en-US/docs/Glossary/Callback_function) are the original way of exposing asynchronous JavaScript runtime APIs. There are a variety of different styles. For example, `setTimeout` takes a simple callback invoked after a delay with no error handling. NodeJS APIs, like `fs.readfile`, use a single callback with separate `err` and `data` parameters. 
+
+At the other end of the scale you have `XMLHttpRequest`. You create an `XMLHttpRequest` object, call methods on it to define your request, set separate `onload` and `onerror` callbacks and finally invoke the asynchronous operation by calling `send`.
+
+There's similarly no uniformity in error handling, even within an API. [XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) throws JavaScript `Error` objects for errors when defining the request, includes errors reported by the server in the `status` property accessible once `onload` has been invoked and reports other asynchronous errors via `onerror`.
+
+Not all callback based APIs are asynchronous. Many, such as [Array.forEach](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach) are completely synchronous. Some APIs invoke the callback synchronously if data is already available and asynchronously if not. This can make code very [difficult to reason about](https://blog.izs.me/2013/08/designing-apis-for-asynchrony/).
+
+Invoking a sequence of asynchronous operations can easily lead to [callback hell](http://callbackhell.com/).
 
 ```ts
 doSomething(function (result) {
@@ -49,9 +40,9 @@ Jobs are added to the end of the queue when events are delivered or asynchronous
 
 # Promises
 
-[Promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises) were added to JavaScript with [ES2015](https://developers.google.com/web/shows/ttt/series-2/es2015). A `Promise` is an object representing the eventual complete or failure of an asynchronous operation. 
+[Promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises) were added to JavaScript with [ES2015](https://developers.google.com/web/shows/ttt/series-2/es2015). A `Promise` is an object representing the eventual completion or failure of an asynchronous operation. 
 
-You call an asynchronous API and it returns a `Promise`. Instead of passing callbacks to the API, you attach them to the promise by calling the `then` method. Promises replace the chaotic variety of callback based APIs with a common way of interacting with an asynchronous API. 
+You call an asynchronous API and it returns a `Promise`. Instead of passing callbacks to the API, you attach them to the promise by calling the `then` method. Promises replace the chaotic variety of callback based APIs with a common way of interacting with asynchronous APIs. 
 
 ```ts
 type OnFulfilled<T,TResult> = (value: T) => TResult | PromiseLike<TResult>;
@@ -113,7 +104,7 @@ Many of the old callback based APIs have newer promise based replacements. For e
 
 Unlike callback based APIs, promises [guarantee](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises#timing) that callbacks passed to `then` are always invoked asynchronously, even if the promise is already *fulfilled*. This helps avoid many bugs by ensuring consistency of behavior. 
 
-Promise callbacks are added to a [microtask queue](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide). Any microtasks added by the current event loop job are executed before the next job. The use of microtasks allows promised to provide consistent asynchronous behavior without introducing unnecessary delays for cases that could have been synchronous. 
+Promise callbacks are added to a [microtask queue](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide). Any microtasks added by the current event loop job are executed before the next job. The use of microtasks allows promises to provide consistent asynchronous behavior without introducing unnecessary delays for cases that could have been synchronous. 
 
 # Async Functions
 
@@ -134,7 +125,7 @@ Promise callbacks are added to a [microtask queue](https://developer.mozilla.org
 
 You can only use the `await` operator inside an `async` function. The [Async IIFE](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/async_function#async_iife) pattern can be used to write async code at the top level. Our async sample code is wrapped inside an anonymous async function that is declared and executed immediately.
 
-The [await operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await) is used to wait for a promise or thenable and get its fulfillment value. That is, `await PromiseLike<T>` returns `T`. Behind the scenes, the runtime calls `then` with a callback that resumes execution with the remaining code in the function. If the argument to `await` is not a thenable, a new resolved Promise is created and used. 
+The [await operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await) is used to wait for a promise or thenable and get its fulfillment value. That is, `await PromiseLike<T>` returns `T`. Behind the scenes, the runtime calls `then` with a callback that resumes execution with the remaining code in the function. If the argument to `await` is a simple value, a new resolved Promise is created for that value and then waited on.
 
 The `try ... catch` handles rejected promises, reinforcing the equivalence between exceptions in synchronous code and rejected promises in asynchronous code.
 
@@ -151,7 +142,15 @@ The promise chain is [constructed dynamically](https://developer.mozilla.org/en-
   }
 ```
 
-* `async` not part of API contract, implementation detail. Turning `Do` into an API. Interface + different implementations. 
+Whether a function is declared `async` or not is an implementation detail. It's not part of an API contract or interface definition.
+
+```ts
+interface API {
+  doSomething(): Promise<number>;
+}
+```
+
+You could implement the `doSomething` method using a regular function or an `async` function. Your choice. 
 
 # Promised you a Result
 
@@ -189,7 +188,7 @@ doSomething()
   })
 ```
 
-That looks messy. The problem is that the `Promise` and `Result` chaining methods don't combine well. The `andThen` method expects an expression that returns a `Result` but `doSomethingElse` returns a `Promise<Result>`. You end up having to write the error propagation logic by hand. 
+That looks messy. The problem is that the `Promise` and `Result` chaining methods don't combine well. The `Result.andThen` method expects an expression that returns a `Result` but `doSomethingElse` returns a `Promise<Result>`. You end up having to write the error propagation logic by hand. 
 
 It looks better as an async function. You also have the ability to short circuit the remaining asynchronous operations if there's an error.
 
@@ -219,9 +218,9 @@ doSomething()
   .mapErr((error) => failureCallback(error));
 ```
 
-You can mix and match asynchronous and synchronous calls with `Result` and `ResultAsync` in the same chain. `ResultAsync` is also a `PromiseLike` so you can use it in most places that expect a `Promise`, including with `await`. 
+You can mix and match asynchronous and synchronous calls with `ResultAsync` and `Result` in the same chain. `ResultAsync` is also a `PromiseLike` so you can use it in most places that expect a `Promise`, including with `await`. 
 
-However, if you use `await` you lose most of the benefits of `ResultAsync`. You're back in a world where you handle the asynchronous completion and error propagation separately. The async function version of this sample is the same as it was when using `Promise<Result<T,E>>` directly.
+However, if you use `await` you lose most of the benefits of `ResultAsync`. You're back in a world where you handle the asynchronous completion and error propagation separately. The cleanest `async` function version of this sample is the same as it was when using `Promise<Result<T,E>>` directly.
 
 ```ts
   const result = await doSomething();
@@ -233,18 +232,29 @@ However, if you use `await` you lose most of the benefits of `ResultAsync`. You'
     failureCallback(finalResult.error);
 ```
 
-* Implications for API implementation
-* An `async` function can't return a `ResultAsync`, it always returns a `Promise`.
-* Can use async IIFE pattern. 
+A `ResultAsync` API provides added benefits over a `Promise<Result>` API without adding constraints for the consumer. If you don't like the `ResultAsync` chaining methods you can treat it like a regular `Promise`. Unfortunately, that's not true when it comes to *implementing* a `ResultAsync` API.
+
+It's straightforward to implement the API using `ResultAsync` chaining methods. It gets more difficult if you want to use an `async` function. An `async` function can't return a `ResultAsync`, it *must* return a native `Promise` object.
+
+You can work around this restriction by using the Async IIFE pattern again. 
 
 ```ts
-function delayNumber() { 
-  return new ResultAsync((async () => {
-    await timeoutResult(10);
-    return ok(3);
-  })())
+class MyAPI implements API {
+  doSomething(): ResultAsync<number,APIError> {
+    return new ResultAsync((async () => {
+      await timeoutPromise(10);
+      return ok(3);
+    })())
+  }
 }
 ```
 
-* Whatever `Result` you return from your inner async function is wrapped with a `Promise` by the JavaScript runtime which you in turn wrap in a `ResultAsync`, ending up in the same place as if you'd been able to return a `ResultAsync` directly. Just a lot uglier.
-* Note that you can return a `ResultAsync` too but better if you don't. A `ResultAsync` is thenable, so the JavaScript runtime wraps it with a `Promise` that forwards the `then` method on. Which means you end up with a double wrapped result. `ResultAsync` around a `Promise` around a `ResultAsync` with its own inner `Promise`.
+Whatever `Result` you return from your inner async function is wrapped with a `Promise` by the JavaScript runtime, which you in turn wrap in a `ResultAsync`, ending up in the same place as if you'd been able to return a `ResultAsync` directly. Just a lot uglier.
+
+It also works if the inner async function tries to return a `ResultAsync`, but it's better that you don't. A `ResultAsync` is thenable, so the JavaScript runtime wraps it with a `Promise` that forwards the `then` method on. Which means you end up with a double wrapped result. A `ResultAsync` around the `Promise` created by the JavaScript runtime around a `ResultAsync` with its own inner `Promise<Result>`.
+
+# Conclusion
+
+I'm going to use `ResultAsync` for my asynchronous APIs, matching my synchronous APIs that return `Result`. Using `ResultAsync` provides additional benefits for the API consumer over using `Promise<Result>`. It's also more compact to write. 
+
+As the API implementer, I can live with the ugliness of the Async IIFE pattern for the times when I need to use an `async` function.
