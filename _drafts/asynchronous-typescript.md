@@ -4,7 +4,7 @@ tags: typescript
 thumbnail: /assets/images/frontend/ts-logo-128.png
 ---
 
-One of my main reasons for [choosing TypeScript as a language stack]({% link _posts/2023-05-15-language-stack.md %}) is that it's built on an asynchronous IO, event-driven programming model from the ground up. On the server side, idiomatic NodeJS code scales surprisingly well for a dynamic, low ceremony, fast development stack. 
+One of my reasons for [choosing TypeScript as a language stack]({% link _posts/2023-05-15-language-stack.md %}) is that it's built on an asynchronous IO, event-driven programming model, from the ground up. On the server side, idiomatic NodeJS code scales surprisingly well for a dynamic, low ceremony, fast development stack. 
 
 I'm [about to build](/_posts/2025-05-05-infinisheet-event-log.md) my first, from scratch, public asynchronous API. I want to get it right. I need a better understanding of how asynchronous code works so that I can make the right choices.
 
@@ -16,7 +16,7 @@ At the other end of the scale you have `XMLHttpRequest`. You create an `XMLHttpR
 
 There's similarly no uniformity in error handling, even within an API. [XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) throws JavaScript `Error` objects for errors when defining the request, includes errors reported by the server in the `status` property accessible once `onload` has been invoked and reports other asynchronous errors via `onerror`.
 
-Not all callback based APIs are asynchronous. Many, such as [Array.forEach](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach) are completely synchronous. Some APIs invoke the callback synchronously if data is already available and asynchronously if not. This can make code very [difficult to reason about](https://blog.izs.me/2013/08/designing-apis-for-asynchrony/).
+Not all callback based APIs are asynchronous. Many, such as [Array.forEach](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach), are completely synchronous. Some APIs invoke the callback synchronously if data is already available and asynchronously if not. This can make code very [difficult to reason about](https://blog.izs.me/2013/08/designing-apis-for-asynchrony/).
 
 Invoking a sequence of asynchronous operations can easily lead to [callback hell](http://callbackhell.com/).
 
@@ -158,7 +158,7 @@ We previously looked at [error handling in TypeScript]({% link _posts/2025-04-14
 
 The idea behind `Result` types is to handle expected failures explicitly, supported by the type system. A `Result<T,E>` is either in an `Ok` state with a `value T` or in an `Err` state with an `error E`. 
 
-You often want to execute a sequence of operations, skipping the remaining operations if there's an error. Implementations of `Result`, like [neverthrow](https://github.com/supermacro/neverthrow), usually provide support for chaining operations together, with errors propagated to the end of the chain. 
+You often want to execute a sequence of operations, skipping the remaining operations if there's an error. Implementations of `Result`, like [NeverThrow](https://github.com/supermacro/neverthrow), provide support for chaining operations together, with errors propagated to the end of the chain. 
 
 Does this synchronous `Result` based code look familiar?
 
@@ -232,6 +232,8 @@ However, if you use `await` you lose most of the benefits of `ResultAsync`. You'
     failureCallback(finalResult.error);
 ```
 
+# Implementing ResultAsync APIs
+
 A `ResultAsync` API provides added benefits over a `Promise<Result>` API without adding constraints for the consumer. If you don't like the `ResultAsync` chaining methods you can treat it like a regular `Promise`. Unfortunately, that's not true when it comes to *implementing* a `ResultAsync` API.
 
 It's straightforward to implement the API using `ResultAsync` chaining methods. It gets more difficult if you want to use an `async` function. An `async` function can't return a `ResultAsync`, it *must* return a native `Promise` object.
@@ -251,7 +253,7 @@ class MyAPI implements API {
 
 Whatever `Result` you return from your inner async function is wrapped with a `Promise` by the JavaScript runtime, which you in turn wrap in a `ResultAsync`, ending up in the same place as if you'd been able to return a `ResultAsync` directly. Just a lot uglier.
 
-It also works if the inner async function tries to return a `ResultAsync`, but it's better that you don't. A `ResultAsync` is thenable, so the JavaScript runtime wraps it with a `Promise` that forwards the `then` method on. Which means you end up with a double wrapped result. A `ResultAsync` around the `Promise` created by the JavaScript runtime around a `ResultAsync` with its own inner `Promise<Result>`.
+It also works if the inner async function tries to return a `ResultAsync`, but it's better that you don't. A `ResultAsync` is *thenable*, so the JavaScript runtime wraps it with a `Promise` that forwards the `then` method on. Which means you end up with a double wrapped result. A `ResultAsync` around the `Promise` created by the JavaScript runtime around a `ResultAsync` with its own inner `Promise<Result>`.
 
 # Conclusion
 
