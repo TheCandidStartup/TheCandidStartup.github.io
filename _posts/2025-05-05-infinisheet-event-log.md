@@ -349,4 +349,4 @@ Unit testing is an important part of the iteration loop. It lets you validate th
 
 In my rush to define an elegant interface and validate it with a reference implementation, I've overlooked something vital. Real production implementations will need to persist log entries to a file, or a database, or over the network. All of which are asynchronous operations. 
 
-My interface needs to be asynchronous too. As does the workflow orchestration that I've yet to implement. We'll get into all that next time.
+My interface needs to be asynchronous too. As does the workflow orchestration that I've yet to implement. We'll get into all that [next time]({% link _posts/2025-05-19-asynchronous-typescript.md %}).

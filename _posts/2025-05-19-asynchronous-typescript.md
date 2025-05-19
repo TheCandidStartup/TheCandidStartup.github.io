@@ -6,7 +6,7 @@ thumbnail: /assets/images/frontend/ts-logo-128.png
 
 One of my reasons for [choosing TypeScript as a language stack]({% link _posts/2023-05-15-language-stack.md %}) is that it's built on an asynchronous IO, event-driven programming model, from the ground up. On the server side, idiomatic NodeJS code scales surprisingly well for a dynamic, low ceremony, fast development stack. 
 
-I'm [about to build](/_posts/2025-05-05-infinisheet-event-log.md) my first, from scratch, public asynchronous API. I want to get it right. I need a better understanding of how asynchronous code works so that I can make the right choices.
+I'm [about to build]({% link _posts/2025-05-05-infinisheet-event-log.md %}) my first, from scratch, public asynchronous API. I want to get it right. I need a better understanding of how asynchronous code works so that I can make the right choices.
 
 # Callbacks
 
