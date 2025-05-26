@@ -4,7 +4,7 @@ tags: infinisheet
 thumbnail: /assets/images/infinisheet/log-entry.png
 ---
 
-I've [created]({% link _posts/2025-05-05-infinisheet-event-log.md %}) an event log interface and reference implementation. The interface exposes all the functionality I'll need with a minimal API. There's enough of an abstraction level that it should allow for multiple real implementations.
+I've [created]({% link _posts/2025-05-05-infinisheet-event-log.md %}) an event log interface and reference implementation. The interface exposes all the functionality I'll need with a minimal API. There's enough of an abstraction layer that it should allow for multiple real implementations.
 
 There's one problem (so far). The interface is synchronous and all the real implementations I'm planning on building rely on asynchronous storage APIs. My event log interface needs to be asynchronous too.
 
