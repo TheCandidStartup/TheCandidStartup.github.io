@@ -257,6 +257,6 @@ It also works if the inner async function tries to return a `ResultAsync`, but i
 
 # Conclusion
 
-I'm going to use `ResultAsync` for my asynchronous APIs, matching my synchronous APIs that return `Result`. Using `ResultAsync` provides additional benefits for the API consumer over using `Promise<Result>`. It's also more compact to write. 
+I'm [going to use]({% link _posts/2025-05-26-asynchronous-event-log.md %}) `ResultAsync` for my asynchronous APIs, matching my synchronous APIs that return `Result`. Using `ResultAsync` provides additional benefits for the API consumer over using `Promise<Result>`. It's also more compact to write. 
 
 As the API implementer, I can live with the ugliness of the Async IIFE pattern for the times when I need to use an `async` function.
