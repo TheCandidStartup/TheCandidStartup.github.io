@@ -138,6 +138,24 @@ break;
 ```
 
 * Used explicit chaining in the event handler. There's bits of the original code, like `event.preventDefault()` that have to happen synchronously. The only bits that need to be async are the lines that deal with successful call to `commitFormulaChange`.
+* Need to update unit tests to deal with async completion. The async code is all buried inside `VirtualSpreadsheet` so no promise to `await`.
+* Turned out to be surprisingly easy. The React testing `act` function that ensures all state updates are applied and rendered before your assertions run has an [async version](https://legacy.reactjs.org/docs/testing-recipes.html#data-fetching) which also ensures that all promises have completed. 
+* All I had to do was make the test function async and pass an async function to `act`.
+
+```ts
+  // Enter tries to commit changes, moves to next cell down and leaves edit mode
+  // eslint-disable-next-line @typescript-eslint/require-await
+  {await act(async () => {
+    fireEvent.change(focusSink, { target: { value: "changed" }})
+    fireEvent.keyDown(focusSink, { key: 'Enter' })
+  })}
+  expect(setCellValueAndFormatMock).lastCalledWith(1, 0, "changed", undefined)
+  expect(focusSink).toHaveProperty("value", "");
+  expect(name).toHaveProperty("value", "A3");
+  expect(formula).toHaveProperty("value", "A3");
+```
+
+* Unfortunately this pattern triggers a false positive in eslint
 * It runs and behavior looks exactly the same as before
 * So why do I have these nagging feelings of unease?
 
