@@ -50,7 +50,7 @@ export interface SetCellValueAndFormatLogEntry extends LogEntry {
 export type SpreadsheetLogEntry = SetCellValueAndFormatLogEntry;
 ```
 
-I'll need to add different types of log entry over time, for example for insert/delete of rows and columns, so I've included a `SpreadsheetLogEntry` type alias which will eventually be a union of the different types. 
+I'll need to add different types of log entry over time, for example for insert/delete of rows and columns. I've included a `SpreadsheetLogEntry` type alias which will eventually be a union of the different types. 
 
 # EventSourcedSpreadsheetData Class
 
@@ -71,7 +71,7 @@ export class EventSourcedSpreadsheetData implements SpreadsheetData<EventSourced
 
 I'm following the same pattern as my other implementations of `SpreadsheetData`. The public interface exposes an opaque `EventSourcedSnapshot` type that represents an external store snapshot. Internally, we cast that to `EventSourcedContent` that defines all the internal implementation details. 
 
-The event log used for storage is passed to the constructor. This allows clients to use whatever event log implementation they like. For our tracer bullet, we'll be using `SimpleEventLog` which we implemented [last time]({% link _posts/2025-05-26-asynchronous-event-log.md %}).
+The event log used for storage is passed to the constructor. This allows clients to use whatever event log implementation they like. For our tracer bullet, we'll be using `SimpleEventLog`, which we implemented [last time]({% link _posts/2025-05-26-asynchronous-event-log.md %}).
 
 Passing the event log to the constructor also allows us to model the scenario where two different clients are editing the same stored data.
 
@@ -111,7 +111,7 @@ interface LogSegment {
 }
 ```
 
-We don't have any snapshots yet, so for this tracer bullet we're only using the array of log entries. 
+We don't have any snapshots yet, so for this tracer bullet we're only using the array of log entries and `startSequenceId`.
 
 # Syncing Content
 
@@ -174,7 +174,7 @@ The basic structure is simple. We query the event log, either from the most rece
 
 As this is a tracer bullet, error handling is sketchy for now. If we encounter any errors, we panic and throw, with the expectation that we'll get a failing unit test or uncaught error reported in the browser console.
 
-We will invoke the sync operation from multiple places so we use `isInSyncLogs` as a guard variable to ensure we only have one sync process active at a time. The rest of the implementation invokes sync via the `syncLogs` wrapper function.
+We will invoke the sync operation from multiple places, so we use `isInSyncLogs` as a guard variable to ensure we only have one sync process active at a time. The rest of the implementation invokes sync via the `syncLogs` wrapper function.
 
 ```ts
 #syncLogs(): void {
@@ -213,7 +213,8 @@ getCellValue(snapshot: EventSourcedSnapshot, row: number, column: number): CellV
   return entry?.value;
 }
 
-getCellFormat(snapshot: EventSourcedSnapshot, row: number, column: number): string | undefined {
+getCellFormat(snapshot: EventSourcedSnapshot, row: number,
+              column: number): string | undefined {
   const entry = this.#getCellValueAndFormatEntry(snapshot, row, column);
   return entry?.format;
 }
@@ -221,7 +222,7 @@ getCellFormat(snapshot: EventSourcedSnapshot, row: number, column: number): stri
 
 # Modifying Data
 
-This is where we hit our first real impedance mismatch. The `setCellValueAndFormat` method is synchronous, returning a `Result<void,SpreadsheetDataError>`. There's no way to return errors from asynchronous calls to the event log. For now, let's plough on and see if there's anything else we can learn.
+This is where we hit our first real impedance mismatch. The `setCellValueAndFormat` method is synchronous, returning a `Result<void,SpreadsheetDataError>`. There's no way to return errors from our asynchronous calls to the event log. For now, let's plough on and see if there's anything else we can learn.
 
 ```ts
 setCellValueAndFormat(row: number, column: number, value: CellValue, 
@@ -285,7 +286,7 @@ We start the interval timer running when the first listener is added, and stop i
 
 # Unit Tests
 
-I have existing unit tests for my reference implementation of `SpreadsheetData`. I immediately ran into problems with the now asynchronous implementation of `setCellValueAndFormat`. I could make the unit tests asynchronous, but without returning a promise, there's no easy way to wait for the operation to complete. 
+I have existing unit tests for my reference implementation of `SpreadsheetData`. I immediately ran into problems with the now asynchronous implementation of `setCellValueAndFormat`. I could make the unit tests asynchronous but without returning a promise, there's no easy way to wait for the operation to complete. 
 
 ```ts
 function tasksProcessed(): Promise<void> {
