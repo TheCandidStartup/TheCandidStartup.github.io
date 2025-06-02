@@ -116,4 +116,4 @@ There's an easy way and a hard way. I could rewrite my `SimpleEventLog` unit tes
 
 # Next Time
 
-Well, that was almost too easy. Next time we'll try building an implementation of the `SpreadsheetData` [interface]({% link _posts/2025-02-03-react-spreadsheet-edit-ready.md %}) on top of our reference event log. That should throw up some interesting [impedance mismatches](https://startup-house.com/glossary/what-is-impedance-mismatch). 
+Well, that was almost too easy. [Next time]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}) we'll try building an implementation of the `SpreadsheetData` [interface]({% link _posts/2025-02-03-react-spreadsheet-edit-ready.md %}) on top of our reference event log. That should throw up some interesting [impedance mismatches](https://startup-house.com/glossary/what-is-impedance-mismatch). 
