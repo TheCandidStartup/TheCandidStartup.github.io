@@ -1,6 +1,6 @@
 ---
 title: Asynchronous Spreadsheet Data
-tags: infinisheet
+tags: infinisheet react-spreadsheet
 ---
 
 Last week's tracer bullet development showed that I needed to make my `SpreadsheetData` interface more explicitly asynchronous.

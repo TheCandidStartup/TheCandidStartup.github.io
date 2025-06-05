@@ -1,6 +1,6 @@
 ---
 title: Event Sourced Spreadsheet Data
-tags: infinisheet
+tags: infinisheet react-spreadsheet
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 
