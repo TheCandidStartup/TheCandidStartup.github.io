@@ -14,7 +14,7 @@ Let's do some research, and work out what I should have done.
 
 You often see the assertion that state updates in React are asynchronous. You can trace this back to the [legacy React documentation](https://legacy.reactjs.org/docs/state-and-lifecycle.html#state-updates-may-be-asynchronous). When you call `setState`, the current value of the state doesn't change. All updates are queued up and applied the next time the UI is rendered.
 
-The behavior is asynchronous in a way, but not what most people think of when you say asynchronous today.
+The behavior is asynchronous in a way, but not what most people think of today when you say asynchronous.
 
 # State as a Snapshot
 
@@ -26,7 +26,7 @@ Think of the state of your UI as a sequence of frames in a movie, with each rend
 
 Event handlers always run in the context of what was last rendered. Any updates to state result in a render which also generates a new set of event handlers with updated bound state.
 
-This doesn't work well with asynchronous APIs. The API may complete many state updates and renders later. The code from my spreadsheet component looks like this. 
+This doesn't work well with asynchronous APIs. The API may complete many state updates and renders later. The code from my spreadsheet component looks like this (simplified compared to the actual implementation).
 
 ```ts  
   commitFormulaChange(row, col, editValue).then(() => {
@@ -65,9 +65,32 @@ useEffect(() => {
 }, [userId]);
 ```
 
-The provided example uses the effect's cleanup function to tie the lifetime of the asynchronous request to the current state. If the UI is rendered again with a different `userId` state, before the original request completes, the original response is ignored. The new render runs the effect again, which makes a new request with the new `userId`. 
+The provided example uses the effect's cleanup function to tie the lifetime of the asynchronous request to the current state. If the UI is rendered again with a different `userId`, before the original request completes, the original response is ignored. The new render runs the effect again, which makes a new request with the new `userId`. This [blog post](https://www.developerway.com/posts/fetching-in-react-lost-promises) covers the ground in much more detail. 
 
-This [blog post](https://www.developerway.com/posts/fetching-in-react-lost-promises) covers the ground in much more detail. It's all very interesting but not directly relevant for my problem because I'm not fetching data during a render. I'm mutating data and updating state to match in an event handler.
+Later on, the React documentation [suggests](https://react.dev/learn/you-might-not-need-an-effect#fetching-data) that [frameworks](https://react.dev/learn/creating-a-react-app#production-grade-react-frameworks) built on top of React can provide more efficient data fetching mechanisms than using Effects. React 19 lets you use this magic directly via the [use API](https://react.dev/blog/2024/12/05/react-19#new-feature-use). Rather than using `await` to resolve a promise in an effect, you pass it to `use` when rendering. 
+
+```tsx
+function Todos({todosPromise}) {
+  const todos = use(todosPromise);
+  return todos.map(todo => <p key={todo.id}>{todo.description}</p>);
+}
+
+function Page({todosPromise}) {
+  return {
+    <ErrorBoundary fallback={<div>The page is broken...</div>}>
+      <Suspense fallback={<div>Loading...</div>}>
+        <Todos todosPromise={todosPromise}>
+      </Suspense>
+    </ErrorBoundary>
+  }
+}
+```
+
+`use` is designed to work with [Suspense](https://react.dev/reference/react/Suspense) and [error boundaries](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary). `Suspense` replaces UI with a fallback until all promises have resolved, an error boundary renders a fallback for any rejected promise. 
+
+Have you spotted the elephant in the room? You can't create a promise in render. The promise needs to be stable across multiple renders. You have to create it elsewhere and pass it in as a prop. That elsewhere could be one of those suspense enabled frameworks, state set by an event handler or effect, or some kind of caching system.
+
+This is all very interesting but not directly relevant for my problem because I'm not fetching data during a render. I'm mutating data and updating state to match in an event handler.
 
 # Pending Update
 
@@ -132,7 +155,7 @@ function spreadsheet() {
 }
 ```
 
-Here, the way that state is captured when the API is invoked, makes it easy to reset everything in the error handler.
+This time, the way that state is captured when the API is invoked works to our advantage. It makes it easy to reset everything in the error handler.
 
 You can leave more of the UI enabled while in the pending state. In theory, allowing the user to do anything short of making another change. You hide the effects of normal latency, only blocking the user in the case of more serious problems. Works great in the usual case where updates generally succeed. If failures are common, the frequent rollbacks are jarring.
 
@@ -210,7 +233,7 @@ function spreadsheet() {
 }
 ```
 
-In the example above I'm only using an optimistic value for `formula`. The way I manage edit mode and cell selection make it simpler to implement optimistic updates by setting and restoring the state manually. Which makes me wonder, is it really worth adding the complexity of these additional abstractions for something that I can do easily do myself by manipulating state directly?
+In the example above I'm only using an optimistic value for `formula`. The way I manage edit mode and cell selection make it simpler to implement optimistic updates by setting and restoring the state manually. Which makes me wonder, is it really worth adding the complexity of these additional abstractions for something that I can easily do myself?
 
 My initial assumption was that these are simple custom hooks that you could write for yourself. They actually rely heavily on concurrent rendering.
 
@@ -219,27 +242,28 @@ Calling `startTransition` triggers an immediate render with the existing state t
 The `useOptimistic` hook is designed to work with concurrent rendering and transitions. The optimistic value is used for the main render with the real value used for the transition's background render. You can also call the optimistic `set` function during the transition to provide progress updates visible in the main render.
 
 The point is not to make it slightly easier to implement the classic pending and optimistic update patterns. The point is to use concurrent rendering to solve two different problems.
-* Rendering complex UI updates in the background without blocking the main UI
-* Batching together all state changes from a complex async process so that they all get shown together at the end. 
+1. Rendering complex UI updates in the background without blocking the main UI
+2. Batching together all state changes from a complex async process so that they all get shown together at the end. 
 
 There's an awful lot going on here. Transitions is a complex feature with [interesting implications](https://www.developerway.com/posts/use-transition). The React documentation includes a long list of [caveats](https://react.dev/reference/react/useTransition#starttransition-caveats). Worryingly for me, there are more caveats when using transitions [with an external store](https://react.dev/reference/react/useSyncExternalStore#caveats).
 
 If your changes are quick to render and it's easy to arrange for all state operations to happen at the end of your asynchronous update, then I'd steer clear of transitions. Simpler is better, right?
 
-# Suspense
-
-# Error Boundaries
-
 # Custom Events
 
-# Completion Handler
+I still haven't found a solution to the problem I started with. How do you write completion code that can deal with the state of the UI when the asynchronous operation completes? By design, all the state values your code has access to are bound to the state of the UI when the operation was invoked. The pending and optimistic update patterns simply avoid the problem by locking down the UI.
+
+There wouldn't be a problem if the asynchronous result was delivered as an event. Each time the UI is rendered, the associated event handlers are bound to the corresponding state. An event handler has access to the state of the UI when the event is delivered. It's [easy](https://blog.logrocket.com/using-custom-events-react/) [enough](https://dev.to/adrianknapp/managing-application-state-with-custom-events-in-react-a-simple-yet-powerful-approach-ngd) to dispatch and subscribe to custom events using React.
 
 ```ts
 function spreadsheet() {
-  const completionRef = React.useRef(handleCompletion);
-  React.useEffect(() => { completionRef.current = handleCompletion });
+  useEffect(() => {
+    document.addEventListener("myCompletionEvent", onCompletionEvent);
+    return () => { document.removeEventListener("myCompletionEvent", onCompletionEvent); }
+  }
 
-  function handleCompletion(changeRow: number, changeCol: number) {
+  function onCompletionEvent(event: CustomEvent) {
+    { changeRow, changeCol } = event.detail;
     updateFormula(changeRow, changeCol); 
     if (editMode && changeRow == row && changeCol == col) {
       setEditMode(false);
@@ -249,8 +273,80 @@ function spreadsheet() {
 
   function onEnter() {
     commitFormulaChange(row, col).then({
-      completionRef.current.handleCompletion(row, col);
+      const event = new CustomEvent("myCompletionEvent", 
+        { detail: { changeRow: row, changeCol: col }});
+      document.dispatchEvent(event);
     })
   }
 }
 ```
+
+The event handler compares the selected cell when the update was invoked with the selected cell when it completes. It will only disable edit mode and move to the next cell if the currently selected cell is the one that was updated.
+
+It works, but feels heavy handed. You're paying for another round trip via the event loop. Dispatching and subscribing to custom events is more complicated than using the standard events. Even more so if you want to restrict the scope of your events by dispatching and subscribing to the corresponding element in the UI rather than the global document. 
+
+# Completion Handler
+
+Is there a more direct way of implementing the same pattern? They say that [all problems in computer science can be solved by another level of indirection](https://en.wikipedia.org/wiki/Indirection#Overview). Similarly, all problems in React can be solved by adding a [Ref](https://react.dev/reference/react/useRef).
+
+```ts
+function spreadsheet() {
+  const completionRef = useRef(onCompletion);
+  useEffect(() => { completionRef.current = onCompletion });
+
+  function onCompletion(changeRow: number, changeCol: number) {
+    updateFormula(changeRow, changeCol); 
+    if (editMode && changeRow == row && changeCol == col) {
+      setEditMode(false);
+      nextCell(row,col);
+    }
+  }
+
+  function onEnter() {
+    commitFormulaChange(row, col).then({
+      completionRef.current.onCompletion(row, col);
+    })
+  }
+}
+```
+
+A ref is simply a JavaScript object with a current project. The same object is returned by `useRef` for each render. After each render the ref's `current` property is updated to point at the most recent completion handler function. You can't change `current` during a render. You have to change it once the DOM has been updated, using an effect, particularly if there's any concurrent rendering.
+
+I haven't seen this approach used elsewhere. Normally, people create refs to the bits of state that they need special access to. That gets painful as you modify your code and need access to other bits of state, then have to fiddle around with the refs again. This feels cleaner. You do the ref magic once for the completion function. The code inside the completion function works like any other handler in React, automatically binding to whatever state you want to use. 
+
+If you end up using this pattern a lot, it's easy to package up as a custom hook.
+
+```ts
+function useCompletion<T extends (...args: any) => void>(callback: T) {
+  const completionRef = useRef(callback);
+  useEffect(() => { completionRef.current = callback });
+
+  return (...args: Parameters<T>) => { completionRef.current(...args); }
+}
+
+function spreadsheet() {
+  const invokeCompletion = useCompletion(onCompletion);
+
+  function onCompletion(changeRow: number, changeCol: number) {
+    updateFormula(changeRow, changeCol); 
+    if (editMode && changeRow == row && changeCol == col) {
+      setEditMode(false);
+      nextCell(row,col);
+    }
+  }
+
+  function onEnter() {
+    commitFormulaChange(row, col).then({
+      invokeCompletion(row, col);
+    })
+  }
+}
+```
+
+You're welcome. 
+
+# Conclusion
+
+We've covered a lot of ground but I have a good understanding of the different options now. The idea of a completion handler is a good thing to have in my back pocket. However, for my immediate problem I'm going to go with a simple optimistic update. It fits my use case nicely and should be simple to implement. 
+
+We'll see how that works out next time.
