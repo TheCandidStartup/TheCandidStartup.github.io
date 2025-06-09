@@ -4,7 +4,7 @@ tags: frontend
 thumbnail: /assets/images/frontend/react-icon.png
 ---
 
-[Last time]({% link _drafts/asynchronous-spreadsheet-data.md %}), I naively updated my [spreadsheet frontend component]({% link _topics/react-spreadsheet.md %}) to use an asynchronous update API. Everything looked like it was working, until I added some latency to the API's response. The resulting user experience was terrible. 
+[Last time]({% link _posts/2025-06-09-asynchronous-spreadsheet-data.md %}), I naively updated my [spreadsheet frontend component]({% link _topics/react-spreadsheet.md %}) to use an asynchronous update API. Everything looked like it was working, until I added some latency to the API's response. The resulting user experience was terrible. 
 
 The result from the API was applied to the UI based on the React state at the time the API was invoked. By the time the response was available, the state of the UI had changed so much that the update no longer made sense.
 

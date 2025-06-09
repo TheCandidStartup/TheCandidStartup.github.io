@@ -404,4 +404,4 @@ If all retries fail, we give up until the next sync interval and then try again.
 
 The write path needs a change of API. The `setCellValueAndFormat` method needs to be made explicitly asynchronous by returning a `ResultAsync` instead of a `Result`. That makes it clear to the caller that the operation is asynchronous, gives them an easy way to wait for the operation to complete and lets them respond accordingly if there's an error. 
 
-That will lead to a whole set of knock on changes. We can tackle those next time.
+That will lead to a whole set of knock on changes. We can tackle those [next time]({% link _posts/2025-06-09-asynchronous-spreadsheet-data.md %}).
