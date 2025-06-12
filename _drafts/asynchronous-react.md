@@ -42,6 +42,16 @@ The `then` handler is running in a different context but using state from the ti
 
 Any React app which interacts with a remote backend will run into this. So, what's the canonical way of dealing with truly asynchronous behavior?
 
+# State Updaters
+
+For really simple cases, you can use a state [updater function](https://react.dev/learn/queueing-a-series-of-state-updates#updating-the-same-state-multiple-times-before-the-next-render). This applies when you're updating a single state and only need access to the current value of that state. For example, a simple counter.
+
+```ts
+  setCounter(n => n + 1);
+```
+
+Sadly, my case involves multiple states, access to multiple current values, and conditional logic that determines which states are updated. I need a more general solution.
+
 # Fetching Data with Effects
 
 The only thing I could find in the React documentation that really addresses this is [fetching data](https://react.dev/learn/synchronizing-with-effects#fetching-data) asynchronously. You're rendering some UI and need some data to populate it. The API used to retrieve the data is asynchronous so you use an [effect](https://react.dev/learn/synchronizing-with-effects) to synchronize the state with the API. 
@@ -310,7 +320,7 @@ function spreadsheet() {
 }
 ```
 
-A ref is simply a JavaScript object with a current project. The same object is returned by `useRef` for each render. After each render the ref's `current` property is updated to point at the most recent completion handler function. You can't change `current` during a render. You have to change it once the DOM has been updated, using an effect, particularly if there's any concurrent rendering.
+A ref is simply a JavaScript object with a `current` property. The same object is returned by `useRef` for each render. After each render the ref's `current` property is updated to point at the most recent completion handler function. You can't change `current` during a render. You have to change it once the DOM has been updated, using an effect, particularly if there's any concurrent rendering.
 
 I haven't seen this approach used elsewhere. Normally, people create refs to the bits of state that they need special access to. That gets painful as you modify your code and need access to other bits of state, then have to fiddle around with the refs again. This feels cleaner. You do the ref magic once for the completion function. The code inside the completion function works like any other handler in React, automatically binding to whatever state you want to use. 
 
