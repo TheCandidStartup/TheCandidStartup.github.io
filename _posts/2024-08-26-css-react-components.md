@@ -82,7 +82,7 @@ Most conventions use the same underlying principles. They impose some structure 
 * State: Appearance changes based on state like hover and focus
 * Theme: Colors, typography, branding, "skin".
 
-The convention ensures that styles in different sets override each other in a predictable array. That might be done by using layers, or having rules for which selectors can be used in each set. Restricting the types of selectors that can be used is common in order to ensure that selector specificity is kept low and consistent. This is usually coupled with a system for creating and assigning class names to elements which enables the common selector pattern to work.
+The convention ensures that styles in different sets override each other in a predictable way. That might be done by using layers, or having rules for which selectors can be used in each set. Restricting the types of selectors that can be used is common in order to ensure that selector specificity is kept low and consistent. This is usually coupled with a system for creating and assigning class names to elements which enables the common selector pattern to work.
 
 As these are simply conventions without any required tooling, they're easy to adapt to your own needs and preferences. This worked well in a world where you have a team building a site from top to bottom. Things get more difficult if you need to integrate third party components. The chances that a component uses your version of a convention are close to zero. You always need to adapt to the way the component works. 
 
