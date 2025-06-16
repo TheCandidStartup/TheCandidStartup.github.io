@@ -4,7 +4,7 @@ title: >
 tags: react-spreadsheet
 ---
 
-I recently made my spreadsheet data interface [more explicitly asynchronous]({% link _posts/2025-06-09-asynchronous-spreadsheet-data.md %}). I naively [updated]({% link _topics/react-spreadsheet.md %}) `VirtualSpreadsheet` to use the newly asynchronous `setCellValueAndFormat` API. After discovering that the user experience was horrible if there was any latency, I did a deep dive into [best practice]({% link _drafts/asynchronous-react.md %}) for handling asynchronous updates in React.
+I recently made my spreadsheet data interface [more explicitly asynchronous]({% link _posts/2025-06-09-asynchronous-spreadsheet-data.md %}). I naively [updated]({% link _topics/react-spreadsheet.md %}) `VirtualSpreadsheet` to use the newly asynchronous `setCellValueAndFormat` API. After discovering that the user experience was horrible if there was any latency, I did a deep dive into [best practice]({% link _posts/2025-06-16-asynchronous-react.md %}) for handling asynchronous updates in React.
 
 I decided that the optimistic update pattern was the best fit. Let's go try it out.
 

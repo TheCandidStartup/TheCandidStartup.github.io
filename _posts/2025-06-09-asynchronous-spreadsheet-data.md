@@ -208,4 +208,4 @@ It's a mess.
 
 I've got all sorts of ideas of things I could do, but no real sense for what would work best. It's time for some more research. How do other React apps handle asynchronous completions?
 
-We'll do a deep dive next time.
+We'll do a deep dive [next time]({% link _posts/2025-06-16-asynchronous-react.md %}).
