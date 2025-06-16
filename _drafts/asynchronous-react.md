@@ -6,7 +6,7 @@ thumbnail: /assets/images/frontend/react-icon.png
 
 [Last time]({% link _posts/2025-06-09-asynchronous-spreadsheet-data.md %}), I naively updated my [spreadsheet frontend component]({% link _topics/react-spreadsheet.md %}) to use an asynchronous update API. Everything looked like it was working, until I added some latency to the API's response. The resulting user experience was terrible. 
 
-The result from the API was applied to the UI based on the React state at the time the API was invoked. By the time the response was available, the state of the UI had changed so much that the update no longer made sense.
+The result from the API was applied to the UI based on the React state at the time the API was invoked. By the time the result was available, the state of the UI had changed so much that the update no longer made sense.
 
 Let's do some research, and work out what I should have done. 
 
@@ -245,7 +245,7 @@ function spreadsheet() {
 
 In the example above I'm only using an optimistic value for `formula`. The way I manage edit mode and cell selection make it simpler to implement optimistic updates by setting and restoring the state manually. Which makes me wonder, is it really worth adding the complexity of these additional abstractions for something that I can easily do myself?
 
-My initial assumption was that these are simple custom hooks that you could write for yourself. They actually rely heavily on concurrent rendering.
+My initial assumption was that these are simple custom hooks that you could write for yourself. They're not. They actually depend heavily on concurrent rendering.
 
 Calling `startTransition` triggers an immediate render with the existing state that returns `true` for the `isPending` flag. It then invokes the update function. Any changes made to state inside `startTransition` result in a concurrent background render which can be suspended and resumed as needed. The pending UI stays interactive with events processed and the UI rendered. Once the update completes, the state changes made inside `startTransition` become visible and the background render is applied to the DOM. 
 
@@ -320,7 +320,7 @@ function spreadsheet() {
 }
 ```
 
-A ref is simply a JavaScript object with a `current` property. The same object is returned by `useRef` for each render. After each render the ref's `current` property is updated to point at the most recent completion handler function. You can't change `current` during a render. You have to change it once the DOM has been updated, using an effect, particularly if there's any concurrent rendering.
+A ref is simply a JavaScript object with a `current` property. The same object is returned by `useRef` for each render. After each render, we update the ref's `current` property to point at the most recent completion handler function. You can't change `current` during a render. You have to change it once the DOM has been updated, using an effect, particularly if there's any concurrent rendering.
 
 I haven't seen this approach used elsewhere. Normally, people create refs to the bits of state that they need special access to. That gets painful as you modify your code and need access to other bits of state, then have to fiddle around with the refs again. This feels cleaner. You do the ref magic once for the completion function. The code inside the completion function works like any other handler in React, automatically binding to whatever state you want to use. 
 
@@ -357,6 +357,6 @@ You're welcome.
 
 # Conclusion
 
-We've covered a lot of ground but I have a good understanding of the different options now. The idea of a completion handler is a good thing to have in my back pocket. However, for my immediate problem I'm going to go with a simple optimistic update. It fits my use case nicely and should be simple to implement. 
+We've covered a lot of ground but at least I have a good understanding of the different options now. The idea of a completion handler is a good thing to have in my back pocket. However, for my immediate problem, I'm going to go with a simple optimistic update. It fits my use case nicely and should be simple to implement. 
 
 We'll see how that works out next time.
