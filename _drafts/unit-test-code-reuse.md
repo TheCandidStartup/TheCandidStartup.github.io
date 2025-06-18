@@ -7,7 +7,7 @@ I'm a [strong believer]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) in
 
 # Unit Test Code
 
-Unit test code is a very particular thing. It's shaped by the particular unit test framework you're using, In my case that's [Vitest]({% link _posts/2024-03-11-bootstrapping-vitest.md %}). The framework provides an API for describing test suites, test cases and assertions of expected behavior.
+Unit test code is a very particular thing. It's shaped by the particular unit test framework you're using. In my case that's [Vitest]({% link _posts/2024-03-11-bootstrapping-vitest.md %}). The framework provides an API for describing test suites, test cases and assertions of expected behavior.
 
 Here's an individual unit test I created recently for an [asynchronous event log]({% link _posts/2025-05-26-asynchronous-event-log.md %}) component. Here `describe`, `test` and `expect` are provided by the [Vitest API](https://vitest.dev/api/). The test creates an empty event log and then runs a variety of queries that check whether the implementation has the expected behavior.
 
@@ -87,8 +87,10 @@ Most frameworks include [Setup and Teardown](https://vitest.dev/api/#setup-and-t
 
 ```ts
 describe('VirtualSpreadsheet', () => {
+  let mock;
+
   beforeEach(() => {
-    const mock = vi.fn();
+    mock = vi.fn();
     Element.prototype["scrollTo"] = mock;
   })
   afterEach(() => {
@@ -96,17 +98,96 @@ describe('VirtualSpreadsheet', () => {
   })
 ```
 
-Here I use Vitest's `beforeEach` and `afterEach` hooks to install and remove a mock `scrollTo` method on [DOM elements](https://developer.mozilla.org/en-US/docs/Web/API/Element). 
+Here I use Vitest's `beforeEach` and `afterEach` hooks to install and remove a mock `scrollTo` method on [DOM elements](https://developer.mozilla.org/en-US/docs/Web/API/Element). I stash the mock function in a variable that's accessible to all tests in case they need to check whether the mock was called.
 
 I tend to use this approach only when there is cleanup code which needs to be run after each test, regardless of what happens during the test. Anything more than single line setup code is best extracted as a utility function. If there's no cleanup needed, I prefer calling the utility function explicitly at the start of each test, making it clearer what's going on.
 
-# Context
+# Fixtures
 
-Vitest lets you provide additional [context](https://vitest.dev/guide/test-context.html) to each test. The context can be used to provide utility functions, test fixtures, shared state or whatever you want.
+Fixtures are a more sophisticated form of setup and teardown hooks. A fixture typically takes the form of an object that the test interacts with. Unit test frameworks will setup the fixtures needed for each test, make them available to the test and then tear them down after each test.
 
-So far, I've found no reason to use context. I prefer calling a utility function if I want to create a test fixture. If I want to provide some common static context to all tests, I can define a local variable at the test suite level, or a module variable at the test file level. 
+Vitest supports fixtures using the same approach as [Playwright](https://playwright.dev/). The [Vitest documentation](https://vitest.dev/guide/test-context.html#extend-test-context) has some gaps that assume you're familiar with Playwright fixtures. I had to read the [Playwright documentation](https://playwright.dev/docs/test-fixtures) before I fully understood what was going on. 
+
+In Vitest, fixtures are part of the [test context](https://vitest.dev/guide/test-context.html) object. The test context is provided to every test as an optional argument. You define additional fixtures by creating a custom test. Let's turn our mock scroll function into a fixture.
+
+```ts
+import { test as baseTest } from 'vitest'
+
+export const test = baseTest.extend({
+  scrollMock: async ({}, use) => {
+    const mock = vi.fn();
+    Element.prototype["scrollTo"] = mock;
+
+    await use(mock);
+
+    Reflect.deleteProperty(Element.prototype, "scrollTo");
+  }
+})
+```
+
+There's a lot going on here. You call `extend` on the base `test` and pass in an object. Each fixture is defined as a property whose value is an `async` function. The function has two required arguments. The first is a test context. The fixture can access anything it needs, including other fixtures. The second argument is a `use` callback function. Your fixture implementation should run any setup code needed to initialize the fixture, pass the fixture to `use` and `await` it, then run any teardown code.
+
+You can define as many fixtures as you like. You can also extend an existing custom test to add more fixtures. You would typically have shared utility code that defines all the fixtures needed for your project. You then import your custom test into each unit test file and use the fixtures in your tests.
+
+```ts
+describe('My Test Suite', () => {
+  test('needs mocked scroll', async ({ scrollMock }) => {
+    ...
+    expect(scrollMock).toBeCalledTimes(1);
+  }
+})
+```
+
+There's lots of magic happening behind the scenes. Fixtures are only initialized if they're used. You [should use object destructuring](https://vitest.dev/guide/test-context.html#fixture-initialization) to retrieve the fixtures from the context. The getters accessed when destructuring run the corresponding fixture functions (recursively if they depend on other fixtures), returning whatever was passed to the `use` callback. Once the test completes, the functions are resumed so they can cleanup. 
+
+So far, I've had no compelling need for fixtures. Most of my tests create a single "fixture" (`SimpleEventLog` in my initial example) that doesn't need any explicit cleanup. It's easier to start each test with an explicit single line fixture creation.
+
+# Context Properties and Projects
+
+You can also extend the test context with regular properties. Anything that isn't a fixture is just added to the context where it can be accessed by each test. This becomes useful for code reuse when combined with Vitest [projects](https://vitest.dev/guide/projects.html). You can define multiple projects which include a common set of unit test files. You can [override](https://vitest.dev/guide/test-context.html#default-fixture) context properties on a per project basis. For example, you could run the same backend test suite against production, staging and dev environments using three projects with a different base URL context property for each. 
+
+It's good to know that this kind of large scale reuse is possible, but at the moment my code reuse needs are more fine grained.
 
 # Refactoring Common Code
+
+In particular, I run the same set of assertions for every query in my event log unit test. If it was any other sort of code, I'd refactor it and extract a common `expectQueryResult` function. What happens if I do that here?
+
+```ts
+function expectQueryResult(result: Result<QueryValue<LogEntry>, QueryError>, 
+  startSequenceId: SequenceId, isComplete: boolean, length: number) {
+  expect(result.isOk());
+  let value = result._unsafeUnwrap();
+  expect(value.startSequenceId).toEqual(startSequenceId);
+  expect(value.isComplete).toEqual(isComplete);
+  expect(value.entries.length).toEqual(length);
+}
+
+describe('SimpleEventLog', () => {
+  test('should start out empty', async () => {
+    const data = new SimpleEventLog;
+
+    let result = await data.query('start', 'end');
+    expectQueryResult(result, 0n, true, 0);
+
+    result = await data.query('snapshot', 'end');
+    expectQueryResult(result, 0n, true, 0);
+
+    result = await data.query(0n, 0n);
+    expectQueryResult(result, 0n, true, 0);
+
+    result = await data.query(0n, 5n);
+    expectQueryResult(result, 0n, true, 0);
+
+    ...
+  }
+}
+```
+
+That looks much cleaner. However, remember what I said about the code being shaped by the tooling. Let's see what happens if I change one of the arguments to the second `expectQueryResult` so that the test fails.
+
+{% include candid-image.html src="/assets/images/frontend/refactor-unit-test-detailed-error-terminal.png" alt="Refactored unit test standard error reporting" %}
+
+{% include candid-image.html src="/assets/images/frontend/refactor-unit-test-detailed-error-vscode.png" alt="Refactored unit test VSCode error reporting" %}
 
 # Deeply Equal
 
