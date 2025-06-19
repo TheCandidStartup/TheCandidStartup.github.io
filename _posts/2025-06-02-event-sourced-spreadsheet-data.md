@@ -351,7 +351,9 @@ const eventSourcedDataB = new EventSourcedSpreadsheetData(eventLog);
 
 I created a couple of `EventSourcedSpreadsheetData` instances that share the same event log.
 
-```ts
+{% raw %}
+
+```tsx
 export const EventSourceSync: Story = {
   args: {
     theme: theme,
@@ -377,6 +379,8 @@ export const EventSourceSync: Story = {
   ),
 };
 ```
+
+{% endraw %}
 
 Then I added a story that renders two spreadsheets, one with each data source. As this is a special case story, I removed the ability to override the `data` prop and excluded it from the auto generated *Docs* page.
 
