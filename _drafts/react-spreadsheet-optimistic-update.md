@@ -4,13 +4,13 @@ title: >
 tags: react-spreadsheet
 ---
 
-I recently made my spreadsheet data interface [more explicitly asynchronous]({% link _posts/2025-06-09-asynchronous-spreadsheet-data.md %}). I naively [updated]({% link _topics/react-spreadsheet.md %}) `VirtualSpreadsheet` to use the newly asynchronous `setCellValueAndFormat` API. After discovering that the user experience was horrible if there was any latency, I did a deep dive into [best practice]({% link _posts/2025-06-16-asynchronous-react.md %}) for handling asynchronous updates in React.
+I recently made my spreadsheet data interface [more explicitly asynchronous]({% link _posts/2025-06-09-asynchronous-spreadsheet-data.md %}). I naively updated `VirtualSpreadsheet` to use the newly asynchronous `setCellValueAndFormat` API. After discovering that the user experience was horrible if there was any latency, I did a deep dive into [best practice]({% link _posts/2025-06-16-asynchronous-react.md %}) for handling asynchronous updates in React.
 
 I decided that the optimistic update pattern was the best fit. Let's go try it out.
 
 # Optimistic Update
 
-The idea is simple. After calling `setCellValueAndFormat` we optimistically update the React state assuming that the update will succeed. If it eventually fails, put the state back the way it was and report the error as if you’d never shown the request succeeding.
+The idea is simple. After calling `setCellValueAndFormat`, we optimistically update the React state, assuming that the update will succeed. If it eventually fails, put the state back the way it was and report the error as if you’d never shown the request succeeding.
 
 The content displayed in each cell comes from the `SpreadsheetData` interface which I'm calling `setCellValueAndFormat` on. To display the updated value optimistically we need to add some React state to track the pending update.
 
