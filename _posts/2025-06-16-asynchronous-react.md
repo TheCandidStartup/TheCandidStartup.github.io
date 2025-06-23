@@ -359,4 +359,4 @@ You're welcome.
 
 We've covered a lot of ground but at least I have a good understanding of the different options now. The idea of a completion handler is a good thing to have in my back pocket. However, for my immediate problem, I'm going to go with a simple optimistic update. It fits my use case nicely and should be simple to implement. 
 
-We'll see how that works out next time.
+We'll see how that works out [next time]({% link _posts/2025-06-23-react-spreadsheet-optimistic-update.md %}).
