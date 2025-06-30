@@ -57,7 +57,7 @@ describe('SimpleEventLog', () => {
 })
 ```
 
-The code is also shaped by the tooling used to run the tests. When a unit test fails you want the cause to be as obvious as possible. That encourages simple, sequential code. The tooling reports an error on a particular line in the test. If that's buried inside nested loops or at the bottom of a callstack of function calls, it's going to be hard to figure out what happened.
+The code is also shaped by the tooling used to run the tests. When a unit test fails you want the cause to be as obvious as possible. That encourages simple, sequential code. The tooling reports an error on a particular line in the test. If that's buried inside nested loops, or at the bottom of a callstack of function calls, it's going to be hard to figure out what happened.
 
 The downside is that unit test code can easily become verbose and repetitive. We want to find a [sweet spot](https://kentcdodds.com/blog/aha-testing) where we have just enough abstraction to keep our tests understandable and maintainable. Let's look at some possible solutions for Vitest.
 
@@ -209,7 +209,7 @@ In general, you get the most consistent results from unit test tooling if all th
 
 In our case, we're testing a `query` method which returns a `QueryValue` object in a `Result` wrapper. We use five lines of assertions to check individual properties of the `QueryValue` and `Result`. 
 
-One trick you can use is to extract a utility method that creates an object with the properties you expect, then to use the `toEqual` assertion which does a deep comparison of the objects.
+One trick you can use is to extract a utility method that creates an object with the properties you expect, then use the `toEqual` assertion which does a deep comparison of the objects.
 
 ```ts
 function queryResult(startSequenceId: SequenceId, isComplete: boolean, length: number): Result<QueryValue<TestLogEntry>, QueryError> {
@@ -252,7 +252,7 @@ Unfortunately, the one line summary of the error is not helpful. It tells you th
 
 # Custom Matchers
 
-Can we do better? Yes we can, if we're prepared to put some effort in. Vitest allows you to [extend](https://vitest.dev/guide/extending-matchers.html) the set of matchers available to use with `expect`. 
+Can we do better? Yes, if we're prepared to put some effort in. Vitest allows you to [extend](https://vitest.dev/guide/extending-matchers.html) the set of matchers available to use with `expect`. 
 
 ```ts
 function fail(message: () => string, _actual: unknown, _expected: [SequenceId, boolean, number]) {
@@ -292,7 +292,7 @@ expect.extend({
 })
 ```
 
-This is a custom matcher for `QueryValue` which defines a `toBeQueryValue` assertion. Each matcher is a function which takes a `received` value (the argument to `expect`) and an `expected` value (the argument to the assertion). You run whatever comparison logic you want and return an `ExpectationResult` object. The required properties are a `pass` boolean and a function that returns an error message. My matcher uses a `fail` utility function to construct expectation results.
+These are custom matchers which define `toBeQueryValue` and `toBeInfinisheetError` assertions. Each matcher is a function which takes a `received` value (the argument to `expect`) and an `expected` value (the argument to the assertion). You run whatever comparison logic you want and return an `ExpectationResult` object. The required properties are a `pass` boolean and a function that returns an error message. My matcher uses a `fail` utility function to construct expectation results.
 
 You would normally define all your custom matchers as shared utility code. If you include the utility source file in your Vitest [setupFiles](https://vitest.dev/config/#setupfiles) config, it will be run automatically before each test file. This way, just like the built-in assertions, your custom assertions are available in any test file without having to explicitly import anything.
 
