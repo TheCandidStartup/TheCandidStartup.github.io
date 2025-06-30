@@ -1,25 +1,34 @@
 ---
 title: InfiniSheet Blob Store
 tags: infinisheet
+thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 
-wise words
+We left our [scalable cloud spreadsheet project]({% link _topics/spreadsheets.md %}) in a good place. We used [tracer bullet development]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}) and after a [few iterations]({% link _posts/2025-06-09-asynchronous-spreadsheet-data.md %}) got an [end to end simulation]({% link _posts/2025-06-23-react-spreadsheet-optimistic-update.md %}) running against a reference implementation of an event log. 
 
-* Abstracting over S3, NodeJS File interface and Browser Origin Private File System
-* Plus an in-memory reference implementation
+{% include candid-image.html src="/assets/images/infinisheet/event-sourced-spreadsheet-data-tracer-bullet.svg" alt="Event Sourced Spreadsheet Data Tracer Bullet Development" %}
+
+It's now time to expand scope and tackle the blob store. 
+
+# Blob Store
+
+The backend data storage for the spreadsheet uses a combination of an event log and a blob store. The event log is an append only list of changes to the spreadsheet. The blob store is used to store [regular snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) of the spreadsheet. The idea is to provide an optimal balance between efficient coarse grained storage and fine grained updates.
+
+The overall [system architecture]({% link _posts/2024-07-29-infinisheet-architecture.md %}) requires a common `BlobStore` interface with a variety of implementations. These include a reference implementation, AWS S3, the NodeJS file system and the browser's Origin Private File System. We need to understand how these different backends work to come up with the right level of abstraction for the `BlobStore` interface.
 
 # S3
 
-* Key-Value semantics
-* Key can be any string up to 1024 bytes long
-* GetObject/PutObject to read/write blob with given key
-* ListObjects to list objects with specified key prefix (paginated)
-  * Entries listed in ascending UTF8 binary order
-  * Can specify delimiter character to get directory like semantics
-  * Returns only objects without delimiter in rest of key, + list of key values up to next delimiter with duplicates eliminated
-* DeleteObject/DeleteObjects to delete objects with specified key (up to 1000 at a time for DeleteObjects)
-* Delete all objects with given prefix needs iteration with ListObjects/DeleteObjects calls per page of 1000 entries
-* Can use lifecycle rules for bulk delete but lifecycle config is set as single object per bucket. Not practical to update from concurrent app servers
+[S3](https://docs.aws.amazon.com/s3/) is Amazon's foundational blob storage service. It can store blobs of data up to [5 TB](https://docs.aws.amazon.com/general/latest/gr/s3.html#limits_s3), with [no limit on the number of blobs](https://docs.aws.amazon.com/AmazonS3/latest/userguide/BucketRestrictions.html#object-bucket-limitations) you can store. 
+
+S3 has key-value semantics. Keys can be any [UTF-8 string up to 1024 bytes long](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html). There are `GetObject` and `PutObject` APIs to [read](https://docs.aws.amazon.com/AmazonS3/latest/userguide/download-objects.html) and [write](https://docs.aws.amazon.com/AmazonS3/latest/userguide/upload-objects.html) blobs with a given key.
+
+The `ListObjects` [API](https://docs.aws.amazon.com/AmazonS3/latest/userguide/ListingKeysUsingAPIs.html) lists objects with a specified key prefix. The results are paginated and returned in ascending UTF-8 order. The API also supports an optional `delimiter` argument. When used, only objects *without* the delimiter character in the rest of the key are returned, together with a list of unique key values up to the next delimiter.
+
+That's a convoluted way of saying that the query API lets you pretend that objects are organized hierarchically. If you use `/` as a delimiter, it looks like a cloud file system. However, there are no actual directories stored. You're just using a convention that interprets the object key as a path, combined with a query API that lets you query the "file system" efficiently. 
+
+There are `DeleteObject` and `DeleteObjects` APIs to [delete objects](https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeletingObjects.html) with specified keys, up to 1000 at a time. There's no API to delete an entire set of objects with a common prefix. You have to iterate using `ListObjects` and delete them a page at a time. 
+
+Administrators can use [life cycle rules](https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-set-lifecycle-configuration-intro.html) to automatically delete objects based on age, tag and prefix. There is one lifecycle configuration per bucket, which makes it impractical for app servers to perform ad hoc deletes by modifying lifecycle rules.
 
 # NodeJS File
 
