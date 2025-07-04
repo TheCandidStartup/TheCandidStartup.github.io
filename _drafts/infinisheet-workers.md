@@ -4,7 +4,7 @@ tags: infinisheet
 thumbnail: /assets/images/infinisheet/workers-thumbnail.png
 ---
 
-I'm building an [event sourced spreadsheet]({% link _topics/spreadsheets.md %}) on a [foundation]({% link _posts/2024-07-29-infinisheet-architecture.md %}) of an event log, a blob store and background workers. I've defined interfaces and reference implementations for `EventLog` and `BlobStore`. Now it's the turn of background workers.
+I'm building an [event sourced spreadsheet]({% link _topics/spreadsheets.md %}) on a [foundation]({% link _posts/2024-07-29-infinisheet-architecture.md %}) of an event log, a blob store and background workers. I've defined `EventLog` and `BlobStore` interfaces with reference implementations. Now it's the turn of background workers.
 
 # The Big Picture
 
@@ -49,6 +49,14 @@ Let's look at how this might work for a few clients and see if we can find a com
 * Similar approach to web client with different APIs for starting worker and communicating with it
 * Same error handling model
 
+# Thin Client
+
+* Client with no local storage, interacts with server via a REST API
+* API let's client read event log and blob store, plus add entries to the log
+* All workflows run on server
+* No workers
+* Client's `EventSourcedSpreadsheetData` can't request workflows, that's servers responsibility
+
 # AWS Serverless
 
 * AWS infrastructure does all the heavy lifting
@@ -72,7 +80,7 @@ Three high level parts
 
 * `InfiniSheetWorkerHost<MessageT>` to represent host side of infrastructure. `PostMessageWorkerHost<MessageT>` subclass for hosts with explicit `postMessage` API.
 * `InfiniSheetWorker<MessageT>` to represent worker side of infrastructure. Has an `onMessageReceived` event.
-* `EventSourcedSpreadsheetData` can be initialized with either an `InfiniSheetWorkerHost` or an `InfiniSheetWorker`
+* `EventSourcedSpreadsheetData` can be initialized with either an `InfiniSheetWorkerHost` or an `InfiniSheetWorker` or undefined if no local workflow
   * Understand whether its running in host or worker context
   * Use host interface to understand state of system. e.g. If still busy creating previous snapshot, delay next one. 
   * Use worker interface to handle messages and invoke workflows
@@ -85,3 +93,13 @@ Three high level parts
 * `EventSourcedSpreadsheetData` needs to expose an `invokeWorkflow` method. Either directly or by passing it to a `Workers` interface.
 * The client puts the two together by setting an `EventLog` callback that uses a `Promise` or `setTimeout` to schedule a call to `invokeWorkflow` from the event loop.
 
+# Event Sourced Spreadsheet Data integration
+
+* Two instances of ESSD, one host side, one worker side
+* First cut constructs with choice of WorkerHost, Worker or undefined (no local workflows)
+* Is this best approach
+* Alternative is to have `EventSourcedSpreadsheetBase` with basically all current code
+  * Then `EventSourcedSpreadsheetData` extends with constructor that takes `WorkerHost | undefined`
+  * Plus new `EventSourcedSpreadsheetWorkflow` extends with constructor that takes `Worker`
+* Static vs dynamic behavior differences
+* Splitting into three classes makes it easier to split code into separate files to make it more maintainable
