@@ -16,7 +16,7 @@ The core logic for the spreadsheet lives in the `event-sourced-spreadsheet-data`
 
 I used [tracer bullet development]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}) to build an end to end prototype of the web client. I implemented just enough of `event-sourced-spreadsheet-data` to connect my `VirtualSpreadsheet` React component to spreadsheet data stored in an `EventLog` reference implementation. 
 
-I have a `BlobStore` [reference implementation]({% link _drafts/infinisheet-blob-store.md %}) ready to go. I just need to come up with an abstraction for background workers so that I can trigger a background job that reads an `EventLog` and creates a snapshot by writing blobs into a `BlobStore`.
+I have a `BlobStore` [reference implementation]({% link _posts/2025-07-07-infinisheet-blob-store.md %}) ready to go. I just need to come up with an abstraction for background workers so that I can trigger a background job that reads an `EventLog` and creates a snapshot by writing blobs into a `BlobStore`.
 
 # Use Case
 
