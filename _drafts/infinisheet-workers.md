@@ -30,76 +30,119 @@ Let's look at how this might work for a few clients and see if we can find a com
 
 # Web Client
 
-* The web client should use [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) for background jobs.
-* Create a dedicated worker and communicate with it via `postMessage`
-* Worker has access to same local data storage and network resources as main app
-* The client sets an `EventLog` callback that posts a message to the worker specifying workflow name and event log sequence id
-* Client starts worker with code that imports `event-sourced-spreadsheet-data` module
-* Client sends init message which includes constructor arguments for `EventLog` and `BlobStore`. Worker creates an `EventSourcedSpreadsheetData` instance.
-* Worker calls `invokeWorkflow` in response to workflow messages
-* Possible to use multiple workers if needed. Start with a single dedicated worker. Assumption that worker only needed to prevent blocking of main event loop. Snapshot creation should complete long before another snapshot is needed.
-* Error handling
-  * Restart web worker if it dies
-  * On initial launch of app and after any restart, go through event log looking for pending workflows and resend them
-  * Workflows MUST be idempotent
+The web client will use [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) for background jobs. Web workers run in parallel with the main event loop, using a separate context. They're typically implemented using a separate thread or process. 
+
+You create a dedicated worker by passing a URL for the script you want to run. The main app and worker can communicate with each other using `postMessage`.The worker has access to the same local data storage and network resources as the main app. 
+
+Our web client needs to start the worker with code that imports the `event-sourced-spreadsheet-data` module. The worker creates an `EventSourcedSpreadsheetData` instance that uses the same local data storage for `EventLog` and `BlobStore` as the main app.
+
+The client sets an `EventLog` callback that posts a message to the worker specifying a workflow name and event log sequence id. The worker receives the message and invokes the appropriate workflow using its `EventSourcedSpreadsheetData` instance to manipulate the `EventLog` and `BlobStore`. 
+
+It's possible to use multiple workers if needed. We'll start with a single dedicated worker. The assumption is that the worker is only needed to prevent blocking of the main event loop. Snapshot creation should complete long before another snapshot is needed.
+
+Error handling is fairly simple. The app should restart the web worker if it dies or becomes unresponsive. When the app first launches, and after any worker restart, go through the event log looking for pending workflows and resend them. Workflow implementations need to be idempotent.
 
 # Desktop Client / NodeJS Server
 
-* Both cases feature a "client" running on a single dedicated instance with local storage and access to OS style [processes](https://nodejs.org/api/child_process.html) and [threads](https://nodejs.org/api/worker_threads.html).
-* Similar approach to web client with different APIs for starting worker and communicating with it
-* Same error handling model
+Both cases feature a "client" running on a single dedicated instance with local storage and access to OS style [processes](https://nodejs.org/api/child_process.html) and [threads](https://nodejs.org/api/worker_threads.html). The approach is the same as the web client. The only difference is in the APIs used to start the worker and communicate with it. 
+
+The NodeJS server is intended for local testing of a complete end to end system, or for anyone that wants to run their own dedicated server instance. In both cases, failures are ultimately handled by restarting the client/instance.
 
 # Thin Client
 
-* Client with no local storage, interacts with server via a REST API
-* API let's client read event log and blob store, plus add entries to the log
-* All workflows run on server
-* No workers
-* Client's `EventSourcedSpreadsheetData` can't request workflows, that's servers responsibility
+This is a client with no local storage, interacting with a server via a REST API. The API lets the client read the event log and blob store, as well as adding entries to the log. All workflows run on the server, so workers are not needed locally. 
+
+The client's instance of `EventSourcedSpreadsheetData` can't request workflows, that's the server's responsibility. 
 
 # AWS Serverless
 
-* AWS infrastructure does all the heavy lifting
-* EventLog hosted on DynamoDB -> DynamoDB Streams -> Lambda worker
-* Deploy DynamoDB configured so that write with a pending workflow is forwarded to a Lambda function using DynamoDB streams
-* Node.js Lambda function that imports `event-sourced-spreadsheet-data`
-* Init sets up connection to DynamoDB and S3
-* Function invoked with spreadsheet id, workflow name and sequence id in log.
-* May need cache of `EventSourcedSpreadsheetData` instances per spreadsheet id
+The intention is to use an AWS serverless backend for production use. In this case, the AWS infrastructure does all the heavy lifting. The `EventLog` is implemented using DynamoDB. Changes to the log are sent to DynamoDB streams. Any change to the log entry's `pending` field invokes a Lambda hosted worker.
+
+The backend deployment sets up the infrastructure so that writes with a pending workflow are forwarded to a Lambda function using DynamoDB streams. The NodeJS based Lambda function imports `event-sourced-spreadsheet-data`. 
+
+The Lambda function init should set up the connection to DynamoDB and S3 (for the blob store). The function needs to be invoked with a spreadsheet id, workflow name and sequence id. There could be many different clients, each working on a different spreadsheet. We may need a cache of `EventSourcedSpreadsheetData` instances per spreadsheet id.
 
 # Common Abstraction
 
-Three high level parts
+Each client has three high level parts.
 1. A host that manages workers(s) with a way of sending messages to the workers it manages. Sending messages may be explicit via a `postMessage` style API or implicit (e.g. DynamoDB streams). 
-2. A worker running in a separate context with its own instance of `EventSourcedSpreadsheetData`. It processes messages from the host, to run workflows that interact with `EventLog` and `BlobStore`.
-3. Some infrastructure that connects host and workers. This might be inter-process communication on the same instance, or across the network in a cloud hosted distributed system. Setting this up is the client's responsibility. The `event-sourced-spreadsheet-data` module interacts with each end, doesn't need to know anything about what happens in between.
+2. A worker running in a separate context with its own instance of `EventSourcedSpreadsheetData`. It processes messages from the host, to run workflows that interact with a shared `EventLog` and `BlobStore`.
+3. Some infrastructure that connects host and workers. This might be inter-process communication on the same instance, or across the network in a cloud hosted distributed system. Setting this up is the client's responsibility. The `event-sourced-spreadsheet-data` module interacts with each end. It doesn't need to know anything about what happens in between.
 
 {% include candid-image.html src="/assets/images/infinisheet/workers.svg" alt="InfiniSheet Workers" %}
 
 # Workers Interface
 
-* `InfiniSheetWorkerHost<MessageT>` to represent host side of infrastructure. `PostMessageWorkerHost<MessageT>` subclass for hosts with explicit `postMessage` API.
-* `InfiniSheetWorker<MessageT>` to represent worker side of infrastructure. Has an `onMessageReceived` event.
-* `EventSourcedSpreadsheetData` can be initialized with either an `InfiniSheetWorkerHost` or an `InfiniSheetWorker` or undefined if no local workflow
-  * Understand whether its running in host or worker context
-  * Use host interface to understand state of system. e.g. If still busy creating previous snapshot, delay next one. 
-  * Use worker interface to handle messages and invoke workflows
+Unlike the `EventLog` and `BlobStore` interfaces, workers are kind of vague and hand-wavy. I did wonder whether I needed a dedicated workers interface at all. You could provide an `invokeWorkflow` function in `event-sourced-spreadsheet-data` and say it's entirely the client's responsibility to call it when needed, in a separate context.
+
+In the end I decided that it would be worthwhile to have something that represents a "worker host" and a "worker". The `EventSourcedSpreadsheetData` instance might need to know whether it's running in a host or worker context. The instance on the host side might need to understand the state of the system. For example, it might delay creation of a new snapshot if the worker is still busy with the previous one. The instance on the worker side might want to send back progress and error reports.
+
+```ts
+export interface WorkerMessage {
+  /** Used as a discriminated union tag by implementations */
+  type: string;
+}
+
+export interface WorkerHost<MessageT extends WorkerMessage>  {
+}
+
+export interface PostMessageWorkerHost<MessageT extends WorkerMessage> extends WorkerHost<MessageT> {
+  postMessage(message: MessageT): void
+}
+
+export type MessageHandler<MessageT extends WorkerMessage> = (message: MessageT) => void;
+
+export interface InfiniSheetWorker<MessageT extends WorkerMessage> {
+  onReceiveMessage: MessageHandler<MessageT> | undefined;
+}
+```
+
+It's a pretty sparse starting point. We have a discriminated union type for messages sent to the worker. There's a currently empty base `WorkerHost` for hosts with implicit messages and `PostMessageWorkerHost` for hosts with an explicit `postMessage` method.
+
+On the worker side, `InfinisheetWorker` has an `onReceiveMessage` property for the message handler function that will be invoked when a message is received.
+
+The interfaces are generic on the type of messages supported. The message for a pending workflow might look something like this.
+
+```ts
+export interface PendingWorkflowMessage {
+  type: "PendingWorkflowMessage",
+  workflow: WorkflowId;
+  sequenceId: SequenceId;
+}
+```
 
 # Reference Implementation
 
-* Simplest thing that implements the interface. Performance not an issue.
-* In this case it's simply scheduling a callback from the event loop. Yes, this can block the UI if snapshot creation takes a long time but that's fine for a reference implementation. 
-* The `EventLog` needs to invoke a callback when an entry with an pending workflow is created.
-* `EventSourcedSpreadsheetData` needs to expose an `invokeWorkflow` method. Either directly or by passing it to a `Workers` interface.
-* The client puts the two together by setting an `EventLog` callback that uses a `Promise` or `setTimeout` to schedule a call to `invokeWorkflow` from the event loop.
+Remember, a reference implementation is the simplest thing that implements the interface. Performance is not an issue. In this case all we're doing is scheduling a callback from the event loop. Yes, this can block the UI if snapshot creation takes a long time. Yes, there isn't any real isolation between host and worker. Both are fine for a reference implementation. 
 
-# Event Sourced Spreadsheet Data integration
+```ts
+export class SimpleWorkerHost<T extends WorkerMessage> implements PostMessageWorkerHost<T> {
+  constructor(worker: SimpleWorker<T>) {
+    this.worker = worker;
+  }
 
-* Two instances of ESSD, one host side, one worker side
-* First cut constructs with choice of WorkerHost, Worker or undefined (no local workflows)
-* Is this best approach
-* Alternative is to have `EventSourcedSpreadsheetBase` with basically all current code
-  * Then `EventSourcedSpreadsheetData` extends with constructor that takes `WorkerHost | undefined`
-  * Plus new `EventSourcedSpreadsheetWorkflow` extends with constructor that takes `Worker`
-* Static vs dynamic behavior differences
-* Splitting into three classes makes it easier to split code into separate files to make it more maintainable
+  postMessage(message: T): void {
+    const handler = this.worker.onReceiveMessage;
+    if (handler) {
+      setTimeout(() => { handler(message) }, 0);
+    } else {
+      throw new Error("Worker has no message handler");
+    }
+  }
+
+  private worker: SimpleWorker<T>;
+}
+
+export class SimpleWorker<T extends WorkerMessage> implements InfiniSheetWorker<T> {
+  onReceiveMessage: MessageHandler<T> | undefined;
+}
+```
+
+The worker host is simple. The constructor takes a `SimpleWorker` instance. The `postMessage` method invokes the worker's handler, if defined, using `setTimeout` to schedule a callback. 
+
+The worker implementation is even simpler. A class with an `onReceiveMessage` property.
+
+# Next Time
+
+That involved a lot of thinking for little concrete outcome. Next time, we'll try wiring `SimpleBlobStore` and `SimpleWorker` into our tracer bullet `EventSourcedSpreadsheetData`. That should shake some more requirements loose. 
+
