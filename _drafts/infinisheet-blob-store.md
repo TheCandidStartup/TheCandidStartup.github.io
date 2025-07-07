@@ -121,7 +121,7 @@ The `getDir` method gives you a `BlobDir` for a sub-directory. This succeeds whe
 
 # Reference Implementation
 
-As ever, the first stage in validating the interface is to create a reference implementation. I'm using a simple `Map` to store the blobs and sub-directories in a `BlobDir`. I'm using a branded opaque type for the continuation token in the public interface. The internal implementation is a wrapper around an iterator. I'll need to do the same for NodeJS and OPFS implementations, so it's a good opportunity to try it now. 
+As ever, the first stage in validating the interface is to create a reference implementation. I'm using a simple `Map` to store the blobs and sub-directories in a `BlobDir`. There's a [branded opaque type]({% link _posts/2025-03-10-react-spreadsheet-editable-data.md %}) for the continuation token in the public interface. The internal implementation is a wrapper around an iterator. I'll need to do the same for NodeJS and OPFS implementations, so it's a good opportunity to try it now. 
 
 ```ts
 interface SimpleBlobStoreIter {
@@ -310,7 +310,7 @@ test('should start out empty', async () => {
 })
 ```
 
-After that things went much quicker and I was easily able to get to 100% coverage of `SimpleBlobStore`.
+After that, things went much quicker and I was easily able to get to 100% coverage of `SimpleBlobStore`.
 
 # Next Time
 
