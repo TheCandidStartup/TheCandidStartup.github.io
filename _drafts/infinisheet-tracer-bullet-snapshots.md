@@ -153,3 +153,17 @@ export class EventSourcedSpreadsheetWorkflow  extends EventSourcedSpreadsheetEng
   protected worker: InfiniSheetWorker<PendingWorkflowMessage>;
 }
 ```
+
+Clean separation between host and worker. No longer need the type predicate. Ironically, the presence of the type predicate is the only thing stopping TypeScript from throwing it's toys out of the pram. 
+* Error due to generic parameter not being used
+* Error when passing `SimpleWorkerHost` to `EventSourcedSpreadsheetData` constructor which expects a `WorkerHost`. They have "no properties in common".
+* Tried various ways to keep TypeScript happy. Most minimal was 
+
+```ts
+export interface WorkerHost<MessageT extends WorkerMessage> { 
+  /** @internal */
+  __messageType: MessageT | null;
+}
+```
+
+* Required property to be declared and initialized in `SimpleWorkerHost` implementation. In the end went back to using a type predicate as the least ugly workaround. Can always junk `WorkerHost` completely if it turns out there's nothing that `EventSourcedSpreadsheetData` needs from it.
