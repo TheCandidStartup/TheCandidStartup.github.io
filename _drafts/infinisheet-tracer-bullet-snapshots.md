@@ -167,3 +167,53 @@ export interface WorkerHost<MessageT extends WorkerMessage> {
 ```
 
 * Required property to be declared and initialized in `SimpleWorkerHost` implementation. In the end went back to using a type predicate as the least ugly workaround. Can always junk `WorkerHost` completely if it turns out there's nothing that `EventSourcedSpreadsheetData` needs from it.
+
+```ts
+export interface WorkerHost<MessageT extends WorkerMessage> { 
+  isHost(): this is WorkerHost<MessageT>
+}
+```
+
+# Unit Test
+
+```ts
+function creator() {
+  const eventLog = new SimpleEventLog<SpreadsheetLogEntry>;
+  const worker = new SimpleWorker<PendingWorkflowMessage>;
+  const host = new SimpleWorkerHost(worker);
+  const blobStore = new SimpleBlobStore;
+  eventLog.workerHost = host;
+  
+  // Constructor subscribes to worker's onReceiveMessage which keeps it alive
+  new EventSourcedSpreadsheetWorkflow(eventLog, blobStore, worker);
+
+  return new EventSourcedSpreadsheetData(eventLog, blobStore, host);
+}
+```
+
+# Event Source Sync Story
+
+```ts
+// Backend
+const blobStore = new SimpleBlobStore;
+const worker = new SimpleWorker<PendingWorkflowMessage>;
+const workerHost = new SimpleWorkerHost(worker);
+const eventLog = new SimpleEventLog<SpreadsheetLogEntry>(workerHost);
+new EventSourcedSpreadsheetWorkflow(eventLog, blobStore, worker);
+
+// Client A
+const delayEventLogA = new DelayEventLog(eventLog);
+const eventSourcedDataA = new EventSourcedSpreadsheetData(delayEventLogA, blobStore);
+
+// Client B
+const delayEventLogB = new DelayEventLog(eventLog);
+const eventSourcedDataB = new EventSourcedSpreadsheetData(delayEventLogB, blobStore);
+```
+
+# Next Time
+
+* Wired up all the components but nothing actually happening yet
+* Need to trigger snapshot workflow
+* Need to implement workflow to create snapshot
+* Need to update spreadsheet loading code to read snapshot as well as event log
+* Before all that, need a real in-memory representation of spreadsheet data to load into.
