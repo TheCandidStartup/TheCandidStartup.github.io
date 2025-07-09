@@ -1,5 +1,5 @@
 ---
-title: InfiniSheet Tracer Bullet Snapshots
+title: Wiring up the Blob Store and Workers
 tags: infinisheet
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
