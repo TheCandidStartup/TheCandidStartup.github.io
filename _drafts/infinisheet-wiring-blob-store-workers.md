@@ -4,48 +4,52 @@ tags: infinisheet
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 
-wise words
+Now that I have interfaces and reference implementations for a [Blob Store]({% link _posts/2025-07-07-infinisheet-blob-store.md %}) and [Workers]({% link _drafts/infinisheet-workers.md %}), we can try to wire them up to our [tracer bullet prototype]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}). 
+
+{% include candid-image.html src="/assets/images/infinisheet/event-sourced-spreadsheet-data-tracer-bullet.svg" alt="Event Sourced Spreadsheet Data Tracer Bullet Development" %}
+
+The aim here is to see whether the pieces fit together properly. Do the interfaces need to be tweaked? Does the existing structure extend gracefully? If it's not right, we should fix it now, while change is still cheap.
+
+{% include candid-image.html src="/assets/images/infinisheet/workers.svg" alt="InfiniSheet Workers" %}
+
+We have a wiring diagram from last time. Let's see how it goes.
 
 # EventLog and WorkerHost
 
-* How `EventLog` interacts with `WorkerHost` to trigger workflows is implementation specific. No point trying to shoehorn some kind of one size fits all interface into `EventLog`. Wiring everything together is the client's responsibility so not losing anything by excluding from `EventLog` scope.
-* Here's what it looks like for `SimpleEventLog`.
+How `EventLog` interacts with `WorkerHost` to trigger workflows is implementation specific. There's no point trying to shoehorn some kind of one size fits all interface into `EventLog`. Wiring everything together is the client's responsibility, so we don't lose anything by excluding it from the `EventLog` interface.
+
+We've [already decided]({% link _drafts/infinisheet-workers.md %}) that our `SimpleEventLog` reference implementation will use a `PostMessageWorkerHost` to explicitly send messages to a `Worker`. Here's what that looks like.
 
 ```ts
 export class SimpleEventLog<T extends LogEntry> implements EventLog<T> {
   constructor(workerHost?: PostMessageWorkerHost<PendingWorkflowMessage>)
 
+  private sendPendingWorkflowMessage(workflow: WorkflowId, sequenceId: SequenceId) {
+    if (this.workerHost) {
+      const message: PendingWorkflowMessage = 
+        { type: 'PendingWorkflowMessage', sequenceId, workflow }
+      this.workerHost.postMessage(message);
+    }
+  }
+
   workerHost?: PostMessageWorkerHost<PendingWorkflowMessage> | undefined;
 }
 ```
 
-* It can work with any `PostMessageWorkerHost` that supports `PendingWorkflowMessage`. Usually this will be an instance of `SimpleWorkerHost`.
+`SimpleEventLog` works with any `PostMessageWorkerHost` implementation that supports `PendingWorkflowMessage`. Usually this will be an instance of `SimpleWorkerHost`.
 
-# EventLog BlobId
+# Event Sourced Spreadsheet Data
 
-* Expects to identify snapshot and history blob using a `BlobId` which is a `string`
-* Gives flexibility to the next level up for how they want to use this
-* If I do File System style, what would my `BlobId` be?
-* If I'm only thinking about a single spreadsheet then for snapshots it would be name of blob in `snapshots` dir, for history it would be name of blob in `history` dir. Simple enough.
-* What about multiple spreadsheets? How does `EventLog` know which `snapshots` dir to look in? 
-* `EventLog` doesn't look anywhere. It doesn't care how `BlobId` is interpreted. Layer above decides how to tie `EventLog` and `BlobStore` together
-* Simplest way of managing multiple spreadsheets is to use upper layers of blob store as a user visible file system: folders containing spreadsheets. No new abstraction needed. Easy to implement folder hierarchy. 
-* Store per-spreadsheet metadata in a blob insider per-spreadsheet directory. Metadata can include `EventLog` id in whatever database is being used.
-* Don't need to identify which spreadsheet in `BlobId` because we start from spreadsheet to get `EventLog`. Layer above will already know which `BlobDir` to use with `BlobId` in event log. 
-
-# Event Sourced Spreadsheet Data integration
-
-* Two instances of ESSD, one host side, one worker side
-* First cut constructs with choice of WorkerHost, Worker or undefined (no local workflows)
+Our wiring diagram shows two instances of `EventSourcedSpreadsheetData`, one host side, one worker side. We need to be able to instantiate `EventSourcedSpreadsheetData` with either a `WorkerHost`, an `InfiniSheetWorker` or `undefined` (if there are no local workflows).
 
 ```ts
 export class EventSourcedSpreadsheetData implements SpreadsheetData<EventSourcedSnapshot> {
   constructor (eventLog: EventLog<SpreadsheetLogEntry>, blobStore: BlobStore<unknown>, 
-    workerOrHost?: WorkerHost<PendingWorkflowMessage> | InfinisheetWorker<PendingWorkflowMessage>)
+    workerOrHost?: WorkerHost<PendingWorkflowMessage> | InfiniSheetWorker<PendingWorkflowMessage>)
 }
 ```
 
-* Then need some way to distinguish between the two cases. The cleanest way is to add a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) method to `WorkerHost` and `InfinisheetWorker`.
+Which it turn means we need some way to distinguish between `WorkerHost` and `InfiniSheetWorker` at runtime. The cleanest way is to add a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) method to `WorkerHost` and `InfiniSheetWorker`.
 
 ```ts
   isWorker(): this is InfiniSheetWorker<MessageT>
@@ -64,21 +68,23 @@ export class EventSourcedSpreadsheetData implements SpreadsheetData<EventSourced
 }
 ```
 
-* Is this best approach?
-* Why do I have instance of `EventSourcedSpreadsheetData` in both host and worker? Because it contains all the code for loading the state of a spreadsheet from an `EventLog` and `BlobStore`. That's an implementation reason. Does it make conceptual sense. Why does the worker need an implementation of the `SpreadsheetData` interface? It doesn't, its working at a lower level.
-* Already have the problem that `EventSourcedSpreadsheetData` is getting too big. Can't keep throwing everything in there.
-* Alternative is to split the code three ways. Have an `EventSourcedSpreadsheetEngine` with all the low level code for manipulating the spreadsheet representation. Then on top of that build `EventSourcedSpreadsheetData` and `EventSourcedSpreadsheetWorkflow`. 
-* Now I can get rid of those ugly runtime `isWorker` checks. 
-* Alternative is to have `EventSourcedSpreadsheetBase` with basically all current code
-  * Then `EventSourcedSpreadsheetData` extends with constructor that takes `WorkerHost | undefined`
-  * Plus new `EventSourcedSpreadsheetWorkflow` extends with constructor that takes `Worker`
-* Static vs dynamic behavior differences
-* Splitting into three classes makes it easier to split code into separate files to make it more maintainable
+This already feels wrong. Why did I decide to use an instance of `EventSourcedSpreadsheetData` in both host and worker? Well, because it was the easiest approach. All the code for loading the state of a spreadsheet from an `EventLog` lives there. 
+
+That's an implementation reason. Does it make conceptual sense? Why does the worker need an implementation of the `SpreadsheetData` interface? 
+
+It doesn't. It works at a lower level. I'm mixing multiple concerns in the same class.
+
+I already have the problem that `EventSourcedSpreadsheetData` is getting too big to manage. I can't keep throwing everything into the same module. 
+
+If I had separate `EventSourcedSpreadsheetData` and `EventSourcedSpreadsheetWorkflow` classes, I could get rid of the ugly runtime checks. `EventSourcedSpreadsheetData` requires a `WorkerHost`, `EventSourcedSpreadsheetWorkflow` requires a `Worker`. I just need to factor out the common code.
 
 # Refactoring EventSourcedSpreadsheetData
 
-* Refactored so that `EventSourcedSpreadsheetData` and `EventSourcedSpreadsheetWorkflow` inherit from `EventSourcedSpreadsheetEngine`. Longer term it might make more sense for engine to be a member. For now, wanted to minimize the number of changes needed. Largely a case of deciding which declarations and methods go in which source file.
-* Only awkward bit is that `syncLogs` belongs in `EventSourcedSpreadsheetEngine` but calls `notifyListeners` which depends on implementation in `EventSourcedSpreadsheetData`. Simplest thing was to declare it as an abstract method in `EventSourcedSpreadsheetEngine`.
+I split the existing code into three separate components. All the common low level code lives in `EventSourcedSpreadsheetEngine`, which `EventSourcedSpreadsheetData` and `EventSourcedSpreadsheetWorkflow` inherit from. 
+
+I chose this structure to make the refactoring as simple as possible. It's mostly a case of deciding which declarations and methods go in which source file. It's easy to move things around if I get the initial split wrong. Once things settle down, it might make more sense for `EventSourcedSpreadsheetEngine` to be a member of `EventSourcedSpreadsheetData` and `EventSourcedSpreadsheetWorkflow` rather than a base class.
+
+The only awkward bit of the refactoring is that `syncLogs` belongs in `EventSourcedSpreadsheetEngine` but calls `notifyListeners` which depends on the  implementation in `EventSourcedSpreadsheetData`. The easy way out was to declare `notifyListeners` as an abstract method in `EventSourcedSpreadsheetEngine`.
 
 ```ts
 export abstract class EventSourcedSpreadsheetEngine {
@@ -106,11 +112,13 @@ export abstract class EventSourcedSpreadsheetEngine {
 }
 ```
 
-Then `EventSourcedSpreadsheetData` can concentrate on implementing the `SpreadsheetData` interface using the in-memory representation of the spreadsheet provided by `EventSourcedSpreadsheetEngine`.
+Now `EventSourcedSpreadsheetData` can concentrate on implementing the `SpreadsheetData` interface, using the in-memory representation of the spreadsheet provided by `EventSourcedSpreadsheetEngine`.
 
 ```ts
-export class EventSourcedSpreadsheetData  extends EventSourcedSpreadsheetEngine implements SpreadsheetData<EventSourcedSnapshot> {
-  constructor (eventLog: EventLog<SpreadsheetLogEntry>, blobStore: BlobStore<unknown>, workerHost?: WorkerHost<PendingWorkflowMessage>) {
+export class EventSourcedSpreadsheetData extends EventSourcedSpreadsheetEngine 
+                                         implements SpreadsheetData<EventSourcedSnapshot> {
+  constructor (eventLog: EventLog<SpreadsheetLogEntry>, blobStore: BlobStore<unknown>, 
+               workerHost?: WorkerHost<PendingWorkflowMessage>) {
     super(eventLog, blobStore);
 
     this.intervalId = undefined;
@@ -133,16 +141,18 @@ export class EventSourcedSpreadsheetData  extends EventSourcedSpreadsheetEngine 
 }
 ```
 
-That leaves `EventSourcedSpreadsheetWorkflow` as pretty much a blank sheet waiting to be filled in.
+That leaves `EventSourcedSpreadsheetWorkflow` as pretty much a blank slate waiting to be filled in.
 
 ```ts
 export class EventSourcedSpreadsheetWorkflow  extends EventSourcedSpreadsheetEngine {
-  constructor (eventLog: EventLog<SpreadsheetLogEntry>, blobStore: BlobStore<unknown>, worker: InfiniSheetWorker<PendingWorkflowMessage>) {
+  constructor (eventLog: EventLog<SpreadsheetLogEntry>, blobStore: BlobStore<unknown>, 
+               worker: InfiniSheetWorker<PendingWorkflowMessage>) {
     super(eventLog, blobStore);
 
     this.worker = worker;
 
-    worker.onReceiveMessage = (message: PendingWorkflowMessage) => { this.onReceiveMessage(message); }
+    worker.onReceiveMessage = 
+      (message: PendingWorkflowMessage) => { this.onReceiveMessage(message); }
   }
 
   protected notifyListeners(): void {}
@@ -154,10 +164,22 @@ export class EventSourcedSpreadsheetWorkflow  extends EventSourcedSpreadsheetEng
 }
 ```
 
-Clean separation between host and worker. No longer need the type predicate. Ironically, the presence of the type predicate is the only thing stopping TypeScript from throwing it's toys out of the pram. 
-* Error due to generic parameter not being used
-* Error when passing `SimpleWorkerHost` to `EventSourcedSpreadsheetData` constructor which expects a `WorkerHost`. They have "no properties in common".
-* Tried various ways to keep TypeScript happy. Most minimal was 
+There's a clean separation between host and worker. Which means there's no need for the type predicate in the worker interfaces.
+
+# TypeScript Interlude
+
+ Ironically, the presence of the type predicate was the only thing stopping TypeScript from throwing its toys out of the pram. Currently, there's nothing in the `WorkerHost` interface because I haven't figured out what will be needed yet. I know that I'll have some kind of worker host implementation without an explicit `postMessage`, but not how that will surface in the interface, if at all.
+
+ Once I removed the type predicate, I was left with an interface with literally nothing in it.
+
+```ts
+export interface WorkerHost<MessageT extends WorkerMessage> { 
+}
+```
+
+That makes TypeScript very unhappy. First, there's an error because we have an unused generic parameter. If you get round that, you get an error when passing `SimplWorkerHost` to the `EventSourcedSpreadsheetData` constructor which expects a `WorkerHost`. TypeScript complains that the two interfaces have "no properties in common". Which I guess is technically true because `WorkerHost` has no properties at all. 
+
+I tried hacking something in to keep TypeScript happy and ended up with this monstrosity. 
 
 ```ts
 export interface WorkerHost<MessageT extends WorkerMessage> { 
@@ -166,7 +188,7 @@ export interface WorkerHost<MessageT extends WorkerMessage> {
 }
 ```
 
-* Required property to be declared and initialized in `SimpleWorkerHost` implementation. In the end went back to using a type predicate as the least ugly workaround. Can always junk `WorkerHost` completely if it turns out there's nothing that `EventSourcedSpreadsheetData` needs from it.
+I also need to declare and initialize the junk property in `SimpleWorkerHost`. In the end, I went back to keeping a pointless type predicate as the least ugly workaround. I can remove it once I've found something useful to add. If it turns out there isn't anything, I can ditch `WorkerHost` completely.
 
 ```ts
 export interface WorkerHost<MessageT extends WorkerMessage> { 
@@ -176,22 +198,28 @@ export interface WorkerHost<MessageT extends WorkerMessage> {
 
 # Unit Test
 
+The `EventSourcedSpreadsheetData` unit test was the first opportunity to wire everything up. Each test starts with a one-liner that creates the instance to test. I extracted that into a separate creator function as there's significantly more work to do.
+
 ```ts
 function creator() {
-  const eventLog = new SimpleEventLog<SpreadsheetLogEntry>;
+  const blobStore = new SimpleBlobStore;
   const worker = new SimpleWorker<PendingWorkflowMessage>;
   const host = new SimpleWorkerHost(worker);
-  const blobStore = new SimpleBlobStore;
-  eventLog.workerHost = host;
-  
-  // Constructor subscribes to worker's onReceiveMessage which keeps it alive
+  const eventLog = new SimpleEventLog<SpreadsheetLogEntry>(workerHost);
+
   new EventSourcedSpreadsheetWorkflow(eventLog, blobStore, worker);
 
   return new EventSourcedSpreadsheetData(eventLog, blobStore, host);
 }
 ```
 
+There's now six components to connect, rather than just two. Straightforward enough apart from the `EventSourcedSpreadsheetWorkflow` instance. It looks like it's unused. However, the constructor connects it to the worker's `onReceiveMessage`. The worker is referenced by the host which in turn is referenced by the returned `EventSourcedSpreadsheetData`.
+
+I couldn't come up with a more obvious alternative without making the code more complex. Eventually, I expect it will be hidden behind some higher level utility function. 
+
 # Event Source Sync Story
+
+My other existing example is the Storybook "Event Source Sync" story. This simulates two separate spreadsheet clients connected to a common backend accessed over a network with significant latency. Gratifyingly, all the pieces fit together cleanly.
 
 ```ts
 // Backend
@@ -210,10 +238,10 @@ const delayEventLogB = new DelayEventLog(eventLog);
 const eventSourcedDataB = new EventSourcedSpreadsheetData(delayEventLogB, blobStore);
 ```
 
+On the backend we have a blob store and event log connected to a simple worker host feeding a workflow instance. Each client is represented by an `EventSourcedSpreadsheetData` that accesses the backend event log and blob store with simulated network delay. I don't have a delay wrapper for blob stores yet but it will be easy enough to add once I have a real snapshot implementation.
+
 # Next Time
 
-* Wired up all the components but nothing actually happening yet
-* Need to trigger snapshot workflow
-* Need to implement workflow to create snapshot
-* Need to update spreadsheet loading code to read snapshot as well as event log
-* Before all that, need a real in-memory representation of spreadsheet data to load into.
+I have all the components wired up but the new pieces aren't doing anything yet. `SimpleEventLog` needs to trigger snapshot workflows, and `EventSourcedSpreadsheetWorkflow` needs to process them. Once I have snapshots being created, `EventSourcedSpreadsheetEngine` will need to start reading them. 
+
+However, before I can do any of that, I need a real in-memory representation of spreadsheet data to load into. I can then serialize it into a blob as a first stab at creating a snapshot. We'll tackle that next time.
