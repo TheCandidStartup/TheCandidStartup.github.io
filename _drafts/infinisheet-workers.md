@@ -10,17 +10,17 @@ I'm building an [event sourced spreadsheet]({% link _topics/spreadsheets.md %}) 
 
 {% include candid-image.html src="/assets/images/infinisheet/infinisheet-types-architecture.svg" alt="InfiniSheet Architecture" %}
 
-The core logic for the spreadsheet lives in the `event-sourced-spreadsheet-data` module. This is common code that will be used by frontend web and desktop clients, together with backend NodeJS and AWS servers. Low level platform dependencies are abstracted away behind `EventLog`, `BlobStore` and `Workers` interfaces. The specific implementations required, together with any other infrastructure and platform dependencies, are put together by each client.
+The core logic for the spreadsheet lives in the `event-sourced-spreadsheet-data` module. This is common code that will be used by frontend web and desktop clients, together with backend NodeJS and AWS servers. Low level platform dependencies are abstracted away behind `EventLog`, `BlobStore` and `Workers` interfaces. Each client is responsible for choosing the specific implementations used, together with any other infrastructure and platform dependencies.
 
 {% include candid-image.html src="/assets/images/infinisheet/event-sourced-spreadsheet-data-tracer-bullet.svg" alt="Event Sourced Spreadsheet Data Tracer Bullet Development" %}
 
-I used [tracer bullet development]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}) to build an end to end prototype of the web client. I implemented just enough of `event-sourced-spreadsheet-data` to connect my `VirtualSpreadsheet` React component to spreadsheet data stored in an `EventLog` reference implementation. 
+I used [tracer bullet development]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}) to build an end to end prototype of a web client. I implemented just enough of `event-sourced-spreadsheet-data` to connect my `VirtualSpreadsheet` React component to spreadsheet data stored in an `EventLog` reference implementation. 
 
 I have a `BlobStore` [reference implementation]({% link _posts/2025-07-07-infinisheet-blob-store.md %}) ready to go. I just need to come up with an abstraction for background workers so that I can trigger a background job that reads an `EventLog` and creates a snapshot by writing blobs into a `BlobStore`.
 
 # Use Case
 
-Everything is orchestrated by the event log. A snapshot workflow is triggered by writing an event log with `'Snapshot'` in the `pending` field. The workflow creates the snapshot and then uses an atomic write to the log to clear the `pending` field and to store a reference to the root snapshot blob in the `snapshot` field.
+Everything is orchestrated by the event log. A snapshot workflow is triggered by writing an event log entry with `'Snapshot'` in the `pending` field. The workflow creates the snapshot and then uses an atomic write to the log to clear the `pending` field and to store a reference to the root snapshot blob in the `snapshot` field.
 
 {% include candid-image.html src="/assets/images/infinisheet/event-log.svg" alt="Event Log" %}
 
@@ -65,9 +65,9 @@ The Lambda function init should set up the connection to DynamoDB and S3 (for th
 # Common Abstraction
 
 Each client has three high level parts.
-1. A host that manages workers(s) with a way of sending messages to the workers it manages. Sending messages may be explicit via a `postMessage` style API or implicit (e.g. DynamoDB streams). 
+1. A host that manages worker(s) with a way of sending messages to the workers it manages. Sending messages may be explicit via a `postMessage` style API or implicit (e.g. DynamoDB streams). 
 2. A worker running in a separate context with its own instance of `EventSourcedSpreadsheetData`. It processes messages from the host, to run workflows that interact with a shared `EventLog` and `BlobStore`.
-3. Some infrastructure that connects host and workers. This might be inter-process communication on the same instance, or across the network in a cloud hosted distributed system. Setting this up is the client's responsibility. The `event-sourced-spreadsheet-data` module interacts with each end. It doesn't need to know anything about what happens in between.
+3. Some infrastructure that connects host and workers. This might be inter-process communication on the same instance, or across the network in a cloud hosted distributed system. Setting this up is the client's responsibility. The `event-sourced-spreadsheet-data` module interacts with worker and host. It doesn't need to know anything about what happens in between.
 
 {% include candid-image.html src="/assets/images/infinisheet/workers.svg" alt="InfiniSheet Workers" %}
 
@@ -97,7 +97,7 @@ export interface InfiniSheetWorker<MessageT extends WorkerMessage> {
 }
 ```
 
-It's a pretty sparse starting point. We have a discriminated union type for messages sent to the worker. There's a currently empty base `WorkerHost` for hosts with implicit messages and `PostMessageWorkerHost` for hosts with an explicit `postMessage` method.
+It's a pretty sparse starting point. We have a discriminated union type for messages sent to the worker. There's a currently empty `WorkerHost` interface for hosts with implicit messages and `PostMessageWorkerHost` for hosts with an explicit `postMessage` method.
 
 On the worker side, `InfinisheetWorker` has an `onReceiveMessage` property for the message handler function that will be invoked when a message is received.
 
@@ -105,7 +105,7 @@ The interfaces are generic on the type of messages supported. The message for a 
 
 ```ts
 export interface PendingWorkflowMessage {
-  type: "PendingWorkflowMessage",
+  type: "PendingWorkflowMessage";
   workflow: WorkflowId;
   sequenceId: SequenceId;
 }
