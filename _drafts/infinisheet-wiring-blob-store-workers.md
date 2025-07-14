@@ -4,7 +4,7 @@ tags: infinisheet
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 
-Now that I have interfaces and reference implementations for a [Blob Store]({% link _posts/2025-07-07-infinisheet-blob-store.md %}) and [Workers]({% link _drafts/infinisheet-workers.md %}), we can try to wire them up to our [tracer bullet prototype]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}). 
+Now that I have interfaces and reference implementations for a [Blob Store]({% link _posts/2025-07-07-infinisheet-blob-store.md %}) and [Workers]({% link _posts/2025-07-14-infinisheet-workers.md %}), we can try to wire them up to our [tracer bullet prototype]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}). 
 
 {% include candid-image.html src="/assets/images/infinisheet/event-sourced-spreadsheet-data-tracer-bullet.svg" alt="Event Sourced Spreadsheet Data Tracer Bullet Development" %}
 
@@ -18,7 +18,7 @@ We have a wiring diagram from last time. Let's see how it goes.
 
 How `EventLog` interacts with `WorkerHost` to trigger workflows is implementation specific. There's no point trying to shoehorn some kind of one size fits all interface into `EventLog`. Wiring everything together is the client's responsibility, so we don't lose anything by excluding it from the `EventLog` interface.
 
-We've [already decided]({% link _drafts/infinisheet-workers.md %}) that our `SimpleEventLog` reference implementation will use a `PostMessageWorkerHost` to explicitly send messages to a `Worker`. Here's what that looks like.
+We've [already decided]({% link _posts/2025-07-14-infinisheet-workers.md %}) that our `SimpleEventLog` reference implementation will use a `PostMessageWorkerHost` to explicitly send messages to a `Worker`. Here's what that looks like.
 
 ```ts
 export class SimpleEventLog<T extends LogEntry> implements EventLog<T> {

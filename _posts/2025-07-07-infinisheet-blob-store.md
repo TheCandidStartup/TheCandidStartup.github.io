@@ -314,4 +314,4 @@ After that, things went much quicker and I was easily able to get to 100% covera
 
 # Next Time
 
-I have some confidence in the interface from building out and testing a reference implementation. However, before I can try it with my `EventSourcedSpreadsheetData` tracer bullet, I need to figure out how to run snapshot creation using a background worker.
+I have some confidence in the interface from building out and testing a reference implementation. However, before I can try it with my `EventSourcedSpreadsheetData` tracer bullet, I need to figure out how to run snapshot creation using a [background worker]({% link _posts/2025-07-14-infinisheet-workers.md %}).
