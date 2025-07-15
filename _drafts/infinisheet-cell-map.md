@@ -1,27 +1,29 @@
 ---
 title: Infinisheet Cell Map
 tags: infinisheet
-thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
+thumbnail: /assets/images/infinisheet/cell-map-thumbnail.png
 ---
 
-I have all the bits of infrastructure needed to start saving snapshots of my event sourced spreadsheet. The source of truth for the spreadsheet content is in an `EventLog`. I've defined a `BlobStore` interface to serialize snapshots as blobs of data together with a `Workers` interface to create snapshots as a background tax. 
+I have all the bits of infrastructure needed to start saving [snapshots]({% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}) of my event sourced spreadsheet. The source of truth for the spreadsheet content is in an [event log]({% link _posts/2025-05-05-infinisheet-event-log.md %}). I've defined a [Blob Store]({% link _posts/2025-07-07-infinisheet-blob-store.md %}) interface to serialize snapshots as blobs of data together with a [Workers]({% link _posts/2025-07-14-infinisheet-workers.md %}) interface to create snapshots as a background task. 
 
-There's one crucial bit missing. I don't have a good in-memory representation of a spreadsheet that I can load and save as a snapshot. My tracer bullet development prototype has an event log as the one and only representation.
+There's one crucial bit missing. I don't have a good in-memory representation of a spreadsheet that I can load and save as a snapshot. My [tracer bullet development]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}) prototype has an event log as the one and only representation.
 
 # Requirements
 
-Reading the value of a cell from an event log is an *O(n)* process. Relying solely on an event log only works if you don't have many entries in the log, which in turn means it only works for small spreadsheets. That's fine as a starting point when you're just trying to connect all the pieces and don't have anyway of producing snapshots. Now that we're ready to move on, we need something better. 
+Reading the value of a cell from an event log is an *O(n)* process. Relying solely on an event log only works if you don't have many entries in the log, which in turn means it only works for small spreadsheets. That's fine as a starting point when you're just trying to connect all the pieces and don't have any way of producing snapshots. Now that we're ready to move on, we need something better. 
 
 I have three main requirements for the replacement data structure.
 1. It should still support event log semantics. We need to be able to read the value of a cell corresponding to a specific point in the event log.
-2. Reading the value of a cell should be *O(nlogn)* in the worst case. 
+2. Reading the value of a cell should be *O(logn)* in the worst case. 
 3. As spreadsheet sizes increase, we'll need to write snapshots as multiple blobs. Each blob represents a 2D tile of the overall spreadsheet. The data structure needs to support loading and saving subsets of the spreadsheet corresponding to individual tiles. 
 
 {% include candid-image.html src="/assets/images/spreadsheet-snapshots-2023/fixed-width-stripe-tiles.svg" alt="Fixed width stripe tiles" %}
 
 # Spreadsheet Cell Map
 
-The data structure I came up with is pretty simple. It's basically a `Map` from cell reference to list of values for that cell at different points in the event log. We don't keep the entire event log in memory. We work with a `LogSegment` that represents a snapshot together with any log entries added since the snapshot was created.
+The data structure I came up with is pretty simple. It's basically a `Map` from cell reference to list of values for that cell at different points in the event log. 
+
+We don't keep the entire event log in memory. We work with a `LogSegment` that represents a snapshot together with any log entries added since the snapshot was created.
 
 {% include candid-image.html src="/assets/images/infinisheet/cell-map.svg" alt="Cell Map Data Structure" %}
 
@@ -85,7 +87,7 @@ export class SpreadsheetCellMap {
 }
 ```
 
-I couldn't resist a little bit of premature optimization. As most occupied cells will have a single entry, you can use a `CellMapEntry` directly as a value. Arrays are only used if there are two or more entries.
+I couldn't resist a little bit of premature optimization. As most occupied cells will have a single value, you can use a `CellMapEntry` directly as the value. Arrays are only used if there are two or more entries.
 
 The downside of using a `Map` is that we can't support spatial queries. You can't iterate over the cell map by row or by column. You can't efficiently query for ranges of cells. I could have gone down a fascinating rabbit hole of spatial data structures but that really would be premature optimization. We'll wait and see if we need it. My current theory is that using a separate cell map for each tile of data we're working with may be enough. 
 
@@ -151,7 +153,7 @@ findEntry(row: number, column: number, snapshotIndex: number): CellMapEntry|unde
 
 # Serializing Snapshots
 
-A production implementation needs to think carefully about serialization formats. The format needs to support versioning, backwards compatibility, and the ability to evolve over time. The serialization process should try to minimize the size of data stored while balancing the amount of time needed. 
+A production implementation needs to think carefully about serialization formats. The format needs to support versioning, backwards compatibility, and the ability to evolve over time. The serialization process should try to minimize the size of data stored while balancing the amount of compute needed.
 
 A tracer bullet doesn't need any of that. Implementations should be simple and easy to debug. The format we use should be easy to inspect. We're using a JavaScript stack, so JSON is the obvious choice. 
 
@@ -159,7 +161,15 @@ Unfortunately, using JSON isn't as straightforward as I'd like. For a start, a `
 
 The `stringify` function has an optional argument for a `replacer` function that can replace what would normally be serialized with whatever you want. The replacer function is called on each object, array and value as `stringify` recurses over the structure. 
 
-The [Simplest](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#using_reviver_when_paired_with_the_replacer_of_json.stringify) way of serializing a `Map` is using an array of arrays. You replace the `Map` with an array of `[key,value]` pairs.
+The [simplest](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#using_reviver_when_paired_with_the_replacer_of_json.stringify) way of serializing a `Map` is using an array of arrays. It's a one-liner to replace the `Map` with an array of `[key,value]` pairs.
+
+```ts
+  const json = JSON.stringify(this.map, (key,value) => {
+    return (value instanceof Map) ? Array.from(value.entries() : value;
+  })
+```
+
+Unfortunately, this approach gets complex fast. The replacer function gets called on the map you pass in, then each element of the array you returned in the top level replacement, then on each element of the `[key,value]` pairs, then on each property in the `CellMapEntry` value. We want to leave the arrays and `key` unchanged, then filter the map entries.
 
 ```ts
   const json = JSON.stringify(this.map, (key,value) => {
@@ -178,18 +188,16 @@ The [Simplest](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference
   })
 ```
 
-Unfortunately, this approach gets complex fast. The replacer function gets called on the map you pass in, then each element of the array you returned in the top level replacement, then on each element of the `[key,value]` pairs, then on each property in the `CellMapEntry` value. We want to leave the arrays and `key` unchanged, then filter the map entries.
+You have no context of where you are in the traversal each time `replacer` is called, so you have to check every possibility every time. It's horrible, error prone code. I got this far, then gave up when I realized that filtering out all entries in a cell produced output like `[["A1",null],["B2",null]]`.
 
-You have no context of where you are in the traversal each time `replacer` is called, so you have to check every possibility every time. It's horrible, error prone code. Which doesn't work. I gave up after filtering out all entries in a cell gave results like `[["A1",null],["B2",null]]`.
+I could ignore the `null` entries when I read back in, but I'm left thinking there must be a simpler, more maintainable way of doing this. This approach isn't even that efficient. It starts by copying all the map entries into an array of arrays structure, then iterates over it.
 
-I could ignore the `null` entries when I read back in, but I'm left thinking there must be a simpler, more maintainable way of doing this. This approach isn't even that efficient. It starts by copying all the map entries into an array of arrays structure, then iterating over it.
-
-It turned out to be much more understandable and maintainable to copy and filter the entries myself and then stringify the result.
+It turned out to be simpler and more maintainable to copy and filter the entries myself, then stringify the result.
 
 ```ts
   const output: { [index: string]: CellData } = {};
   for (const [key,value] of this.map.entries()) {
-    const entry = this.bestEntry(value,snapshotIndex);
+    const entry = bestEntry(value,snapshotIndex);
     if (entry) {
       const { logIndex: _logIndex, ...rest } = entry;
       output[key] = rest;
@@ -202,16 +210,23 @@ As I'm iterating over all the entries anyway, it's easy to convert to a more nat
 
 # Unit Tests
 
-* Especially careful to test round tripping of snapshots, including every possible type of cell value
-* Coverage driven testing to make sure we test all three paths for cell map entries
+`SpreadsheetCellMap` is a clean unit of self contained code, so naturally demands a unit test. I was especially careful to test round tripping of snapshots, including every possible type of cell value. I used my usual coverage driven testing approach to make sure that we test all three code paths for cell map entries, getting to 100% code coverage.
 
 # Integration
 
-* Into `EventSourcedSpreadsheetData`
-* Add to `LogSegment`
-* Update whenever `LogSegment.entries` is updated
-* Switch queries to use map rather than entries directly
+I added `SpreadsheetCellMap` to my `LogSegment` representation in the `EventSourcedSpreadsheetEngine` module. Whenever an entry is added to the `entries` array, it also gets added to the cell map.
+
+```ts
+export interface LogSegment {
+  startSequenceId: SequenceId;
+  entries: SpreadsheetLogEntry[];
+  cellMap: SpreadsheetCellMap;
+  snapshot?: BlobId | undefined;
+}
+```
+
+In `EventSourcedSpreadsheetData` I switched all queries to use `cellMap` rather than `entries`. I *probably* don't need `entries` any more. I'll keep it for now, just in case. 
 
 # Next Time
 
-* Finally ready to hook everything up and start creating snapshots
+I think I'm finally, finally ready to hook everything up and start creating snapshots. We'll see how that works out next time.
