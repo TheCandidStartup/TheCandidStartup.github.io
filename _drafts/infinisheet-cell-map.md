@@ -29,7 +29,7 @@ We don't keep the entire event log in memory. We work with a `LogSegment` that r
 
 Event log entries are identified by sequence id, a unique integer value over the lifetime of the entire event log. We identify log entries within a log segment by index, starting at zero for the first entry after a snapshot. Each cell map entry stores the cell value and the corresponding `logIndex`. Values loaded from the snapshot have no `logIndex` property. 
 
-Most cells are empty and most occupied cells contain a single value. Therefore, most queries are *O(1)*. What happens when there are multiple values for a cell? Maybe the user repeatedly changed the same cell over and over.
+Most cells are empty and most occupied cells contain a single value. Therefore, most queries are *O(1)*. What happens when there are multiple values for a cell? For example, if the user repeatedly changes the same cell over and over.
 
 The entries for each cell are naturally ordered by log index, which has some nice properties. Most of the time we work with values corresponding to positions near the end of the event log. If we iterate over the entries in the cell from last to first, we're likely to find what we're looking for very quickly. If we don't, we can switch to a binary chop search strategy. Most queries are still *O(1)*, with a worst case of *O(logn)*. 
 
@@ -79,7 +79,7 @@ The existing code uses [exclusive ranges](https://metala.org/posts/api-design-ex
 
 # Implementation
 
-The current implementation is simple. It's just a wrapper around a `Map`. I need to be able to cope with sparse data and a `Map` is perfect for that. For simplicity, and ease of debugging, I'm using spreadsheet cell references (e.g. "A1") as a key. The value is an array of `CellMapEntry`. 
+The current implementation is simple. It's just a wrapper around a `Map`. I need to be able to cope with sparse data and a `Map` is perfect for that. For simplicity, and ease of debugging, I'm using spreadsheet cell references (e.g. "A1") as keys. The value is an array of `CellMapEntry`. 
 
 ```ts
 export class SpreadsheetCellMap {
@@ -169,7 +169,7 @@ The [simplest](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference
   })
 ```
 
-Unfortunately, this approach gets complex fast. The replacer function gets called on the map you pass in, then each element of the array you returned in the top level replacement, then on each element of the `[key,value]` pairs, then on each property in the `CellMapEntry` value. We want to leave the arrays and `key` unchanged, then filter the map entries.
+Unfortunately, this approach gets complex fast. The replacer function gets called on the map you pass in, then each element of the array you returned in the top level replacement, then on each element of the `[key,value]` pairs, then on each property in the `CellMapEntry` values. We want to leave the arrays and `key` unchanged, then filter the map entries.
 
 ```ts
   const json = JSON.stringify(this.map, (key,value) => {
@@ -210,11 +210,11 @@ As I'm iterating over all the entries anyway, it's easy to convert to a more nat
 
 # Unit Tests
 
-`SpreadsheetCellMap` is a clean unit of self contained code, so naturally demands a unit test. I was especially careful to test round tripping of snapshots, including every possible type of cell value. I used my usual coverage driven testing approach to make sure that we test all three code paths for cell map entries, getting to 100% code coverage.
+`SpreadsheetCellMap` is a clean unit of self contained code, so naturally demands a unit test. I was especially careful to test round tripping of snapshots, including every possible type of cell value. I used my usual coverage driven testing approach to make sure that we test all three code paths for cell map entries.
 
 # Integration
 
-I added `SpreadsheetCellMap` to my `LogSegment` representation in the `EventSourcedSpreadsheetEngine` module. Whenever an entry is added to the `entries` array, it also gets added to the cell map.
+I added `SpreadsheetCellMap` to my `LogSegment` representation in the `EventSourcedSpreadsheetEngine` module. 
 
 ```ts
 export interface LogSegment {
@@ -225,7 +225,7 @@ export interface LogSegment {
 }
 ```
 
-In `EventSourcedSpreadsheetData` I switched all queries to use `cellMap` rather than `entries`. I *probably* don't need `entries` any more. I'll keep it for now, just in case. 
+Whenever an entry is added to the `entries` array, it also gets added to the cell map. In `EventSourcedSpreadsheetData` I switched all queries to use `cellMap` rather than `entries`. 
 
 # Next Time
 

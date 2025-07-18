@@ -82,7 +82,7 @@ If I had separate `EventSourcedSpreadsheetData` and `EventSourcedSpreadsheetWork
 
 I split the existing code into three separate components. All the common low level code lives in `EventSourcedSpreadsheetEngine`, which `EventSourcedSpreadsheetData` and `EventSourcedSpreadsheetWorkflow` inherit from. 
 
-I chose this structure to make the refactoring as simple as possible. It's mostly a case of deciding which declarations and methods go in which source file. It's easy to move things around if I get the initial split wrong. Once things settle down, it might make more sense for `EventSourcedSpreadsheetEngine` to be a member of `EventSourcedSpreadsheetData` and `EventSourcedSpreadsheetWorkflow` rather than a base class.
+I chose this structure to make the refactoring as simple as possible. It's mostly a case of deciding which declarations and methods go in which source file. It's easy to move things around if I get the initial split wrong. Once things settle down, it might make more sense for `EventSourcedSpreadsheetEngine` to be a member of `EventSourcedSpreadsheetData` and `EventSourcedSpreadsheetWorkflow`, rather than a base class.
 
 The only awkward bit of the refactoring is that `syncLogs` belongs in `EventSourcedSpreadsheetEngine` but calls `notifyListeners` which depends on the  implementation in `EventSourcedSpreadsheetData`. The easy way out was to declare `notifyListeners` as an abstract method in `EventSourcedSpreadsheetEngine`.
 
