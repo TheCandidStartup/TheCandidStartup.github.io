@@ -8,7 +8,9 @@ Now that I have interfaces and reference implementations for a [Blob Store]({% l
 
 {% include candid-image.html src="/assets/images/infinisheet/event-sourced-spreadsheet-data-tracer-bullet.svg" alt="Event Sourced Spreadsheet Data Tracer Bullet Development" %}
 
-The aim here is to see whether the pieces fit together properly. Do the interfaces need to be tweaked? Does the existing structure extend gracefully? If it's not right, we should fix it now, while change is still cheap.
+The aim here is to see whether the pieces fit together properly. Do the interfaces need to be tweaked? Does the existing structure extend gracefully? 
+
+If it's not right, we should fix it now, while change is still cheap.
 
 {% include candid-image.html src="/assets/images/infinisheet/workers.svg" alt="InfiniSheet Workers" %}
 
@@ -49,7 +51,7 @@ export class EventSourcedSpreadsheetData implements SpreadsheetData<EventSourced
 }
 ```
 
-Which it turn means we need some way to distinguish between `WorkerHost` and `InfiniSheetWorker` at runtime. The cleanest way is to add a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) method to `WorkerHost` and `InfiniSheetWorker`.
+Which in turn means we need some way to distinguish between `WorkerHost` and `InfiniSheetWorker` at runtime. The cleanest way is to add a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) method to `WorkerHost` and `InfiniSheetWorker`.
 
 ```ts
   isWorker(): this is InfiniSheetWorker<MessageT>
@@ -67,6 +69,8 @@ export class EventSourcedSpreadsheetData implements SpreadsheetData<EventSourced
   }
 }
 ```
+
+# Misgivings
 
 This already feels wrong. Why did I decide to use an instance of `EventSourcedSpreadsheetData` in both host and worker? Well, because it was the easiest approach. All the code for loading the state of a spreadsheet from an `EventLog` lives there. 
 
@@ -244,4 +248,6 @@ On the backend we have a blob store and event log connected to a simple worker h
 
 I have all the components wired up but the new pieces aren't doing anything yet. `SimpleEventLog` needs to trigger snapshot workflows, and `EventSourcedSpreadsheetWorkflow` needs to process them. Once I have snapshots being created, `EventSourcedSpreadsheetEngine` will need to start reading them. 
 
-However, before I can do any of that, I need a real in-memory representation of spreadsheet data to load into. I can then serialize it into a blob as a first stab at creating a snapshot. We'll tackle that next time.
+However, before I can do any of that, I need a real in-memory representation of spreadsheet data to load into. I can then serialize it into a blob as a first stab at creating a snapshot. 
+
+We'll tackle that next time.
