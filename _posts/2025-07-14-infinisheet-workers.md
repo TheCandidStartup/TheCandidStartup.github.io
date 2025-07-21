@@ -144,5 +144,5 @@ The worker implementation is even simpler. A class with an `onReceiveMessage` pr
 
 # Next Time
 
-That involved a lot of thinking for little concrete outcome. Next time, we'll try wiring `SimpleBlobStore` and `SimpleWorker` into our tracer bullet `EventSourcedSpreadsheetData`. That should shake some more requirements loose. 
+That involved a lot of thinking for little concrete outcome. [Next time]({% link _posts/2025-07-21-infinisheet-wiring-blob-store-workers.md %}), we'll try wiring `SimpleBlobStore` and `SimpleWorker` into our tracer bullet `EventSourcedSpreadsheetData`. That should shake some more requirements loose. 
 
