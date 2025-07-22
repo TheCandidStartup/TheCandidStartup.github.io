@@ -4,7 +4,11 @@ tags: infinisheet
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 
-Is it really, finally, time to create snapshots as my event sourced spreadsheet's event log grows? It seemed like I was never going to get here as I worked through [creating a blob store interface and reference implementation]({% link _posts/2025-07-07-infinisheet-blob-store.md %}), [creating a workers abstraction and interfaces]({% link _posts/2025-07-14-infinisheet-workers.md %}), [refactoring the spreadsheet internals so I could wire everything up cleanly]({% link _posts/2025-07-21-infinisheet-wiring-blob-store-workers.md %}) and [creating a cell map data structure with code for serializing snapshots]({% link _drafts/infinisheet-cell-map.md %}).
+Is it really, finally, time to create snapshots as my event sourced spreadsheet's event log grows? It seemed like I was never going to get here. There's a laundry list of pre-work that I needed to complete first.
+* [Creating a blob store interface and reference implementation]({% link _posts/2025-07-07-infinisheet-blob-store.md %})
+* [Creating a workers abstraction and interfaces]({% link _posts/2025-07-14-infinisheet-workers.md %})
+* [Refactoring the spreadsheet internals so I could wire everything up cleanly]({% link _posts/2025-07-21-infinisheet-wiring-blob-store-workers.md %})
+* [Creating a cell map data structure with code for serializing snapshots]({% link _drafts/infinisheet-cell-map.md %}).
 
 Let's go.
 
@@ -215,6 +219,7 @@ export interface EventLog<T extends LogEntry> {
   ...
   addEntry(entry: T, sequenceId: SequenceId, 
     snapshotId?: SequenceId): ResultAsync<AddEntryValue,AddEntryError>;
+
   query(start: SequenceId | 'snapshot' | 'start', end: SequenceId | 'end', 
     snapshotId?: SequenceId): ResultAsync<QueryValue<T>,QueryError>;
 }
@@ -222,3 +227,18 @@ export interface EventLog<T extends LogEntry> {
 
 I added an optional `snapshotId` argument to `query` and `addEntry`. The idea is that clients can specify the snapshot that they depend on. An updated `snapshotId` is returned if there's a more recent snapshot that the client should switch to.
 
+# Creating New Log Segments
+
+## Add Entry
+
+* If call succeeds we must have written new head of log, which means any new snapshot must have completed in historic log entries we already have.
+* Create new segment by forking off current log segment after snapshot
+
+## Sync Logs
+
+* Could be anywhere in the sync process
+  * Initial load, `query('snapshot','end')`, already covered
+  * Subsequent load, `query(curr, 'end')`. 
+    * Snapshot id may be in log entry we already have. Same forking process as addEntry.
+    * Snapshot id may be in entry returned by query. Create new segment from that entry, like initial load.
+    * Snapshot id may be in entry beyond what was returned by query. Can continue sync so that we get everything and eventually pick up the snapshot, or ignore the entries in between and continue with `query('snapshot','end')`.
