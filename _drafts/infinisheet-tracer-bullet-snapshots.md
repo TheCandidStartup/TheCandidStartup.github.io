@@ -1,5 +1,5 @@
 ---
-title: Infinisheet Tracer Bullet Snapshots
+title: Tracer Bullet Snapshots
 tags: infinisheet
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
@@ -27,9 +27,9 @@ I added a return value. It's up to specific worker implementations to decide wha
 
 # Loading data into the Engine
 
-The first step in the workflow is loading the data needed to create a snapshot. The `syncLogs` method in `EventSourcedSpreadsheetEngine` handles this. The workflow has to create a snapshot for a specific version. However, `syncLogs` syncs to the latest version. I had to refactor to take an optional sequence id to sync to. 
+The first step in the workflow is loading the data needed to create a snapshot. The `syncLogs` method in `EventSourcedSpreadsheetEngine` handles this. The workflow has to create a snapshot for a specific version. However, `syncLogs` syncs to the latest version. I refactored it to take an optional sequence id to sync to. 
 
-The next problem is that `syncLogs` doesn't return a promise that the workflow can wait on. It was originally written for `EventSourcedSpreadsheetData` that doesn't have an async interface.
+The next problem is that `syncLogs` doesn't return a promise that the workflow can wait on. It was originally written for `EventSourcedSpreadsheetData` which doesn't have an async interface.
 
 ```ts
 export abstract class EventSourcedSpreadsheetEngine {
@@ -115,9 +115,6 @@ private addEntry(entry: SpreadsheetLogEntry): ResultAsync<void,AddEntryError> {
     const index = this.content.logSegment.entries.length % this.snapshotInterval;
     if (this.snapshotInterval === index + 1)
       entry.pending = 'snapshot';
-
-    // TODO: Check whether previous snapshot has completed. If not need to wait before
-    // doing another. May need to retry previous snapshot.
   }
 
   return this.eventLog.addEntry(entry, this.content.endSequenceId);
@@ -130,7 +127,7 @@ Now I need some way of loading them.
 
 # Loading Snapshots
 
-I factored out the code in `syncLogsAsync` that processes the value returned from querying the event log to create the `updateContent` helper function. It takes the current spreadsheet content and returns a new updated content object. To start, I added new code that handles the case where the returned entries start with a snapshot. This is what you'd expect during the initial load into the engine. 
+I factored out the code in `syncLogsAsync` that updates in-memory content to create the `updateContent` helper function. It takes the current spreadsheet content and returns a new updated content object. To start with, I added code that handles the case where the returned entries start with a snapshot. This is what you'd expect to see when you first load data into the engine. 
 
 Here's the overall structure.
 
@@ -186,26 +183,42 @@ We start by creating a new log segment. It gets initialized with the log entries
 
 I'd forgotten that the content object also contains row and column counts. I added a `calcExtents` method to `CellMap` and used that to determine the counts. The alternative would be to serialize them into the snapshot. Let's wait and see if there's any reason to change.
 
-I finished up by adding unit tests to verify that initializing a new `EventSourcedSpreadsheetData` from an event log with structure ends up with the same state as the original.
+I finished up by adding unit tests to verify that initializing a new `EventSourcedSpreadsheetData` from an event log with a snapshot ends up with the same state as the original.
 
 # Snapshot Completion
 
-* How to know when a snapshot workflow has completed?
-* Will pick up new snapshot implicitly when client starts up
-* Long running client could end up with a huge log segment unless there's some kind of explicit notification
-* Considered adding a `workflowCompletion` event to `EventLog`
-* For workflows running on the same instance could have worker post a message back to the host
-* For distributed implementation would need something like a web socket connection so server could notify client
-* Opens up reliability problem. What if snapshot completes and event log updated but worker fails before notification sent or notification gets lost?
-* Need a fallback mechanism which polls for update to event log. If web socket not possible, becomes primary mechanism.
-* What does engine do when it gets completion event? It could start a new log segment immediately, copy over events that happened since snapshot and create a new content snapshot. However, content hasn't actually changed. Just internal stuff. Client pointlessly re-renders. Not end of the world but annoying.
-* Insight: Doesn't matter that there's a new snapshot until there are more entries to add to the event log. 
-* Have a pending flag and create the pending new segment whenever you're about to add entries to the event log. 
-* Insight: Client doesn't need to know there's a new snapshot until there are more entries to add. There are only more entries to add as a result of calling `query` or `addEntry` on the event log.
-* If we extend those methods so they can also return the most recent snapshot, then we don't need a separate polling call, and we don't need a separate workflow completion event.
-* Add optional argument of sequence id of snapshot that the client is currently using. If there's a most recent snapshot, it gets added to response.
-* Works nicely with multiple clients too
+We don't yet handle the case where a snapshot completes when a client is already up and running. The snapshot could have completed because this client triggered it, or another client did. How can clients find out that a snapshot workflow has completed? They'll pick up the new snapshot when they start up, but a long running client could end up with a huge log segment unless there's some kind of explicit notification.
 
+I considered adding a `workflowCompletion` event to the `EventLog` interface. Workflows running on the same instance as the host could have the worker post a message back to the host. Distributed implementations would need something like a web socket connection so that the server can notify clients.
 
+That adds a lot of complexity and opens up a reliability problem. What if the snapshot completes, the event log is updated but the worker fails before the notification is sent? What if the notification gets lost? You need a fallback mechanism which polls for updates to the event log. If explicit notification is too unreliable or difficult to implement, you might use polling as the primary mechanism.
 
+What does the engine do when it gets a completion event? The obvious thing would be to start a new log segment immediately, copy over events that happened since the snapshot and create a new content object. However, the content hasn't actually changed. All that's changed is details of our internal book keeping. UI clients will pointlessly re-render. Asynchronous operations like `syncLogs` and `addEntry` will abandon their results because it looks like some other operation has changed internal state behind their back.
+
+Then I realized. It doesn't matter that there's been a new snapshot until there are more entries to add to the event log. I could have a pending flag and delay creating the pending new segment until the next time `syncLogs` or `addEntry` is called. That avoids both problems. Content is being updated anyway. The only change is to also create a new log segment.
+
+Then I had another insight. The client doesn't need to know there's a new snapshot until there are more entries to add. There are only more entries to add as a result of calling `query` or `addEntry` on the event log. If we extend those methods so they can also return the most recent snapshot, then we don't need a separate polling call, and we don't need a separate workflow completion event.
+
+This is where the tracer bullet and reference implementation approach really shines. I can change the `EventLog` interface easily. Updating a reference implementation is trivial. There's no database schemas to worry about. No deployed infrastructure. Minimal sunk cost.
+
+```ts
+export interface QueryValue<T extends LogEntry> {
+  ...
+  snapshotId?: SequenceId | undefined;
+}
+
+export interface AddEntryValue {
+  snapshotId?: SequenceId | undefined;
+}
+
+export interface EventLog<T extends LogEntry> {
+  ...
+  addEntry(entry: T, sequenceId: SequenceId, 
+    snapshotId?: SequenceId): ResultAsync<AddEntryValue,AddEntryError>;
+  query(start: SequenceId | 'snapshot' | 'start', end: SequenceId | 'end', 
+    snapshotId?: SequenceId): ResultAsync<QueryValue<T>,QueryError>;
+}
+```
+
+I added an optional `snapshotId` argument to `query` and `addEntry`. The idea is that clients can specify the snapshot that they depend on. An updated `snapshotId` is returned if there's a more recent snapshot that the client should switch to.
 
