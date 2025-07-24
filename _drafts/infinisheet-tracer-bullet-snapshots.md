@@ -206,13 +206,18 @@ Then I had another insight. The client doesn't need to know there's a new snapsh
 This is where the tracer bullet and reference implementation approach really shines. I can change the `EventLog` interface easily. Updating a reference implementation is trivial. There's no database schemas to worry about. No deployed infrastructure. Minimal sunk cost.
 
 ```ts
+export interface SnapshotValue {
+  sequenceId: SequenceId;
+  blobId: BlobId;
+}
+
 export interface QueryValue<T extends LogEntry> {
   ...
-  snapshotId?: SequenceId | undefined;
+  lastSnapshot?: SnapshotValue | undefined;
 }
 
 export interface AddEntryValue {
-  snapshotId?: SequenceId | undefined;
+  lastSnapshot?: SnapshotValue | undefined;
 }
 
 export interface EventLog<T extends LogEntry> {
@@ -225,7 +230,7 @@ export interface EventLog<T extends LogEntry> {
 }
 ```
 
-I added an optional `snapshotId` argument to `query` and `addEntry`. The idea is that clients can specify the snapshot that they depend on. An updated `snapshotId` is returned if there's a more recent snapshot that the client should switch to.
+I added an optional `snapshotId` argument to `query` and `addEntry`. The idea is that clients can specify the snapshot that they depend on. The response includes a `SnapshotValue` if there's a more recent snapshot that the client should switch to.
 
 # Creating New Log Segments
 
@@ -233,6 +238,35 @@ I added an optional `snapshotId` argument to `query` and `addEntry`. The idea is
 
 * If call succeeds we must have written new head of log, which means any new snapshot must have completed in historic log entries we already have.
 * Create new segment by forking off current log segment after snapshot
+* Careful how you split things up. My first attempt put all the generic event log manipulation in my `EventSourcedSpreadsheetData.addEntry` helper method. Like a good functional async citizen, I added a `.map` clause to the end of the call to `EventLog.addEntry`. All the `SetCellValueAndFormat` specific logic then gets chained to the end of that in `SetCellValueAndFormat`.
+* I've split the replacement of one set of immutable content with another across two async tasks. Luckily, in two of my unit tests a `syncLogs` call completed between the two, with hilarious consequences.
+* Moral: Make sure that change from one valid state to another happens within the same async task. I extracted the common forking logic into a non-async `forkSegment` helper function instead.
+
+```ts
+  const entry: SetCellValueAndFormatLogEntry = 
+    { type: 'SetCellValueAndFormat', row, column, value, format };
+  return this.addEntry(curr, entry).map((addEntryValue) => {
+    if (this.content === curr) {
+      // Nothing else has updated local copy (no async load has snuck in), 
+      // so safe to do it myself avoiding round trip with event log
+      const logSegment = addEntryValue.lastSnapshot 
+        ? forkSegment(curr.logSegment, addEntryValue.lastSnapshot) : curr.logSegment;
+      logSegment.entries.push(entry);
+      const logIndex = Number(curr.endSequenceId-curr.logSegment.startSequenceId)
+      logSegment.cellMap.addEntry(row, column, logIndex, value, format);
+
+      this.content = {
+        endSequenceId: curr.endSequenceId + 1n,
+        logSegment,
+        loadStatus: ok(true),
+        rowCount: Math.max(curr.rowCount, row+1),
+        colCount: Math.max(curr.colCount, column+1)
+      }
+
+      this.notifyListeners();
+    }
+  })
+```
 
 ## Sync Logs
 
