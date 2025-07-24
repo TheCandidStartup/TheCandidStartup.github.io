@@ -270,6 +270,12 @@ I added an optional `snapshotId` argument to `query` and `addEntry`. The idea is
 
 ## Sync Logs
 
+* Change event log so that snapshot is all entries preceding this one (same as history, exclusive range)
+  * Entry with snapshot attached becomes useful again. It's the first change since snapshot taken
+  * Should remove all the annoying +- 1n in the code
+  * Log segment first entry is then the one with the snapshot
+  * Downside: Can't have a snapshot of current state (unless you add special snapshot log entry)
+  * Would it be better to always use a special snapshot entry and get rid of the per-entry metadata?
 * Could be anywhere in the sync process
   * Initial load, `query('snapshot','end')`, already covered
   * Subsequent load, `query(curr, 'end')`. 
