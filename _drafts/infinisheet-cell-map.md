@@ -29,7 +29,7 @@ We don't keep the entire event log in memory. We work with a `LogSegment` that r
 
 Event log entries are identified by sequence id, a unique integer value over the lifetime of the entire event log. We identify log entries within a log segment by index, starting at zero for the first entry after a snapshot. Each cell map entry stores the cell value and the corresponding `logIndex`. Values loaded from the snapshot have no `logIndex` property. 
 
-Most cells are empty and most occupied cells contain a single value. Therefore, most queries are *O(1)*. What happens when there are multiple values for a cell? For example, if the user repeatedly changes the same cell over and over.
+Most cells are empty and most occupied cells contain a single value. Therefore, most queries are *O(1)*. What happens when there are multiple values for a cell? For example, if the user repeatedly changes the same cell over and over?
 
 The entries for each cell are naturally ordered by log index, which has some nice properties. Most of the time we work with values corresponding to positions near the end of the event log. If we iterate over the entries in the cell from last to first, we're likely to find what we're looking for very quickly. If we don't, we can switch to a binary chop search strategy. Most queries are still *O(1)*, with a worst case of *O(logn)*. 
 
