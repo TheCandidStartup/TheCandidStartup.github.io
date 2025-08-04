@@ -4,11 +4,12 @@ tags: infinisheet
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 
-Is it really, finally, time to create snapshots as my event sourced spreadsheet's event log grows? It seemed like I was never going to get here. There's a laundry list of pre-work that I needed to complete first.
+It's finally time to create snapshots as my event sourced spreadsheet's event log grows. It seemed like I was never going to get here. There's a laundry list of pre-work that I needed to complete first.
+
 * [Creating a blob store interface and reference implementation]({% link _posts/2025-07-07-infinisheet-blob-store.md %})
 * [Creating a workers abstraction and interfaces]({% link _posts/2025-07-14-infinisheet-workers.md %})
 * [Refactoring the spreadsheet internals so I could wire everything up cleanly]({% link _posts/2025-07-21-infinisheet-wiring-blob-store-workers.md %})
-* [Creating a cell map data structure with code for serializing snapshots]({% link _drafts/infinisheet-cell-map.md %}).
+* [Creating a cell map data structure with code for serializing snapshots]({% link _posts/2025-08-04-infinisheet-cell-map.md %}).
 
 Let's go.
 
