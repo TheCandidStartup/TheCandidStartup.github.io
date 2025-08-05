@@ -1,6 +1,6 @@
 ---
 title: Tracer Bullet Snapshots
-tags: infinisheet
+tags: event-sourced-spreadsheet-data
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 

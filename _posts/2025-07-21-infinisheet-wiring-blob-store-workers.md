@@ -1,6 +1,6 @@
 ---
 title: Wiring up the Blob Store and Workers
-tags: infinisheet
+tags: event-sourced-spreadsheet-data
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 

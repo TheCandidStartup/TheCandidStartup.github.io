@@ -1,6 +1,6 @@
 ---
 title: Infinisheet Cell Map
-tags: infinisheet
+tags: event-sourced-spreadsheet-data
 thumbnail: /assets/images/infinisheet/cell-map-thumbnail.png
 ---
 
