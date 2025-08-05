@@ -6,6 +6,8 @@ thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 
 We don't yet handle the case where a snapshot completes when a client is already up and running. The snapshot could have completed because this client triggered it, or another client did. How can clients find out that a snapshot workflow has completed? They'll pick up the new snapshot when they start up, but a long running client could end up with a huge log segment unless there's some kind of explicit notification.
 
+# Insight
+
 I considered adding a `workflowCompletion` event to the `EventLog` interface. Workflows running on the same instance as the host could have the worker post a message back to the host. Distributed implementations would need something like a web socket connection so that the server can notify clients.
 
 That adds a lot of complexity and opens up a reliability problem. What if the snapshot completes, the event log is updated but the worker fails before the notification is sent? What if the notification gets lost? You need a fallback mechanism which polls for updates to the event log. If explicit notification is too unreliable or difficult to implement, you might use polling as the primary mechanism.
@@ -15,6 +17,8 @@ What does the engine do when it gets a completion event? The obvious thing would
 Then I realized. It doesn't matter that there's been a new snapshot until there are more entries to add to the event log. I could have a pending flag and delay creating the pending new segment until the next time `syncLogs` or `addEntry` is called. That avoids both problems. Content is being updated anyway. The only change is to also create a new log segment.
 
 Then I had another insight. The client doesn't need to know there's a new snapshot until there are more entries to add. There are only more entries to add as a result of calling `query` or `addEntry` on the event log. If we extend those methods so they can also return the most recent snapshot, then we don't need a separate polling call, and we don't need a separate workflow completion event.
+
+# Tracer Bullet Rework
 
 This is where the tracer bullet and reference implementation approach really shines. I can change the `EventLog` interface easily. Updating a reference implementation is trivial. There's no database schemas to worry about. No deployed infrastructure. Minimal sunk cost.
 
@@ -43,11 +47,18 @@ export interface EventLog<T extends LogEntry> {
 }
 ```
 
-I added an optional `snapshotId` argument to `query` and `addEntry`. The idea is that clients can specify the snapshot that they depend on. The response includes a `SnapshotValue` if there's a more recent snapshot that the client should switch to.
+I added an optional `snapshotId` argument to `query` and `addEntry`. The idea is that clients can specify the snapshot that they depend on. The response includes `lastSnapshot` if there's a more recent snapshot that the client should switch to.
 
-# Creating New Log Segments
+# Off by One
 
-## Add Entry
+* Change event log so that snapshot is all entries preceding this one (same as history, exclusive range)
+  * Entry with snapshot attached becomes useful again. It's the first change since snapshot taken
+  * Should remove all the annoying +- 1n in the code
+  * Log segment first entry is then the one with the snapshot
+  * Downside: Can't have a snapshot of current state (unless you add special snapshot log entry)
+  * Would it be better to always use a special snapshot entry and get rid of the per-entry metadata?
+
+# Add Entry
 
 * If call succeeds we must have written new head of log, which means any new snapshot must have completed in historic log entries we already have.
 * Create new segment by forking off current log segment after snapshot
@@ -81,14 +92,9 @@ I added an optional `snapshotId` argument to `query` and `addEntry`. The idea is
   })
 ```
 
-## Sync Logs
+# Sync Logs
 
-* Change event log so that snapshot is all entries preceding this one (same as history, exclusive range)
-  * Entry with snapshot attached becomes useful again. It's the first change since snapshot taken
-  * Should remove all the annoying +- 1n in the code
-  * Log segment first entry is then the one with the snapshot
-  * Downside: Can't have a snapshot of current state (unless you add special snapshot log entry)
-  * Would it be better to always use a special snapshot entry and get rid of the per-entry metadata?
+
 * Could be anywhere in the sync process
   * Initial load, `query('snapshot','end')`, already covered
   * Subsequent load, `query(curr, 'end')`. 
