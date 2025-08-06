@@ -76,7 +76,7 @@ I added an optional `snapshotId` argument to `query` and `addEntry`. The idea is
       const logSegment = addEntryValue.lastSnapshot 
         ? forkSegment(curr.logSegment, addEntryValue.lastSnapshot) : curr.logSegment;
       logSegment.entries.push(entry);
-      const logIndex = Number(curr.endSequenceId-curr.logSegment.startSequenceId)
+      const logIndex = Number(curr.endSequenceId-logSegment.startSequenceId)
       logSegment.cellMap.addEntry(row, column, logIndex, value, format);
 
       this.content = {
