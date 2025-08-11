@@ -95,7 +95,7 @@ Expected errors are returned, exceptional errors (that should never happen) are 
 
 Which got me thinking. How would this work if our client allows the user to create multiple spreadsheets? For a start, we'd need a separate blob directory for each spreadsheet. We store the snapshot `BlobId` in the event log. How does the event log know which directory to look in to load the blob?
 
-`EventLog` doesn't look anywhere. It doesn't care how `BlobId` is interpreted. The layer above decides how to tie `EventLog` and `BlobStore` together. The simplest way of managing multiple spreadsheets is to use upper layers of the blob store as a user visible file system: folders containing spreadsheets. No new abstraction needed. Makes it easy to implement a folder hierarchy. 
+`EventLog` doesn't look anywhere. It doesn't care how `BlobId` is interpreted. The layer above decides how to tie `EventLog` and `BlobStore` together. The simplest way of managing multiple spreadsheets is to use the upper layers of the blob store as a user-visible file system: folders containing spreadsheets. No new abstraction needed. Makes it easy to implement a folder hierarchy. 
 
 We can store per-spreadsheet metadata in a blob inside the per-spreadsheet directory. The metadata can include an `EventLog` id in whatever database is being used to store the event logs. Once the user has navigated to the spreadsheet they want to open, the client creates `EventLog` and `BlobStore` instances using the metadata, then creates and wires up an `EventSourcedSpreadsheetData` instance. Each `EventSourcedSpreadsheetData` represents a single spreadsheet.
 
