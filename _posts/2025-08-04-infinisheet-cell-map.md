@@ -229,4 +229,4 @@ Whenever an entry is added to the `entries` array, it also gets added to the cel
 
 # Next Time
 
-I think I'm finally, finally ready to hook everything up and start creating snapshots. We'll see how that works out next time.
+I think I'm finally, finally ready to hook everything up and start creating snapshots. We'll see how that works out [next time]({% link _posts/2025-08-11-infinisheet-tracer-bullet-snapshots.md %}).

@@ -4,7 +4,7 @@ tags: event-sourced-spreadsheet-data
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 
-We [don't yet]({% link _drafts/infinisheet-tracer-bullet-snapshots.md %}) handle the case where a snapshot completes when a client is already up and running. The snapshot could have completed because this client triggered it, or another client did. How can clients find out that a snapshot workflow has completed? They'll pick up the new snapshot when they start up, but a long running client could end up with a huge log segment unless there's some kind of explicit notification.
+We [don't yet]({% link _posts/2025-08-11-infinisheet-tracer-bullet-snapshots.md %}) handle the case where a snapshot completes when a client is already up and running. The snapshot could have completed because this client triggered it, or another client did. How can clients find out that a snapshot workflow has completed? They'll pick up the new snapshot when they start up, but a long running client could end up with a huge log segment unless there's some kind of explicit notification.
 
 # Insight
 
@@ -128,7 +128,7 @@ The cases we need to look at are during subsequent loads, where we're calling `q
 
 For now, I'm going to assume we'll be close to the head of the log and avoid having to download and parse snapshots. In future we'll probably need a mechanism to give up and reload from the latest snapshot if the client falls too far behind.
 
-I had a few false starts but eventually found that I could slot the logic needed neatly into the `updateContent` method I introduced [last time]({% link _drafts/infinisheet-tracer-bullet-snapshots.md %}). It goes immediately before the existing code that appends entries retrieved from the event log to the in-memory representation. 
+I had a few false starts but eventually found that I could slot the logic needed neatly into the `updateContent` method I introduced [last time]({% link _posts/2025-08-11-infinisheet-tracer-bullet-snapshots.md %}). It goes immediately before the existing code that appends entries retrieved from the event log to the in-memory representation. 
 
 ```ts
   if (value.lastSnapshot) {
