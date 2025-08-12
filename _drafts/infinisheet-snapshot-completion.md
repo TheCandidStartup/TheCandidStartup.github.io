@@ -170,3 +170,4 @@ As always I added unit tests that cover all the different cases. Again, as alway
 The basic framework and data flow is in place. Now we need to make it properly scalable. We're off to a good start with the log segment representation. That gives us a bound on the number of log entries in memory. However, the cell map and snapshot blob are currently unbounded. 
 
 We'll start by setting up the cell map so that it can contain just the subset of the spreadsheet we're actively working with. For example, the content of the current viewport in the UI. Obviously, as the viewport changes we'll end up reloading the cell map from the latest snapshot and log segment. To make that scalable we'll need to break the snapshot into multiple blobs so we can load just what's needed.
+
