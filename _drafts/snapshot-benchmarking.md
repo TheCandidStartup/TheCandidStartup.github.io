@@ -13,3 +13,9 @@ wise words
 # Vitest Bench
 
 {% include candid-image.html src="/assets/images/benchmark/tracer-bullet-snapshot.png" alt="Tracer Bullet Snapshot Benchmark Results" %}
+
+{% include candid-image.html src="/assets/images/benchmark/tracer-bullet-snapshot-finegrain.png" alt="Tracer Bullet Snapshot Finer Grain Benchmark Results" %}
+
+{% include candid-image.html src="/assets/images/benchmark/tracer-bullet-snapshot-writes-graph.png" alt="Tracer Bullet Snapshot Writes Graph" %}
+
+{% include candid-image.html src="/assets/images/benchmark/tracer-bullet-snapshot-reads-graph.png" alt="Tracer Bullet Snapshot Reads Graph" %}
