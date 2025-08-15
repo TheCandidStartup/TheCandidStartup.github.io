@@ -93,9 +93,9 @@ describe('EventSourcedSpreadsheetData', () => {
 })
 ```
 
-I was delighted to see that `bench` supports async functions. I'm interested in overall compute time, not any of the artificial delays that my reference implementations add to async operations. I used Vitest's fake timers to remove any async delays and to ensure that all async operations have completed. 
+I was delighted to find that `bench` supports async functions. I'm interested in overall compute time, not any of the artificial delays that my reference implementations add to async operations. I used Vitest's fake timers to remove any async delays and to ensure that all async operations have completed. 
 
-I would normally use `beforeEach` and `afterEach` to wrap each benchmark with `useFakeTimers` and `useRealTimers`. Unfortunately, that results in an infinite loop. Tinybench runs as many iterations as it can within a given time. I suspect that the Tinybench code is running between the calls to `beforeEach` and `afterEach`, and getting confused by the fake timers. Everything works as expected when I put the calls to `useFakeTimers` and `useRealTimers` inside each benchmark. I left the `afterEach` in place to make sure we clean up however the benchmark ends.
+I would normally use `beforeEach` and `afterEach` to wrap each benchmark with `useFakeTimers` and `useRealTimers`. Unfortunately, that results in an infinite loop. Tinybench runs as many iterations as it can within a given time. I suspect that the Tinybench code is running between the calls to `beforeEach` and `afterEach`, and getting confused by the fake timers. Everything works as expected when I put the calls to `useFakeTimers` and `useRealTimers` inside each benchmark. I left the `afterEach` in place to make sure we clean up how ever the benchmark ends.
 
 As benchmarks are a specialized form of unit test, you have access to the full API including expectations and mocks. I used expectations to confirm that the benchmark was doing what I thought it was doing. 
 
@@ -109,7 +109,7 @@ For my first run I created benchmarks that read and write 100, 1000, 10000 and 1
 
 {% include candid-image.html src="/assets/images/benchmark/tracer-bullet-snapshot.png" alt="Tracer Bullet Snapshot Benchmark Results" %}
 
-At first glance, there's an overwhelming amount of data. For my use case it made sense to pick one of the columns (I went with `p75` to exclude as many outliers as possible) and compare the results from each benchmark. It's also worth looking at the `samples` column to see how many iterations were run for each benchmark. 
+At first glance, there's an overwhelming amount of data. For my use case it made sense to pick one of the columns (I went with `p75` to exclude as many outliers as possible) and compare the results from each benchmark. It's also worth looking at the `samples` column to see how many iterations were run for each benchmark. At the top end I only have time for a single sample.
 
 The 100 entries benchmark is too small to provide useful data while the 100K entries benchmark takes too long to run. There are also too few data points to see how things scale. 
 
