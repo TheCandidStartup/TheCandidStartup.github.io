@@ -4,7 +4,7 @@ tags: event-sourced-spreadsheet-data frontend
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 
-The framework for our event sourced spreadsheet is [in place]({% link _drafts/infinisheet-snapshot-completion.md %}). Entries are being written to the log, snapshots are created at regular intervals, clients start by reading the most recent snapshot and then following along as the log is updated. All this has been done [tracer bullet]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}) style, with simple code that is largely unoptimized and not scalable.
+The framework for our event sourced spreadsheet is [in place]({% link _posts/2025-08-18-infinisheet-snapshot-completion.md %}). Entries are being written to the log, snapshots are created at regular intervals, clients start by reading the most recent snapshot and then following along as the log is updated. All this has been done [tracer bullet]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}) style, with simple code that is largely unoptimized and not scalable.
 
 We're about to start on the hard graft of filling in the rest of the implementation, making it scalable and optimizing where needed. There's no sexy new UI features to demonstrate progress. We need another way to track improvements and keep us motivated. 
 

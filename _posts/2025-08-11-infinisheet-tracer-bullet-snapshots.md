@@ -198,4 +198,4 @@ Not so fast. What happens if you have a long running client? It adds entries to 
 
 A log segment is meant to be just the section of log from the most recent snapshot on. Somehow, the client needs to notice when snapshots complete and discard the old log entries.
  
-It turns out to be surprisingly involved. We'll look at it next time. 
+It turns out to be surprisingly involved. We'll look at it [next time]({% link _posts/2025-08-18-infinisheet-snapshot-completion.md %}). 
