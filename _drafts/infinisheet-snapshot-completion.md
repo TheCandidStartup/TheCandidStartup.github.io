@@ -126,7 +126,7 @@ The cases we need to look at are during subsequent loads, where we're calling `q
   2. Snapshot id may be in entry returned by query. We need to create a new segment from that entry, like initial load.
   3. Snapshot id may be in entry beyond what was returned by query. We can continue sync so that we get everything and eventually pick up the snapshot, or ignore the entries in between and continue with `query('snapshot','end')`. 
 
-For now, I'm going to assume we'll be close to the head of the log and avoid having to download and parse snapshots. In future we'll probably need a mechanism to give up and reload from the latest snapshot if the client falls too far behind.
+For now, I'm going to assume we'll be close to the head of the log and want to avoid downloading and parsing snapshots, if we don't have to. In future we'll probably need a mechanism to give up and reload from the latest snapshot if the client falls too far behind.
 
 I had a few false starts but eventually found that I could slot the logic needed neatly into the `updateContent` method I introduced [last time]({% link _posts/2025-08-11-infinisheet-tracer-bullet-snapshots.md %}). It goes immediately before the existing code that appends entries retrieved from the event log to the in-memory representation. 
 
@@ -157,7 +157,7 @@ I had a few false starts but eventually found that I could slot the logic needed
   // Original code that appends `entries` to `segment`
 ```
 
-The logic covers all three cases identified above. The first clause handles case 1 by forking the existing log segment. The second clause handles case 2. We add entries up to the snapshot to the previous segment's cell map and use that to initialize the new segment. We slice the new entries so that they start with the snapshot and leave it to the existing append code to add them to the new segment. 
+The logic covers all three cases identified above. The first clause handles case 1 by forking the existing log segment. The second clause handles case 2. We add entries up to the snapshot to the previous segment's cell map and use that to initialize the new segment. We slice the new entries so that they start with the snapshot and leave it to the original append code to add them to the new segment. 
 
 The third case is handled by doing nothing. There is a new snapshot but it's somewhere in a later page of results. We fall through and just append all the entries as normal. Eventually the snapshot page will be processed and handled by the second clause.
 
