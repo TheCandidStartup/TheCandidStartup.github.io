@@ -14,9 +14,9 @@ We need a benchmark.
 
 My tooling is built around [TypeScript and Vite]({% link _posts/2023-10-23-bootstrapping-vite.md %}). I like the friction free development experience where TypeScript is transpiled on the fly, without having to think about it. The downside is that Vite is focused on web app development. A benchmark for my internal data structures and file formats makes more sense as something you can run from the command line.
 
-I was vaguely aware that my unit testing tool, [Vitest]({% link _posts/2024-03-11-bootstrapping-vitest.md %}), includes the [vite-node](https://www.npmjs.com/package/vite-node). This lets you run TypeScript files from the command line with a NodeJS runtime. Vitest uses it to run unit tests. It seemed like the obvious choice as it works with the Vite pipeline so I would still have access to all the Vite plugins I've been using. 
+I was vaguely aware that my unit testing tool, [Vitest]({% link _posts/2024-03-11-bootstrapping-vitest.md %}), includes the [vite-node](https://www.npmjs.com/package/vite-node) package. This lets you run TypeScript files from the command line with a NodeJS runtime. Vitest uses it to run unit tests. It seemed like the obvious choice as it works with the Vite pipeline, so I would still have access to all the Vite plugins I've been using. 
 
-As I explored further, I came across a [comment](https://github.com/vitest-dev/vitest/discussions/6096#discussioncomment-10051744) from one of Vitest's maintainers saying that vite-node is "softly deprecated" as the functionality it provides is now available in Vite 6. They recommended [tsx](https://tsx.is/) for running TypeScript files from the command line, if you don't rely on Vite plugins. 
+As I explored further, I came across a [comment](https://github.com/vitest-dev/vitest/discussions/6096#discussioncomment-10051744) from one of Vitest's maintainers saying that `vite-node` is "softly deprecated", as the functionality it provides is now available in Vite 6. They recommended [tsx](https://tsx.is/) for running TypeScript files from the command line, if you don't rely on Vite plugins. 
 
 The new Vite 6 functionality is the [Environment API](https://vite.dev/guide/api-environment-runtimes.html). This provides more formal support for other runtimes built on Vite, like Vitest.
 
@@ -38,7 +38,7 @@ You run all the benchmarks in your project using the `vitest bench` [command lin
 
 I'm interested to see how the spreadsheet engine scales as increasing numbers of cells are written. I also want to see how long it takes to read the resulting spreadsheet back into memory.
 
-It's easy to write code that writes to some number of cells, then reads into another client from the underlying event log and blob store. The problem is that I want to time each part separately and Vitest only times an entire `bench` function. In the end I created separate utility functions for reading and writing, with global variables to share the event log and blob store between them. 
+It's easy to write code that writes to some number of cells, then reads into another client from the underlying event log and blob store. The problem is that I want to time each part separately. Vitest only times an entire `bench` function. In the end I created separate utility functions for reading and writing, with global variables to share the event log and blob store between them. 
 
 I can then declare benchmarks for writing and reading different numbers of cells and see how things scale.
 
@@ -95,7 +95,7 @@ describe('EventSourcedSpreadsheetData', () => {
 
 I was delighted to find that `bench` supports async functions. I'm interested in overall compute time, not any of the artificial delays that my reference implementations add to async operations. I used Vitest's fake timers to remove any async delays and to ensure that all async operations have completed. 
 
-I would normally use `beforeEach` and `afterEach` to wrap each benchmark with `useFakeTimers` and `useRealTimers`. Unfortunately, that results in an infinite loop. Tinybench runs as many iterations as it can within a given time. I suspect that the Tinybench code is running between the calls to `beforeEach` and `afterEach`, and getting confused by the fake timers. Everything works as expected when I put the calls to `useFakeTimers` and `useRealTimers` inside each benchmark. I left the `afterEach` in place to make sure we clean up how ever the benchmark ends.
+I would normally use `beforeEach` and `afterEach` to wrap each benchmark with `useFakeTimers` and `useRealTimers`. Unfortunately, that results in an infinite loop. Tinybench runs as many iterations as it can within a given time. I suspect that the Tinybench code is running between the calls to `beforeEach` and `afterEach`, and getting confused by the fake timers. Everything works as expected when I put the calls to `useFakeTimers` and `useRealTimers` *inside* each benchmark. I left the `afterEach` in place to make sure we clean up however the benchmark ends.
 
 As benchmarks are a specialized form of unit test, you have access to the full API including expectations and mocks. I used expectations to confirm that the benchmark was doing what I thought it was doing. 
 
