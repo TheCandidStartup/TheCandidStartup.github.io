@@ -3,35 +3,76 @@ title: Home Assistant
 tags: gear
 ---
 
-wise words
+[Home Assistant](https://www.home-assistant.io/) has been on my radar for a while. I've always liked the idea of having a small local server running 24x7 that I could use to "automate stuff". Two things put me off doing anything about it. There was low level anxiety over picking the right hardware to run it on, but more importantly there was the lack of anything that *really* needed automating.
 
-# Alpha ESS
+That changed this week. We got a new EV charger, the [Hypervolt Home 3 Pro](https://www.hypervolt.co.uk/product/hv3proaauw100t2). I wasn't expecting to replace our existing 5 year old [EO Mini Pro 2](https://www.eocharging.com/support/home-charging/eo-mini-pro-2). Then the manufacturer EOLed it. 
 
-* Integrate locally via modbus API or via cloud hosted Alpha ESS Open AI
-* Modbus gives more control and doesn't need internet connection but does need hardwired ethernet or an ethernet to wifi repeater
-* Try Open AI route first
-* Register at [https://open.alphaess.com/]( https://open.alphaess.com/)
-* Need you serial number and check code from the sticker on the side of the inverter
-* Anyone with physical access to your inverter can register to control with API!
+Normally, my response would be who cares. Keep using it until it breaks, then replace it. However, like most big ticket tech items these days, much of the EO Mini's functionality relies on a cloud backend. EO are turning the servers off and effectively bricking the device. 
 
-# Postman
+# Intelligent Octopus Go
 
-* Alpha ESS Open API [Postman collection](https://github.com/CharlesGillanders/alphaess-openAPI/blob/main/AlphaESS%20Open%20API.postman_collection.json)
-* Create free account
-* Fork collection so you can edit config
-* Fill in collection level variables (click on root node) - AppId, AppSecret, serial number, etc. Use current values to restrict how far they're shared.
-* Ignore auth panel. Auth is handled by pre-request script that signs request using AppId and AppSecret
-* Remember to press save before you try using a request. Look like you've changed value, persists when you navigate to another page in Postman web UI and come back, but won't be used.
-* Click on console button in bottom right footer to see actual request made
-* Hurray - API works!
+Our energy provider, [Octopus](https://octopus.energy/), has a [dedicated tariff](https://octopus.energy/smart/intelligent-octopus-go/) for EV owners that provides extremely low rates when charging in exchange for letting Octopus control when the charging happens. It's compatible with our new Hypervolt charger.
+
+The tariff includes fixed off-peak rates between 23.30 and 5.30 but may schedule charging outside that period. If it does, you get charged the off-peak rates for those times too.
+
+# Alpha ESS Home Battery
+
+We also have a home storage battery, the [Alpha ESS Smile-5]({% link _posts/2023-08-28-alpha-ess-smile5-home-battery.md %}). We charge the battery overnight at off-peak rates and then use the stored energy during the day. I can configure the battery to charge during the dedicated off-peak period, but what happens if EV charging is scheduled outside that time?
+
+Simple, the battery discharges flat out to try and meet the required load and quickly empties itself. 
+
+Adjusting the battery configuration manually to match the Octopus charging schedule is tedious. Also futile, because the Octopus schedule frequently changes based on current and expected demand for energy. 
+
+I want to make full use of my new toy, so I *really* need a way to automate the battery configuration.
+
+# Existing Integrations
+
+A few quick internet searches found people with similar problems that had solved them with Home Assistant together with existing open source integrations.
+* [homeassistant-alphaESS](https://github.com/CharlesGillanders/homeassistant-alphaESS) and [AlphaESS Home Assistant via Modbus](https://projects.hillviewlodge.ie/alphaess/)
+* [HomeAssistant-OctopusEnergy](https://github.com/BottlecapDave/HomeAssistant-OctopusEnergy)
+* [home-assistant-hypervolt-charger](https://github.com/gndean/home-assistant-hypervolt-charger)
+
+There were also a couple of recommendations for hardware to run it on. 
 
 # Home Assistant Green
 
-* All-in-one package with Home Assistant preinstalled
-* Lovely cardboard packaging
-* Device, power supply and ethernet cable included
-* Plug in to router (no wifi), plug in power, then wait while the LEDs dance furiously
-* Once it's calmed down to a gentle throb it's ready for you to connect
+[Home Assistant Green](https://www.home-assistant.io/green/) is a dedicated package that comes with Home Assistant preinstalled. It's roughly equivalent to a Raspberry Pi supplied with an enclosure and a power supply. The device uses passive cooling and needs little power, around 1.5W at idle.
+
+Before jumping in I wanted to make sure that I really could control my battery via API. 
+
+# Alpha ESS Open API
+
+In theory, you can integrate with Alpha ESS systems locally via a [modbus](https://en.wikipedia.org/wiki/Modbus) API, or via the cloud hosted [Alpha ESS Open API](https://open.alphaess.com/). There are Home Assistant integrations available for both. 
+
+I'd prefer to use the modbus API and remove the dependency on someone else's cloud hosted backend. Unfortunately, Alpha ESS only expose the modbus API via a hardwired ethernet connection. My battery connects via  wifi as it's an inconveniently long way from my router. 
+
+I'll try the Open API route first. You have to register at [https://open.alphaess.com/]( https://open.alphaess.com/) to get access to the API. You need to provide your serial number and the check code from the sticker on the side of the inverter. Be careful with these values. Anyone that knows them can get control over your system. 
+
+# Postman
+
+The maintainer of the Home Assistant integration has a [Postman collection](https://github.com/CharlesGillanders/alphaess-openAPI/blob/main/AlphaESS%20Open%20API.postman_collection.json) for the API. I used it to verify that I did indeed have API access.
+
+You need to create a free Postman account so that you can fork the collection and edit the config. Click on the root node in the left hand tree and fill in the required collection level variables: AppId, AppSecret, serial number, etc. You can find all these in the Alpha ESS Open API portal. Use the "current value" fields to restrict how far the values are shared. 
+
+Remember to press save before you try using a request. It look like you've changed variable values, the changes persist when you navigate to another page in the Postman web UI and come back, but won't be used until you explicitly save them.
+
+Ignore the auth panel in Postman. Authentication is handled by a pre-request script that signs each request using the AppId and AppSecret. If you have any issues, click on the console button in the bottom right footer to see the actual requests being made by Postman.
+
+After some fiddling around I got the API to work. If you already have Home Assistant, I suggest skipping this part. Getting the integration working in Home Assistant is much easier.
+
+# Unboxing
+
+I got my Home Assistant Green from [Pimoroni](https://shop.pimoroni.com/products/home-assistant-green?variant=54863020130683) for £85. They were much more expensive on Amazon when I looked, so shop around. 
+
+I enjoyed the lovely recyclable cardboard packaging. Unfortunately, I was in too much of a hurry to get it plugged in to take a photo first.
+
+{% include candid-image.html src="/assets/images/home-assistant/home-assistant-green-packaging.jpg" alt="Home Assistant Green Packaging" %}
+
+You get the device, a cute little power supply (with adaptors for every country you can think of included), and a short ethernet cable. Plug the ethernet cable into your router (there's no wifi), plug in the power and then wait while the LEDs dance furiously.
+
+Once it's calmed down to a gentle throb it's ready for you to connect. Here's mine in situ beneath [my desk]({% link _posts/2023-05-22-desk-setup.md %}), in front of the router.
+
+{% include candid-image.html src="/assets/images/home-assistant/home-assistant-green-router.jpg" alt="Home Assistant Green in situ, in front of router" %}
 
 # .Local
 
