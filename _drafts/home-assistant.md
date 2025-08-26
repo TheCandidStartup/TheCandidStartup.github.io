@@ -171,15 +171,13 @@ Once it's calmed down to a gentle throb it's ready for you to connect. Here's mi
 * Events can be caused by entity state changing or by built-in events provided by Home Assistant and integrations
 * [Conditions](https://www.home-assistant.io/docs/automation/condition/) are additional criteria that need to be satisfied for the automation to run.
 * Common conditions could be based on time of day, position of the sun, states of other entities
-* My conditions are that current time is outside of off-peak hours, Octopus control is enabled or the charger is in boost mode (full power)
+* My condition is that Octopus smart control is enabled.
 * [Actions](https://www.home-assistant.io/docs/automation/action/) do something. Each entity have a set (possibly empty) of actions that it supports. There are also a variety of built-in Home Assistant actions, such as sending a notification to the HA app.
 * My Alpha ESS battery integration supports two actions that change the charging and discharging settings respectively
 * I want to override the standard settings when the charger turns on and reset them when the charger turns off
 * My battery is configured to charge during Octopus off-peak hours between 23:30 and 5:30
 * During this period the battery won't discharge
 * Charging sessions outside off-peak are charged at off-peak rates. I may as well charge the battery (if needed) while also preventing discharge.
-* The simplest way of forcing the battery into charge mode outside off-peak hours is to swap the start and end time. Then swap them back when the charger turns off.
-* Unfortunately you have to change multiple settings in one go (which mirrors how the Alpha API works)
 
 {% include candid-image.html src="/assets/images/home-assistant/battery-discharge-action.png" alt="Alpha ESS Battery Discharge Action" %}
 
@@ -190,8 +188,13 @@ Once it's calmed down to a gentle throb it's ready for you to connect. Here's mi
 
 * In theory I can use Home Assistant [templating](https://www.home-assistant.io/docs/configuration/templating/) to retrieve those values and extract the pieces I need. In practice that's too much effort for my first attempt at automation. 
 * For now I'm going to hard code the values to those I currently use. I'll figure out a better approach later.
+* There's no simple control to force the battery into charge mode. The solution I use is to set the charge period to the widest possible range. In my case, from 13.15 today through to 13.00 tomorrow. Alpha ESS requires start and ends times to be multiples of 15 minutes and can't be equal. That leaves a 15 minute range exposed. Smart charging typically happens between 19.00 and 08.00, so I put the 15 minute period as far away as possible. 
+* Unfortunately you have to change multiple settings in one go (which mirrors how the Alpha API works)
 
 {% include candid-image.html src="/assets/images/home-assistant/charger-automation.png" alt="Octopus Peak Hours Charging Automation" %}
 
-* The automation triggers when the charger turns on if smart charging is enabled and we're outside off-peak hours. If the conditions are met, five actions are executed one after the other. First, the charging settings are changed to enable battery charging and a notification is sent to my phone.
-* The magic is in the [wait for triggers](https://www.home-assistant.io/docs/scripts/#wait-for-a-trigger) action. We wait until the charger turns off or we reach the start of the off-peak period, whichever happens first. Then we reset the charging period to the normal off-peak hours and send another notification that it's all over.
+* The automation triggers when the charger turns on if smart charging is enabled. If the conditions are met, five actions are executed one after the other. First, the charging settings are changed to enable battery charging and a notification is sent to my phone.
+* The magic is in the [wait for triggers](https://www.home-assistant.io/docs/scripts/#wait-for-a-trigger) action. We wait until the charger turns off or we reach a time when charging should definitely be over, whichever happens first. Then we reset the charging period to the normal off-peak hours and send another notification that it's all over.
+* I don't have any intuition for how reliable Home Assistant events are, so felt that it was worth putting in the fail safe to stop the automation. 
+* I tried a few different approaches first but abandoned them as too complicated. The first idea was to use the charging schedule that Octopus makes available via it's API. The problem is that the schedule changes frequently and the off-peak rates only apply outside off-peak hours if your car manages to charge. It was simpler and more reliable to trigger the integration on the car starting to charge.
+* I originally setup the automation so that it would only apply for charging sessions outside off-peak hours. The problem is that charging sessions don't fall neatly into peak and off-peak. You can have a session that starts outside off-peak and finishes inside, or starts during off-peak and finishes outside, or starts outside, runs right through the off-peak hours and finishes outside. There were too many special cases to deal with. In the end it was simplest to treat all smart charging sessions the same way.
