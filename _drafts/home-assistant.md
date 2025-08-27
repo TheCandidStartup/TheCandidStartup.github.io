@@ -194,6 +194,6 @@ I originally setup the automation so that it would only apply for charging sessi
 
 # Conclusion
 
-Well, that was fun. Overall, a positive experience. I already have ideas for other integrations and automations I could setup. 
+Well, that was fun. Overall, a positive experience. I already have ideas for other integrations and automations I could set up. 
 
 My background is in software engineering, so I'm very comfortable with the idea of APIs, triggers, conditions, actions, and scripting in general. Your mileage may vary.
