@@ -2,6 +2,7 @@
 title: >
   Home Assistant: Helpers, Templates and Solar Forecasts
 tags: gear
+thumbnail: /assets/images/home-assistant/logo.png
 ---
 
 [Last time]({% link _drafts/home-assistant.md %}) I took you through setting up a Home Assistant Green, installing HACS, adding custom integrations and then creating an automation to disable discharge of my home battery while my EV is charging.
