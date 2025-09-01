@@ -5,7 +5,7 @@ tags: gear
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 
-[Last time]({% link _drafts/home-assistant.md %}) I took you through setting up a Home Assistant Green, installing HACS, adding custom integrations and then creating an automation to disable discharge of my home battery while my EV is charging.
+[Last time]({% link _posts/2025-09-01-home-assistant.md %}) I took you through setting up a Home Assistant Green, installing HACS, adding custom integrations and then creating an automation to disable discharge of my home battery while my EV is charging.
 
 I had one loose end. I was using lots of hardcoded values in the automation. In particular, the target State of Charge (SOC) for the battery. This is a value that I often tweak manually, so having it reset whenever I charge the car is annoying. 
 
