@@ -59,9 +59,9 @@ The maintainer of the Home Assistant Alpha ESS integration has a [Postman collec
 
 You need to create a free Postman account so that you can fork the collection and edit the config. Click on the root node in the left hand tree and fill in the required collection level variables: AppId, AppSecret, serial number, etc. You can find all these in the Alpha ESS Open API portal. Use the "current value" fields to restrict how far the values are shared. 
 
-Remember to press save before you try using a request. It look like you've changed variable values, the changes persist when you navigate to another page in the Postman web UI and come back, but won't be used until you explicitly save them.
+Remember to press save before you try making a request. It look like you've changed variable values, the changes persist when you navigate to another page in the Postman web UI and come back, but won't be used until you explicitly save them.
 
-Ignore the Auth tab in Postman. Authentication is handled by a pre-request script that signs each request using the AppId and AppSecret. If you have any issues, click on the console button in the bottom right footer to see the actual requests being made by Postman.
+Ignore the Auth tab in Postman. Authentication is handled by a pre-request script that signs each request using the AppId and AppSecret. If you have any issues, click on the console button in the bottom left footer to see the actual requests being made by Postman.
 
 After some fiddling around I got the API to work. If you already have Home Assistant, I suggest skipping this part. Getting the integration working in Home Assistant is much easier.
 
@@ -79,9 +79,9 @@ Once it's calmed down to a gentle throb, it's ready for you to connect. Here's m
 
 {% include candid-image.html src="/assets/images/home-assistant/home-assistant-green-router.jpg" alt="Home Assistant Green in situ, in front of router" %}
 
-# .Local
+# .local
 
-I was wondering how connecting would work. The device will have got an IP address from my router via DHCP. How do I find out what it is?
+I was wondering how connecting would work. The device will have an IP address from my router via DHCP. How do I find out what it is?
 
 You use the URL `http://homeassistant.local:8123`. The [.local domain](https://en.wikipedia.org/wiki/.local) is a special-use domain name that is explicitly not a top-level DNS domain. Most operating systems use it as a trigger for running a mDNS protocol that searches the local network for devices that respond to the name and port.
 
@@ -169,7 +169,7 @@ I have the additional condition that Octopus smart control is enabled.
 
 [Actions](https://www.home-assistant.io/docs/automation/action/) do something. Each entity has a set of actions that it supports. There are also a variety of built-in Home Assistant actions, such as sending a notification to the Home Assistant app.
 
-The Alpha ESS battery integration supports two actions that change the charging and discharging settings respectively. I want to override the standard settings when the charger turns on and reset them when the charger turns off. My battery is configured to charge during Octopus off-peak hours between 23:30 and 5:30. During this period the battery won't discharge.
+The Alpha ESS battery integration supports two actions that change the charging and discharging settings respectively. I want to override the standard settings when the charger turns on and reset them when the charger turns off. My battery is normally configured to charge during Octopus off-peak hours between 23:30 and 5:30. During this period the battery won't discharge.
 
 Charging sessions outside off-peak are charged at off-peak rates. I may as well charge the battery (if needed) while also preventing discharge.
 
@@ -179,25 +179,37 @@ The battery charge action exposes the same parameters as the corresponding Alpha
 
 {% include candid-image.html src="/assets/images/home-assistant/alpha-ess-diagnostic.png" alt="Alpha ESS Diagnostic Sensors" %}
 
-In theory I can use Home Assistant [templating](https://www.home-assistant.io/docs/configuration/templating/) to retrieve those values and extract the pieces I need. In practice that's too much effort for my first attempt at automation. 
+In theory, I can use Home Assistant [templating](https://www.home-assistant.io/docs/configuration/templating/) to retrieve those values and extract the pieces I need. In practice, that's too much effort for my first attempt at automation. 
 
 For now I'm going to hard code the values to those I currently use. I'll figure out a better approach later.
 
-There's no simple way to force the battery into charge mode. The solution I use is to set the charge period to the widest possible range. In my case, from 13.15 today through to 13.00 tomorrow. Alpha ESS requires start and ends times to be multiples of 15 minutes and can't be equal. That leaves a 15 minute range exposed. Smart charging typically happens between 19.00 and 08.00, so I put the 15 minute period as far away as possible. 
+There's no simple way to force the battery into charge mode. The solution I use is to set the second charging period to peak hours, 5.30 - 23.30.  
 
 {% include candid-image.html src="/assets/images/home-assistant/charger-automation.png" alt="Octopus Peak Hours Charging Automation" %}
 
-The automation triggers when the charger turns on, if smart charging is enabled. If the conditions are met, five actions are executed one after the other. First, the charging settings are changed to enable battery charging and a notification is sent to my phone.
+The automation triggers when the charger turns on, if smart charging is enabled. If the conditions are met, five actions are executed one after the other. First, the charging settings are changed to force battery charging and a notification is sent to my phone.
 
-The magic is in the [wait for triggers](https://www.home-assistant.io/docs/scripts/#wait-for-a-trigger) action. We wait until the charger turns off or we reach a time when charging should definitely be over, whichever happens first. Then we reset the charging period to the normal off-peak hours and send another notification that it's all over.
+The magic is in the [wait for triggers](https://www.home-assistant.io/docs/scripts/#wait-for-a-trigger) action. We wait until the charger turns off or we reach a time when charging should definitely be over, whichever happens first. Then we reset the second charging period to 0.00 - 0.00 and send another notification that it's all over.
 
 I don't have any intuition for how reliable Home Assistant events are, so felt that it was worth putting in the fail safe to stop the automation. 
 
-I tried a few different approaches initially, but abandoned them as too complicated. The first idea was to use the charging schedule that Octopus makes available via it's API. The problem is that the schedule changes frequently and the off-peak rates only apply outside off-peak hours if your car manages to charge. It was simpler and more reliable to trigger the integration on the car starting to charge.
+# Previous Attempts
+
+I tried a few different approaches initially, but had to abandon them when they proved too complicated or too unreliable. 
+
+The first idea was to use the charging schedule that Octopus makes available via it's API. The problem is that the schedule changes frequently and the off-peak rates only apply outside off-peak hours if your car manages to charge. It was simpler and more reliable to trigger the integration on the car starting to charge.
 
 I originally set up the automation so that it would only apply for charging sessions outside off-peak hours. The problem is that charging sessions don't fall neatly into peak and off-peak. You can have a session that starts outside off-peak and finishes inside, or starts during off-peak and finishes outside, or starts outside, runs right through the off-peak hours and finishes outside. There were too many special cases to deal with. In the end it was simplest to treat all smart charging sessions the same way.
 
+Finally, I started out trying to do everything using a single charging period. The documentation for the Alpha ESS integration appears to say that the second period can't be used.
+
+> These settings will only use slot 1 for charging and discharging, while you are not able to modify slot 2 from this integration, you are able to view its current settings.
+
+The problem with that is that Alpha ESS requires start and end times to be multiples of 15 minutes and can't be equal. After waking up to an empty battery one morning, I also discovered that the start and end times need to be at least an hour apart or the charging period is considered to be unused. 
+
+In desperation, I tried setting the second charging period and to my surprise it worked. I had a look round the source code and realized that the comment only applied to some GUI buttons that I wasn't using. The battery charge action does pass both charging periods to the Alpha API. 
+
 # Conclusion
 
-Well, that was fun. Overall, a positive experience. I already have ideas for other integrations and automations I could set up. 
+Well, that was fun. On balance, a positive experience. I solved my problem and already have ideas for other integrations and automations I could set up. 
 
