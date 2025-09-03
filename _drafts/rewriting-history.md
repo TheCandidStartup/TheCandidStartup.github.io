@@ -37,7 +37,7 @@ This approach extends to simple factual errors. If I see an error that was also 
 
 # Comments
 
-Where I've made larger scale changes to an existing post, I'll add a comment that explains what I've done. A comment is clearly meta-information about the post and identifies who made the change and when.
+Where I've made larger scale changes to an existing post, I'll add a comment that explains what I've done. A comment is clearly meta-data about the post and identifies who made the change and when.
 
 The changes made are still small scale and don't change the structure or meaning of the original post. In most cases the changes were made within a couple of weeks of publication. 
 
@@ -50,7 +50,7 @@ There's one post that I updated before I realized I could use comments to track 
 
 # Legal Jeopardy
 
-Hopefully this case was a one off. Autodesk legal [objected]({% link _posts/2023-12-18-legal-jeopardy.md %}) to a post about the [Navisworks File Format]({% link _posts/2023-10-30-navisworks-file-formats.md %}). Once I'd established which parts they objected to, I rewrote them. 
+Hopefully this is a one off. Autodesk legal [objected]({% link _posts/2023-12-18-legal-jeopardy.md %}) to a post about the [Navisworks File Format]({% link _posts/2023-10-30-navisworks-file-formats.md %}). Once I'd established which parts they objected to, I rewrote them. 
 
 Luckily, the parts they didn't like weren't that important. I wrote a [separate post]({% link _posts/2023-12-18-legal-jeopardy.md %}) explaining what had happened.
 
@@ -66,4 +66,4 @@ If I realize that a post is outdated enough to be dangerous, I'll add a highligh
 
 Rewritten posts will also have a disclaimer at the top listing the reasons for the rewrite and a link to the previous version.
 
-The first post I'm rewritten is [Vitest Monorepo Setup]({% link _posts/2024-08-19-vitest-monorepo-setup.md %}), which is my second most popular post for visitors from Google Search. Reader [christoph-hue](https://github.com/christoph-hue) left a [comment](https://github.com/TheCandidStartup/TheCandidStartup.github.io/issues/42#issuecomment-3193623479) (thank you!), pointing out that my recommendations were deprecated as of Vitest 3.2. 
+The first post I've rewritten is [Vitest Monorepo Setup]({% link _posts/2024-08-19-vitest-monorepo-setup.md %}), which is my second most popular post for visitors from Google Search. Reader [christoph-hue](https://github.com/christoph-hue) left a [comment](https://github.com/TheCandidStartup/TheCandidStartup.github.io/issues/42#issuecomment-3193623479) (thank you!), pointing out that my recommendations were deprecated as of Vitest 3.2. 
