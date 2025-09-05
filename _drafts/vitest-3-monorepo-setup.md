@@ -112,7 +112,7 @@ You can define projects with their config directly in the root config but it beh
 
 # Global Settings
 
-It gets more confusing. Some configuration, like reporters and coverage, needs to be [defined in the root config](https://vitest.dev/guide/projects.html#defining-projects) rather than the per-package config files, when running Vitest in the root directory.
+It gets more confusing. When running Vitest in the root directory, some configuration, like reporters and coverage, needs to be [defined in the root config](https://vitest.dev/guide/projects.html#defining-projects) rather than the per-package config files.
 
 The tests to run are picked up from the per-package configs but coverage specific options, like which files to include in the coverage report, need to be specified here.
 
