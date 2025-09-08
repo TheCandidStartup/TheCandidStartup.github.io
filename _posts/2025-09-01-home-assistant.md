@@ -167,7 +167,7 @@ My trigger will be the charger turning on.
 
 I have the additional condition that Octopus smart control is enabled.
 
-[Actions](https://www.home-assistant.io/docs/automation/action/) do something. Each entity has a set of actions that it supports. There are also a variety of built-in Home Assistant actions, such as sending a notification to the Home Assistant app.
+[Actions](https://www.home-assistant.io/docs/automation/action/) do something. Each entity has a set of actions that it supports. There are also a variety of built-in Home Assistant actions, such as sending a notification to the Home Assistant app. You can see all the available actions in "Developer Tools -> Actions". 
 
 The Alpha ESS battery integration supports two actions that change the charging and discharging settings respectively. I want to override the standard settings when the charger turns on and reset them when the charger turns off. My battery is normally configured to charge during Octopus off-peak hours between 23:30 and 5:30. During this period the battery won't discharge.
 
