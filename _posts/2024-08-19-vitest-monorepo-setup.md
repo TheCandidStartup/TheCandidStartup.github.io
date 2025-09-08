@@ -5,6 +5,13 @@ tags: frontend
 
 I was about to get started turning my stub `react-spreadsheet` package into a real one, when I noticed a new Vitest related warning from VS Code. 
 
+{% capture note-content %}
+This post describes monorepo setup for Vitest 1.6 - 2.x. The workspace feature described here was deprecated in Vitest 3.2.
+
+There is an [updated version]({% link _posts/2025-09-08-vitest-3-monorepo-setup.md %}) of this post for Vitest 3 and later.
+{% endcapture %}
+{% include candid-note.html content=note-content %}
+
 {% include candid-image.html src="/assets/images/react-spreadsheet/vitest-workspace-warning.png" alt="Vitest Workspace Warning" %}
 
 # Vite Config Files
@@ -80,7 +87,7 @@ export default defineConfig({
 })
 ```
 
-I copied the `react-virtual-scroll` config when I created the `react-spreadsheet` stub package. It would be great if I can hoist all the common settings up to the workspace level. Searching for "Vitest Workspace" took me straight to the [documentation](https://vitest.dev/guide/workspace.html). 
+I copied the `react-virtual-scroll` config when I created the `react-spreadsheet` stub package. It would be great if I can hoist all the common settings up to the workspace level. Searching for "Vitest Workspace" took me straight to the [documentation](https://v2.vitest.dev/guide/workspace.html). 
 
 Vitest supports an explicit workspace level config for monorepo setups. As far as I can tell, there's [no equivalent](https://vitejs.dev/guide/features.html) for Vite. I'm going to concentrate on sharing the Vitest settings as the rest of the config file is pretty much a stub anyway.
 
@@ -104,7 +111,7 @@ You can put config into the workspace file but it behaves just like a per-packag
 
 # Global Settings
 
-It gets more confusing. The documentation explains that some settings, [like coverage](https://vitest.dev/guide/workspace.html#coverage), apply globally at the workspace level. Fine, I'll move those settings into the workspace file. 
+It gets more confusing. The documentation explains that some settings, [like coverage](https://v1.vitest.dev/guide/workspace.html#coverage), apply globally at the workspace level. Fine, I'll move those settings into the workspace file. 
 
 Wrong again. The configs in the workspace file are per-package config, not workspace level config! You have to put your coverage options into a separate `vitest.config.ts` file in the root directory. This isn't documented but is covered in a [Q&A discussion](https://github.com/vitest-dev/vitest/discussions/3852).
 
@@ -155,7 +162,7 @@ I had to add `test` to the include array in each per-package stub config.
 
 # Shared Vite Config
 
-The workspace documentation has a separate section on [sharing config](https://vitest.dev/guide/workspace.html#configuration). You need to put your shared config in a separate file and then import it and use the `mergeConfig` utility to combine with your per-package config. Interestingly, `mergeConfig` seems to be generic. It appears to work with Vite settings too.
+The workspace documentation has a separate section on [sharing config](https://v2.vitest.dev/guide/workspace.html#configuration). You need to put your shared config in a separate file and then import it and use the `mergeConfig` utility to combine with your per-package config. Interestingly, `mergeConfig` seems to be generic. It appears to work with Vite settings too.
 
 I was expecting another misunderstanding on my part, but it worked as expected. I was able to move almost everything into a shared `vitest.config.ts`. I've left the old coverage settings in place so that I can still run per package coverage.
 
