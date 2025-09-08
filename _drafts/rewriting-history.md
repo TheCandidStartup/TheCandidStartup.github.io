@@ -45,7 +45,7 @@ The changes made are still small scale and don't change the structure or meaning
 * [Making Spreadsheet Snapshots work with Insert and Delete]({% link _posts/2023-06-05-spreadsheet-insert-delete.md %}) - I rewrote a couple of paragraphs after I came up with a better approach. Added a comment to explain what I'd done. 
 * [Unique Ids]({% link _posts/2023-09-24-unique-ids.md %}) - Got great feedback on this post and addressed the points raised as comments.
 
-There's one post that I updated before I realized I could use comments to track changes. In this case, I added a Revisions section at the end listing the changes.
+There's one post that I updated before I realized I could use comments to track changes. In this case, I added a Revisions section at the end, listing the changes.
 * [Serverless or Not?]({% link _posts/2022-12-05-serverless-or-not.md %}) - Added new rows to tables of serverless services after new services announced at AWS Re:Invent.
 
 # Legal Jeopardy
@@ -66,4 +66,4 @@ If I realize that a post is outdated enough to be dangerous, I'll add a highligh
 
 Rewritten posts will also have a disclaimer at the top listing the reasons for the rewrite and a link to the previous version.
 
-The first post I've rewritten is [Vitest Monorepo Setup]({% link _posts/2024-08-19-vitest-monorepo-setup.md %}), which is my second most popular post for visitors from Google Search. Reader [christoph-hue](https://github.com/christoph-hue) left a [comment](https://github.com/TheCandidStartup/TheCandidStartup.github.io/issues/42#issuecomment-3193623479) (thank you!), pointing out that my recommendations were deprecated as of Vitest 3.2. 
+The first post I've [rewritten]({% link _posts/2025-09-08-vitest-3-monorepo-setup.md %}) is [Vitest Monorepo Setup]({% link _posts/2024-08-19-vitest-monorepo-setup.md %}), which is my second most popular post for visitors from Google Search. Reader [christoph-hue](https://github.com/christoph-hue) left a [comment](https://github.com/TheCandidStartup/TheCandidStartup.github.io/issues/42#issuecomment-3193623479) (thank you!), pointing out that my recommendations were deprecated as of Vitest 3.2. 
