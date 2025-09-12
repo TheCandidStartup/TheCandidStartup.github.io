@@ -5,7 +5,7 @@ tags: gear
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 
-[Last time]({% link _posts/2025-09-01-home-assistant.md %}) I took you through setting up a Home Assistant Green, installing HACS, adding custom integrations and then creating an automation to disable discharge of my home battery while my EV is charging.
+[Last time]({% link _posts/2025-09-01-home-assistant.md %}), I took you through setting up a Home Assistant Green, installing HACS, adding custom integrations and then creating an automation to disable discharge of my home battery while my EV is charging.
 
 I had one loose end. I was using lots of hardcoded values in the automation. In particular, the target State of Charge (SOC) for the battery. This is a value that I often tweak manually, so having it reset whenever I charge the car is annoying. 
 
@@ -41,7 +41,7 @@ I can now update my "Force charge battery" automation and replace the hardcoded 
 
 {% include candid-image.html src="/assets/images/home-assistant/charge_cutoff_paste_template.png" alt="Pasting a template directly into the visual editor results in an error" %}
 
-The editor uses controls optimized for the type of value used by each entity. In this case, it's an integer percentage between 0 and 100. You'll get an error if you try pasting in a template expression.
+The editor uses controls specialized for the type of value used by each entity. In this case, it's an integer percentage between 0 and 100. You'll get an error if you try pasting in a template expression.
 
 You need to flip the editor into YAML mode to insert the template. You can enable YAML mode just for the section that you need to edit.
 
