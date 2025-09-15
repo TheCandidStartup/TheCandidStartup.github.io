@@ -47,7 +47,7 @@ You need to flip the editor into YAML mode to insert the template. You can enabl
 
 {% include candid-image.html src="/assets/images/home-assistant/charge_cutoff_yaml_template.png" alt="Pasting a template into the YAML representation" %}
 
-There's one gotcha. In YAML, strings have double quotes around them but numbers and booleans don't. However, when replacing the number in `chargestopsoc: 100` with the template expression, you have to add double quotes.
+There's one gotcha. In YAML, curly braces are used to define mappings. You have to put the template expression in double quotes to treat it as a string. So, when replacing the number in `chargestopsoc: 100` with the template expression, remember to wrap it with double quotes.
 
 If you don't like working with YAML, you can now switch back to visual editor mode. The visual editor parses the YAML and this time gives you a string editing control.
 
