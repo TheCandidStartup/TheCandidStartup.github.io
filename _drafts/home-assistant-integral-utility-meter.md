@@ -35,11 +35,11 @@ It picks a representative power value for each pair of samples and multiplies it
 
 You can also use *left* and *right* methods which just use one of the sample values, either the left or right respectively. So, which integration method should I use?
 
-I found the documentation unhelpful. It explains that the default is "most accurate", "if the source updates often", as it better fits the curve. *Left* "underestimates the intrinsic source" but is "extremely accurate" for "rectangular functions which are very stable for long periods of time and change rapidly". *Right* "overestimates the intrinsic source" and is "only appropriate to be used with rectangular functions". 
+I found the documentation unhelpful. It explains that the default is "most accurate", "if the source updates often", as it better fits the curve. The *left* method "underestimates the intrinsic source" but is "extremely accurate" for "rectangular functions which are very stable for long periods of time and change rapidly". The *right* method "overestimates the intrinsic source" and is "only appropriate to be used with rectangular functions". 
 
 Which would you choose?
 
-It didn't make any sense to me. How can using the *left* sample always underestimate, and *right* always over estimate? Doesn't it depend on the slope of the graph? What makes a function rectangular?
+It didn't make any sense to me. What makes a function rectangular? How can using the *left* sample always underestimate, and *right* always over estimate? Doesn't it depend on the slope of the graph? 
 
 If I wasn't cursed with an enquiring mind I would have gone with the default. The example for converting power readings in Watts to kWh uses the default. If it's the default it should cover the most common cases, and it says it's more accurate, and my power values jump around all over the place, updating often. Right?
 
@@ -86,7 +86,7 @@ I can now see how well actual solar production matches the solar generation fore
 
 I have another problem with Grid Import/Export. There's a single sensor that reports a positive number of watts when importing and a negative number when exporting. I need separate increasing sums for total amount imported over time and exported over time. 
 
-The [recommended approach](https://community.home-assistant.io/t/calculating-of-electrical-energy-kwh-from-power-sensor-kw/635480/4) is to create two separate sensors for Grid Import and Export using templates. The Grid Import sensor outputs `+input` when Grid I/O is positive and zero otherwise. The Grid Export sensor output `-input` when Grid I/O is negative and zero otherwise. 
+The [recommended approach](https://community.home-assistant.io/t/calculating-of-electrical-energy-kwh-from-power-sensor-kw/635480/4) is to create two separate sensors for Grid Import and Export using templates. The Grid Import sensor outputs `+input` when Grid I/O is positive and zero otherwise. The Grid Export sensor outputs `-input` when Grid I/O is negative and zero otherwise. 
 
 {% raw %}
 
@@ -128,12 +128,13 @@ Once you have import and export separated, you create an integral helper for eac
 
 # Cleaning Dirty Input
 
-* Want to measure power used by Hypervolt Charger.
-* Hypervolt session energy sensor looks like it should work. Sum of energy used by each charging session.
-* Added as individual device to the energy dashboard
-* Shows energy consumed and then returned at end of each session
-* Long [issue thread](https://github.com/gndean/home-assistant-hypervolt-charger/issues/5) in the GitHub repo for the integration.
-* Wrapping the sensor in a daily resetting utility meter did the trick. All sessions during the day are totalled up. 
+The energy dashboard lets you add metered entities that track the power consumption of individual devices. It was natural to add the Hypervolt EV charger. There's a "Hypervolt Session Energy" sensor that looks like it should be compatible. 
+
+It kind of works. You can see the energy consumed during a charging session. Unfortunately, at the end of the session the dashboard shows a large negative value, as if all the energy consumed is handed back. This is because the [entity has a state class of `TOTAL`](https://github.com/gndean/home-assistant-hypervolt-charger/issues/5), which means it reports a net total (can decrease as well as increase).
+
+There is a separate "Hypervolt Session Energy Increasing" entity which is meant to report a constantly increasing total. Unfortunately, it's [currently broken](https://github.com/gndean/home-assistant-hypervolt-charger/issues/75).
+
+The problem can be fixed by wrapping the session energy sensor with a utility meter.
 
 ```yaml
 utility_meter:
@@ -145,6 +146,8 @@ utility_meter:
     net_consumption: false
     delta_values: false
 ```
+
+The `periodically_resetting`, `net_consumption` and `delta_values` options control how the utility meter handles the input. Setting `net_consumption` to `false` fixes the problem of negative consumption appearing on the dashboard. Setting `periodically_resetting` to true ensures that if there are multiple charging sessions in a day, they're all added up together.
 
 # Peak and Off-Peak Load
 
@@ -163,9 +166,13 @@ utility_meter:
       - Off-Peak
 ```
 
-I created a utility meter with `Peak` and `Off-Peak` tariffs. This in turn creates three entities.
+I created an integral for the Alpha ESS battery's instantaneous load sensor and used it as input to a utility meter with `Peak` and `Off-Peak` tariffs. That in turn creates three entities for me.
 
 {% include candid-image.html src="/assets/images/home-assistant/load-daily-tariff-sensors.png" alt="Entities created by Load (Daily) utility meter" %}
+
+The `sensor.load_daily` entity lets you switch between `Peak` and `Off-Peak` tariffs. The utility meter uses the value of `sensor.load_daily` to decided whether to increment `sensor.load_daily_peak` or `sensor.load_daily_off_peak`. The final piece of the jigsaw is to create an automation that switches been `Peak` and `Off-Peak`.
+
+I created a template sensor helper to make that easier. The Octopus Energy integration provides a sensor that turns on during normal off peak periods. However, that doesn't include the additional off peak periods added dynamically when smart charging. 
 
 {% raw %}
 
@@ -179,6 +186,10 @@ I created a utility meter with `Peak` and `Off-Peak` tariffs. This in turn creat
 ```
 
 {% endraw %}
+
+I can then use my "Live Off Peak Electricity" sensor to drive an automation that sets the tariff accordingly. 
+
+{% raw %}
 
 ```yaml
 alias: Select Utility Meter Electricity Tariff
@@ -198,14 +209,23 @@ actions:
 mode: single
 ```
 
-# Plan
+{% endraw %}
 
-* Integrals for all the Alpha ESS instantaneous values
-* Need to split Battery I/O and Grid I/O into separate sensors for charge/discharge and import/export to produce increasing sums.
-* Try one for Hypervolt Grid I/O too. Interesting to see how values differ.
-* Use Utility Meters to get daily figures
-* Update energy dashboard to use these more "live" values
-* Actual costs and consumption from Octopus (day behind external stats). Can I compare against calculated values?
-* Use Utility Meter tariffs to measure peak and off-peak load separately. Will that handle long sample intervals correctly, or do I need max sub interval for that???
-* Need to charge battery enough to cover next days peak load allowing for forecast solar
-* Instead of using hard coded estimate of 7 kWh, measure it. Will change with seasons and possibly day of the week.
+I added a little bit of future proofing. Rather than directly updating `sensor.load_daily`, I update all entities with the `electricity_meter_tariff` label. If I add other tariff based utility meters in future, I just need to add the label to have them automated.
+
+I added the daily peak and off peak load sensors to the dashboard as individual devices. I configured the hypervolt charger device to use off peak load as an upstream device. This prevents the dashboard from double counting the off peak energy used by the charger.
+
+{% include candid-image.html src="/assets/images/home-assistant/individual-device-energy-dashboard.png" alt="Individual Devices from Energy Dashboard" %}
+
+# Conclusion
+
+I've succeeded in my mission of populating the energy dashboard with more useful, fine-grained energy consumption values.
+
+{% include candid-image.html src="/assets/images/home-assistant/fine-energy-dashboard-consumption.png" alt="Fine Grained Consumption from Energy Dashboard" %}
+
+There's still an itch that I haven't scratched. How accurate is my grid import number? Can I compare it with the readings from my electricity meter available from the Octopus integration?
+
+Can I look at peak load over multiple days of the week to see how it varies? The energy dashboard will only show me one day at a time, or totals for a week or month.
+
+I need a custom dashboard. 
+
