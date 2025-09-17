@@ -70,7 +70,28 @@ template:
 * To make changes take effect you have to save the file and then go to "Developer Tools -> YAML" and click on "Template Entries" to reload the config
 * Then see if you can find the sensor that the template should have created
 * If not, and you're lucky, you might get a notification from Home Assistant with an error message extracted from the logs
+* Once the sensor was actually created I needed to work out why it wasn't working properly. It always returned the value from the Alpha ESS sensor. 
+* The problem was that I'd used double quotes around `hypervolt` in the `if` condition. The [Jinja documentation](https://jinja.palletsprojects.com/en/latest/templates/#literals) says that string literals can use double or single quotes. However, for whatever reason, in this circumstance, it didn't work until I changed to single quotes.
 
 # Automating Hypervolt restart
 
 * Possible to [write an automation](https://github.com/gndean/home-assistant-hypervolt-charger/issues/92#issuecomment-2954067886) that detects when Hypervolt sensor is stuck and restart the integration.
+* The attribute on the Composite Grid I/O sensor gives us an easy way to determine if the Hypervolt integration is stuck.
+
+```yaml
+alias: Hypervolt Grid  Power Stuck
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - sensor.composite_grid
+    attribute: source
+    to: alpha
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+```
+
+* If the source attribute changes to "alpha" and remains that way for 5 minutes, the Hypervolt must be stuck. 
+* For now the automation just notifies me. I want to unstick it manually once before trying to automate the procedure.
