@@ -151,5 +151,41 @@ series:
 * Statistics card allows you to specify an explicit time period
 * Played around to try and see if I could work out start/end being supplied by energy date selector
 * Equivalent to 23:00 - 22.59
+
+```yaml
+fixed_period:
+  start: "2025-09-09T23:00:00.000Z"
+  end: "2025-09-10T22:59:59.000Z"
+```
+
+```yaml
+cards:
+  - type: energy-date-selection
+    grid_options:
+      columns: full
+  - type: statistic
+    period: energy_date_selection
+    stat_type: change
+    entity: sensor.charge
+  - chart_type: bar
+    period: day
+    type: statistics-graph
+    entities:
+      - sensor.charge
+    stat_types:
+      - change
+    energy_date_selection: true
+  - chart_type: bar
+    period: hour
+    type: statistics-graph
+    entities:
+      - sensor.charge
+    stat_types:
+      - change
+    energy_date_selection: true
+```
+
 * Missing last entry from yesterday and adding in last from previous day
 * Noticed it because I charged the car yesterday which kicked in at 23.30
+
+{% include candid-image.html src="/assets/images/home-assistant/statistics-card-bug.png" alt="Statistics Card missing data from last hour" %}
