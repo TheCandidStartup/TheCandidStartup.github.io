@@ -170,15 +170,15 @@ I created an integral for the Alpha ESS battery's instantaneous load sensor and 
 
 {% include candid-image.html src="/assets/images/home-assistant/load-daily-tariff-sensors.png" alt="Entities created by Load (Daily) utility meter" %}
 
-The `sensor.load_daily` entity lets you switch between `Peak` and `Off-Peak` tariffs. The utility meter uses the value of `sensor.load_daily` to decided whether to increment `sensor.load_daily_peak` or `sensor.load_daily_off_peak`. The final piece of the jigsaw is to create an automation that switches been `Peak` and `Off-Peak`.
+The `sensor.load_daily` entity lets you switch between `Peak` and `Off-Peak` tariffs. The utility meter uses the value of `sensor.load_daily` to decide whether to increment `sensor.load_daily_peak` or `sensor.load_daily_off_peak`. The final piece of the jigsaw is to create an automation that switches been `Peak` and `Off-Peak`.
 
-I created a template sensor helper to make that easier. The Octopus Energy integration provides a sensor that turns on during normal off peak periods. However, that doesn't include the additional off peak periods added dynamically when smart charging. 
+I created a template sensor helper to make that easier. The Octopus Energy integration provides a sensor that turns on during normal off-peak periods. However, that doesn't include the additional off-peak periods added dynamically when smart charging. 
 
 {% raw %}
 
 ```
 {% if is_state('binary_sensor.octopus_energy_electricity_XXXX_off_peak', 'on') or 
-      is_state('switch.hypervolt_charging', 'On') %}
+      is_state('switch.hypervolt_charging', 'on') %}
   {{ 'Off-Peak' }}
 {% else %}
   {{ 'Peak' }}
@@ -187,7 +187,7 @@ I created a template sensor helper to make that easier. The Octopus Energy integ
 
 {% endraw %}
 
-I can then use my "Live Off Peak Electricity" sensor to drive an automation that sets the tariff accordingly. 
+I can then use my "Live Off-Peak Electricity" sensor to drive an automation that sets the tariff accordingly. 
 
 {% raw %}
 
@@ -213,9 +213,11 @@ mode: single
 
 I added a little bit of future proofing. Rather than directly updating `sensor.load_daily`, I update all entities with the `electricity_meter_tariff` label. If I add other tariff based utility meters in future, I just need to add the label to have them automated.
 
-I added the daily peak and off peak load sensors to the dashboard as individual devices. I configured the hypervolt charger device to use off peak load as an upstream device. This prevents the dashboard from double counting the off peak energy used by the charger.
+I added the daily peak and off-peak load sensors to the dashboard as individual devices. I configured the hypervolt charger device to use off-peak load as an upstream device. This is meant to prevent the dashboard from double counting the off-peak energy used by the charger.
 
 {% include candid-image.html src="/assets/images/home-assistant/individual-device-energy-dashboard.png" alt="Individual Devices from Energy Dashboard" %}
+
+At least it works for two out of the three cards that show individual devices. What do you think? Does it make sense that the total usage chart shows the energy used by the Hypervolt charger twice?
 
 # Conclusion
 
