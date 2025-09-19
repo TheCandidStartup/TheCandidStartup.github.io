@@ -1,7 +1,7 @@
 ---
 title: >
   Home Assistant: Integrals and Utility Meters
-tags: gear
+tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 

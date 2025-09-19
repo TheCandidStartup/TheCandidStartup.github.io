@@ -1,7 +1,7 @@
 ---
 title: >
   Home Assistant: Helpers, Templates and Solar Forecasts
-tags: gear
+tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 

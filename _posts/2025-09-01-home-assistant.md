@@ -1,6 +1,6 @@
 ---
 title: Home Assistant
-tags: gear
+tags: gear home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 

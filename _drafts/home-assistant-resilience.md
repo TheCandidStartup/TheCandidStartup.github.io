@@ -1,7 +1,7 @@
 ---
 title: >
   Home Assistant: Resilience
-tags: gear
+tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 

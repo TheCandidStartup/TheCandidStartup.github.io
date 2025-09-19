@@ -1,7 +1,7 @@
 ---
 title: >
   Home Assistant: Dashboards, Statistics and Custom Cards
-tags: gear
+tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 
