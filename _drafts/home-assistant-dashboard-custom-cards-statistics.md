@@ -5,50 +5,67 @@ tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 
-wise words
+I [now have]({% link _drafts/home-assistant-integral-utility-meter.md %}) useful data being collected and displayed on the Home Assistant built-in energy dashboard. Of course, it's not being presented exactly as I would like and doesn't include all the data sources I'd like. Time to dive into the wonderful world of custom dashboards.
 
-* Custom dashboards for battery and charger
-* Exploring statistics - like energy dashboard but better
-* Home view for highest priority stuff - divided into Today, Yesterday and Tomorrow
+I already created a [simple custom dashboard]({% link _posts/2025-09-15-home-assistant-helpers-template-solar-forecasts.md %}) for my home battery, where I threw a few cards together for relevant entities.
 
-# History vs Statistics
+{% include candid-image.html src="/assets/images/home-assistant/alpha-ess-custom-dashboard.png" alt="Alpha ESS Custom Dashboard" %}
 
-* History of previous entity values (both state and attributes), retained for 10 days by default
-* Statistics recorded for measurements (sensors with `state_class` of `measurement`) and metered values (sensors with `state_class` of `total` or `total_increasing`)
-* Measurement represents a measurement in current time, recorded immediately, not a historical record or future prediction
-* Metered value is a total amount. `total` can go up and down (e.g. net consumption of electricity). `total_increasing` always increases (e.g. total import of electricity from grid).
-* Both may reset to zero, typically aligned with billing cycle.
-* Worked with metered values last time when improving the energy dashboard. The energy dashboard is driven from stored statistics
-* Measurements store min/max/mean over period, metered values store state/sum at end of period
-* Period is 5 minutes for short term statistics (retained for 10 days by default), one hour for long term statistics (retained indefinitely by default)
-* sum is grand total over lifetime of statistics, able to cope with reset to zero (by ignoring value of zero when adding changed entity to running total)
-* sum is typically used to determine change over a period of time (by subtracting sum at start of period from sum at end)
+I have something more interesting in mind.
 
 # Metered Consumption vs Measured
 
-* Switched to real time consumption based on integral over hypervolt grid CT clamp
-* How accurate is that, how does it compare with what meter measures?
-* Measurements reported once a day with state that contains *previous* days consumption with attribute that contains meter reading for each half-hourly period
-* Want to display as bar graph for previous day
-* Standard dashboard cards don't cut it
-  * Can't retrieve points to graph from attribute
-  * Most of HA assumes that time associated with historical data is the time that the entity changed
-  * Both history and statistics graph show a rolling window (of selectable size) ending at current time
+The Home Assistant energy dashboard is configured to measure grid electricity consumption in close to real time. It uses an integral helper over samples from my Hypervolt charger's grid CT clamp. I want to see how accurate that is by comparing with the measurements from my electricity meter. 
+
+Octopus, my energy provider, makes the *previous* day's electricity consumption available via API. The Octopus Home Assistant integration makes the results of this API available as a "Previous Accumulative Consumption Electricity" entity. The state value is the total consumption for the previous day, with the detailed half-hourly meter readings provided as attributes. 
+
+{% include candid-image.html src="/assets/images/home-assistant/prev-accum-consumption.png" alt="Octopus Previous Accumulative Consumption entity" %}
+
+I want to display a bar graph for each half hour period of the previous day comparing the metered and measured values. The standard [dashboard cards](https://www.home-assistant.io/dashboards) can't do it.
+* There's no card that supports retrieving points to graph from an attribute
+* The standard cards assume that the time to use for historical data is the time that the entity changed
+
+I need to retrieve the `Charges` attribute from the current "Previous Accumulative Consumption Electricity" entity, draw a series using the dates in the attribute, combined with a series based on the history of my "Grid Import" sensor. 
 
 # Custom Cards
 
-* Rich eco-system of custom dashboard cards available via HACS
-* For graphing, there are three main contenders
-* Immediately feel off the reservation as all three require YAML based configuration, no visual editor support
+Fortunately, there's a rich ecosystem of custom dashboard cards that you can add to your Home Assistant using HACS. For graphing, there are three main contenders: Mini Graph, ApexCharts and Plotly.
+
+All three immediately feel more "advanced" as there's no visual editor support, YAML is required. They're listed in order of flexibility, complexity and size.
 
 ## Mini Graph Card
 
-* Much more customizable version of standard History Card
-* Still tied to rolling window of data
+[Mini Graph Card](https://github.com/kalkih/mini-graph-card) is a more customizable and flexible version of the standard [Sensor](https://www.home-assistant.io/dashboards/sensor/) and [History Graph](https://www.home-assistant.io/dashboards/history-graph/) cards for use with Sensors. It's the simplest and most popular of the three.
 
-## Apexcharts Card
+The look and feel is a good match for the standard cards. It supports line and bar graphs, multiple entities on the same card, and a host of options for controlling the layout and rendering. 
 
-* Wrapper around ApexCharts JS library
+Unfortunately, there's no way to extract data points for an entity from attributes. I can use it to display a half-hourly bar chart for 24 hours of grid import.
+
+{% include candid-image.html src="/assets/images/home-assistant/mini-graph-card.png" alt="Mini Graph Card displaying Grid Import bar chart" %}
+
+The card shows an unlabelled bar graph until you hover over a bar (pictured). It then shows the value and time range for the bar, and also shows the minimum and maximum values for all the bars. 
+
+There's no way to control when the graph starts and ends. You get a rolling window ending with the current time, which in turn defines the start and end times for each bar.
+
+On the positive side, the card is easy to configure and works well for showing the current state and immediate history for a sensor.
+
+```yaml
+type: custom:mini-graph-card
+icon: mdi:lightning-bolt
+entities:
+  - entity: sensor.grid_import_daily
+    name: Grid Import
+    show_state: true
+show:
+  graph: bar
+points_per_hour: 2
+hours_to_show: 24
+```
+
+## ApexCharts Card
+
+Next up is [ApexCharts Card](https://github.com/RomRider/apexcharts-card), which is a wrapper around [ApexCharts.js](https://apexcharts.com/). 
+Wrapper around ApexCharts JS library
 * Default look and feel fits in well with standard cards
 * Lots of configuration options, including extensive control over start and end of period
 * Easy to setup to show day, or week or month's data beginning at the start of the current period
@@ -120,6 +137,21 @@ series:
 * Rich transformation pipeline to further manipulate data
 * Embed JavaScript anywhere for ultimate flexibility
 * Range selector UI
+
+* Home view for highest priority stuff - divided into Today, Yesterday and Tomorrow
+
+# History vs Statistics
+
+* History of previous entity values (both state and attributes), retained for 10 days by default
+* Statistics recorded for measurements (sensors with `state_class` of `measurement`) and metered values (sensors with `state_class` of `total` or `total_increasing`)
+* Measurement represents a measurement in current time, recorded immediately, not a historical record or future prediction
+* Metered value is a total amount. `total` can go up and down (e.g. net consumption of electricity). `total_increasing` always increases (e.g. total import of electricity from grid).
+* Both may reset to zero, typically aligned with billing cycle.
+* Worked with metered values last time when improving the energy dashboard. The energy dashboard is driven from stored statistics
+* Measurements store min/max/mean over period, metered values store state/sum at end of period
+* Period is 5 minutes for short term statistics (retained for 10 days by default), one hour for long term statistics (retained indefinitely by default)
+* sum is grand total over lifetime of statistics, able to cope with reset to zero (by ignoring value of zero when adding changed entity to running total)
+* sum is typically used to determine change over a period of time (by subtracting sum at start of period from sum at end)
 
 # Choosing a Time Period
 
