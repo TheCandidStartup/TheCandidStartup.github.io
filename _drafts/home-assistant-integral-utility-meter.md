@@ -25,7 +25,7 @@ That last line on the page pointed me in the right direction.
 
 # Integral
 
-The Integral helper calculates the [Riemann sum](https://en.wikipedia.org/wiki/Riemann_sum) of the values provided by a source sensor, which is an approximation of the integral of the values. If you plot the samples on a graph against time, this is equivalent to calculating the area under the line. 
+The [Integral](https://www.home-assistant.io/integrations/integration/) helper calculates the [Riemann sum](https://en.wikipedia.org/wiki/Riemann_sum) of the values provided by a source sensor, which is an approximation of the integral of the values. If you plot the samples on a graph against time, this is equivalent to calculating the area under the line. 
 
 In more concrete terms, it can take a sequence of samples in Watts and output the total energy produced in kWh. 
 
@@ -41,7 +41,7 @@ Which would you choose?
 
 It didn't make any sense to me. What makes a function rectangular? How can using the *left* sample always underestimate, and *right* always over estimate? Doesn't it depend on the slope of the graph? 
 
-If I wasn't cursed with an enquiring mind I would have gone with the default. The example for converting power readings in Watts to kWh uses the default. If it's the default it should cover the most common cases, and it says it's more accurate, and my power values jump around all over the place, updating often. Right?
+If I wasn't cursed with an enquiring mind I would have gone with the default. The example for converting power readings in Watts to kWh uses the default. If it's the default it should cover the most common cases, and it says it's the most accurate, and my power values jump around all over the place, updating often. Right?
 
 Wrong. You almost always want to use *left*. In fact, it should be your default choice.
 
@@ -118,7 +118,7 @@ template:
 
 {% endraw %}
 
-I'm using the high resolution Hypervolt sensor for Grid I/O rather than the one minute resolution Alpha ESS sensor. A home battery system tries to discharge to match your home's instantaneous load requirements. There's always some lag which means there will be small amounts of power imported and exported during the day. It will be interesting to see how accurately I can measure these small values compared with the measurements from the electricity meter reported by my energy provider.
+I'm using the high resolution Hypervolt sensor for Grid I/O rather than the one minute resolution Alpha ESS sensor. A home battery system tries to discharge to match your home's instantaneous load requirements. There's always some lag which means there will be small amounts of power imported and exported during the day. It will be interesting to see how accurately I can measure these small values compared with the measurements from the electricity meter.
 
 Once you have import and export separated, you create an integral helper for each as above. 
 
