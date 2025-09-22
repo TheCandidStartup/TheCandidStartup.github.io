@@ -11,7 +11,7 @@ I already created a [simple custom dashboard]({% link _posts/2025-09-15-home-ass
 
 {% include candid-image.html src="/assets/images/home-assistant/alpha-ess-custom-dashboard.png" alt="Alpha ESS Custom Dashboard" %}
 
-I have something more interesting in mind.
+I have something more interesting in mind for my next step.
 
 # Metered Consumption vs Measured
 
@@ -39,7 +39,7 @@ All three immediately feel more "advanced" as there's no visual editor support, 
 
 The look and feel is a good match for the standard cards. It supports line and bar graphs, multiple entities on the same card, and a host of options for controlling the layout and rendering. 
 
-Unfortunately, there's no way to extract data points for an entity from attributes. I can use it to display a half-hourly bar chart for 24 hours of grid import.
+Unfortunately, there's no way to extract data points for an entity from attributes. However, I can use it to display a half-hourly bar chart for 24 hours of grid import.
 
 {% include candid-image.html src="/assets/images/home-assistant/mini-graph-card.png" alt="Mini Graph Card displaying Grid Import bar chart" %}
 
@@ -60,12 +60,12 @@ show:
   graph: bar
 points_per_hour: 2
 hours_to_show: 24
+aggregate_func: diff
 ```
 
 ## ApexCharts Card
 
 Next up is [ApexCharts Card](https://github.com/RomRider/apexcharts-card), which is a wrapper around [ApexCharts.js](https://apexcharts.com/). 
-Wrapper around ApexCharts JS library
 * Default look and feel fits in well with standard cards
 * Lots of configuration options, including extensive control over start and end of period
 * Easy to setup to show day, or week or month's data beginning at the start of the current period
