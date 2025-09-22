@@ -5,7 +5,7 @@ tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 
-I [now have]({% link _drafts/home-assistant-integral-utility-meter.md %}) useful data being collected and displayed on the Home Assistant built-in energy dashboard. Of course, it's not being presented exactly as I would like and doesn't include all the data sources I'd like. Time to dive into the wonderful world of custom dashboards.
+I [now have]({% link _posts/2025-09-22-home-assistant-integral-utility-meter.md %}) useful data being collected and displayed on the Home Assistant built-in energy dashboard. Of course, it's not being presented exactly as I would like and doesn't include all the data sources I'd like. Time to dive into the wonderful world of custom dashboards.
 
 I already created a [simple custom dashboard]({% link _posts/2025-09-15-home-assistant-helpers-template-solar-forecasts.md %}) for my home battery, where I threw a few cards together for relevant entities.
 
