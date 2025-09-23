@@ -23,13 +23,13 @@ Octopus, my energy provider, makes the *previous* day's electricity consumption 
 
 I want to display a bar graph for each half hour period of the previous day, comparing the metered and measured values. The standard [dashboard cards](https://www.home-assistant.io/dashboards) can't do it. There's no card that supports retrieving points to graph from an attribute. The standard cards also assume that the time to use for historical data is the time that the entity changed.
 
-I need to retrieve the `Charges` attribute from the current "Previous Accumulative Consumption Electricity" entity, draw a series using the dates in the attribute, combined with a series based on the history of my "Grid Import" sensor. 
+I need to retrieve the `charges` attribute from the current "Previous Accumulative Consumption Electricity" entity, draw a series using the dates in the attribute, combined with a series based on the history of my "Grid Import" sensor. 
 
 # Custom Cards
 
 Fortunately, there's a rich ecosystem of custom dashboard cards that you can add to your Home Assistant using HACS. For graphing, there are three main contenders: Mini Graph, ApexCharts and Plotly.
 
-All three immediately feel more "advanced" as there's no visual editor support, YAML is required. They're listed in order of flexibility, complexity and size.
+All three immediately feel more "advanced" as there's no visual editor support. YAML is required. They're listed in increasing order of flexibility, complexity and size.
 
 ## Mini Graph Card
 
@@ -106,7 +106,9 @@ The default look and feel is very different from Home Assistant. Out of the box 
 
 {% include candid-image.html src="/assets/images/home-assistant/plotly-grid-import.png" alt="Plotly Graph Card displaying Grid Import Statistics" %}
 
-It's also harder to use. The Plotly Graph Card documentation misses out some important options that you have to infer from Plotly.js documentation. For example, there's no mention of how to switch to a bar chart. I *think* it's all there but it's a battle digging it out. As ApexCharts does what I needed, I stopped here.
+It's also harder to use. The Plotly Graph Card documentation misses out some important options that you have to infer from Plotly.js documentation. For example, there's no mention of how to switch to a bar chart ([turns out](https://github.com/dbuezas/lovelace-plotly-graph-card/discussions/131) you need to add `type: bar` to the series). 
+
+I *think* everything I need is there but it's a battle digging it out. As ApexCharts does what I needed, I stopped here.
 
 ```yaml
 type: custom:plotly-graph
@@ -154,27 +156,34 @@ The weirdest thing about these entities is that they have no current state. Most
 
 Annoyingly, ApexCharts [does exactly this](https://github.com/RomRider/apexcharts-card/issues/707), even when you configure it to read data from long term statistics. You can work around this using a data generator to [read the statistics database](https://community.home-assistant.io/t/display-apexchart-from-statistic-entity/860669/5) yourself. Which feels ugly.
 
-```js
-  const stat_entity =
-  'octopus_energy:electricity_XXXXX_previous_accumulative_consumption';
+```yaml
+type: custom:apexcharts-card
+graph_span: 24h
+series:
+  - entity: >-
+      sensor.octopus_energy_electricity_XXXXX_previous_accumulative_consumption
+    name: Metered
+    data_generator: >
+      const stat_entity =
+      'octopus_energy:electricity_XXXXX_previous_accumulative_consumption';
 
-  var statistics = await hass.callWS({
-      type: 'recorder/statistics_during_period',
-      start_time: new Date(start).toISOString(),
-      end_time: new Date(end).toISOString(),
-      statistic_ids: [stat_entity],
-      period: "hour",
-  });
+      var statistics = await hass.callWS({
+          type: 'recorder/statistics_during_period',
+          start_time: new Date(start).toISOString(),
+          end_time: new Date(end).toISOString(),
+          statistic_ids: [stat_entity],
+          period: "hour",
+      });
 
-  var stats = statistics[stat_entity];
+      var stats = statistics[stat_entity];
 
-  var result = [];
-  var len = stats.length;
-  for (let i = 0; i < len; i++) {
-    let stat = stats[i].change;
-    result.push([(new Date(stats[i].end).getTime()),stat]);
-    }
-  return result;
+      var result = [];
+      var len = stats.length;
+      for (let i = 0; i < len; i++) {
+        let stat = stats[i].change;
+        result.push([(new Date(stats[i].end).getTime()),stat]);
+        }
+      return result;
 ```
 
 Interestingly, Plotly does support external statistics entities, but I'd rather avoid using it if I can. Let's park this one for now and look at another problem. 
@@ -189,7 +198,7 @@ The energy dashboard is built using a [special purpose set of cards](https://www
 
 The cards use a JavaScript API to find a date selector on the current dashboard view and read the specified date range. Recently the Statistics and Statistics Graph cards were given a YAML only option to set their range using the energy date selector. There are also a few custom cards that do the same thing, bad sadly not Mini Graph Card, ApexCharts or Plotly.
 
-But maybe I don't need to. The energy date selector has presets for "Today", "Yesterday", "This Week", etc. You can step forwards and backwards a day, week, month or year at a time. Everything's aligned to whole days. The Statistics cards already support external entities.
+But maybe I don't need them. The energy date selector has presets for "Today", "Yesterday", "This Week", etc. You can step forwards and backwards a day, week, month or year at a time. Everything's aligned to whole days. The Statistics cards already support external statistics entities.
 
 {% include candid-image.html src="/assets/images/home-assistant/energy-selection-statistics-metered-measured.png" alt="Energy Date Period with Statistics Graph showing metered vs measured" %}
 
@@ -213,50 +222,96 @@ stat_types:
 energy_date_selection: true
 ```
 
-# Metered Electricity Statistics
+# Statistics Card
 
-* Graph is nice but also useful to have total electricity consumed for specified period
-* Added a statistics card
-* With the wrong answer
-* Pulling my hair out
-* Statistics card allows you to specify an explicit time period
-* Played around to try and see if I could work out start/end being supplied by energy date selector
-* Equivalent to 23:00 - 22.59
+The graph is nice but it's also useful to see the sum for the entire period. Easy enough, let's add a couple of statistics cards.
 
 ```yaml
-fixed_period:
-  start: "2025-09-09T23:00:00.000Z"
-  end: "2025-09-10T22:59:59.000Z"
+type: statistic
+period: energy_date_selection
+stat_type: change
+entity: >-
+  octopus_energy:electricity_XXXXX_previous_accumulative_consumption
+icon: mdi:meter-electric
+name: Metered
 ```
 
 ```yaml
-cards:
-  - type: energy-date-selection
-    grid_options:
-      columns: full
-  - type: statistic
-    period: energy_date_selection
-    stat_type: change
-    entity: sensor.charge
-  - chart_type: bar
-    period: day
-    type: statistics-graph
-    entities:
-      - sensor.charge
-    stat_types:
-      - change
-    energy_date_selection: true
-  - chart_type: bar
-    period: hour
-    type: statistics-graph
-    entities:
-      - sensor.charge
-    stat_types:
-      - change
-    energy_date_selection: true
+type: statistic
+period: energy_date_selection
+stat_type: change
+entity: sensor.grid_import_daily
+icon: mdi:transmission-tower-import
+name: Measured
 ```
 
-* Missing last entry from yesterday and adding in last from previous day
-* Noticed it because I charged the car yesterday which kicked in at 23.30
+{% include candid-image.html src="/assets/images/home-assistant/energy-selection-statistics-card-wrong-metered-measured.png" alt="Energy Date Period with Statistics Card showing wrong Metered vs correct Measured" %}
 
-{% include candid-image.html src="/assets/images/home-assistant/statistics-card-bug.png" alt="Statistics Card missing data from last hour" %}
+Which is clearly showing the wrong value for "Metered". The graph shows 2.26 kWh for the last hour alone. A total of 1.18 kWh can't be right.
+
+# Bug Hunting
+
+I started by double checking the expected value. I still had the regular "Previous Accumulative Consumption Electricity" entity in my history. Total consumption for 10th September is 3.42 kWh. I added up the hourly values from the graph. That came to 3.41 kWh, which is close enough. It looks like the statistics card is missing the contribution from the last hour.
+
+What exactly is the range that the Energy Date Selection picker is asking for? The Statistics card supports an explicit `fixed_period` so I should be able to figure it out by trial and error. My first try was `2025-09-10T00:00:00 - 2025-09-11T00:00:00`, which resulted in 3.41 kWh. It looks like the picker is providing the wrong range. 
+
+Maybe the picker is using an inclusive range. I tried `2025-09-10T00:00:00 - 2025-09-10T23:59:59`, which resulted in 3.26 kWh. Wrong, in a different way, but including the last hour. 
+
+We're still on daylight savings time, so I wondered if there was a time zone related problem. I tried shifting the range by an hour to `2025-09-09T23:00:00 - 2025-09-10T22:59:59`. Bingo, this time the result was 1.18 kWh. 
+
+Which didn't explain why it works for "Measured". Or why no one else had noticed what looks like a blatant error. 
+
+# UTC and Time Zone Awareness
+
+When debugging, you take the information you have, come up with a hypothesis that explains what you see and then look for something that confirms or disproves that hypothesis. I started with the assumption that at least part of the problem is related to time zone handling in Home Assistant. 
+
+[Internally](https://www.home-assistant.io/blog/2015/05/09/utc-time-zone-awareness/), all times in Home Assistant are in UTC. Times in the UI and YAML configuration are in local time, based on the time zone defined when you setup Home Assistant.
+
+When I searched for time zone related problems, the most common advice was to make sure that the time zone definition in Home Assistant matched that set at the operating system level. I went as far as installing the [Terminal and SSH](https://github.com/home-assistant/addons/tree/master/ssh) add-on so that I could confirm that everything was right at the Home Assistant OS level.
+
+After a quick scan through the source code I determined that, as expected, the statistics recorder works with times in UTC. The `energy_date_selection` and `fixed_period` times in the statistics cards are passed [straight through](https://github.com/home-assistant/frontend/blob/3b90b5fcb147547f1615d2cd1f248871cb7f46ec/src/panels/lovelace/cards/hui-statistic-card.ts#L310) to the statistics recorder, without any conversion from local time to UTC that I could see. For whatever reason, unlike the rest of Home Assistant, the configuration for the Statistics card is in UTC. 
+
+On that basis there's nothing obviously wrong with the range from the date picker. It works with other entities, so maybe there's something wrong with the Octopus external statistics entity. 
+
+# Octopus External Statistics
+
+My next hypothesis was that there was something wrong with the way that the Octopus integration writes to the statistics recorder. Maybe the timestamps it uses are slightly off?
+
+I tried tweaking the Statistics card again to use the range `2025-09-09T23:00:00 - 2025-09-10T23:00:00`. Only one second longer, but that was enough to give the correct result of 3.41 kWh. 
+
+You can query the statistics database using "Developer Tools -> Statistics" in the Home Assistant UI. You provide a timestamp of interest and the UI shows a handful of statistic entries around that time. There was nothing obviously wrong with the Octopus entries. All as I expected. The missing entry was at 23:00:00 local time, or 22:00:00 UTC. Well within a range ending at 22:59:59. 
+
+I compared the timestamps and values with the measured grid import entity. The timestamps were consistent. The only difference was that the UI showed me short term statistic entries at 5 minute intervals, rather than the hour intervals for the Octopus entries. 
+
+# Hacking a Custom Card
+
+I started to get paranoid that maybe I was wrong about the range that the date picker was using. After all, the values being queried were similar enough that I got the same result for both `2025-09-10T00:00:00 - 2025-09-11T00:00:00` and `2025-09-09T23:00:00 - 2025-09-10T23:00:00`.
+
+I found a [simple example](https://github.com/thybag/ha-energy-entity-card) of a custom card that integrates with the energy date picker. Then hacked it to log the range used to the console. If you want to try this yourself, I have two hard won top tips.
+
+1. As well as putting your `custom-card.js` file in `config/www`, you also have to go to "Settings -> Dashboards -> Resources" (hidden in the hamburger menu) and add a config entry for the file.
+2. Use your browser's developer tools to disable caching. It's almost impossible to get the browser to load updated versions of the file otherwise. 
+
+What was the actual range? I was pretty close. `2025-09-10T00:00:00.000Z - 2025-09-10T23:59:59.999Z`. Only one millisecond different from the range that works. 
+
+# Statistics Graph vs Statistics Card
+
+I decided to try another line of attack. Why does the Statistics Graph work when the Statistics Card doesn't? Time for a deep dive into the source code. 
+
+The first difference is that the two cards call different query functions in the statistics recorder. The Statistics Graph uses `statistics_during_period` and the Statistics card uses `statistic_during_period`. The first one returns multiple values between start and end, at regular intervals. The intervals can be 5 minutes, hours, days, weeks or months. The second one returns a single value for the complete range. Both as expected.
+
+The `statistics` query reads values from the short term statistics database for 5 minute intervals, and the long term statistics database for the longer intervals. Makes sense.
+
+The `statistic` query uses a combination of short and long term statistics depending on the start and end points. If the start or end involve a fraction of an hour, the query reads from short term statistics for the partial hour. Then uses long term statistics for the complete hours in the range. Also makes sense.
+
+Then it hit me. The date picker has a partial hour at the end of the range *and* external statistics entities don't have any short term statistics. I doubled checked the code. If there are no short term statistics the final partial hour of the range is ignored.
+
+# Confirmation
+
+If I'm right, the same problem would occur with any entity, if you go back beyond the retention period for short term statistics. I put together a test case using a normal entity.
+
+{% include candid-image.html src="/assets/images/home-assistant/statistics-card-bug.png" alt="Confirmed Statistics Card bug with normal entity" %}
+
+I wrote up a [bug report](https://github.com/home-assistant/frontend/issues/27095) and submitted it. I didn't expect too much. Development resources on open source projects are at a premium. The last bug report I submitted, against React, has seen no progress after more than a year.
+
+To my surprise I got an acknowledgement of the problem within a few hours, and then confirmation that it had been fixed a day later. I'm now looking forward to the next release.
