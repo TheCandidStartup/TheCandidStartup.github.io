@@ -14,7 +14,7 @@ wise words
 * Most sensor updates are pushed from the charger via a websocket
 * Sometimes the updates [stop coming](https://github.com/gndean/home-assistant-hypervolt-charger/issues/88)
 * Need to restart the integration or force a refresh using the Hypervolt app
-* So far has happened once to me
+* As always, once it happened to me I became incentivised to try and so something about it
 * How can we mitigate the problem
 
 # Redundant Grid I/O Sensor
@@ -95,3 +95,8 @@ triggers:
 
 * If the source attribute changes to "alpha" and remains that way for 5 minutes, the Hypervolt must be stuck. 
 * For now the automation just notifies me. I want to unstick it manually once before trying to automate the procedure.
+* When it happened to me I tried a bunch of things. I reloaded the integration, I refreshed the Hypervolt app, I ran the network trouble shooter tool in the app (which said everything was fine), I turned on the kettle so there would be a spike of power imported from grid. A few minutes after doing all that in a frenzy of activity it started working again. 
+* Since then has happened twice more
+* Second time I tried disabling and reenabling the integration. Waited 10 minutes. Made no difference. Tried the app, this time the trouble shooter reported no connectivity to the device. In the end resorted to rebooting it by turning it off and on at the circuit breaker. Was OK again after that.
+* Third time happened within 24 hours. However, by the time I saw the alert it had started working again. Was stuck for about 25 minutes in total. 
+

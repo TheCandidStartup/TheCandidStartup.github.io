@@ -33,7 +33,7 @@ All three immediately feel more "advanced" as there's no visual editor support. 
 
 ## Mini Graph Card
 
-[Mini Graph Card](https://github.com/kalkih/mini-graph-card) is a more customizable and flexible version of the standard [Sensor](https://www.home-assistant.io/dashboards/sensor/) and [History Graph](https://www.home-assistant.io/dashboards/history-graph/) cards for use with Sensors. It's the simplest and most popular of the three.
+[Mini Graph Card](https://github.com/kalkih/mini-graph-card) is a more customizable and flexible version of the standard [Sensor](https://www.home-assistant.io/dashboards/sensor/) and [History Graph](https://www.home-assistant.io/dashboards/history-graph/) cards for use with sensors. It's the simplest and most popular of the three.
 
 The look and feel is a good match for the standard cards. It supports line and bar graphs, multiple entities on the same card, and a host of options for controlling the layout and rendering. 
 
@@ -65,7 +65,7 @@ aggregate_func: diff
 
 Next up is [ApexCharts Card](https://github.com/RomRider/apexcharts-card), which is a wrapper around [ApexCharts.js](https://apexcharts.com/). ApexCharts uses modern HTML features including SVG and animations. The default look and feel fits in well with standard cards. 
 
-There are lots of configuration options, including extensive control over start and end of period. It's easy to setup to show a day, or week or month's data beginning at the start of the current period. Here's how to set it up to show "yesterday".
+There are lots of configuration options, including extensive control over start and end of period. It's easy to set up to show a day, week or month's data beginning at the start of the current period. Here's how to set it up to show "yesterday".
 
 ```yaml
 graph_span: 24h
@@ -142,7 +142,9 @@ Metered values are sensors with a `state_class` of `total` or `total_increasing`
 
 Metered statistics are stored as the current sum at the end of a time period. You can query the sum at the start and end of a range, or the change between start and end. The energy dashboard is based on metered statistics. 
 
-The statistics period is 5 minutes for short term statistics, which like history are retained for 10 days by default. Long term statistics have a period of one hour and are retained indefinitely by default. Short term statistics are useful for queries ending with the current time or with a granularity of less than an hour. Queries automatically use short term, long term or both depending on the start and end point of the query range. 
+The statistics period is 5 minutes for short term statistics which, like history, are retained for 10 days by default. Long term statistics have a period of one hour and are retained indefinitely. 
+
+Short term statistics are useful for queries ending with the current time or with a granularity of less than an hour. Queries automatically use short term, long term or both depending on the start and end point of the query range. 
 
 # External Statistics
 
@@ -196,7 +198,7 @@ Plotly has a built in range selector UI, but what if I have a whole dashboard of
 
 The energy dashboard is built using a [special purpose set of cards](https://www.home-assistant.io/dashboards/energy/). Most functionality is hardcoded. The data source has to be configured using the energy dashboard configurator. You can't see the cards in the visual editor, but you can add them using YAML.
 
-The cards use a JavaScript API to find a date selector on the current dashboard view and read the specified date range. Recently the Statistics and Statistics Graph cards were given a YAML only option to set their range using the energy date selector. There are also a few custom cards that do the same thing, bad sadly not Mini Graph Card, ApexCharts or Plotly.
+The cards use a JavaScript API to find a date selector on the current dashboard view and read the specified date range. Recently the Statistics and Statistics Graph cards were given a YAML only option to set their range using the energy date selector. There are also a few custom cards that do the same thing, but sadly not Mini Graph Card, ApexCharts or Plotly.
 
 But maybe I don't need them. The energy date selector has presets for "Today", "Yesterday", "This Week", etc. You can step forwards and backwards a day, week, month or year at a time. Everything's aligned to whole days. The Statistics cards already support external statistics entities.
 
@@ -271,11 +273,11 @@ When I searched for time zone related problems, the most common advice was to ma
 
 After a quick scan through the source code I determined that, as expected, the statistics recorder works with times in UTC. The `energy_date_selection` and `fixed_period` times in the statistics cards are passed [straight through](https://github.com/home-assistant/frontend/blob/3b90b5fcb147547f1615d2cd1f248871cb7f46ec/src/panels/lovelace/cards/hui-statistic-card.ts#L310) to the statistics recorder, without any conversion from local time to UTC that I could see. For whatever reason, unlike the rest of Home Assistant, the configuration for the Statistics card is in UTC. 
 
-On that basis there's nothing obviously wrong with the range from the date picker. It works with other entities, so maybe there's something wrong with the Octopus external statistics entity. 
+On that basis, there's nothing obviously wrong with the range from the date picker. It works with other entities, so maybe there's something wrong with the Octopus external statistics entity. 
 
 # Octopus External Statistics
 
-My next hypothesis was that there was something wrong with the way that the Octopus integration writes to the statistics recorder. Maybe the timestamps it uses are slightly off?
+My next hypothesis was that there was a problem with the way that the Octopus integration writes to the statistics recorder. Maybe the timestamps it uses are slightly off?
 
 I tried tweaking the Statistics card again to use the range `2025-09-09T23:00:00 - 2025-09-10T23:00:00`. Only one second longer, but that was enough to give the correct result of 3.41 kWh. 
 
@@ -298,13 +300,13 @@ What was the actual range? I was pretty close. `2025-09-10T00:00:00.000Z - 2025-
 
 I decided to try another line of attack. Why does the Statistics Graph work when the Statistics Card doesn't? Time for a deep dive into the source code. 
 
-The first difference is that the two cards call different query functions in the statistics recorder. The Statistics Graph uses `statistics_during_period` and the Statistics card uses `statistic_during_period`. The first one returns multiple values between start and end, at regular intervals. The intervals can be 5 minutes, hours, days, weeks or months. The second one returns a single value for the complete range. Both as expected.
+The first difference is that the two cards call different query functions in the [statistics recorder](https://github.com/home-assistant/core/blob/dev/homeassistant/components/recorder/statistics.py). The Statistics Graph uses `statistics_during_period` and the Statistics card uses `statistic_during_period`. The first one returns multiple values between start and end, at regular intervals. The intervals can be 5 minutes, hours, days, weeks or months. The second one returns a single value for the complete range. Both as expected.
 
-The `statistics` query reads values from the short term statistics database for 5 minute intervals, and the long term statistics database for the longer intervals. Makes sense.
+The `statistics` query [reads values](https://github.com/home-assistant/core/blob/023ecf2a642c75ee11411d8e881b54c0cfbca529/homeassistant/components/recorder/statistics.py#L1931) from the short term statistics database for 5 minute intervals, and the long term statistics database for the longer intervals. Makes sense.
 
-The `statistic` query uses a combination of short and long term statistics depending on the start and end points. If the start or end involve a fraction of an hour, the query reads from short term statistics for the partial hour. Then uses long term statistics for the complete hours in the range. Also makes sense.
+The `statistic` query uses a [combination](https://github.com/home-assistant/core/blob/023ecf2a642c75ee11411d8e881b54c0cfbca529/homeassistant/components/recorder/statistics.py#L1644) of short and long term statistics depending on the start and end points. If the start or end involve a fraction of an hour, the query reads from short term statistics for the partial hour. Then uses long term statistics for the complete hours in the range. Also makes sense.
 
-Then it hit me. The date picker has a partial hour at the end of the range *and* external statistics entities don't have any short term statistics. I doubled checked the code. If there are no short term statistics the final partial hour of the range is ignored.
+Then it hit me. The date picker has a partial hour at the end of the range *and* external statistics entities don't have any short term statistics. I doubled checked the code. If there are no short term statistics, the final partial hour of the range is ignored.
 
 # Confirmation
 
