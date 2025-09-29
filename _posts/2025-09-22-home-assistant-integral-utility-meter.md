@@ -229,5 +229,4 @@ There's still an itch that I haven't scratched. How accurate is my grid import n
 
 Can I look at peak load over multiple days of the week to see how it varies? The energy dashboard will only show me one day at a time, or totals for a week or month.
 
-I need a custom dashboard. 
-
+I need a [custom dashboard]({% link _posts/2025-09-29-home-assistant-dashboard-custom-cards-statistics.md %}). 
