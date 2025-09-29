@@ -92,7 +92,7 @@ series:
       func: diff
 ```
 
-Here I've used a data generator to define a series using the `charges` attribute from the most recent state of the electricity meter entity. That's graphed against a series of half-hourly grid import values.
+Here, I've used a data generator to define a series using the `charges` attribute from the most recent state of the electricity meter entity. That's graphed against a series of half-hourly grid import values.
 
 {% include candid-image.html src="/assets/images/home-assistant/apex-charts-metered-measured.png" alt="ApexCharts Metered vs Measured Graph" %}
 
@@ -257,9 +257,9 @@ I started by double checking the expected value. I still had the regular "Previo
 
 What exactly is the range that the Energy Date Selection picker is asking for? The Statistics card supports an explicit `fixed_period` so I should be able to figure it out by trial and error. My first try was `2025-09-10T00:00:00 - 2025-09-11T00:00:00`, which resulted in 3.41 kWh. It looks like the picker is providing the wrong range. 
 
-Maybe the picker is using an inclusive range. I tried `2025-09-10T00:00:00 - 2025-09-10T23:59:59`, which resulted in 3.26 kWh. Wrong, in a different way, but including the last hour. 
+Maybe the picker is using an inclusive range. I tried `2025-09-10T00:00:00 - 2025-09-10T23:59:59`, which resulted in 3.26 kWh. Wrong, in a different way, but still including the last hour. 
 
-We're still on daylight savings time, so I wondered if there was a time zone related problem. I tried shifting the range by an hour to `2025-09-09T23:00:00 - 2025-09-10T22:59:59`. Bingo, this time the result was 1.18 kWh. 
+We're currently on daylight savings time, so I wondered if there was a time zone related problem. I tried shifting the range by an hour to `2025-09-09T23:00:00 - 2025-09-10T22:59:59`. Bingo, this time the result was 1.18 kWh. 
 
 Which didn't explain why it works for "Measured". Or why no one else had noticed what looks like a blatant error. 
 
@@ -317,3 +317,10 @@ If I'm right, the same problem would occur with any entity, if you go back beyon
 I wrote up a [bug report](https://github.com/home-assistant/frontend/issues/27095) and submitted it. I didn't expect too much. Development resources on open source projects are at a premium. The last bug report I submitted, against React, has seen no progress after more than a year.
 
 To my surprise I got an acknowledgement of the problem within a few hours, and then confirmation that it had been fixed a day later. I'm now looking forward to the next release.
+
+# Conclusion
+
+In the end, I'm happy with where I ended up. I have a custom statistics dashboard which shows me the data I want by day, week, month or whatever time range I want. I can see that my measured grid import is very close to the metered  values (not withstanding the Statistics card bug). I can see that my estimate for peak load of 5-7 kWh a day is pretty close to reality, and that the solar forecast is not far off what I actually generated.
+
+{% include candid-image.html src="/assets/images/home-assistant/statistics-dashboard.png" alt="Confirmed Statistics Dashboard" %}
+
