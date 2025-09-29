@@ -8,10 +8,30 @@ thumbnail: /assets/images/home-assistant/logo.png
 wise words
 
 * All about the Octopus integration
-* Looked at `previous_accumulative_consumption` entity last time and how to extra electricity meter readings
+* Looked at `previous_accumulative_consumption` entity last time and how to extract electricity meter readings
 * Worth a deeper dive
 
 # Electricity Meter
+
+* Set of sensors related to previous days consumption, costs, rates
+* Set of sensors related to tariff you're on: standing charge, off peak times, unit rate by time of day
+* All sensors in home assistant have a simple scalar state value
+* They also have lots of other data defined as attributes
+
+{% include candid-image.html src="/assets/images/home-assistant/prev-accum-consumption.png" alt="Octopus Previous Accumulative Consumption entity" %}
+
+* Why is that?
+
+# Mapping Sensors to API Calls
+
+* How do integrations like Octopus Energy work?
+* They make API calls to external services over the internet
+* Often an API call will return a package of data, such as all the meter readings for one day
+* Integration needs to decide how to expose that data as entities in Home Assistant
+* Not practical to expose every item of data as a separate sensor
+* Pick a small selection of things that are most likely to be useful as state that changes over time
+* May have multiple sensors driven by data from the same API call (like previous consumption/costs/rates)
+* Everything else that might be useful can be thrown on as an attribute
 
 # Repairs
 
@@ -21,9 +41,8 @@ wise words
 
 What's this all about?
 
-# Internet Service Integrations
+# Live Internet Service Integrations
 
-* How do integrations like Octopus Energy work?
 * They try to show data supplied by an external service over the Internet as if it's updating live
 * Typically that means calling the external service at regular intervals, aka polling
 * You can imagine how much stress this can put on the service if there are thousands of Home Assistant all doing the same thing
