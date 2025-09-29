@@ -78,18 +78,12 @@ triggers:
     entity_id:
       - binary_sensor.hypervolt_car_plugged
     to: "on"
-    for:
-      hours: 0
-      minutes: 1
-      seconds: 0
   - trigger: state
     entity_id:
       - binary_sensor.hypervolt_car_plugged
     to: "off"
     for:
-      hours: 0
       minutes: 1
-      seconds: 0
   - trigger: state
     entity_id:
       - time.hypervolt_schedule_session_1_start_time
@@ -131,6 +125,8 @@ actions:
             alias: Trigger is car plugged in
             value_template: "{{ trigger.id == 'car_plugged_in' }}"
         sequence:
+          - delay:
+              seconds: 60
           - action: octopus_energy.refresh_intelligent_dispatches
             target:
               entity_id: binary_sensor.octopus_energy_XXXXX_intelligent_dispatching
