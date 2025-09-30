@@ -1,6 +1,6 @@
 ---
 title: >
-  Home Assistant: Octopus Energy Integration
+  Home Assistant: Octopus Integration, Repairs and Blueprints
 tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
