@@ -21,7 +21,7 @@ Each entity also has a collection of [attributes](https://www.home-assistant.io/
 
 {% include candid-image.html src="/assets/images/home-assistant/prev-accum-consumption.png" alt="Octopus Previous Accumulative Consumption entity" %}
 
-As we saw last time, the Octopus Energy integration adds a huge collection of attributes to it's sensors. Why is that?
+As we saw last time, the Octopus Energy integration adds a huge collection of attributes to its sensors. Why is that?
 
 # Mapping Sensors to API Calls
 
@@ -29,13 +29,15 @@ How do integrations like Octopus Energy work? They retrieve data by making API c
 
 It's not practical to expose every item of data as a separate sensor. It would be overwhelming for the end user, use a lot of Home Assistant resources and create a lot of work for the integration author. 
 
-Most integrations pick a small selection of things that are most likely to be useful as state that changes over time. You may end up with multiple sensors driven by data from the same API call, like previous consumption costs and rates.
+Most integrations pick a small selection of things that are most likely to be useful as state that changes over time. You may also end up with multiple sensors driven by data from the same API call, like previous consumption costs and rates.
 
-What do you do with all the data that you didn't expose as state? You could make a decision and discard anything that isn't relevant. However, everything could be relevant for somebody. 
+What do you do with all the data that you didn't expose as state? You could make a decision and discard anything that isn't relevant. However, anything could be relevant for somebody. 
 
-Attributes are stored as a big blob of structured data (think JSON or YAML). It's easy to add whatever you want, so most integration authors dump whatever data is left into attributes. Unfortunately, attributes are harder to work.
+Attributes are stored as a big blob of structured data (think JSON or YAML). It's easy to add whatever you want, so most integration authors dump whatever data is left into attributes. Unfortunately, attributes are harder for the Home Assistant end user to work with.
 
-There are many automation triggers, conditions and actions that only work with state. The same is true for dashboard cards. Even worse, there's nothing in Home Assistant core that lets you access historical attributes. For many use cases you have to create template sensors which expose the attributes you're interested in as state.
+There are many automation triggers, conditions and actions that only work with state. The same is true for dashboard cards. Even worse, there's nothing in Home Assistant core that lets you access historical attributes. 
+
+For many use cases, you have to create template sensors which expose the attributes you're interested in as state. This is a common pattern in Home Assistant. They say that all problems in computer science can be solved by adding an extra level of [indirection](https://en.wikipedia.org/wiki/Indirection). Similarly, all problems in Home Assistant can be solved by adding a template sensor. 
 
 # Repairs
 
@@ -72,13 +74,13 @@ The repair notice is inviting you to be a good citizen. If you have another inte
 
 # Blueprint
 
-There's a [blueprint](https://bottlecapdave.github.io/HomeAssistant-OctopusEnergy/blueprints/#manual-intelligent-dispatch-refreshes) provided which does one call 30 seconds after the car is plugged in, then at the normal 3 minute refresh intervals while the car continues to be plugged in.
+There's a [Blueprint](https://bottlecapdave.github.io/HomeAssistant-OctopusEnergy/blueprints/#manual-intelligent-dispatch-refreshes) provided which does one refresh 30 seconds after the car is plugged in, then at the normal 3 minute refresh intervals while the car continues to be plugged in.
 
 There's an install link in the documentation which is meant to redirect into Home Assistant. It didn't work for me. Instead, I copied the source link (a GitHub URL), went to "Settings -> Automations -> Blueprints", pressed "Import Blueprint" and pasted the link. Once the Blueprint has imported, you can open it and configure it.
 
 {% include candid-image.html src="/assets/images/home-assistant/octopus-refresh-blueprint.png" alt="Octopus Manual Refresh Blueprint" %}
 
-A Blueprint is a pre-packaged parameterized automation. Provide the required details and a new automation is created using the Blueprint. Editing a Blueprint automation returns you to the configuration editor. You can also update to the latest version if the source Blueprint changes.
+A [Blueprint](https://www.home-assistant.io/docs/blueprint/) is a pre-packaged parameterized automation. Provide the required details and a new automation is created using the Blueprint. Editing a Blueprint automation returns you to the configuration editor. You can also update to the latest version if the source Blueprint changes.
 
 I decided to start with the Blueprint and tweak it if needed. The first hurdle is that there's no "Intelligent Dispatches Data Last Retrieved" entity. The documentation says it's disabled by default. Enabling it was harder than I thought. If you go to the Octopus Energy integration page in Home Assistant, it's not listed with the other Charger entities, or any other device on the page. You need to choose "Entities" from the top hamburger menu and scroll to the bottom of the list. You can then click on the disabled icon to enable it. 
 
@@ -94,13 +96,13 @@ I want to use my 20 requests an hour budget more wisely. When the car is first p
 
 The Hypervolt charger integration communicates with its backend using a WebSocket API. This allows the external Hypervolt service to push changes to Home Assistant when they happen, rather than having Home Assistant poll the service. This includes a simplified version of the charging schedule. If there's any change in the Hypervolt schedule, the full schedule is normally available immediately via the Octopus API. 
 
-The regular refreshes at 5 minute intervals are aligned with the hour. That's just how the Home Assistant [Time pattern](https://www.home-assistant.io/docs/automation/trigger/#time-pattern-trigger) trigger works. That's convenient for us, as Octopus uses hour aligned half-hour charging periods in its schedule. We effectively check for any schedule changes 15, 10, 5 and 0 minutes before the next charging period starts.
+The regular refreshes at 5 minute intervals are aligned with the hour. That's just how the Home Assistant [Time pattern](https://www.home-assistant.io/docs/automation/trigger/#time-pattern-trigger) trigger works. That's convenient for us, as Octopus uses half-hour charging periods in its schedule. We effectively check for any schedule changes 15, 10, 5 and 0 minutes before the next charging period starts.
 
 The downside of time pattern's natural alignment is that all Home Assistant instances end up synchronizing their calls to the external service. It's not just a problem of thousands of Home Assistant instances calling the backend over a period of time. The incoming calls all arrive at the *same* time. The blueprint addresses this by adding jitter, a random delay before invoking the refresh. This is another example of being a good citizen, reducing the likelihood of everyone's calls being made at the same time. 
 
 I also refresh when the charger starts and stops charging. I kept the code from the Blueprint that ensures that these ad hoc refreshes don't happen more often than every 3 minutes.
 
-When the car is finally unplugged, I delay for a minute before refreshing and hopefully picking up the final state. The regular 5 minute refreshes also continue while the intelligent state is still once of the active ones.
+When the car is finally unplugged, I delay for a minute before refreshing and hopefully picking up the final state. The regular 5 minute refreshes also continue while the intelligent state is still one of the active values.
 
 ```yaml
 triggers:
@@ -144,7 +146,7 @@ conditions:
         state: SMART_CONTROL_CAPABLE
 ```
 
-The automation run as long as the car is plugged in or the smart charging state is active.
+The automation runs as long as the car is plugged in or the smart charging state is active.
 
 {% raw %}
 
@@ -189,33 +191,35 @@ actions:
               entity_id: binary_sensor.octopus_energy_XXXXX_intelligent_dispatching
 ```
 
-There are two different cases handled by a `choose` action. If the trigger was the car being plugged in, we run our loop of refreshing until we get an initial schedule (up to 5 tries). There's no jitter in this case because plugging the car in isn't aligned with anything. 
+There are two different cases handled by a `choose` action. If the trigger was the car being plugged in, we run our loop of refreshing until we get an initial schedule (up to 5 tries). There's no jitter in this case because plugging in the car isn't aligned with anything. 
 
-All the other triggers use the other choice of refreshing, after a delay for jitter, if it's been long enough since the last refresh. 
+In all other cases we do a single refresh, after a delay for jitter, if it's been long enough since the last refresh. 
 
 {% endraw %}
 
 # Dashboard
 
-* Of course I had to build a car charging dashboard which shows me the relevant state from the Hypervolt Charger and Octopus.
-* Note the big "Refresh" button which shows how long it's been since the underlying data was refreshed. Pressing it triggers a manual refresh.
-* In general, found it a lot easier to understand what's going in Home Assistant since I started showing when values last changed, which is typically when they were last refreshed.
-* Found the [Markdown](https://www.home-assistant.io/dashboards/markdown/) card with a content template to be the simplest and most flexible way to display complex data encoded as attributes.
-* Careful of where newlines go after the template is evaluated, they're significant in Markdown. May end up with ugly looking template code to make it work.
+Of course, I had to build a car charging dashboard which shows me the relevant data from Octopus and the Hypervolt Charger. Note the big "Refresh" button which shows how long it's been since the underlying data was refreshed. Pressing it triggers a manual refresh.
+
+* PICTURE of dashboard showing dispatches
+
+I wish this was a more common pattern in Home Assistant. Previously, I wasn't sure whether a state was actually staying at the same value for a long time, or whether something had got stuck behind the scenes. 
+
+I found the [Markdown](https://www.home-assistant.io/dashboards/markdown/) card to be the simplest and most flexible way to display complex data encoded as attributes. I can configure the card with a `content` template that formats the data as Markdown. You need to be careful of where template evaluation [inserts newlines](https://jinja.palletsprojects.com/en/latest/templates/#whitespace-control) as they're significant in Markdown. You sometimes need extra annotations in command blocks (`+` or `-` at the start or end) to override the defaults. 
 
 {% raw %}
 
 ```jinja
-{% set dispatches = state_attr('binary_sensor.octopus_energy_a_9b37d84c_intelligent_dispatching', 'planned_dispatches') %}
+{% set dispatches = state_attr('binary_sensor.octopus_energy_XXXXX_intelligent_dispatching', 'planned_dispatches') %}
 {% if dispatches is defined and dispatches|count > 0 %}
 **Planned Dispatches** on {{ dispatches[0].start.strftime('%d %B') }}
 {% endif %}
-{% for dispatch in dispatches %}* {{ dispatch.start.strftime('%H:%M') }} - {{ dispatch.end.strftime('%H:%M') }}: {{ dispatch.charge_in_kwh | abs }} kWh
+{% for dispatch in dispatches -%}
+* {{ dispatch.start.strftime('%H:%M') }} - {{ dispatch.end.strftime('%H:%M') }}: {{ dispatch.charge_in_kwh | abs }} kWh
 {% endfor %}
 ```
 
-* Using conditions to hide cards that don't have anything relevant to show. Unfortunately, can't hide the Markdown cards when there's no schedule because Home Assistant doesn't support conditions on attributes. Right now, I can't be bothered to create a dedicated "is there a charging schedule" sensor. Leaving the card blank if there's no schedule is fine. 
-
 {% endraw %}
 
-* PICTURE of dashboard showing dispatches
+I use [conditions](https://www.home-assistant.io/dashboards/cards/#showing-or-hiding-a-card-or-badge-conditionally) to hide cards that don't have anything relevant to show. Unfortunately, I can't hide the Markdown cards when there's no schedule because Home Assistant doesn't support conditions on attributes. For now, I can't be bothered to create a dedicated "is there a charging schedule" template sensor. Leaving the card blank if there's no schedule is fine. 
+
