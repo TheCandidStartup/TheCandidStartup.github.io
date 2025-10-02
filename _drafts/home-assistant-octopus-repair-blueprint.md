@@ -201,7 +201,7 @@ In all other cases we do a single refresh, after a delay for jitter, if it's bee
 
 Of course, I had to build a car charging dashboard which shows me the relevant data from Octopus and the Hypervolt Charger. Note the big "Refresh" button which shows how long it's been since the underlying data was refreshed. Pressing it triggers a manual refresh.
 
-* PICTURE of dashboard showing dispatches
+{% include candid-image.html src="/assets/images/home-assistant/completed-dispatches.png" alt="Car charging dashboard showing completed dispatches" %}
 
 I wish this was a more common pattern in Home Assistant. Previously, I wasn't sure whether a state was actually staying at the same value for a long time, or whether something had got stuck behind the scenes. 
 
@@ -210,9 +210,9 @@ I found the [Markdown](https://www.home-assistant.io/dashboards/markdown/) card 
 {% raw %}
 
 ```jinja
-{% set dispatches = state_attr('binary_sensor.octopus_energy_XXXXX_intelligent_dispatching', 'planned_dispatches') %}
+{% set dispatches = state_attr('binary_sensor.octopus_energy_XXXXX_intelligent_dispatching', 'completed_dispatches') %}
 {% if dispatches is defined and dispatches|count > 0 %}
-**Planned Dispatches** on {{ dispatches[0].start.strftime('%d %B') }}
+** Completed Dispatches** on {{ dispatches[0].start.strftime('%d %B') }}
 {% endif %}
 {% for dispatch in dispatches -%}
 * {{ dispatch.start.strftime('%H:%M') }} - {{ dispatch.end.strftime('%H:%M') }}: {{ dispatch.charge_in_kwh | abs }} kWh
@@ -221,5 +221,8 @@ I found the [Markdown](https://www.home-assistant.io/dashboards/markdown/) card 
 
 {% endraw %}
 
-I use [conditions](https://www.home-assistant.io/dashboards/cards/#showing-or-hiding-a-card-or-badge-conditionally) to hide cards that don't have anything relevant to show. Unfortunately, I can't hide the Markdown cards when there's no schedule because Home Assistant doesn't support conditions on attributes. For now, I can't be bothered to create a dedicated "is there a charging schedule" template sensor. Leaving the card blank if there's no schedule is fine. 
+I use [conditions](https://www.home-assistant.io/dashboards/cards/#showing-or-hiding-a-card-or-badge-conditionally) to hide cards that don't have anything relevant to show. Unfortunately, I can't hide the Markdown cards when there's no schedule because Home Assistant doesn't support conditions on attributes. 
 
+The screenshot was taken after unplugging the car. The planned dispatches card is blank because the schedule has completed. For now, I can't be bothered to create a dedicated "is there a charging schedule" template sensor. Leaving the card blank if there's no schedule is fine. 
+
+Conveniently, the attributes include a list of completed periods with the energy supplied during each. Completed periods are rounded to the nearest half hour, regardless of how long charging was active during the period. The off-peak rate applies to the complete half hour. You can see a subset of the actual schedule (weirdly in UTC) supplied by the Hypervolt integration. 

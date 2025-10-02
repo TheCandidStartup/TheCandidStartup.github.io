@@ -100,3 +100,41 @@ triggers:
 * Second time I tried disabling and reenabling the integration. Waited 10 minutes. Made no difference. Tried the app, this time the trouble shooter reported no connectivity to the device. In the end resorted to rebooting it by turning it off and on at the circuit breaker. Was OK again after that.
 * Third time happened within 24 hours. However, by the time I saw the alert it had started working again. Was stuck for about 25 minutes in total. 
 
+# Charging Spikes
+
+The car charging dashboard I created last time shows a couple of half-hour charging periods that supplied very little power, a combined 0.03 kWh. What's going on there?
+
+{% include candid-image.html src="/assets/images/home-assistant/charging-spikes.png" alt="Charging Spikes" %}
+
+The only thing happening during that hour is the spike on the right of the history graph. The charger turned on for about 5 minutes, with a current of 5A (rather than the usual 30A) and according to the Hypervolt delivered about 70Wh of energy. The spike is right at the end of the 23.00 - 23.30 period, just spilling over into 23.30 - 24.00.
+
+I've seen this a few times when smart charging. Sometimes the Octopus scheduler decides to fill up it's quota for a period with a few minutes of trickle charging. Not a problem. In fact, good for me, because I should be charged off-peak prices for that entire hour.
+
+Less good are the spikes to the left. These are even more transient. Each lasting about a minute, mostly below 1A with a few seconds spiking to 7A. Negligible power consumed. These spikes aren't included in the Octopus completed dispatches, so are presumably charged at peak rates. I don't know whether these are Octopus testing whether the car is prepared to charge, or some glitch of the charger. 
+
+Given that virtually no power is consumed, it wouldn't matter, except each spike triggers an automation that starts charging my home battery. That draws a sustained 20A. Even worse, the API that the Alpha-ESS battery integration uses is rate limited to once a minute. The integration waits where needed to ensure there is at least a minute between calls. Which means that even if the spike was only a few seconds long, the battery would charge for at least a minute. 
+
+I crafted a more resilient automation trigger that ignores the transient spikes. There are two triggers. The main trigger uses the Hypervolt session energy sensor. I wait until at least 10Wh of power have been delivered. This takes a few seconds when the car is charging normally, while never reaching that threshold for the transient spikes. The second trigger is a fallback. If charging has been active for two minutes and is still going, we trigger the automation anyway.
+
+```yaml
+triggers:
+  - trigger: state
+    entity_id:
+      - switch.hypervolt_charging
+    to: "on"
+    for:
+      minutes: 2
+  - trigger: numeric_state
+    entity_id:
+      - sensor.hypervolt_session_energy
+    above: 10
+conditions:
+  - condition: state
+    entity_id: switch.octopus_energy_XXXXX_intelligent_smart_charge
+    state: "on"
+  - condition: state
+    entity_id: switch.hypervolt_charging
+    state: "on"
+```
+
+The automation completes and resets the battery configuration back to normal off-peak charging when the `hypervolt_charging` sensor goes back to off. I added a trigger condition to make sure that the automation only runs if it's on (in case there's some glitch where session energy changes while charging is off).
