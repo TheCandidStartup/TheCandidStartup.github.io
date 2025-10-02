@@ -291,7 +291,7 @@ I started to get paranoid that maybe I was wrong about the range that the date p
 
 I found a [simple example](https://github.com/thybag/ha-energy-entity-card) of a custom card that integrates with the energy date picker. Then hacked it to log the range used to the console. If you want to try this yourself, I have two hard won top tips.
 
-1. As well as putting your `custom-card.js` file in `config/www`, you also have to go to "Settings -> Dashboards -> Resources" (hidden in the hamburger menu) and add a config entry for the file.
+1. As well as putting your `custom-card.js` file in `config/www`, you also have to go to "Settings -> Dashboards -> Resources" (hidden in the hamburger menu) and [add a config entry](https://developers.home-assistant.io/docs/frontend/custom-ui/registering-resources/) for the file.
 2. Use your browser's developer tools to disable caching. It's almost impossible to get the browser to load updated versions of the file otherwise. 
 
 What was the actual range? I was pretty close. `2025-09-10T00:00:00.000Z - 2025-09-10T23:59:59.999Z`. Only one millisecond different from the range that works. 
