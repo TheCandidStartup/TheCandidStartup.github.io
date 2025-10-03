@@ -138,3 +138,111 @@ conditions:
 ```
 
 The automation completes and resets the battery configuration back to normal off-peak charging when the `hypervolt_charging` sensor goes back to off. I added a trigger condition to make sure that the automation only runs if it's on (in case there's some glitch where session energy changes while charging is off).
+
+# Automation Execution Model
+
+* Not much in the way of formal documentation about what behavior you can rely on
+* Overlapping execution, race conditions, etc.
+* Only thing is [automation mode](https://www.home-assistant.io/docs/automation/modes/) that controls concurrency for multiple instances of the *same* automation
+* Common practical approach is to run automations that could conflict at different times, far enough apart that one will complete before the other starts
+* What can you rely on between running instances of different automations?
+* Python asyncio code
+* async/await pattern common in many languages
+* asyncio explicitly distinguishes between tasks and coroutines
+* A coroutine is a function that can pause itself and be resumed (function declared as `async`)
+* A task is a wrapper around a coroutine that allows it to be run on the event loop, you create a task using `asyncio.create_task` or one of the many wrappers around it. Home Assistant has `hass.async_create_task`.
+* If you `await` a coroutine, control is transferred immediately to that coroutine without going via the event loop
+* If you `await` a task, it gets added to the event loop's list of tasks to run, control is transferred back to the event loop and it resumes execution with the task at the front (usually) of the queue
+* If you wait until some time later or for I/O to complete, the running coroutine is suspended until ready and control given back to the event loop
+* Automation behavior depends on how code is divided into tasks and which operations depend on I/O
+* Backwards compatibility for code that predates asyncio. Home Assistant used to use threading for concurrency. Any code that hasn't explicitly opted in to async way of working is run on a separate worker thread. Can't make any assumptions about concurrency in these cases. Should only be an issue with old third party integrations.
+* Current state is kept in memory and is accessed synchronously
+* This is why most things in Home Assistant only work with current state. Historical state and statistics have to be queried from a database which needs asynchronous IO. 
+* Updates to state typically happen asynchronously in reaction to events on Home Assistant's internal event bus. Almost everything is driven by a regular timer event every second. Either directly for time based triggers or implicitly by polling triggered at regular intervals.
+* Explicit use of task in automations
+  * Executing a sequence of actions
+  * Call to service action
+* Home Assistant `async_create_task` has default option that uses low level event loop APIs to create "eager start" tasks which the event loop runs immediately
+* Automations tasks are all eager start
+* Implies that once an automation starts running it will keep running until it waits or performs external IO
+* Mutex pattern using an `input_boolean` helper *should* work
+* Just the start. Easy to use when you want to prevent conflicting automation from running entirely. What if you need it to run but not concurrently? In theory, you can use a helper entity to model a queue with an automation that picks up queued jobs.
+* Massively over the top complicated, especially given how fiddly it is to implement logic as templates.
+* For many use cases there's a better middle ground
+* Replace multiple conflicting automations and combine them into one using the Trigger - Choose pattern. Generalization of the dispatches refresh automation we looked at last time.
+* Given a set of simple automations: TriggersA - ConditionsA - ActionsA, TriggersB, - ConditionsB - ActionsB, TriggersC - ConditionsC - ActionsC, ...
+* Combine them as
+
+```yaml
+mode: queued
+triggers:
+  - TriggersA
+    id: "A"
+  - TriggersB
+    id: "B"
+  - TriggersC
+    id: "C"
+conditions:
+  - or:
+    - and:
+      - condition: template
+        alias: Trigger A
+        value_template: "{{ trigger.id == 'A' }}"
+      - PreConditionsA
+    - and:
+      - condition: template
+        alias: Trigger B
+        value_template: "{{ trigger.id == 'B' }}"
+      - PreConditionsB
+    - and:
+      - condition: template
+        alias: Trigger C
+        value_template: "{{ trigger.id == 'C' }}"
+      - PreConditionsC
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            alias: Trigger A
+            value_template: "{{ trigger.id == 'A' }}"
+          - PostConditionsA
+        sequence:
+          - ActionsA
+      - conditions:
+          - condition: template
+            alias: Trigger B
+            value_template: "{{ trigger.id == 'B' }}"
+          - PostConditionsB
+        sequence:
+          - ActionsB
+      - conditions:
+          - condition: template
+            alias: Trigger C
+            value_template: "{{ trigger.id == 'C' }}"
+          - PostConditionsC
+        sequence:
+          - ActionsC
+```
+
+* Queued mode ensures that A, B and C can't run concurrently. Execution will be queued if triggered while another instance is running. Queued instances are run in order.
+* The combined automation uses the trigger that fired to determine which conditions to check and then actions to run.
+* Assume that the triggers used by A, B and C are disjoint. If not, you'll need to further merge the common parts. 
+* Any conditions in the main `conditions` section are evaluated at the time the automation was triggered, *before* potentially being queued
+* Any conditions in the action sequence are evaluated when the automation is executed, *after* potentially being queued
+* Will need to decide whether you want to treat each sub-automation condition as a precondition, postcondition or both
+
+# Battery Management Automation
+
+* Combine setting target SOC based on solar forecast and overriding battery charge mode when car is charging
+* Currently schedule forecast automation to run at 2pm when unlikely to be charging
+* Turns out that I plug in during the day quite often. Gives Octopus maximum opportunity to schedule bonus off-peak sessions.
+* Also, for the most accurate forecast, I want to run automation a few times during day with final one just before main off peak charging period
+* High chance of contention
+* Don't want to queue for too long
+* Current battery charge override runs for full duration of charging session
+* Need to split into separate segments to minimize duration of critical section
+* Use helper entity to track state - e.g. whether peak period override applied
+* First segment triggers when charging starts and overrides battery charge mode and sets helper to true
+* Second segment triggers when charging ends with condition that helper set to true, then resets override and sets helper to false
+* Set forecast segment uses helper state to decide what charging period should be set to, same way that target SOC tells override segment want to set that to
+* Foundation for more complex logic. For example, letting battery discharge to target SOC if it was above desired level when charging starts
