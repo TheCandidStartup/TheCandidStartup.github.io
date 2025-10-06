@@ -11,7 +11,7 @@ There's nothing like looking at a real world integration to better understand th
 
 # Electricity Meter
 
-The integration exposes separate devices for each energy meter (electricity and gas in my case). Each device has a set of sensors which can be logically divided into two groups. The first group relates to the *previous* days consumption of energy. There are separate sensors for the energy consumed, the cost of the energy consumed and the applicable rates during the day.
+The integration exposes separate devices for each energy meter (electricity and gas in my case). Each device has a set of sensors which can be logically divided into two groups. The first group relates to the *previous* day's consumption of energy. There are separate sensors for the energy consumed, the cost of the energy consumed and the applicable rates during the day.
 
 The second group relates to the *current* state of the tariff you're on. There are sensors for the standing charge each day, off-peak times, and per-unit rates.
 
@@ -29,9 +29,9 @@ How do integrations like Octopus Energy work? They retrieve data by making API c
 
 It's not practical to expose every item of data as a separate sensor. It would be overwhelming for the end user, use a lot of Home Assistant resources and create a lot of work for the integration author. 
 
-Most integrations pick a small selection of things that are most likely to be useful as state that changes over time. You may also end up with multiple sensors driven by data from the same API call, like previous consumption costs and rates.
+Most integrations pick a small selection of things that are most likely to be useful as state that changes over time. You may also end up with multiple sensors driven by data from the same API call, like previous consumption, costs and rates.
 
-What do you do with all the data that you didn't expose as state? You could make a decision and discard anything that isn't relevant. However, anything could be relevant for somebody. 
+What do you do with all the data that you didn't expose as state? You could make a decision and discard everything that isn't relevant. However, anything could be relevant for somebody. 
 
 Attributes are stored as a big blob of structured data (think JSON or YAML). It's easy to add whatever you want, so most integration authors dump whatever data is left into attributes. Unfortunately, attributes are harder for the Home Assistant end user to work with.
 
@@ -43,7 +43,7 @@ For many use cases, you have to create template sensors which expose the attribu
 
 The [Home Assistant Repairs](https://www.home-assistant.io/integrations/repairs/) system informs you about issues in your Home Assistant instance that should be fixed to keep it healthy. Third party integrations can add their own notices to the repairs system.
 
-A notification badge appears on the "Settings" item in the navigation pane where there are updates or repairs available. A couple of days after installing the Octopus Energy integration I saw this. 
+A notification badge appears on the "Settings" item in the navigation pane when there are updates or repairs available. A couple of days after installing the Octopus Energy integration I first saw this. 
 
 {% include candid-image.html src="/assets/images/home-assistant/octopus-repair.png" alt="Octopus Integration repair notice in Settings" %}
 
@@ -61,7 +61,7 @@ Service providers protect themselves by enforcing rate limits for repeated API c
 
 # Intelligent Dispatch
 
-The Octopus Energy integration creates a "Charger" device if you're on a smart charging tariff, like Octopus Intelligent Go. The `intelligent_dispatching` and `intelligent_state` sensors are both driven by results from the same API call. 
+The Octopus Energy integration creates a "Charger" device if you're on a smart charging tariff, like Octopus Intelligent Go. The device includes `intelligent_dispatching` and `intelligent_state` sensors, which are both driven by results from the same API call. 
 
 Intelligent Dispatching is a binary sensor whose state determines whether you're in a planned smart charge period or within the standard off-peak period. Intelligent State is an enumeration of values that specify the current state of the smart provider. There are three states that you'll see once everything is setup and working correctly.
   * `SMART_CONTROL_NOT_AVAILABLE` - Car not plugged in or not at home
@@ -82,7 +82,9 @@ There's an install link in the documentation which is meant to redirect into Hom
 
 A [Blueprint](https://www.home-assistant.io/docs/blueprint/) is a pre-packaged parameterized automation. Provide the required details and a new automation is created using the Blueprint. Editing a Blueprint automation returns you to the configuration editor. You can also update to the latest version if the source Blueprint changes.
 
-I decided to start with the Blueprint and tweak it if needed. The first hurdle is that there's no "Intelligent Dispatches Data Last Retrieved" entity. The documentation says it's disabled by default. Enabling it was harder than I thought. If you go to the Octopus Energy integration page in Home Assistant, it's not listed with the other Charger entities, or any other device on the page. You need to choose "Entities" from the top hamburger menu and scroll to the bottom of the list. You can then click on the disabled icon to enable it. 
+I decided to start with the Blueprint and tweak it if needed. The first hurdle is that there's no "Intelligent Dispatches Data Last Retrieved" entity. The documentation says it's disabled by default. 
+
+Enabling it was harder than I thought. If you go to the Octopus Energy integration page in Home Assistant, it's not listed with the other Charger entities, or any other device on the page. You need to choose "Entities" from the top hamburger menu and scroll to the bottom of the list. You can then click on the disabled icon to enable it. 
 
 Next, I had a look at the [source code](https://bottlecapdave.github.io/HomeAssistant-OctopusEnergy/blueprints/octopus_energy_spin_wheel_of_fortune_dual.yml). The dispatch sensor state is refreshed while the car continues to be plugged in. As soon as it's unplugged, there are no refreshes, which means the sensors are left in their active state. I did a quick test and confirmed that the Intelligent State never goes back to `SMART_CONTROL_NOT_AVAILABLE` after unplugging the car. 
 
@@ -166,7 +168,7 @@ actions:
           - repeat:
               while:
                 - condition: template
-                  alias: Planned Dispatches not available (5 trys)
+                  alias: Planned Dispatches not available (5 tries)
                   value_template: >-
                     {{ state_attr(intelligent_dispatches_sensor,
                     'planned_dispatches') | count == 0 and repeat.index < 5 }}
@@ -191,11 +193,15 @@ actions:
               entity_id: binary_sensor.octopus_energy_XXXXX_intelligent_dispatching
 ```
 
+{% endraw %}
+
 There are two different cases handled by a `choose` action. If the trigger was the car being plugged in, we run our loop of refreshing until we get an initial schedule (up to 5 tries). There's no jitter in this case because plugging in the car isn't aligned with anything. 
 
 In all other cases we do a single refresh, after a delay for jitter, if it's been long enough since the last refresh. 
 
-{% endraw %}
+I add a descriptive alias to each template condition. This acts as a descriptive comment when reading the YAML and gets picked up by the visual editor, making it easy to understand what's going on.
+
+{% include candid-image.html src="/assets/images/home-assistant/template-condition-alias-visual-editor.png" alt="Template Condition Alias appears in the Visual Editor" %}
 
 # Dashboard
 
@@ -223,6 +229,10 @@ I found the [Markdown](https://www.home-assistant.io/dashboards/markdown/) card 
 
 I use [conditions](https://www.home-assistant.io/dashboards/cards/#showing-or-hiding-a-card-or-badge-conditionally) to hide cards that don't have anything relevant to show. Unfortunately, I can't hide the Markdown cards when there's no schedule because Home Assistant doesn't support conditions on attributes. 
 
-The screenshot was taken after unplugging the car. The planned dispatches card is blank because the schedule has completed. For now, I can't be bothered to create a dedicated "is there a charging schedule" template sensor. Leaving the card blank if there's no schedule is fine. 
+The screenshot was taken after unplugging the car. The planned dispatches card is blank because the schedule has completed. For now, I can't be bothered to create a dedicated "are there planned dispatches" template sensor. Leaving the card blank if there's no schedule is fine. 
 
 Conveniently, the attributes include a list of completed periods with the energy supplied during each. Completed periods are rounded to the nearest half hour, regardless of how long charging was active during the period. The off-peak rate applies to the complete half hour. You can see a subset of the actual schedule (weirdly in UTC) supplied by the Hypervolt integration. 
+
+# Next Time
+
+I want to dive deeper. Next up is getting a better understanding of the Home Assistant execution model. Then using that to make my automations more reliable and resilient. 
