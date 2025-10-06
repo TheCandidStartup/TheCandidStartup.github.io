@@ -173,6 +173,8 @@ The automation completes and resets the battery configuration back to normal off
 * Given a set of simple automations: TriggersA - ConditionsA - ActionsA, TriggersB, - ConditionsB - ActionsB, TriggersC - ConditionsC - ActionsC, ...
 * Combine them as
 
+{% raw %}
+
 ```yaml
 mode: queued
 triggers:
@@ -223,6 +225,8 @@ actions:
         sequence:
           - ActionsC
 ```
+
+{% endraw %}
 
 * Queued mode ensures that A, B and C can't run concurrently. Execution will be queued if triggered while another instance is running. Queued instances are run in order.
 * The combined automation uses the trigger that fired to determine which conditions to check and then actions to run.
