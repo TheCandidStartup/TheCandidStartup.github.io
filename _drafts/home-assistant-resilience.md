@@ -9,13 +9,19 @@ wise words
 * Easy to throw a set of automations together
 * How resilient are they when things go wrong?
 
+# Backups
+
+* Home Assistant instance is single point of failure
+* Make sure you have backups enabled. Really easy to setup on device backups. Only a little more effort to get them uploaded to cloud host of your choice.
+* I used Google Drive
+
 # Hypervolt Integration Gets Stuck
 
 * Most sensor updates are pushed from the charger via a websocket
 * Sometimes the updates [stop coming](https://github.com/gndean/home-assistant-hypervolt-charger/issues/88)
 * Need to restart the integration or force a refresh using the Hypervolt app
 * As always, once it happened to me I became incentivised to try and so something about it
-* How can we mitigate the problem
+* How can we mitigate the problem?
 
 # Redundant Grid I/O Sensor
 
@@ -96,9 +102,10 @@ triggers:
 * If the source attribute changes to "alpha" and remains that way for 5 minutes, the Hypervolt must be stuck. 
 * For now the automation just notifies me. I want to unstick it manually once before trying to automate the procedure.
 * When it happened to me I tried a bunch of things. I reloaded the integration, I refreshed the Hypervolt app, I ran the network trouble shooter tool in the app (which said everything was fine), I turned on the kettle so there would be a spike of power imported from grid. A few minutes after doing all that in a frenzy of activity it started working again. 
-* Since then has happened twice more
+* Since then has happened three times more
 * Second time I tried disabling and reenabling the integration. Waited 10 minutes. Made no difference. Tried the app, this time the trouble shooter reported no connectivity to the device. In the end resorted to rebooting it by turning it off and on at the circuit breaker. Was OK again after that.
-* Third time happened within 24 hours. However, by the time I saw the alert it had started working again. Was stuck for about 25 minutes in total. 
+* The final two times it was stuck for 20 minutes or so then sorted itself out before I saw the alert. 
+* Still in monitoring mode when latest version of integration was released which restarts web socket connection if nothing received for 5 minutes. I changed my alert automation to report after 10 minutes.
 
 # Charging Spikes
 
@@ -234,6 +241,8 @@ actions:
 * Any conditions in the main `conditions` section are evaluated at the time the automation was triggered, *before* potentially being queued
 * Any conditions in the action sequence are evaluated when the automation is executed, *after* potentially being queued
 * Will need to decide whether you want to treat each sub-automation condition as a precondition, postcondition or both
+
+# Next Time
 
 # Battery Management Automation
 
