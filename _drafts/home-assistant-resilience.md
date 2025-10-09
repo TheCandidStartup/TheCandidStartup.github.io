@@ -5,35 +5,38 @@ tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 
-wise words
-* Easy to throw a set of automations together
-* How resilient are they when things go wrong?
+Home Assistant makes it easy to throw some automations together. I've written a few. There's just a few niggling problems where things don't work quite right.
+
+Home Assistant provides a high level abstraction over a fundamentally messy and unreliable reality. It's not surprising that the provided abstraction is often [leaky](https://en.wikipedia.org/wiki/Leaky_abstraction). Sometimes, you have to go the extra mile to plug the holes.
 
 # Backups
 
-* Home Assistant instance is single point of failure
-* Make sure you have backups enabled. Really easy to setup on device backups. Only a little more effort to get them uploaded to cloud host of your choice.
-* I used Google Drive
+The Home Assistant instance is a single point of failure. It would be remiss of me to talk about resilience without first pointing that out. 
+
+Make sure you have backups enabled. It's really easy to setup on-device backups. Only a little more effort to get them uploaded to the cloud host of your choice.
+
+{% include candid-image.html src="/assets/images/home-assistant/backups.png" alt="Backups" %}
+
+I used Google Drive. There was a complex sequence of choreography required to authorize Home Assistant to upload files to my Google Drive. The documentation does a great job of walking you through it. 
+
 
 # Hypervolt Integration Gets Stuck
 
-* Most sensor updates are pushed from the charger via a websocket
-* Sometimes the updates [stop coming](https://github.com/gndean/home-assistant-hypervolt-charger/issues/88)
-* Need to restart the integration or force a refresh using the Hypervolt app
-* As always, once it happened to me I became incentivised to try and so something about it
-* How can we mitigate the problem?
+The Hypervolt integration is unusual in that sensors are updated every seconds rather than minutes. No, we're not running a DDOS attack against Hypervolt's servers. Hypervolt has a web socket based API. Updates are pushed to Home Assistant rather than the integration having to poll a REST API.
+
+Which is great, unless the updates [stop coming](https://github.com/gndean/home-assistant-hypervolt-charger/issues/88). Once it happened to me too, I became incentivised to try and do something about it.
 
 # Redundant Grid I/O Sensor
 
-* Have two CT clamps monitoring Grid I/O accessible via separate integrations
-* Alpha ESS updated every minute by polling API
-* Hypervolt every 3 seconds via websocket
-* Can use a template to combine into a composite sensor
-* Idea is that we report the value from the most recently changed input
-* If Hypervolt gets stuck we'll still get updates every minute from the Alpha ESS sensor
-* Needed to use YAML rather than visual editor so that I could define triggers and attributes
-* Rather than using a state based template and having to compare `last_updated` properties to decide which source to use, use explicit triggers on the source entities and just return value of whichever triggered the update.
-* Added a source attribute so you can see whether value came from `hypervolt` or `alpha`
+I have two CT clamps monitoring grid power import and export. On came with my Alpha ESS home battery installation, the other with the Hypervolt EV charger. The clamps are accessible as sensors via two separate Home Assistant integrations.
+
+The Alpha ESS values are updated every minute by polling a REST API, the Hypervolt values update every 3 seconds or so, via a web socket API. I use the Hypervolt values for my dashboards and automations because of the higher resolution. Which is no use if it intermittently stops working. Maybe I'd be better off using the low resolution reliable one instead.
+
+Why not use both of them? All problems in Home Assistant can be solved by adding a template sensor. In this case I can create a template sensor that reports the value of the most recently updated CT clamp sensor. If Hypervolt gets stuck, we'll still get updates every minute from the Alpha ESS sensor.
+
+I had to directly edit YAML files rather than use the Visual Editor so that I could define [triggers](https://www.home-assistant.io/integrations/template/#trigger-based-template-entities) and [attributes](https://www.home-assistant.io/integrations/template/#sensor-configuration-variables). 
+
+Rather than using a state based template and having to compare `last_updated` properties to decide which source to use, I use explicit triggers on the source entities and just return the value of whichever entity triggered the update. I add a source attribute so you can see whether the value came from `hypervolt` or `alpha`.
 
 {% raw %}
 
@@ -65,19 +68,19 @@ template:
 
 {% endraw %}
 
-* Really painful development experience
-* Using Studio Code Server addon to get syntax checking for conformance with Home Assistant schema
-* Mostly works great and let me fix errors immediately. Problem is that there are false positives. Maybe schema is out of date?
+It looks simple enough, but ended up being a really painful development experience. I used the Studio Code Server addon to get syntax checking for conformance with the Home Assistant schema. It mostly works great and let me fix errors immediately. The problem is that there are also false positives. Maybe the schema bundled with the addon is out of date?
 
 {% include candid-image.html src="/assets/images/home-assistant/template-sensor-editor-false-errors.png" alt="False Postive Errors in Studio Code Server editor" %}
 
-* Took me ages to work out that my YAML was actually fine
-* Obviously no live preview of the output value as you get with the visual editor
-* To make changes take effect you have to save the file and then go to "Developer Tools -> YAML" and click on "Template Entries" to reload the config
-* Then see if you can find the sensor that the template should have created
-* If not, and you're lucky, you might get a notification from Home Assistant with an error message extracted from the logs
-* Once the sensor was actually created I needed to work out why it wasn't working properly. It always returned the value from the Alpha ESS sensor. 
-* The problem was that I'd used double quotes around `hypervolt` in the `if` condition. The [Jinja documentation](https://jinja.palletsprojects.com/en/latest/templates/#literals) says that string literals can use double or single quotes. However, for whatever reason, in this circumstance, it didn't work until I changed to single quotes.
+It took me ages to work out that my YAML was actually fine. Obviously, there's no live preview of the output value as you get with the Visual Editor. To make changes take effect you have to save the file and then go to "Developer Tools -> YAML" and click on "Template Entries" to reload the config. Then see if you can find the sensor that the template should have created.
+
+If not, and you're really lucky, you might get a notification from Home Assistant with an error message extracted from the logs. More likely, you'll be stuck making random simplifying changes until you work out which bit is wrong.
+
+Once the sensor was actually created, I needed to work out why it wasn't working properly. It always returned the value from the Alpha ESS sensor. 
+
+The problem was that I'd used double quotes around `hypervolt` in the `if` condition. The [Jinja documentation](https://jinja.palletsprojects.com/en/latest/templates/#literals) says that string literals can use double or single quotes. However, for whatever reason, in this circumstance, it didn't work until I changed to single quotes.
+
+My dashboards are driven from utility meters based on an integral sensor that in turn uses the Hypervolt sensor. All I needed to do was change the input for the integral sensor. All my existing statistics continued to be valid. One of the benefits of layers of indirection.
 
 # Automating Hypervolt restart
 
@@ -145,102 +148,6 @@ conditions:
 ```
 
 The automation completes and resets the battery configuration back to normal off-peak charging when the `hypervolt_charging` sensor goes back to off. I added a trigger condition to make sure that the automation only runs if it's on (in case there's some glitch where session energy changes while charging is off).
-
-# Automation Execution Model
-
-* Not much in the way of formal documentation about what behavior you can rely on
-* Overlapping execution, race conditions, etc.
-* Only thing is [automation mode](https://www.home-assistant.io/docs/automation/modes/) that controls concurrency for multiple instances of the *same* automation
-* Common practical approach is to run automations that could conflict at different times, far enough apart that one will complete before the other starts
-* What can you rely on between running instances of different automations?
-* Python asyncio code
-* async/await pattern common in many languages
-* asyncio explicitly distinguishes between tasks and coroutines
-* A coroutine is a function that can pause itself and be resumed (function declared as `async`)
-* A task is a wrapper around a coroutine that allows it to be run on the event loop, you create a task using `asyncio.create_task` or one of the many wrappers around it. Home Assistant has `hass.async_create_task`.
-* If you `await` a coroutine, control is transferred immediately to that coroutine without going via the event loop
-* If you `await` a task, it gets added to the event loop's list of tasks to run, control is transferred back to the event loop and it resumes execution with the task at the front (usually) of the queue
-* If you wait until some time later or for I/O to complete, the running coroutine is suspended until ready and control given back to the event loop
-* Automation behavior depends on how code is divided into tasks and which operations depend on I/O
-* Backwards compatibility for code that predates asyncio. Home Assistant used to use threading for concurrency. Any code that hasn't explicitly opted in to async way of working is run on a separate worker thread. Can't make any assumptions about concurrency in these cases. Should only be an issue with old third party integrations.
-* Current state is kept in memory and is accessed synchronously
-* This is why most things in Home Assistant only work with current state. Historical state and statistics have to be queried from a database which needs asynchronous IO. 
-* Updates to state typically happen asynchronously in reaction to events on Home Assistant's internal event bus. Almost everything is driven by a regular timer event every second. Either directly for time based triggers or implicitly by polling triggered at regular intervals.
-* Explicit use of task in automations
-  * Executing a sequence of actions
-  * Call to service action
-* Home Assistant `async_create_task` has default option that uses low level event loop APIs to create "eager start" tasks which the event loop runs immediately
-* Automations tasks are all eager start
-* Implies that once an automation starts running it will keep running until it waits or performs external IO
-* Mutex pattern using an `input_boolean` helper *should* work
-* Just the start. Easy to use when you want to prevent conflicting automation from running entirely. What if you need it to run but not concurrently? In theory, you can use a helper entity to model a queue with an automation that picks up queued jobs.
-* Massively over the top complicated, especially given how fiddly it is to implement logic as templates.
-* For many use cases there's a better middle ground
-* Replace multiple conflicting automations and combine them into one using the Trigger - Choose pattern. Generalization of the dispatches refresh automation we looked at last time.
-* Given a set of simple automations: TriggersA - ConditionsA - ActionsA, TriggersB, - ConditionsB - ActionsB, TriggersC - ConditionsC - ActionsC, ...
-* Combine them as
-
-{% raw %}
-
-```yaml
-mode: queued
-triggers:
-  - TriggersA
-    id: "A"
-  - TriggersB
-    id: "B"
-  - TriggersC
-    id: "C"
-conditions:
-  - or:
-    - and:
-      - condition: template
-        alias: Trigger A
-        value_template: "{{ trigger.id == 'A' }}"
-      - PreConditionsA
-    - and:
-      - condition: template
-        alias: Trigger B
-        value_template: "{{ trigger.id == 'B' }}"
-      - PreConditionsB
-    - and:
-      - condition: template
-        alias: Trigger C
-        value_template: "{{ trigger.id == 'C' }}"
-      - PreConditionsC
-actions:
-  - choose:
-      - conditions:
-          - condition: template
-            alias: Trigger A
-            value_template: "{{ trigger.id == 'A' }}"
-          - PostConditionsA
-        sequence:
-          - ActionsA
-      - conditions:
-          - condition: template
-            alias: Trigger B
-            value_template: "{{ trigger.id == 'B' }}"
-          - PostConditionsB
-        sequence:
-          - ActionsB
-      - conditions:
-          - condition: template
-            alias: Trigger C
-            value_template: "{{ trigger.id == 'C' }}"
-          - PostConditionsC
-        sequence:
-          - ActionsC
-```
-
-{% endraw %}
-
-* Queued mode ensures that A, B and C can't run concurrently. Execution will be queued if triggered while another instance is running. Queued instances are run in order.
-* The combined automation uses the trigger that fired to determine which conditions to check and then actions to run.
-* Assume that the triggers used by A, B and C are disjoint. If not, you'll need to further merge the common parts. 
-* Any conditions in the main `conditions` section are evaluated at the time the automation was triggered, *before* potentially being queued
-* Any conditions in the action sequence are evaluated when the automation is executed, *after* potentially being queued
-* Will need to decide whether you want to treat each sub-automation condition as a precondition, postcondition or both
 
 # Next Time
 
