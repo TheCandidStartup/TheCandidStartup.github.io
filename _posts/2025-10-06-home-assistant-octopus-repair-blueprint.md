@@ -235,4 +235,4 @@ Conveniently, the attributes include a list of completed periods with the energy
 
 # Next Time
 
-I want to dive deeper. Next up is getting a better understanding of the Home Assistant execution model. Then using that to make my automations more reliable and resilient. 
+I want to dive deeper. Next up is getting a better understanding of the Home Assistant concurrency model. Then using that to make my automations more reliable and resilient. 
