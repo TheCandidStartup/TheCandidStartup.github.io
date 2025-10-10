@@ -1,6 +1,6 @@
 ---
 title: >
-  Home Assistant: Resilience
+  Home Assistant: Hypervolt Resilience and Backups
 tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
@@ -9,15 +9,7 @@ Home Assistant makes it easy to throw some automations together. I've written a 
 
 Home Assistant provides a high level abstraction over a fundamentally messy and unreliable reality. It's not surprising that the provided abstraction is often [leaky](https://en.wikipedia.org/wiki/Leaky_abstraction). Sometimes, you have to go the extra mile to plug the holes.
 
-# Backups
 
-The Home Assistant instance is a single point of failure. It would be remiss of me to talk about resilience without first pointing that out. 
-
-Make sure you have backups enabled. It's really easy to setup on-device backups. Only a little more effort to get them uploaded to the cloud host of your choice.
-
-{% include candid-image.html src="/assets/images/home-assistant/backups.png" alt="Backups" %}
-
-I used Google Drive. There was a complex sequence of choreography required to authorize Home Assistant to upload files to my Google Drive. The documentation does a great job of walking you through it. 
 
 
 # Hypervolt Integration Gets Stuck
@@ -148,6 +140,16 @@ conditions:
 ```
 
 The automation completes and resets the battery configuration back to normal off-peak charging when the `hypervolt_charging` sensor goes back to off. I added a trigger condition to make sure that the automation only runs if it's on (in case there's some glitch where session energy changes while charging is off).
+
+# Backups
+
+The Home Assistant instance is a single point of failure. It would be remiss of me to talk about resilience without pointing that out. 
+
+Make sure you have backups enabled. It's really easy to setup on-device backups. Only a little more effort to get them uploaded to the cloud host of your choice.
+
+{% include candid-image.html src="/assets/images/home-assistant/backups.png" alt="Backups" %}
+
+I used Google Drive. There was a complex sequence of choreography required to authorize Home Assistant to upload files to a dedicated folder in Google Drive. The documentation does a great job of walking you through it. 
 
 # Next Time
 
