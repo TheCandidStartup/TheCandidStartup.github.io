@@ -41,7 +41,7 @@ I'm an existing Visual Studio Code user so felt right at home with Studio Code S
 
 # Configuration File
 
-Configuration lives in [configuration.yaml](https://www.home-assistant.io/docs/configuration/), in the `config` directory. In principle, it's structured as one big YAML file. In practice, to keep things manageable, large chunks are separated into separate files and included into the main configuration using the `!include` directive.
+Configuration lives in [configuration.yaml](https://www.home-assistant.io/docs/configuration/), in the `config` directory. In principle, it's structured as one big YAML file. In practice, to keep things manageable, large chunks are extracted into separate files and included into the main configuration using the `!include` directive.
 
 ```yaml
 # Loads default set of integrations. Do not remove.
@@ -140,7 +140,7 @@ triggers:
       seconds: 0
 ```
 
-If the source attribute changes to "alpha" and remains that way for 5 minutes, the Hypervolt must be stuck. For now, the automation just notifies me. I want to unstick it manually once before trying to automate the procedure.
+If the source attribute changes to "alpha" and remains that way for 5 minutes, the Hypervolt must be stuck. For now, the automation just notifies me. I want to unstick it manually before trying to automate the procedure.
 
 When I first noticed the Hypervolt getting stuck, I tried a bunch of different things. I reloaded the integration, I refreshed the Hypervolt app, I ran the network troubleshooter tool in the app (which said everything was fine), I turned on the kettle so there would be a spike of power imported from the grid. A few minutes after doing all that in a frenzy of activity, it started working again. 
 
@@ -152,7 +152,7 @@ I tried the Hypervolt app and this time the troubleshooter reported no connectiv
 
 The other four times it was stuck for 20-60 minutes or so, then sorted itself out before I could react to the alert.  
 
-I was still in monitoring mode when the latest version of the integration was released. It now detects when nothing has been received for 5 minutes and restarts the web socket connection. Unfortunately, it made no difference the next time the integration got stuck. A couple of days later there was another new version which restarts the entire integration.
+I was still in monitoring mode when the latest version of the Hypervolt integration was released. It now detects when nothing has been received for 5 minutes and restarts the web socket connection. Unfortunately, it made no difference the next time the integration got stuck. A couple of days later there was another new version which restarts the entire integration.
 
 I'm beginning to wonder if we're all indulging in [cargo cult](https://en.wikipedia.org/wiki/Cargo_cult_programming) behavior. Maybe the Hypervolt backend eventually comes back to life and we just assume that the last thing we did must have fixed it. 
 
