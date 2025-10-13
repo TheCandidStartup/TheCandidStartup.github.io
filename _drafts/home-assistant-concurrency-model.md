@@ -13,9 +13,9 @@ Now I'm getting that itch. What is actually going on internally? What guarantees
 
 # Home Assistant Architecture
 
-Home Assistant uses a heavily modular architecture built on a small core. The core consists of an event bus, the Home Assistant "state machine" and a service registry. Everything else, both built in functionality and third party integrations, is implemented as a large set of modular components.
+Home Assistant uses a heavily modular architecture built on a small core. The core consists of an event bus, the Home Assistant "state machine" and a service registry. Everything else, both built-in functionality and third party integrations, is implemented as a large set of modular components.
 
-{% include candid-image.html src="/assets/images/home-assistant/ha_architecture.svg" alt="Home Assistant Core Architecture" attrib="Open Home Foundation, [CC A-NC-SA 4.0](https://github.com/home-assistant/developers.home-assistant?tab=License-1-ov-file#readme), via developers.home-assistant" %}
+{% include candid-image.html src="/assets/images/home-assistant/ha_architecture.svg" alt="Home Assistant Core Architecture" attrib="Open Home Foundation, [CC A-NC-SA 4.0](https://github.com/home-assistant/developers.home-assistant?tab=License-1-ov-file#readme), via developers.home-assistant.io" %}
 
 Components define [events](https://www.home-assistant.io/docs/configuration/events/), [entities](https://www.home-assistant.io/docs/configuration/entities_domains/) and [services](https://data.home-assistant.io/docs/services/). Entities hold data. Just about everything you interact with in the Home Assistant UI is some type of entity. Entity data is represented using a [state](https://www.home-assistant.io/docs/configuration/state_object/) value and a set of [state attributes](https://www.home-assistant.io/docs/configuration/state_object/#about-entity-state-attributes).
 
@@ -27,7 +27,7 @@ The `Timer` raises the `time_changed` event once a second, which drives most act
 
 # Concurrency Guarantees
 
-There's very little in the way of formal documentation about what behavior you can rely on. Nothing about overlapping execution or race conditions. A common practical approach is to run automations that could conflict at different times, far enough apart that one will complete before the other starts
+There's very little in the way of formal documentation about what behavior you can rely on. Nothing about overlapping execution or race conditions. A common practical approach is to run automations that could conflict at different times, far enough apart that one will complete before the other starts.
 
 The only documented guarantee is provided by the [automation mode](https://www.home-assistant.io/docs/automation/modes/) that controls concurrency for multiple instances of the *same* automation. There are four options.
 * `single` - Any new invocation is ignored if an existing instance is already running.
@@ -60,7 +60,9 @@ The current state (and attributes) are managed by the state machine. The data is
 
 This is why most things in Home Assistant only work with current state. Historical state and statistics have to be queried from a database which needs asynchronous IO. 
 
-Updates to state typically happen asynchronously in reaction to events on Home Assistant's internal event bus. For example, a component reacts to a timer event by making a request to a REST API, suspending until a response is received, then updating the state machine. Anything else reading the state has immediate synchronous access to the most recent value reported to the state machine.
+Updates to state typically happen asynchronously in reaction to events on the event bus. For example, a component reacts to a timer event by making a request to a REST API, suspending until a response is received, then updating the state machine. Anything else reading the state has immediate synchronous access to the most recent value reported to the state machine.
+
+Updates to state raise `state_changed` events. Components can also raise their own events. The event bus determines all subscribers for each event and then adds tasks that deliver the events to each subscriber, once control has returned to the event loop and other queued tasks have been executed.
 
 Most code in the automation core uses direct calls to `async` functions. These won't suspend the coroutine or transfer control to the event loop. There are two places with explicit use of a task. The execution of a sequence of actions is [wrapped in a dedicated task](https://github.com/home-assistant/core/blob/ec3dd7d1e571dfc00ca2addb53fde21e54d4dd1b/homeassistant/helpers/script.py#L637), as are [calls to service actions](https://github.com/home-assistant/core/blob/ec3dd7d1e571dfc00ca2addb53fde21e54d4dd1b/homeassistant/helpers/script.py#L1013). 
 
@@ -70,16 +72,17 @@ This implies that once an automation starts running it will keep running until i
 
 The mutex pattern using an `input_boolean` helper *should* work. Condition evaluation can only access state and attributes, so won't suspend. The `turn_on` action on the `input_boolean` shouldn't either.
 
-* Just the start. Easy to use when you want to prevent conflicting automation from running entirely. What if you need it to run but not concurrently? In theory, you can use a helper entity to model a queue with an automation that picks up queued jobs.
-* Massively over the top complicated, especially given how fiddly it is to implement logic as templates.
+Implementing mutual exclusion is just the start. It's easy enough to prevent conflicting automations from running entirely. What if you need it to run but not concurrently? In theory, you can use a helper entity to implement a queue with an automation that picks up queued jobs. Which is massively over complicated. It's hard enough implementing your own low level currency primitives in a real programming language, let alone trying to do it using Home Assistant templating.
 
-# Automation Mode
+Even if you can roll your own, you need to think carefully about whether you want to rely on undocumented behavior inferred from reading the source code. Undocumented, means it can change at any time. Are there any other options?
 
-* How much should you rely on undocumented behavior inferred from reading the code?
-* For many use cases there's a better middle ground
-* Replace multiple conflicting automations and combine them into one using the Trigger - Choose pattern. Generalization of the dispatches refresh automation we looked at last time.
-* Given a set of simple automations: TriggersA - ConditionsA - ActionsA, TriggersB, - ConditionsB - ActionsB, TriggersC - ConditionsC - ActionsC, ...
-* Combine them as
+# Composite Automations
+
+There are good concurrency guarantees for multiple instances of the *same* automation. In many cases, we can combine a set of independent automations into one composite automation. 
+
+This is a generalization of the "Trigger - Choose" pattern we previously used for our [Octopus Refresh Dispatches]({% link _posts/2025-10-06-home-assistant-octopus-repair-blueprint.md %}) automation.
+
+In general an automation is a set of triggers, a set of conditions and a set of actions. Given separate automations TriggersA - ConditionsA - ActionsA, TriggersB - ConditionsB - ActionsB, TriggersC - ConditionsC - ActionsC, we can combine them as follows.
 
 {% raw %}
 
@@ -136,9 +139,9 @@ actions:
 
 {% endraw %}
 
-* Queued mode ensures that A, B and C can't run concurrently. Execution will be queued if triggered while another instance is running. Queued instances are run in order.
-* The combined automation uses the trigger that fired to determine which conditions to check and then actions to run.
-* Assume that the triggers used by A, B and C are disjoint. If not, you'll need to further merge the common parts. 
-* Any conditions in the main `conditions` section are evaluated at the time the automation was triggered, *before* potentially being queued
-* Any conditions in the action sequence are evaluated when the automation is executed, *after* potentially being queued
-* Will need to decide whether you want to treat each sub-automation condition as a precondition, postcondition or both
+Queued mode ensures that A, B and C can't run concurrently. Execution will be queued if triggered while another instance is running. Queued instances are run in order.
+
+The combined automation uses the trigger that fired to determine which conditions to check and then which actions to run. This assumes that the triggers used by A, B and C are disjoint. If not, you'll need to further merge the common parts.
+
+Any conditions in the main `conditions` section are evaluated at the time the automation was triggered, *before* potentially being queued. Any conditions in the action sequence are evaluated when the automation is executed, *after* potentially being queued. You will need to decide whether you want to treat each sub-automation condition as a precondition, postcondition or both.
+
