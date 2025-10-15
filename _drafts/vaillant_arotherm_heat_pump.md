@@ -21,7 +21,7 @@ wise words
 
   * MiniStore is small cylinder plumbed in reverse to act as a heat store / "combi"
   * Expansion vessel, no buffer
-  * Single open heating circuit, DHW circuit with switch between the two
+  * Single open heating circuit, DHW circuit with ESBE switch between the two
 * Install date
   * Either earlier week where they would be working two jobs, so Damon only available some of the time
   * Dedicated week end of September
@@ -33,6 +33,9 @@ wise words
   * [Nordic Tec BA-115-100](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/323-plate-heat-exchanger-nordic-ba-115-100-2-3400kw.html) plate heat exchanger
   * Rather than using water as heat store, use metal body of heat exchanger
   * More compact, much better energy transfer
+  * Two ESBE VTA 370/570 series thermostatic mixing valves, 20-55 degrees range, adjustment knob to select temperature from 1 to 6.
+  * One to reduce hot water from the heat exchanger to safe temperature
+  * Other plumbed in reverse to act as a diverting valve so that water flowing from the heat pump only goes into the heat exchanger when it's reached a suitable temperature.
   * Discount, free open energy monitoring and guarantee to replace with MiniStore if it didn't work for us
 
 * Install
@@ -89,6 +92,21 @@ This is an annotated history graph from Home Assistant. The blue line shows the 
   * Fired everything up, turned on hot water and heating, crossed fingers.
   
 {% include candid-image.html src="/assets/images/home-assistant/dhw-with-check-valves.png" alt="After check valves fitted" %}
+
+# Blending Valves
+
+{% include candid-image.html src="/assets/images/home-assistant/esbe-vta372-mixing-valve.png" alt="ESBE VTA 370/570 series mixing valves" %}
+
+* Initially hot water blending valve was on max
+* Hot water came out scalding and then reduced linearly
+* Turned down to 4.5 which seems to be about 45 degrees at the valve, 41 or so at the tap
+* Don't know what heat pump diverting valve was initially set to
+
+{% include candid-image.html src="/assets/images/home-assistant/divert-valve-initial.png" alt="DHW cycle with initial setting for divert valve" %}
+
+{% include candid-image.html src="/assets/images/home-assistant/divert-valve-max.png" alt="DHW cycle with max setting (3 visible) for divert valve" %}
+
+{% include candid-image.html src="/assets/images/home-assistant/divert-valve-5.png" alt="DHW cycle with max-1 setting (2 visible) for divert valve" %}
 
 * Predicting energy use
   * Heat loss formula is Heat Loss = House specific constant x dT
