@@ -108,6 +108,13 @@ This is an annotated history graph from Home Assistant. The blue line shows the 
 
 {% include candid-image.html src="/assets/images/home-assistant/divert-valve-5.png" alt="DHW cycle with max-1 setting (2 visible) for divert valve" %}
 
+{% include candid-image.html src="/assets/images/home-assistant/divert-valve-5-long-shower.png" alt="DHW cycle with max-1 setting, long shower" %}
+
+* Valve not stable! Same valve settings, 10 degree difference in when it starts charging NanoStore.
+* Annotated with tank temperature in yellow. Very coarse grained, samples received by Home Assistant at 5 minute intervals. myVaillant has very low API quotas.
+* Sensor near cold water inlet so can quickly respond to water draw. However, not representative of temperature at hot water outlet, at heat pump inlet or what the current "stored" temperature is. 
+* Suspect some correlation between temperature at valve "cold inlet" (connected to NanoStore heat pump inlet) and temperature needed at "hot inlet" (connected to heat pump return flow) for valve to open. 
+
 * Predicting energy use
   * Heat loss formula is Heat Loss = House specific constant x dT
   * Design says 6.11 kW heat loss at 18 degrees inside, -3 outside
