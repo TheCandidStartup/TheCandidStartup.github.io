@@ -27,7 +27,9 @@ The `Timer` raises the `time_changed` event once a second, which drives most act
 
 # Concurrency Guarantees
 
-There's very little in the way of formal documentation about what behavior you can rely on. Nothing about overlapping execution or race conditions. A common practical approach is to run automations that could conflict at different times, far enough apart that one will complete before the other starts.
+There's very little in the way of formal documentation about what behavior you can rely on. Nothing about overlapping execution or race conditions. 
+
+A common practical approach is to run automations that could conflict at different times, far enough apart that one will complete before the other starts.
 
 The only documented guarantee is provided by the [automation mode](https://www.home-assistant.io/docs/automation/modes/) that controls concurrency for multiple instances of the *same* automation. There are four options.
 * `single` - Any new invocation is ignored if an existing instance is already running.
@@ -48,9 +50,9 @@ Like many modern languages, Python exposes coroutines using the `async` / `await
 
 Asyncio explicitly distinguishes between tasks and coroutines. A coroutine is an `async` function that can pause itself and be resumed. A task is a wrapper around a coroutine that allows it to be run on the event loop. You create a task using [`asyncio.create_task`](https://docs.python.org/3/library/asyncio-task.html#creating-tasks) or one of the many wrappers around it. Home Assistant has [`hass.async_create_task`](https://developers.home-assistant.io/docs/asyncio_working_with_async/#starting-independent-task-from-async).
 
-If you `await` a coroutine, control is transferred immediately to that coroutine without going via the event loop. If you `await` a task, it gets added to the event loop's list of tasks to run. Control is transferred back to the event loop and it resumes execution with the task at the front (usually) of the queue. If you wait until some time later or for I/O to complete, the running coroutine is suspended until ready and control given back to the event loop.
+If you `await` a coroutine, control is transferred immediately to that coroutine, within the current task, without going via the event loop. If you `await` a task, it gets added to the event loop's queue of tasks to run. Control is transferred back to the event loop and it resumes execution with a task from the front of the queue. If you wait until some time later or for I/O to complete, the currently running task is suspended until ready and control given back to the event loop.
 
-Automation behavior depends on how code is divided into tasks and which operations delay or depend on I/O.
+It looks like automation behavior depends on how code is divided into tasks and which operations delay or depend on I/O.
 
 Home Assistant provides backwards compatibility for code that predates asyncio. Any code that hasn't explicitly opted in to the async way of working is run on a separate worker thread. We can't make any assumptions about concurrency in these cases. Fortunately, it should only be an issue with old third party integrations.
 
@@ -64,9 +66,9 @@ Updates to state typically happen asynchronously in reaction to events on the ev
 
 Updates to state raise `state_changed` events. Components can also raise their own events. The event bus determines all subscribers for each event and then adds tasks that deliver the events to each subscriber, once control has returned to the event loop and other queued tasks have been executed.
 
-Most code in the automation core uses direct calls to `async` functions. These won't suspend the coroutine or transfer control to the event loop. There are two places with explicit use of a task. The execution of a sequence of actions is [wrapped in a dedicated task](https://github.com/home-assistant/core/blob/ec3dd7d1e571dfc00ca2addb53fde21e54d4dd1b/homeassistant/helpers/script.py#L637), as are [calls to service actions](https://github.com/home-assistant/core/blob/ec3dd7d1e571dfc00ca2addb53fde21e54d4dd1b/homeassistant/helpers/script.py#L1013). 
+Each automation instance runs as a separate task. Most code in the automation core uses direct calls to `async` functions. These won't suspend the currently running task or transfer control to the event loop. There are two places with explicit use of a sub-task. The execution of a sequence of actions is [wrapped in a dedicated task](https://github.com/home-assistant/core/blob/ec3dd7d1e571dfc00ca2addb53fde21e54d4dd1b/homeassistant/helpers/script.py#L637), as are [calls to service actions](https://github.com/home-assistant/core/blob/ec3dd7d1e571dfc00ca2addb53fde21e54d4dd1b/homeassistant/helpers/script.py#L1013). 
 
-At first I thought this meant that automations can suspend between checking conditions and executing the sequence of actions. However, Home Assistant's `async_create_task` [isn't a simple wrapper](https://github.com/home-assistant/core/blob/d40eeee42293328fb793d1b1a1764b49d842c5d8/homeassistant/core.py#L810) around `asyncio.create_task`. It uses a [lower level interface](https://docs.python.org/3/library/asyncio-task.html#task-object) that allows tasks to be scheduled to run immediately. Both tasks created by automations do this. 
+At first I thought this meant that automations can suspend between checking conditions and executing the sequence of actions. However, Home Assistant's `async_create_task` [isn't a simple wrapper](https://github.com/home-assistant/core/blob/d40eeee42293328fb793d1b1a1764b49d842c5d8/homeassistant/core.py#L810) around `asyncio.create_task`. It uses a [lower level interface](https://docs.python.org/3/library/asyncio-task.html#task-object) that allows tasks to be scheduled to run immediately. Both types of sub-task created by automations do this. 
 
 This implies that once an automation starts running it will keep running until it waits, or performs external IO. A good rule of thumb is to assume that any call to a service action may suspend unless you know that it doesn't perform external IO and that it isn't legacy code running in a dedicated thread.
 
@@ -74,7 +76,7 @@ The mutex pattern using an `input_boolean` helper *should* work. Condition evalu
 
 Implementing mutual exclusion is just the start. It's easy enough to prevent conflicting automations from running entirely. What if you need it to run but not concurrently? In theory, you can use a helper entity to implement a queue with an automation that picks up queued jobs. Which is massively over complicated. It's hard enough implementing your own low level currency primitives in a real programming language, let alone trying to do it using Home Assistant templating.
 
-Even if you can roll your own, you need to think carefully about whether you want to rely on undocumented behavior inferred from reading the source code. Undocumented, means it can change at any time. Are there any other options?
+Even if you can roll your own, you need to think carefully about whether you want to rely on undocumented behavior inferred from reading the source code. "Undocumented" means it can change at any time. Are there any other options?
 
 # Composite Automations
 
@@ -82,7 +84,7 @@ There are good concurrency guarantees for multiple instances of the *same* autom
 
 This is a generalization of the "Trigger - Choose" pattern we previously used for our [Octopus Refresh Dispatches]({% link _posts/2025-10-06-home-assistant-octopus-repair-blueprint.md %}) automation.
 
-In general an automation is a set of triggers, a set of conditions and a set of actions. Given separate automations TriggersA - ConditionsA - ActionsA, TriggersB - ConditionsB - ActionsB, TriggersC - ConditionsC - ActionsC, we can combine them as follows.
+In general, an automation is a set of triggers, a set of conditions and a set of actions. I'm going to use *TriggersA* to represent the list of triggers in automation A, *ConditionsB* to represent the list of conditions in automation B, *ActionsC* to represent the list of actions in automation C, and so on. Given separate automations A, B and C, we can combine them as follows.
 
 {% raw %}
 
@@ -145,3 +147,6 @@ The combined automation uses the trigger that fired to determine which condition
 
 Any conditions in the main `conditions` section are evaluated at the time the automation was triggered, *before* potentially being queued. Any conditions in the action sequence are evaluated when the automation is executed, *after* potentially being queued. You will need to decide whether you want to treat each sub-automation condition as a precondition, postcondition or both.
 
+# Next Time
+
+Now to put all this theory into practice. I'm going to consolidate all my battery management automations into one. Join me next time to see how that works out. 
