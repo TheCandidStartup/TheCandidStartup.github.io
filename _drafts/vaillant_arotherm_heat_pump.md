@@ -21,7 +21,7 @@ wise words
 
   * MiniStore is small cylinder plumbed in reverse to act as a heat store / "combi"
   * Expansion vessel, no buffer
-  * Single open heating circuit, DHW circuit with ESBE switch between the two
+  * Single open heating circuit, DHW circuit with ESBE rotary actuator to switch between the two
 * Install date
   * Either earlier week where they would be working two jobs, so Damon only available some of the time
   * Dedicated week end of September
@@ -37,6 +37,8 @@ wise words
   * One to reduce hot water from the heat exchanger to safe temperature
   * Other plumbed in reverse to act as a diverting valve so that water flowing from the heat pump only goes into the heat exchanger when it's reached a suitable temperature.
   * Discount, free open energy monitoring and guarantee to replace with MiniStore if it didn't work for us
+
+{% include candid-image.html src="/assets/images/home-assistant/plumbing-schematic.svg" alt="Plumbing Schematic" %}
 
 * Install
   * Text from Damon saying he was needed on another job but the rest of the team would be here first thing Monday
@@ -104,7 +106,13 @@ This is an annotated history graph from Home Assistant. The blue line shows the 
 
 {% include candid-image.html src="/assets/images/home-assistant/divert-valve-initial.png" alt="DHW cycle with initial setting for divert valve" %}
 
+{% include candid-image.html src="/assets/images/home-assistant/divert-valve-min.png" alt="DHW cycle with min setting for divert valve" %}
+
+* DHW: 0.669kWh consumed, 1.096 generated, COP 1.64. Post heat dump: 1.029 kWh
+
 {% include candid-image.html src="/assets/images/home-assistant/divert-valve-max.png" alt="DHW cycle with max setting (3 visible) for divert valve" %}
+
+* DHW: 0.589kWh consumed, 0.458 generated, COP 0.78. Post heat dump: 1.159 kWh
 
 {% include candid-image.html src="/assets/images/home-assistant/divert-valve-5.png" alt="DHW cycle with max-1 setting (2 visible) for divert valve" %}
 
