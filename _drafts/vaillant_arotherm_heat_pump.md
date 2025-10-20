@@ -15,137 +15,60 @@ wise words
 
 {% include candid-image.html src="/assets/images/home-assistant/heat-pump.jpg" alt="Vaillant aroTherm plus Heat Pump" %}
 
-  * 110L MiniStore Tall for hot water as minimal room in airing cupboard where boiler lives
+  * Expansion vessel, no buffer
+  * Single open heating circuit, DHW circuit with ESBE rotary actuator to switch between the two
+
+{% include candid-image.html src="/assets/images/home-assistant/base-heat-pump-schematic.svg" alt="Heat Pump System Schematic" %}
+
+* Everything apart from the heat pump needs to fit in the cupboard where our old gas boiler lives
 
 {% include candid-image.html src="/assets/images/home-assistant/airing-cupboard.jpg" alt="Airing Cupboard" %}
 
-  * MiniStore is small cylinder plumbed in reverse to act as a heat store / "combi"
-  * Expansion vessel, no buffer
-  * Single open heating circuit, DHW circuit with ESBE rotary actuator to switch between the two
+* The shelves are removable so there's more space above and below the boiler. All the spare space is currently used for storage, so we'd like to retain as much space as possible.
+
 * Install date
   * Either earlier week where they would be working two jobs, so Damon only available some of the time
   * Dedicated week end of September
   * In no hurry so went with end of September. Also, just starting cold weather so better time for seeing whether it's working properly
 
-* NanoStore guinea pigs
-  * Offer from Heat Geek to be one of the first NanoStore installs
-  * Plate heat exchanger - see Heat Geek video
-  * [Nordic Tec BA-115-100](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/323-plate-heat-exchanger-nordic-ba-115-100-2-3400kw.html) plate heat exchanger
-  * Rather than using water as heat store, use metal body of heat exchanger
-  * More compact, much better energy transfer
-  * Two ESBE VTA 370/570 series thermostatic mixing valves, 20-55 degrees range, adjustment knob to select temperature from 1 to 6.
-  * One to reduce hot water from the heat exchanger to safe temperature
-  * Other plumbed in reverse to act as a diverting valve so that water flowing from the heat pump only goes into the heat exchanger when it's reached a suitable temperature.
-  * Discount, free open energy monitoring and guarantee to replace with MiniStore if it didn't work for us
-
-{% include candid-image.html src="/assets/images/home-assistant/plumbing-schematic.svg" alt="Plumbing Schematic" %}
-
 * Install
   * Text from Damon saying he was needed on another job but the rest of the team would be here first thing Monday
-  * Monday: Delivery of materials, including heat pump. NanoStore and radiators, changed four radiators. One radiator missing, one damaged. Boiler left in place for another day of hot water. No heating but not needed, still warm
+  * Monday: Delivery of materials, including heat pump, mystery hot water system and radiators, changed four radiators. One radiator missing, one damaged. Boiler left in place for another day of hot water. No heating but not needed, still warm.
+  * Most radiators were straight forward swaps reusing the existing plumbing. In a couple of cases the old radiator used imperial measurements and the closest new metric equivalent wasn't an exact match.
+  * Team offered to lift floor boards and adjust piping out of sight. I was happy to avoid that. Having a little more copper pipework on show doesn't bother me at all. 
+
+{% include candid-image.html src="/assets/images/home-assistant/metric-radiator-resize.jpg" alt="Metric radiator resize" %}
+
   * Tuesday: Removed boiler, sited heat pump, started work on external piping, electrician on site installing dedicated consumer unit for Heat Pump and starting work in the airing cupboard.
 
 {% include candid-image.html src="/assets/images/home-assistant/external-conduit.jpg" alt="External Conduit" %}
 
-  * Wednesday: Finished most of external work and most plumbing in the airing cupboard. Much swearing wrestling with Heat Exchanger fittings. 
+* Wednesday: Finished most of external work and most plumbing in the airing cupboard. Much swearing wrestling with mystery hot water system. It didn't make it into the cupboard today.
 
 {% include candid-image.html src="/assets/images/home-assistant/half-way-install.jpg" alt="Airing Cupboard half way through install" %}
 
-  * Heat Exchanger much bigger than the one in the video. Based on the external dimensions looks like a [BA-115-170](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/1472-plate-heat-exchanger-nordic-ba-115-170-25-6300kw.html). Weighs over 100 Kg so very difficult for two people to maneuver up the stairs and into a narrow cupboard.
-  * According to Nordic Tec website it's a "large industrial plate heat exchanger" with "significant weight" that is "not a heat exchanger for single-family homes".
-  * Of course Heat Geek aren't using it in a typical way. Needs to be big enough to act as a heat store for the time it takes for the heat pump to react and build up to full power.
-  * NanoStore is all about combi-like operation. Water has eight times the heat capacity of steel, so a 110L MiniStore can store much more heat than a 100Kg NanoStore. NanoStore is much better at transferring the heat generated by the heat pump, once it starts running. 
-  * Assume the one we've got is so much bigger because we have two showers and they want to see whether both can be used simultaneously. Plus installing a range of sizes gives them more data to work out the optimal size for future installs.
-  * Heat exchanger plus [open energy monitoring level 3](https://shop.openenergymonitor.com/level-3-heat-pump-monitoring-bundle-emonhp/) is £3000 worth of kit, at list prices, so we got a good deal for being guinea pigs.
-  * Thursday: Final two radiators delivered and changed. Plumbing in the heat exchanger. Electrician on site finishing the install in the airing cupboard. Open Energy monitoring needed more sockets than expected so had to use a temporary solution. 
+
+  * Thursday: Final two radiators delivered and changed. Plumbing in the mystery hot water system. Electrician on site finishing the install in the airing cupboard. Some of the small electrical devices need to be protected with a 5A fuse. Chose this ingenious solution.
 
 {% include candid-image.html src="/assets/images/home-assistant/temporary-electrics.jpg" alt="Temporary Electrics" %}
 
-  * Done by midday. Filled system, found heat exchanger connection that leaked. Adjusted, tried again. Repeatedly until 7pm.
-  * Friday: Damon arrived at 7am to apply his magic touch. Had it working by 8am, then rushed off to another job. Frantic effort to finish everything off and tidy up as storm Amy hit. Damon back at 3pm to hand system over. 
-  * Standard setup with heating and hot water on throughout the day.
-  * Spent the evening setting up [myVaillant](https://github.com/signalkraft/mypyllant-component) integration for Home Assistant (more on that next time) and called it a night.
+* Extension lead with a 5A fused plug. Only had a 2-way extension so put this temporary solution in place.
+* Done by midday. Filled system, found connection to mystery hot water system that leaked. Adjusted, tried again. Repeatedly until 7pm.
+* Friday: Damon arrived at 7am to apply his magic touch. Had it working by 8am, then rushed off to another job. Frantic effort to finish everything off and tidy up as storm Amy hit. Damon back at 3pm to hand system over. 
+* Standard setup with heating on throughout the day.
+* Spent the evening setting up [myVaillant](https://github.com/signalkraft/mypyllant-component) integration for Home Assistant (more on that another time) and called it a night.
 
-* Thermal Siphoning
-  * First proper test on Saturday
-  * Tail end of Storm Amy, much colder day. Never above 10 degrees, mostly around 8.
-  * Heat pump running but only for DHW cycles, every 60-90 minutes. No heating cycle at all. 
-  * Messaged Damon who replied almost instantly. Suggested bumping heat curve right up to 2.2 to give 55 degree flow temp, to force heating to kick in.
-  * After a long drawn out few minutes it finally kicked in. Took an hour to get house up to temperature. I went back to design heat curve of 0.7.
-  * House stayed at temperature but behavior was the same. A DHW cycle every 60-90 minutes. No heating cycle. COP around 2.5. 
+{% include candid-image.html src="/assets/images/home-assistant/heating-cycle.png" alt="Heating Cycles" %}
 
-{% include candid-image.html src="/assets/images/home-assistant/dhw-thermal-siphoning.png" alt="Thermal Siphoning" %}
+This is a graph from Open Energy Monitoring. Easy access by scanning the QR code on the side of the open energy data logger. The blue shading shows the electricity consumed by the heat pump and the beige shading the corresponding heat generated. The rest of the time water is being pumped round the heating circuit but the heat pump isn't generating any heat.
 
-This is an annotated history graph from Home Assistant. The blue line shows the reported hot water temperature and heat pump flow temperature. The blue shading shows when the heat pump is generating heat with the hot water circuit active. The red shading shows when it's generating heat with the heating circuit active. The rest of the time water is being pumped round the heating circuit but the heat pump isn't generating heat.
-
-  * Used live monitoring feature on controller to try and work out what was going on.
-  * Had to read up on Vaillant's energy integral cycle to control when to turn heat pump on and off when running at minimum output
-  * Energy integral never got low enough for heating cycle to start before next DHW cycle.
-  * Target flow temperature was around 25 degrees and actual flow temperature was about that or higher most of the time
-  * Where was the heat coming from? Given rapid loss of heat from heat exchanger (without airing cupboard or outside of insulation feeling over warm) seemed most likely that it was escaping into the heating circuit.
-  * Almost at the same time got a message from Damon saying it was most likely to be thermal siphoning which would need to be fixed by adding no-return check valves to the installation. 
-  * Turned off the hot water. We can heat on demand when we need it and use immediately.
-  * Normal heating cycle kicked in after a couple of hours. Much more reasonable COP around 5.
-  * At minimum level heat pump kicks out 3 kW of heat using 600 W of electricity. With a temperature delta of 7 degrees, heat pump was on 50% of the time. Cycle it settled at was 45 minutes on, 45 minutes off. Can tweak the energy integral threshold for starting a new cycle to change cycle length. May try increasing it to see how much more efficient a longer cycle is (and whether it makes room temperature oscillate too much).
-  * Damon messaged again the following day. Whole team were heading out for a remote week long job but would send one of them back a day early so they can fit the valves on Friday. Also offered to cover my electricity costs until problem sorted.
-  * Rearranged again to the following Monday
-  * Belt and braces approach with four check valves. Two spring loaded ones on the inflows and two flutter valves on the outflows.
-  * Took an afternoon to do. Needed to alter some of the pipework runs to get long enough straight sections to fit the valves in
-  * Fired everything up, turned on hot water and heating, crossed fingers.
-  
-{% include candid-image.html src="/assets/images/home-assistant/dhw-with-check-valves.png" alt="After check valves fitted" %}
-
-# Blending Valves
-
-{% include candid-image.html src="/assets/images/home-assistant/esbe-vta372-mixing-valve.png" alt="ESBE VTA 370/570 series mixing valves" %}
-
-* Initially hot water blending valve was on max
-* Hot water came out scalding and then reduced linearly
-* Turned down to 4.5 which seems to be about 45 degrees at the valve, 41 or so at the tap
-* Don't know what heat pump diverting valve was initially set to
-
-{% include candid-image.html src="/assets/images/home-assistant/divert-valve-initial.png" alt="DHW cycle with initial setting for divert valve" %}
-
-{% include candid-image.html src="/assets/images/home-assistant/divert-valve-min.png" alt="DHW cycle with min setting for divert valve" %}
-
-* DHW: 0.669kWh consumed, 1.096 generated, COP 1.64. Post heat dump: 1.029 kWh
-
-{% include candid-image.html src="/assets/images/home-assistant/divert-valve-max.png" alt="DHW cycle with max setting (3 visible) for divert valve" %}
-
-* DHW: 0.589kWh consumed, 0.458 generated, COP 0.78. Post heat dump: 1.159 kWh
-
-{% include candid-image.html src="/assets/images/home-assistant/divert-valve-5.png" alt="DHW cycle with max-1 setting (2 visible) for divert valve" %}
-
-{% include candid-image.html src="/assets/images/home-assistant/divert-valve-5-long-shower.png" alt="DHW cycle with max-1 setting, long shower" %}
-
-* Valve not stable! Same valve settings, 10 degree difference in when it starts charging NanoStore.
-* Annotated with tank temperature in yellow. Very coarse grained, samples received by Home Assistant at 5 minute intervals. myVaillant has very low API quotas.
-* Sensor near cold water inlet so can quickly respond to water draw. However, not representative of temperature at hot water outlet, at heat pump inlet or what the current "stored" temperature is. 
-* Suspect some correlation between temperature at valve "cold inlet" (connected to NanoStore heat pump inlet) and temperature needed at "hot inlet" (connected to heat pump return flow) for valve to open. 
-
-* Predicting energy use
-  * Heat loss formula is Heat Loss = House specific constant x dT
-  * Design says 6.11 kW heat loss at 18 degrees inside, -3 outside
-  * dT = 21, therefore heat loss is 291 W per degree
-  * Passive gain equivalent to three degrees an hour from occupant heat, solar gain, other electricial devices. Equivalent to target temperate - OT threshold (cut off below which heat pump won't bother turning on)
-  * Get hourly weather forecast and determine dT for each hour
-  * Sum up 291 * dT for each hour to get Wh of heat needed
-  * Electricity needed to generate that heat is heat needed / COP. 
-  * Design gives minimum efficiency guarantee of 3.8 at max 45 degrees flow rate (dT up to 21 degrees)
-  * Measured efficiency of 5 running at minimum output at 10 degrees outside.
-  * Actual COP [depends on](https://energy-stats.uk/how-to-measure-vaillant-arotherm-cop/) your installation, outside temperature and flow temperature
-  * Given fixed target temperature, fixed installation, flow temp is a function of outside temperature (via heat curve)
-  * Pragmatic approach is to measure COP at different outside temperatures and use a lookup table for expected COP given expected temperature
-
-* Jinja
-  * Can't modify variables defined at outer scope (e.g. increment sum inside a loop)
-  * Have to create a namespace object to hold the variable which can be modified from any scope
-
-* Stats
-  * Split electric/heat energy from open energy monitoring into heating and hot water using utility meter (daily)
-  * Energy stats for myVaillant are too coarse grained and infrequently updated
-  * Calculate COP for each per day just before daily reset, also time when nothing running.
-  * More complicated to get fine grained COP and also less meaningful as dependent on where cycle boundaries lie
-  * Hack to make stats somewhat useful. Mark entity as `unavailable` for period during day before COP calculated.
-  * Avoids having previous days value used for average/max/min
-  * Average of daily COP across year is NOT SCOP. For that need to calculate total energy output/used. Which would need a custom dashboard card with `energy-date-selection` integration. Or read off the graphs and use a calculator if you really want to know ...
+* Heat Pump is cycling which is supposed to be bad
+* Each cycle heat pump ramps up to 800W and then throttles back to 500-600W. Runs for 30 minutes and then turns off for 50 minutes. Water continues to be pumped round the heating circuit while the heat pump if off.
+* Target flow rate is about 24 degrees. Heat pump is over shooting.
+* Used live monitoring feature on controller to try and work out what was going on.
+* Had to read up on Vaillant's energy integral cycle to control when to turn heat pump on and off when running at minimum output
+* Heat pumps have a minimum speed at which they can run. For my heat pump that minimum is around 550W. It's producing too much heat to run continuously.
+* Energy integral is a simple approximation of how much extra energy is being generated: Difference between target and actual temp * time.
+* Heat pump turns on when energy integral at -60. If it hits 0 (60 extra degree minutes of heat generated) it turns off and stays off until energy integral below -60 again.
+* Water being pumped round circuit gradually cools. Eventually it goes below target and starts reducing energy integral. New cycle starts when everything balances out.
+* The start point is a configuration option. Using -120 instead of -60 will double the length of each cycle. This should improve efficiency as the heat pump runs for longer at a time with fewer cycles. However, if the cycle is too long you'll notice swings in temperature in the house. Something to experiment with.
