@@ -3,93 +3,112 @@ title: Vaillant aroTHERM plus 7kW Air Source Heat Pump
 tags: gear
 ---
 
-wise words
+Like many houses in the UK, we rely on a gas combi boiler for heating and hot water. I know that continuing to burn gas is not sustainable in the long term. However, I couldn't see the point in switching while the grid is still burning gas to generate electricity. 
+
+Two things changed my mind. First, heat pumps are becoming increasingly efficient. Once you get above 350% efficient (i.e. a SCOP of 3.5), a gas power station generating electricity that powers a heat pump uses less gas than burning it yourself. It's cheaper too. Secondly, over the last year, [only 30%](https://grid.iamkate.com/) of the UK's power came from fossil fuels. 
+
+We're now the proud owners of a Vaillant aroTHEM plus air source heat pump. Getting here was an interesting journey.
 
 {% include candid-image.html src="/assets/images/home-assistant/heat-pump.jpg" alt="Vaillant aroTherm plus Heat Pump" %}
 
-* Heat Geek
-  * Originally focused on training heat engineers how to design and install efficient heat pump systems
-  * Extra investment. Becoming a platform for heat pump installation. 
-  * Fancy website with automated application process
-  * Initial guestimate based on publicly available information about your house
-  * Next step is a paid design consulation with a local Heat Geek
+# Heat Geek
 
-* Design Consultation
-  * Blakemore Heating and Plumbing, local company
-  * March 2024
-  * Fancy automated scanning software on tablet
-  * Worked in half of the rooms - had to do the rest manually
-  * Determine sizes, external doors and windows, external walls, ask about insulation
-  * 1929 semi-detached. Cavity wall insulation. Suspended wooden floors on ground floor, no insulation. Loft conversion insulated to 2008 building regs.
-  * 6 kW heat loss at -3 degrees C
-  * Can keep existing radiators with a design temperature of 55 degrees (flow temperature needed to deliver 6kW at -3 outside)
-  * Pushed for a more efficient design
-  * Replacing 6 radiators with double/triple width versions occupying the same footprint would bring design temperature down to 45 degrees
+Our system was installed through [Heat Geek](https://www.heatgeek.com/). Heat Geek are an interesting company. They started out as a one-man band, focused on training heating engineers to design and install efficient heat pump systems. I've enjoyed watching Adam's [YouTube videos](https://www.youtube.com/HeatGeek) over the past few years.
 
-* Formal proposal
-  * Headline overview: 380% guaranteed minimum efficiency, Vaillant aroTHERM plus 7kw, 6 new radiators
-  * Detailed design listing heat loss and radiators for each room
-  * List of kit to install, including Vaillant sensoCOMFORT control and internet gateway
-  * Difficult to understand what actually gets installed and where
-  * There's also a control box included with the heat pump that has to go somewhere inside with wiring to heat pump
-  * sensoComfort would replace the old boiler controls in our hall. Set schedule, etc.
-  * sensoComfort comes in wired or wireless version. Quoted for wireless. Was concerned about batteries running out. Can it have hardwired power? Apparently the choice is all or nothing. If you go wired, also need wire between sensorComfort and heat pump control box, and wire to outdoor temperature sensor.
-  * Told batteries last for ages, systems run for years on same batteries.
-  * Internet gateway enables use of phone app. Not sure I wanted this but also used so Heat Geek can remotely monitor system for guarantee.
-  * Once accepted, Heat Geek handle application for government grant and DNO approval
+More recently, Heat Geek have had additional investment and built a platform for managing the installation process. You apply online, get an automated initial estimate and then get matched up with a local Heat Geek trained heating engineer.
 
-* EPC Certificate
-  * Lived here since 1997 so never had one
-  * Needed for UK government grant
-  * Doesn't matter what rating you get, as long as you have certificate
-  * System is bonkers. Assessor does a simplified version of Heat Geek survey but can only count things they can see themselves. You can't see what's inside the cavity walls or the roof without ripping them open, so they count as uninsulated.
-  * Get my EPC certificate with a D rating and recommendations to install cavity wall insulation, roof insulation, and solar panels. All of which I already have.
-  * Annoyed enough to dig out old plans, receipts and building regs approvals, and ask the assessor to have another go. 
-  * This time I get a C with just suspended floor insulation and solar water heating called out as recommended improvements. Which would increase my score from 74 to 77 out of 100. I'll pass.
+The next step is a paid design consultation.
+
+# Design Consultation
+
+I submitted my Heat Geek application over the Christmas holidays and got a reply at the beginning of January 2025. We were matched with [Blakemore Plumbing and Heating](http://blakemoreplumbingandheating.co.uk/), a local Sheffield company. The earliest appointment we could get for a design consultation was in March. 
+
+The process took a couple of hours. Damon walked through the house with me, room by room. He used a Heat Geek app on a tablet to capture all the details. The app has an automated scanning feature which worked in half the rooms. The rest were done manually, but it was still a quick process.
+
+The idea is to determine the heat loss for each room. The heating system is designed to generate enough heat to cover the loss at any time of the year. Damon needed to know the size of each room, which walls are external, location of external doors and windows, location and size of radiators, and the levels of insulation for floors, walls and roof. 
+
+Our house is a 1929 semi-detached. It has cavity wall insulation. The ground floor has suspended wooden floors with no insulation. The attic was converted into another room with insulation compliant with 2008 building regulations. It's a typical, middle of the road, UK house.
+
+The end result is an estimated heat loss of 6kW at -3°C outside. Heat loss scales linear with the temperature difference between inside and outside, so that's equivalent to 300W heat loss per degree.
+
+With our existing radiators a heat pump would need a flow temperature of 55°C to cover a presumed worst case heat loss of 6kW. I pushed for a more efficient design. Replacing 6 radiators with double or triple width versions occupying the same footprint would bring the design temperature down to 45°C.
+
+That seemed like a reasonable compromise to me. 
+
+# Formal Proposal
+
+A fully priced, formal proposal appeared on the Heat Geek portal a couple of days later. The headline overview was a Vaillant aroTHEM plus 7kW with 6 new radiators and a guaranteed 380% minimum efficiency. 
+
+Of course, the proposal included a domestic hot water system. That is a whole story in itself. For now, I'm going to focus on the heat pump. I'll cover the mystery hot water system another time.
+
+The detailed proposal included the heat loss and radiators for each room, together with a list of all the kit to be installed. As well as the heat pump and it's internal application interface control box, there was a Vaillant sensoCOMFORT system control and a myConnect internet gateway. 
+
+It was difficult to understand where each piece would be installed and what it was for. I had to do some digging. The sensoCOMFORT replaces the room thermostat that controls our old boiler. You can set target temperatures, schedules for when the heating is on, etc.
+
+The sensoCOMFORT is available as a wired or wireless package. We'd been quoted for wireless. We'd had problems over the years with our old boiler controls running out of batteries at the most inconvenient moments. I asked if we could use the hardwired version instead. Apparently the choice is all or nothing. If you go wired, you also need a comms wire between the sensoCOMFORT and the heat pump application interface, with another comms wire to the outdoor temperature sensor.
+
+The wireless version of the outdoor sensor is solar powered, no need for batteries. According to Damon the sensoCOMFORT batteries last for ages. He has some systems that have run for years on the original batteries. I agreed to go with the wireless version.
+
+I wasn't sure that I needed an internet gateway either. Do I really need to control the heating on my phone while I'm away? However, the gateway is also used by Heat Geek to remotely monitor the system to ensure performance meets their guarantee. I agreed to keep that too.
+
+Once the proposal is accepted, Heat Geek take a deposit and apply for the UK government heat pump grant, as well as DNO approval to connect a heat pump to the grid. 
+
+# EPC Certificate
+
+The UK government heat pump grant requires you to have a valid EPC certificate for your home. The only other time you need one is when you sell a house, so that the buyer understands what kind of energy performance they're letting themselves in for.  We've lived here since before the EPC scheme was introduced, so have never needed one. 
+
+As far as I can tell, it doesn't matter what energy performance rating you get, you just need the piece of (digital) paper. I booked an assessor using one of the many online platforms and waited for my appointment.
+
+The system is bonkers. The assessor does a simplified version of the Heat Geek survey but can only count things they can see themselves. You can't see what's inside cavity walls or the roof without ripping them open, so they count as uninsulated.
+
+I get my EPC certificate with a D rating and recommendations to install cavity wall insulation, roof insulation, and solar panels. All of which I already have. Apparently, most people don't care how inaccurate EPCs are because no one pays any attention to them anyway. 
+
+I was annoyed enough to dig out old plans, receipts and building regulations approvals, and ask the assessor to have another go. This time I get a C with just suspended floor insulation and solar water heating called out as recommended improvements. Which would increase my score from 74 to 77. I'll pass.
 
 {% include candid-image.html src="/assets/images/home-assistant/epc-rating.png" alt="EPC Rating 'C'" %}
 
 # Install Date
-  * Either earlier week in June where they would be working two jobs, so Damon only available some of the time
-  * Dedicated week end of September
-  * In no hurry so went with end of September. Also, just starting cold weather so better time for seeing whether it's working properly
+
+Installation was scheduled to take a week, for most of which we'd be without heating or hot water. Damon offered us a choice of dates. There was a week in June where the team would be working two jobs, so Damon would only be available some of the time. Alternatively, if we waited until the last week in September, they would be able to work full time on our install. 
+
+In was in no hurry, so went with the last week in September. The cold weather should just be starting, which makes it a better time for seeing whether it's working properly.
 
 # Installation
 
-* Everything apart from the heat pump needs to fit in the airing cupboard where our old gas boiler lives
-* Sunday before installation week we removed everything from the cupboard
+Everything apart from the heat pump needs to fit in the airing cupboard where our old gas boiler lives. The Sunday before installation week we removed everything from the cupboard.
 
 {% include candid-image.html src="/assets/images/home-assistant/airing-cupboard.jpg" alt="Airing Cupboard" %}
 
-* The shelves are also removable so there's more space available above and below the boiler. All the spare space is currently used for storage, so we'd like to retain as much as possible.
+The shelves are also removable so there's more space available above and below the boiler. There's still a notable lack of width. All the spare space is currently used for storage, so we'd like to retain as much of it as possible.
 
-  * Text from Damon saying he was needed on another job but the rest of the team would be here first thing Monday
-  * Monday: Delivery of materials, including heat pump, mystery hot water system and radiators, changed four radiators. One radiator missing, one damaged. Boiler left in place for another day of hot water. No heating but not needed, still warm.
-  * Most radiators were straight forward swaps reusing the existing plumbing. In a couple of cases the old radiator used imperial measurements and the closest new metric equivalent wasn't an exact match.
-  * Team offered to lift floor boards and adjust piping out of sight. I was happy to avoid that. Having a little more copper pipework on show doesn't bother me at all. 
+First thing Monday morning I got a text from Damon saying that the team would be with me as planned, but that he had been called away to another job. The two man team arrived in a van each, bringing the mystery hot water system with them. They were followed through the day by deliveries of materials, including the heat pump and new radiators. One radiator was missing, one arrived damaged and was promptly returned.
+
+The four available radiators were installed and the system refilled so that we'd have heating and hot water for another day. Most radiators were straight forward swaps reusing the existing plumbing. In a couple of cases the old radiator used imperial measurements and the closest new metric equivalent wasn't an exact match. The team offered to lift floor boards and adjust piping out of sight. I was happy to avoid that. Having a little more copper pipework on show doesn't bother me at all. 
 
 {% include candid-image.html src="/assets/images/home-assistant/metric-radiator-resize.jpg" alt="Metric radiator resize" %}
 
-  * Tuesday: Removed boiler, sited heat pump, using adjustable legs to level it.
-  * Position at side of house. Closest reasonable point to old boiler location in upstairs bathroom
-  * Close to meter cupboard and electrical supply and a drain
-  * Pipe to drain for condensate rather than a gravel bed soak away
-  * started work on external piping, electrician on site installing dedicated consumer unit for Heat Pump and starting work in the airing cupboard.
+ The boiler was removed first thing on Tuesday. The heat pump was put into position, using adjustable legs to level it on the slightly sloping tarmac. We decided to put the heat pump at the side of the house. This is the furthest distance from occupied rooms (both ours and our neighbours). It's also the closest practical position to the boiler cupboard in the upstairs bathroom. There's convenient access to the electricity supply and a drain. They used a discrete pipe to the drain for the condensate, rather than needing to dig out a gravel soak away. 
+
+Work started on the external piping from the heat pump to the boiler cupboard. There was also an electrician on site, installing a dedicated consumer unit for the heat pump and then starting work on in the electrics in the boiler cupboard. 
 
 {% include candid-image.html src="/assets/images/home-assistant/external-conduit.jpg" alt="External Conduit" %}
 
-* Wednesday: Finished most of external work and most plumbing in the airing cupboard. Much swearing wrestling with mystery hot water system. It didn't make it into the cupboard today.
+I was pleasantly surprised by how neat the external pipework looked. Flow and return pipes together with comms cables were packed into a trunking system. It's better looking than some of the existing pipe work on the side of the house.
+
+Wednesday saw most of the external work finished and good progress with the plumbing in the boiler cupboard. There was much swearing while wrestling with the mystery hot water system. It didn't make it into the cupboard today.
 
 {% include candid-image.html src="/assets/images/home-assistant/half-way-install.jpg" alt="Airing Cupboard half way through install" %}
 
-
-  * Thursday: Final two radiators delivered and changed. Plumbing in the mystery hot water system. Electrician on site finishing the install in the airing cupboard. Some of the small electrical devices need to be protected with a 5A fuse. Chose this ingenious solution.
+The last two radiators were delivered and installed on Thursday. The electrician was on site again, finishing the install in the boiler cupboard. Some of the small electrical devices need to be protected with a 5A fuse. They chose this ingenious solution.
 
 {% include candid-image.html src="/assets/images/home-assistant/temporary-electrics.jpg" alt="Temporary Electrics" %}
 
-* Extension lead with a 5A fused plug. Only had a 2-way extension so put this temporary solution in place.
-* Done by midday. Filled system, found connection to mystery hot water system that leaked. Adjusted, tried again. Repeatedly until 7pm.
-* Friday: Damon arrived at 7am to apply his magic touch. Had it working by 8am, then rushed off to another job. Frantic effort to finish everything off and tidy up as storm Amy hit. Damon back at 3pm to hand system over. 
+The extension lead is fitted with a 5A fused plug. They only had a 2-way extension to hand, so had to improvise by adding an extension block. They *will* be back to put a more permanent solution in place. 
+
+The rest of the day was spent plumbing in the mystery hot water system. Everything was done by midday. They filled the system and found a leaky connection. They adjusted things and tried again. And again. Repeatedly until giving up at 7pm.
+
+Damon arrived at 7am to try applying his magic touch. He had it working by 8am, then rushed off to another job. The rest of the team worked hard to finish everything off, insulate all the exposed pipework and tidy up as storm Amy hit. Damon was back at 3pm to hand the working system over. 
+
 * 0.7 heat curve, Inactive mode.
 * Standard setup with heating on throughout the day.
 * Spent the evening setting up [myVaillant](https://github.com/signalkraft/mypyllant-component) integration for Home Assistant (more on that another time) and called it a night.
@@ -126,6 +145,7 @@ This is a graph from Open Energy Monitoring. Easy access by scanning the QR code
 
 # Living with a Heat Pump
 
+* PDF manuals, commissioning report, MCS certificate, building regulations certificate and electrical installation certificate appeared on the Heat Geek portal a couple of days after the install was completed. 
 * Stable temperature
 * Radiators don't feel hot at all
 * Adjusted schedule from 24x7 running to make most of overnight cheap rate. Off late at night before cheap rate starts, then off again early morning after it ends. Make up for it by extra heat during cheap rate. Opposite of normal practice of a slightly lower set back temperature at night.
