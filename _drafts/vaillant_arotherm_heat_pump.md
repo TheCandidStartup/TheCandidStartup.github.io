@@ -13,7 +13,7 @@ We're now the proud owners of a Vaillant aroTHEM plus air source heat pump. Gett
 
 # Heat Geek
 
-Our system was installed through [Heat Geek](https://www.heatgeek.com/). Heat Geek are an interesting company. They started out as a one-man band, focused on training heating engineers to design and install efficient heat pump systems. I've enjoyed watching Adam's [YouTube videos](https://www.youtube.com/HeatGeek) over the past few years.
+Our system was installed through [Heat Geek](https://www.heatgeek.com/). Heat Geek are an interesting company. They started out as a one-man band, focused on training heating engineers to design and install efficient heat pump systems. I've enjoyed watching Adam's [YouTube videos](https://www.youtube.com/HeatGeek) over the years.
 
 More recently, Heat Geek have had additional investment and built a platform for managing the installation process. You apply online, get an automated initial estimate and then get matched up with a local Heat Geek trained heating engineer.
 
@@ -25,13 +25,13 @@ I submitted my Heat Geek application over the Christmas holidays and got a reply
 
 The process took a couple of hours. Damon walked through the house with me, room by room. He used a Heat Geek app on a tablet to capture all the details. The app has an automated scanning feature which worked in half the rooms. The rest were done manually, but it was still a quick process.
 
-The idea is to determine the heat loss for each room. The heating system is designed to generate enough heat to cover the loss at any time of the year. Damon needed to know the size of each room, which walls are external, location of external doors and windows, location and size of radiators, and the levels of insulation for floors, walls and roof. 
+The idea is to determine the heat loss for each room. The heating system is designed to generate enough heat to cover the loss at any time of the year. Damon needed to know the size of each room, which walls are external, location of external doors and windows, location and size of radiators, and the levels of insulation for windows, doors, floors, walls and roof. 
 
 Our house is a 1929 semi-detached. It has cavity wall insulation. The ground floor has suspended wooden floors with no insulation. The attic was converted into another room with insulation compliant with 2008 building regulations. It's a typical, middle of the road, UK house.
 
-The end result is an estimated heat loss of 6kW at -3°C outside. Heat loss scales linear with the temperature difference between inside and outside, so that's equivalent to 300W heat loss per degree.
+The end result is an estimated heat loss of 6kW at -3°C outside. Heat loss scales linearly with the temperature difference between inside and outside, so that's equivalent to 300W heat loss per degree.
 
-With our existing radiators a heat pump would need a flow temperature of 55°C to cover a presumed worst case heat loss of 6kW. I pushed for a more efficient design. Replacing 6 radiators with double or triple width versions occupying the same footprint would bring the design temperature down to 45°C.
+With our existing radiators, a heat pump would need a flow temperature of 55°C to cover a presumed worst case heat loss of 6kW. I pushed for a more efficient design. Replacing 6 radiators with double or triple width versions occupying the same footprint would bring the design temperature down to 45°C.
 
 That seemed like a reasonable compromise to me. 
 
@@ -45,7 +45,7 @@ The detailed proposal included the heat loss and radiators for each room, togeth
 
 It was difficult to understand where each piece would be installed and what it was for. I had to do some digging. The sensoCOMFORT replaces the room thermostat that controls our old boiler. You can set target temperatures, schedules for when the heating is on, etc.
 
-The sensoCOMFORT is available as a wired or wireless package. We'd been quoted for wireless. We'd had problems over the years with our old boiler controls running out of batteries at the most inconvenient moments. I asked if we could use the hardwired version instead. Apparently the choice is all or nothing. If you go wired, you also need a comms wire between the sensoCOMFORT and the heat pump application interface, with another comms wire to the outdoor temperature sensor.
+The sensoCOMFORT is available as a wired or wireless package. The quote was for wireless. We'd had problems over the years with our old boiler controls running out of batteries at the most inconvenient moments. I asked if we could use the hardwired version instead. Apparently the choice is all or nothing. If you go wired, you also need a comms wire between the sensoCOMFORT and the heat pump application interface, with another comms wire to the outdoor temperature sensor.
 
 The wireless version of the outdoor sensor is solar powered, no need for batteries. According to Damon the sensoCOMFORT batteries last for ages. He has some systems that have run for years on the original batteries. I agreed to go with the wireless version.
 
@@ -71,7 +71,17 @@ I was annoyed enough to dig out old plans, receipts and building regulations app
 
 Installation was scheduled to take a week, for most of which we'd be without heating or hot water. Damon offered us a choice of dates. There was a week in June where the team would be working two jobs, so Damon would only be available some of the time. Alternatively, if we waited until the last week in September, they would be able to work full time on our install. 
 
-In was in no hurry, so went with the last week in September. The cold weather should just be starting, which makes it a better time for seeing whether it's working properly.
+In was in no hurry, so went with the last week in September. The cold weather should just be starting, which makes it a better time for seeing whether everything is working properly.
+
+# DNO Approval
+
+A few days after accepting the proposal, I got emails from Ofgem and our DNO, Northern Powergrid, asking for confirmation that Heat Geek were authorized to apply on our behalf. Over the following weeks I was occasionally copied in on emails sent to Heat Geek. I assumed everything was progressing. The fancy Heat Geek web portal confirmed that "Heat Geek Upgrades" were responsible for DNO approval. 
+
+In July I was copied on an email about a potential main fuse upgrade. We already have a 100A fuse so I assumed this was just a box ticking exercise. I emailed Heat Geek (using the same address as Northern Powergrid's original email was sent to) to confirm that I was expecting them to handle whatever was needed.
+
+I hadn't heard anything by the end of August and started getting worried. I followed up, copying in all the Heat Geek contact addresses I had. Apparently, the email address they'd used on their application to Northern Powergrid was one they "mainly use for applications and don't actively monitor for responses". Which makes no sense to me. Why would you make an application and ignore the responses?
+
+Also, I was the one who had to arrange for a site visit from Northern Powergrid. Luckily, Northern Powergrid couldn't have been more helpful and scheduled a visit a few days later. They confirmed I did indeed have a 100A fuse. Then replaced it with an 80A one. Apparently, they don't like people having 100A fuses as they can take too long to trip. 
 
 # Installation
 
@@ -89,11 +99,11 @@ The four available radiators were installed and the system refilled so that we'd
 
  The boiler was removed first thing on Tuesday. The heat pump was put into position, using adjustable legs to level it on the slightly sloping tarmac. We decided to put the heat pump at the side of the house. This is the furthest distance from occupied rooms (both ours and our neighbours). It's also the closest practical position to the boiler cupboard in the upstairs bathroom. There's convenient access to the electricity supply and a drain. They used a discrete pipe to the drain for the condensate, rather than needing to dig out a gravel soak away. 
 
-Work started on the external piping from the heat pump to the boiler cupboard. There was also an electrician on site, installing a dedicated consumer unit for the heat pump and then starting work on in the electrics in the boiler cupboard. 
+Work started on the external piping from the heat pump to the boiler cupboard. There was also an electrician on site, installing a dedicated consumer unit for the heat pump and then starting work on the electrics in the boiler cupboard. 
 
 {% include candid-image.html src="/assets/images/home-assistant/external-conduit.jpg" alt="External Conduit" %}
 
-I was pleasantly surprised by how neat the external pipework looked. Flow and return pipes together with comms cables were packed into a trunking system. It's better looking than some of the existing pipe work on the side of the house.
+I was pleasantly surprised by how neat the external pipework looked. Insulated flow and return pipes together with comms cables were packed into a trunking system. It's better looking than some of the existing pipework on the side of the house.
 
 Wednesday saw most of the external work finished and good progress with the plumbing in the boiler cupboard. There was much swearing while wrestling with the mystery hot water system. It didn't make it into the cupboard today.
 
@@ -105,49 +115,74 @@ The last two radiators were delivered and installed on Thursday. The electrician
 
 The extension lead is fitted with a 5A fused plug. They only had a 2-way extension to hand, so had to improvise by adding an extension block. They *will* be back to put a more permanent solution in place. 
 
-The rest of the day was spent plumbing in the mystery hot water system. Everything was done by midday. They filled the system and found a leaky connection. They adjusted things and tried again. And again. Repeatedly until giving up at 7pm.
+The rest of the day was spent plumbing in the mystery hot water system. Everything was done by midday. They filled the system and found a leaky connection. They adjusted things and tried again. And again. Repeatedly, until giving up at 7pm.
 
-Damon arrived at 7am to try applying his magic touch. He had it working by 8am, then rushed off to another job. The rest of the team worked hard to finish everything off, insulate all the exposed pipework and tidy up as storm Amy hit. Damon was back at 3pm to hand the working system over. 
+Damon arrived at 7am on Friday to try applying his magic touch. He had it working by 8am, then rushed off to another job. The rest of the team worked hard to finish everything off, insulate all the exposed pipework and tidy up as storm Amy hit. Damon was back at 3pm to hand the working system over. 
 
-* 0.7 heat curve, Inactive mode.
-* Standard setup with heating on throughout the day.
-* Spent the evening setting up [myVaillant](https://github.com/signalkraft/mypyllant-component) integration for Home Assistant (more on that another time) and called it a night.
+It's a pretty standard setup for a high efficiency heat pump install. The heating is on throughout the day using weather compensation (difference between target indoor temperature and measured outdoor temperature) to determine the heat output required. This is done using the "heat curve" setting.
+
+A heat curve maps between the temperature difference and the required flow temperature for water in the heating circuit. The exact curve to use depends on your heat loss. Vaillant supports a family of heat curves identified by a numeric parameter. We're using a 0.7 heat curve, based on the estimated heat loss from our design consultation. Over time we may need to nudge it up or down depending on how close the estimate is to the actual heat loss. In most cases, it's an overestimate, so I'm prepared to nudge it down if we get too hot.
+
+The controls are configured to use "inactive" mode, where the heat pump is controlled purely by the heat curve. The measured indoor temperature is ignored.
+
+Damon left the paper manuals with me at the end of the week. PDF manuals, a commissioning report, MCS certificate, building regulations certificate and electrical installation certificate appeared on the Heat Geek portal a couple of days after the install was completed. 
 
 # Plumbing
 
-  * Expansion vessel, no buffer
-  * Single open heating circuit, DHW circuit with ESBE rotary actuator to switch between the two
+Let's take stock of what we've got on the plumbing side. 
 
 {% include candid-image.html src="/assets/images/home-assistant/base-heat-pump-schematic.svg" alt="Heat Pump Plumbing Schematic" %}
 
+It's a pretty simple setup. Water flows from the heat pump into a diverter valve controlled by an ESBE actuator. When the heating circuit is active, water flows through the radiators before returning to the heat pump. When the DHW circuit is active, water flows through the mystery hot water system before returning to the heat pump.
+
+A spur pipe leads from the return to an expansion vessel and a pressure relief valve. The expansion vessel maintains an even pressure in the system as the water temperature changes. The pressure relief valve vents outside if something goes wrong and the pressure becomes too high.
+
+There's filling loop connected to the flow pipe which can be used to top up the system pressure. There's also the confusingly named "Impel Filling Device" on the return pipe. The main purpose seems to be as a removable filter that catches any crud from our old pipes and radiators before it can reach the heat pump.
+
 # Electrics
+
+It seems like every modern hardwired electrical appliance expects to have its own consumer unit. Our meter cupboard is getting ridiculously overcrowded. We had another pair of henley blocks fitted when our [EV charger was updated]({% link _posts/2025-09-01-home-assistant.md %}). The old charger worked perfectly well on a dedicated circuit in our main consumer unit but things have changed and the new one had to have its own consumer unit. Another two consumer units for our [home battery]({% link _posts/2023-08-28-alpha-ess-smile5-home-battery.md %}) are out of shot to the right. 
 
 {% include candid-image.html src="/assets/images/home-assistant/meter-cupboard-post-heat-pump.jpg" alt="Meter Cupboard" %}
 
+The spare ways in the new henley blocks were gobbled up by the heat pump with an enormous new consumer unit (bottom left). That required moving some of the existing wiring to make room. The first attempt at it was even messier than this.
+
+Here's what the overall electrical system looks like. 
+
 {% include candid-image.html src="/assets/images/home-assistant/electric-schematic.svg" alt="Electrical Schematic" %}
+
+The new consumer unit includes a dedicated electricity meter for the heat pump. This feeds into an [Open Energy Monitoring](https://shop.openenergymonitor.com/level-3-heat-pump-monitoring-bundle-emonhp/) setup in the boiler cupboard. There's a surprising amount of kit involved. The emonHP data logger is the brains of the system. It's basically a Raspberry Pi in a ruggedized case. It has three sensor inputs: the electricity meter readings via an external Modbus reader, heat meter readings via an M-Bus reader and the position of the DHW-Heating actuator via a 240V status sensor. 
+
+The logged data is transferred to the Open Energy Monitoring backend via a wifi connection to our router. The heat meter consists of a flow meter for the flow pipe from the heat pump and temperature sensors for both flow and return pipes. You can calculate heat generated from the flow rate and temperature difference between flow and return.
+
+The appliance interface is the brains for the heat pump. It controls the heat pump's activity and switches the actuator between DHW and heating circuits. The same 240V control line is connected to the Open Energy Monitoring DHW status sensor. 
+
+There are two additional boxes on the wall. The radio receiver is part of the wireless sensoCOMFORT package. It receives signals from the outdoor temperature sensor and sensoCOMFORT control. The myConnect gateway connects the system to the internet via wifi to our router and provides support for the myVaillant phone app.
 
 # Initial Performance
 
 {% include candid-image.html src="/assets/images/home-assistant/heating-cycle.png" alt="Heating Cycles" %}
 
-This is a graph from Open Energy Monitoring. Easy access by scanning the QR code on the side of the open energy data logger. The blue shading shows the electricity consumed by the heat pump and the beige shading the corresponding heat generated. The rest of the time water is being pumped round the heating circuit but the heat pump isn't generating any heat.
+This is a graph from Open Energy Monitoring. There's easy access to your data by scanning the QR code on the side of the data logger. The blue shading shows the electricity consumed by the heat pump and the beige shading the corresponding heat generated. 
 
-* Heat Pump is cycling which is supposed to be bad
-* Each cycle heat pump ramps up to 800W and then throttles back to 500-600W. Runs for 30 minutes and then turns off for 50 minutes. Water continues to be pumped round the heating circuit while the heat pump if off.
-* Target flow rate is about 24 degrees. Heat pump is over shooting.
-* Used live monitoring feature on controller to try and work out what was going on.
-* Had to read up on Vaillant's energy integral cycle to control when to turn heat pump on and off when running at minimum output
-* Heat pumps have a minimum speed at which they can run. For my heat pump that minimum is around 550W. It's producing too much heat to run continuously.
-* Energy integral is a simple approximation of how much extra energy is being generated: Difference between target and actual temp * time.
-* Heat pump turns on when energy integral at -60. If it hits 0 (60 extra degree minutes of heat generated) it turns off and stays off until energy integral below -60 again.
-* Water being pumped round circuit gradually cools. Eventually it goes below target and starts reducing energy integral. New cycle starts when everything balances out.
-* The start point is a configuration option. Using -120 instead of -60 will double the length of each cycle. This should improve efficiency as the heat pump runs for longer at a time with fewer cycles. However, if the cycle is too long you'll notice swings in temperature in the house. Something to experiment with.
+The heat pump is cycling on and off which is supposed to be bad. Each cycle the heat pump ramps up to 800W power consumed and then throttles back to 500-600W. It runs for 30 minutes and then turns off for 50 minutes. Water continues to be pumped round the heating circuit while the heat pump is off.
+
+According to the sensoCOMFORT, the target flow rate is about 24 degrees. The heat pump is overshooting. I tried using the live monitoring feature on the appliance interface to try and work out what was going on. All the values reported made sense apart from this weird "Energy integral" thing that has units in °min. Time for some research.
+
+After a long trip down the rabbit hole I have a much better understanding of how things work. The first thing to understand is that heat pumps have a minimum speed at which they can run. For my heat pump that minimum corresponds to 550W of power. At this time of year, the heat pump is producing too much heat to run continuously.
+
+[Energy integral](https://energy-stats.uk/vaillant-arotherm-firmware-351-06-07-problems-energy-integral/) is a really clever idea for controlling when the heat pump turns on and off. The implementation uses a stored counter. The counter is incremented by the difference between the actual and target flow temperatures at regular time intervals. Which explains why the value is displayed in °min. During the first half of a cycle, the value increases until it hits a configurable limit. The heat pump turns off and the hot water in the pipes continues to circulate. The counter continues to increase until the water has cooled to below the target flow temperature, at which point it starts to decrease. Once the counter gets back to its starting point the cycle starts again. 
+
+The end result is that the *average* amount of heat delivered is equivalent to consistently running at the target flow temperature. To make things more confusing, instead of starting at 0 and turning the heat pump off when you hit the limit, you start at -limit and turn off when the counter reaches 0. Although it does mean that you can tell by the sign of the integral whether heat is currently over or under delivered.
+
+The default start point is -60. Using -120 instead of -60 will double the amount of energy the heat pump can overshoot by, increasing the length of each cycle. This should improve efficiency as the heat pump runs for longer at a time with fewer cycles. However, if the cycle is too long you'll notice swings in temperature in the house. Something to experiment with.
 
 # Living with a Heat Pump
 
-* PDF manuals, commissioning report, MCS certificate, building regulations certificate and electrical installation certificate appeared on the Heat Geek portal a couple of days after the install was completed. 
+
 * Stable temperature
 * Radiators don't feel hot at all
+* Quiet!
 * Adjusted schedule from 24x7 running to make most of overnight cheap rate. Off late at night before cheap rate starts, then off again early morning after it ends. Make up for it by extra heat during cheap rate. Opposite of normal practice of a slightly lower set back temperature at night.
 * Helps that our bedroom in attic doesn't have any radiators. We tell everyone it has underfloor heating (i.e. the rest of the house).
 * sensoComfort is junk, app much better for day to day control
