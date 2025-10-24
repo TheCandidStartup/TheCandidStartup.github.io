@@ -27,9 +27,9 @@ The process took a couple of hours. Damon walked through the house with me, room
 
 The idea is to determine the heat loss for each room. The heating system is designed to generate enough heat to cover the loss at any time of the year. Damon needed to know the size of each room, which walls are external, location of external doors and windows, location and size of radiators, and the levels of insulation for windows, doors, floors, walls and roof. 
 
-Our house is a 1929 semi-detached. It has cavity wall insulation. The ground floor has suspended wooden floors with no insulation. The attic was converted into another room with insulation compliant with 2008 building regulations. It's a typical, middle of the road, UK house.
+Our house is a 1929 semi-detached. It has cavity wall insulation. The ground floor has suspended wooden floors with no insulation. The attic was converted into another bedroom with insulation compliant with 2008 building regulations. It's a typical, middle of the road, UK house.
 
-The end result is an estimated heat loss of 6kW at -3°C outside. Heat loss scales linearly with the temperature difference between inside and outside, so that's equivalent to 300W heat loss per degree.
+The end result is an estimated heat loss of 6kW at -3°C outside. Heat loss scales linearly with the temperature difference between inside and outside. We keep the indoor temperature at 17°C, so that's equivalent to 300W heat loss per degree difference between indoor and outdoor temperature.
 
 With our existing radiators, a heat pump would need a flow temperature of 55°C to cover a presumed worst case heat loss of 6kW. I pushed for a more efficient design. Replacing 6 radiators with double or triple width versions occupying the same footprint would bring the design temperature down to 45°C.
 
@@ -39,7 +39,7 @@ That seemed like a reasonable compromise to me.
 
 A fully priced, formal proposal appeared on the Heat Geek portal a couple of days later. The headline overview was a Vaillant aroTHEM plus 7kW with 6 new radiators and a guaranteed 380% minimum efficiency. 
 
-Of course, the proposal included a domestic hot water system. That is a whole story in itself. For now, I'm going to focus on the heat pump. I'll cover the mystery hot water system another time.
+Of course, the proposal included a domestic hot water system. That's a whole story in itself. For now, I'm going to focus on the heat pump. I'll cover the mystery hot water system another time.
 
 The detailed proposal included the heat loss and radiators for each room, together with a list of all the kit to be installed. As well as the heat pump and it's internal application interface control box, there was a Vaillant sensoCOMFORT system control and a myConnect internet gateway. 
 
@@ -97,7 +97,9 @@ The four available radiators were installed and the system refilled so that we'd
 
 {% include candid-image.html src="/assets/images/home-assistant/metric-radiator-resize.jpg" alt="Metric radiator resize" %}
 
- The boiler was removed first thing on Tuesday. The heat pump was put into position, using adjustable legs to level it on the slightly sloping tarmac. We decided to put the heat pump at the side of the house. This is the furthest distance from occupied rooms (both ours and our neighbours). It's also the closest practical position to the boiler cupboard in the upstairs bathroom. There's convenient access to the electricity supply and a drain. They used a discrete pipe to the drain for the condensate, rather than needing to dig out a gravel soak away. 
+ The boiler was removed first thing on Tuesday. The heat pump was put into position, using adjustable legs to level it on the slightly sloping tarmac. 
+ 
+ We decided to put the heat pump at the side of the house. This is the furthest distance from occupied rooms (both ours and our neighbours). It's also the closest practical position to the boiler cupboard in the upstairs bathroom. There's convenient access to the electricity supply and a drain. They used a discrete pipe to the drain for the condensate, rather than needing to dig out a gravel soak away. 
 
 Work started on the external piping from the heat pump to the boiler cupboard. There was also an electrician on site, installing a dedicated consumer unit for the heat pump and then starting work on the electrics in the boiler cupboard. 
 
@@ -137,7 +139,7 @@ It's a pretty simple setup. Water flows from the heat pump into a diverter valve
 
 A spur pipe leads from the return to an expansion vessel and a pressure relief valve. The expansion vessel maintains an even pressure in the system as the water temperature changes. The pressure relief valve vents outside if something goes wrong and the pressure becomes too high.
 
-There's filling loop connected to the flow pipe which can be used to top up the system pressure. There's also the confusingly named "Impel Filling Device" on the return pipe. The main purpose seems to be as a removable filter that catches any crud from our old pipes and radiators before it can reach the heat pump.
+There's a filling loop connected to the flow pipe which can be used to top up the system pressure. There's also the confusingly named "Impel Filling Device" on the return pipe. The main purpose seems to be as a removable filter that catches any crud from our old pipes and radiators before it can reach the heat pump.
 
 # Electrics
 
@@ -153,7 +155,7 @@ Here's what the overall electrical system looks like.
 
 The new consumer unit includes a dedicated electricity meter for the heat pump. This feeds into an [Open Energy Monitoring](https://shop.openenergymonitor.com/level-3-heat-pump-monitoring-bundle-emonhp/) setup in the boiler cupboard. There's a surprising amount of kit involved. The emonHP data logger is the brains of the system. It's basically a Raspberry Pi in a ruggedized case. It has three sensor inputs: the electricity meter readings via an external Modbus reader, heat meter readings via an M-Bus reader and the position of the DHW-Heating actuator via a 240V status sensor. 
 
-The logged data is transferred to the Open Energy Monitoring backend via a wifi connection to our router. The heat meter consists of a flow meter for the flow pipe from the heat pump and temperature sensors for both flow and return pipes. You can calculate heat generated from the flow rate and temperature difference between flow and return.
+The logged data is transferred to the Open Energy Monitoring backend via a wifi connection to our router. The heat meter consists of a flow meter for the flow pipe from the heat pump and temperature sensors for both flow and return pipes. You can [calculate](https://docs.openenergymonitor.org/heatpumps/basics.html) heat generated from the flow rate and temperature difference between flow and return.
 
 The appliance interface is the brains for the heat pump. It controls the heat pump's activity and switches the actuator between DHW and heating circuits. The same 240V control line is connected to the Open Energy Monitoring DHW status sensor. 
 
@@ -179,18 +181,19 @@ The default start point is -60. Using -120 instead of -60 will double the amount
 
 # Living with a Heat Pump
 
+The first thing I noticed was how quiet it was. You get used to the sound a gas boiler makes when it ignites. It was shocking when it wasn't there anymore.
 
-* Stable temperature
-* Radiators don't feel hot at all
-* Quiet!
-* Adjusted schedule from 24x7 running to make most of overnight cheap rate. Off late at night before cheap rate starts, then off again early morning after it ends. Make up for it by extra heat during cheap rate. Opposite of normal practice of a slightly lower set back temperature at night.
-* Helps that our bedroom in attic doesn't have any radiators. We tell everyone it has underfloor heating (i.e. the rest of the house).
-* sensoComfort is junk, app much better for day to day control
-* sensoComfort off by default, takes 5 seconds to turn on, everything you want to do is 3 menus deep.
-* Fine tuning can in theory be done with heat pump appliance interface. Can't tell because installing sensoComfort disables the overlapping functionality in the control box.
-* Some confusion over weather compensation. Reports on forums from people without sensoCOMFORT say that weather compensation included with heat pump. On the other hand, all the installation details for outdoor sensor are in the sensoCOMFORT documentation. When buying sensoComfort you can choose either a wired package containing sensoComfort and wired sensor, or wireless containing sensoComfort, radio receiver and wireless sensor.
-* My best guess is that there's some way of buying those packages without the sensoComfort.  
-* Only thing we're using sensoComfort for is indoor temperature pulled through into app. Not needed to control Heat Pump in inactive mode.
+The app tells me the heat pump is working, otherwise I wouldn't know. If you stand in front of the heat pump during a heating cycle, you can feel the cold air blowing out, but can barely hear it. It's more noticeable when running full speed, similar to a fridge. Even then, you can't hear anything inside the house.
+
+At this time of year, the flow temperature is around 22°C. The radiators don't feel warm to the touch. However, the house maintains a stable, comfortable temperature. I had to knock the heat curve down a couple of times when I noticed the temperature gradually creeping up over the first few days. The temperature has remained within a degree or so of the set point for the last week. There is some variation, particularly from solar gain on sunny days, but it evens out over time.
+
+I adjusted the schedule from 24x7 running to make the most of our overnight cheap rate. The heating turns off late at night before the cheap rate starts, then off again early morning after it ends. We make up for it by generating extra heat when electricity is cheap. This is the opposite of the normal practice of a slightly lower set back temperature at night. It helps that our attic bedroom doesn't have any radiators and remains cool for sleeping.
+
+We don't use the sensoCOMFORT at all day to day. It turns itself off after use and takes 5 seconds to turn back on. Once it's on, you find that everything you need is buried three menus deep, scattered among a multitude of confusingly named sub-menus. It has touch controls but not a touch screen, which makes navigation painful. 
+
+In contrast the most important information is on the front page of the app. Everything else is logically placed a click or two below the widgets on the front page. The only annoyance is that the data displayed is laggy as changes have to bounce off Vaillant's internet servers to get from the appliance interface to the app.  
+
+We have to use the sensoCOMFORT to make more advanced configuration changes. In theory these could be done through the heat pump appliance interface. Unfortunately, integrating the sensoCOMFORT disables the overlapping functionality in the appliance interface. Apart from that, the only thing the sensoCOMFORT does is provide the indoor temperature displayed in the app. 
 
 # Next Time
 

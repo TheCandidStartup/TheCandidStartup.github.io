@@ -27,10 +27,13 @@ wise words
 
 * Stats
   * Split electric/heat energy from open energy monitoring into heating and hot water using utility meter (daily)
+  * Heat energy generated has 1kWh granularity which isn't great when metering
+  * Apparently this is common for heat meters
+  * Power is reported to nearest Watt so switched to an integral over power for my dashboards
   * Energy stats for myVaillant are too coarse grained and infrequently updated
   * Calculate COP for each per day just before daily reset, also time when nothing running.
   * More complicated to get fine grained COP and also less meaningful as dependent on where cycle boundaries lie
   * Hack to make stats somewhat useful. Mark entity as `unavailable` for period during day before COP calculated.
   * Avoids having previous days value used for average/max/min
   * Average of daily COP across year is NOT SCOP. For that need to calculate total energy output/used. Which would need a custom dashboard card with `energy-date-selection` integration. Or read off the graphs and use a calculator if you really want to know ...
-  
+  * Vaillant aggressively restricting API quota so minimizing data retrieved from there to ensure automations work when I need them, using Open Energy Monitoring where possible
