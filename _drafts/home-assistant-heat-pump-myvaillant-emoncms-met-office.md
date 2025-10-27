@@ -36,4 +36,21 @@ wise words
   * Hack to make stats somewhat useful. Mark entity as `unavailable` for period during day before COP calculated.
   * Avoids having previous days value used for average/max/min
   * Average of daily COP across year is NOT SCOP. For that need to calculate total energy output/used. Which would need a custom dashboard card with `energy-date-selection` integration. Or read off the graphs and use a calculator if you really want to know ...
-  * Vaillant aggressively restricting API quota so minimizing data retrieved from there to ensure automations work when I need them, using Open Energy Monitoring where possible
+
+# Vaillant Integration
+
+* Vaillant aggressively restricting API quota so minimizing data retrieved from there to ensure automations work when I need them, using Open Energy Monitoring where possible
+* Outage due to change a few days ago with one call an hour quotas for APIs where data returned changes infrequently. e.g. Current time zone, homes owned by account, systems owned by each home. 
+* Updates to Vaillant integration to aggressively cache the ultra low quota stuff, give greater control of what additional data is retrieved. Turned all the optional stuff off. Back to updates of core sensors once a minute. If you want more data, will need to drop update rate to every 2, 3, or 5 minutes.
+
+# Emoncms Integration
+
+* API read key
+* Choose feeds
+* Once per minute updates
+* Can't beat the Emoncms web view for detailed look at the data - pulled into dashboard using a web card
+* Some limited URL parameters for view (power vs histogram), time to display, explicit start and end timestamps
+
+# Met Office Integration
+
+# Custom Weather Card
