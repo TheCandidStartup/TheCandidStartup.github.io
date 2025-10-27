@@ -37,11 +37,11 @@ That seemed like a reasonable compromise to me.
 
 # Formal Proposal
 
-A fully priced, formal proposal appeared on the Heat Geek portal a couple of days later. The headline overview was a Vaillant aroTHEM plus 7kW with 6 new radiators and a guaranteed 380% minimum efficiency. 
+A fully priced, formal proposal appeared on the Heat Geek portal a couple of days later. The headline overview was for a Vaillant aroTHEM plus 7kW with 6 new radiators and a guaranteed 380% minimum efficiency. 
 
 Of course, the proposal included a domestic hot water system. That's a whole story in itself. For now, I'm going to focus on the heat pump. I'll cover the mystery hot water system another time.
 
-The detailed proposal included the heat loss and radiators for each room, together with a list of all the kit to be installed. As well as the heat pump and it's internal application interface control box, there was a Vaillant sensoCOMFORT system control and a myConnect internet gateway. 
+The detailed proposal included the heat loss and radiators for each room, together with a list of all the kit to be installed. As well as the heat pump and it's application interface control box, there was a Vaillant sensoCOMFORT system control and a myConnect internet gateway. 
 
 It was difficult to understand where each piece would be installed and what it was for. I had to do some digging. The sensoCOMFORT replaces the room thermostat that controls our old boiler. You can set target temperatures, schedules for when the heating is on, etc.
 
@@ -71,13 +71,13 @@ I was annoyed enough to dig out old plans, receipts and building regulations app
 
 Installation was scheduled to take a week, for most of which we'd be without heating or hot water. Damon offered us a choice of dates. There was a week in June where the team would be working two jobs, so Damon would only be available some of the time. Alternatively, if we waited until the last week in September, they would be able to work full time on our install. 
 
-In was in no hurry, so went with the last week in September. The cold weather should just be starting, which makes it a better time for seeing whether everything is working properly.
+I was in no hurry, so went with the last week in September. The cold weather should just be starting, which makes it a better time for seeing whether everything is working properly.
 
 # DNO Approval
 
 A few days after accepting the proposal, I got emails from Ofgem and our DNO, Northern Powergrid, asking for confirmation that Heat Geek were authorized to apply on our behalf. Over the following weeks I was occasionally copied in on emails sent to Heat Geek. I assumed everything was progressing. The fancy Heat Geek web portal confirmed that "Heat Geek Upgrades" were responsible for DNO approval. 
 
-In July I was copied on an email about a potential main fuse upgrade. We already have a 100A fuse so I assumed this was just a box ticking exercise. I emailed Heat Geek (using the same address as Northern Powergrid's original email was sent to) to confirm that I was expecting them to handle whatever was needed.
+In July I was copied on an email about a potential main fuse upgrade. We already have a 100A fuse so I assumed this was just a box ticking exercise. I emailed Heat Geek (using the same address as Northern Powergrid's email was sent to) to confirm that I was expecting them to handle whatever was needed.
 
 I hadn't heard anything by the end of August and started getting worried. I followed up, copying in all the Heat Geek contact addresses I had. Apparently, the email address they'd used on their application to Northern Powergrid was one they "mainly use for applications and don't actively monitor for responses". Which makes no sense to me. Why would you make an application and ignore the responses?
 
@@ -93,7 +93,7 @@ The shelves are also removable so there's more space available above and below t
 
 First thing Monday morning I got a text from Damon saying that the team would be with me as planned, but that he had been called away to another job. The two man team arrived in a van each, bringing the mystery hot water system with them. They were followed through the day by deliveries of materials, including the heat pump and new radiators. One radiator was missing, one arrived damaged and was promptly returned.
 
-The four available radiators were installed and the system refilled so that we'd have heating and hot water for another day. Most radiators were straight forward swaps reusing the existing plumbing. In a couple of cases the old radiator used imperial measurements and the closest new metric equivalent wasn't an exact match. The team offered to lift floor boards and adjust piping out of sight. I was happy to avoid that. Having a little more copper pipework on show doesn't bother me at all. 
+The four available radiators were installed and the system refilled so that we'd have heating and hot water for another day. Most radiators were straightforward swaps reusing the existing plumbing. In a couple of cases the old radiator used imperial measurements and the closest new metric equivalent wasn't an exact match. The team offered to lift floor boards and adjust piping out of sight. I was happy to avoid that. Having a little more copper pipework on show doesn't bother me at all. 
 
 {% include candid-image.html src="/assets/images/home-assistant/metric-radiator-resize.jpg" alt="Metric radiator resize" %}
 
@@ -191,7 +191,7 @@ I adjusted the schedule from 24x7 running to make the most of our overnight chea
 
 We don't use the sensoCOMFORT at all day to day. It turns itself off after use and takes 5 seconds to turn back on. Once it's on, you find that everything you need is buried three menus deep, scattered among a multitude of confusingly named sub-menus. It has touch controls but not a touch screen, which makes navigation painful. 
 
-In contrast the most important information is on the front page of the app. Everything else is logically placed a click or two below the widgets on the front page. The only annoyance is that the data displayed is laggy as changes have to bounce off Vaillant's internet servers to get from the appliance interface to the app.  
+In contrast, the most important information is on the front page of the app. Everything else is logically placed a click or two below the widgets on the front page. The only annoyance is that the data displayed is laggy as changes have to bounce off Vaillant's internet servers to get from the appliance interface to the app.  
 
 We have to use the sensoCOMFORT to make more advanced configuration changes. In theory these could be done through the heat pump appliance interface. Unfortunately, integrating the sensoCOMFORT disables the overlapping functionality in the appliance interface. Apart from that, the only thing the sensoCOMFORT does is provide the indoor temperature displayed in the app. 
 
