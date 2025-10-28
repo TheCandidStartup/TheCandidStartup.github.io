@@ -53,4 +53,21 @@ wise words
 
 # Met Office Integration
 
+* Register at [Met Office DataHub](https://datahub.metoffice.gov.uk)
+* Choose Global Spot subscription and free plan
+* Copy the ludicrously long API key
+* Add the Met Office integration (Home Assistant standard integration rather than HACS)
+* Paste the API key into the options
+
 # Custom Weather Card
+
+* [Platinum weather card](https://github.com/Makin-Things/platinum-weather-card)
+  * Looks good on paper but only a subset of attributes provided by Met Office were picked up
+  * Couldn't get daily forecast slots to work at all
+  * No significant updates for last 3 years. Looks like it predates changes in 2023.9 for how detailed forecast data is accessed
+  * There's a [fork](https://github.com/tommyjlong/platinum-weather-card) which hacks in support but now I've found hourly weather card I'm not bothered anymore ...
+* [Hourly weather card](https://github.com/decompil3d/lovelace-hourly-weather)
+  * Brilliant!
+  * Great overview of day ahead
+  * Pulls in wind and precipitation too
+  * Sprinkle of templating support so you can do things like show tomorrows weather from a fixed start point tomorrow
