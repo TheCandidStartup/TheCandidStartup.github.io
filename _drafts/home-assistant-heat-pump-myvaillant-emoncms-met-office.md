@@ -1,11 +1,55 @@
 ---
 title: >
-  Home Assistant Heat Pump: myVaillant, Emoncms and Met Office
+  Home Assistant Heat Pump: myVAILLANT, Emoncms and Met Office
 tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 
-wise words
+Now that we have a heat pump [up and running]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}), the obvious next job is to get it hooked up to Home Assistant. Our heat pump is a Vaillant AroTHERM plus. A quick search of the Home Assistant Community Store turns up the [myVAILLANT](https://github.com/signalkraft/mypyllant-component) integration which uses the same API as Vaillant's myVAILLANT app. 
+
+We also have [Open Energy Monitoring](https://openenergymonitor.org/) hooked up which sends data to their [Emoncms.org](https://emoncms.org/) backend. There's a built in Home Assistant [integration](https://www.home-assistant.io/integrations/emoncms/) for that.
+
+# myVAILLANT Integration
+
+{% include candid-image.html src="/assets/images/home-assistant/myvaillant-integration.png" alt="myVAILLANT Integration" %}
+
+When I first added the myVAILLANT integration it hadn't been updated in 5 months. There was some nervous chatter wondering if it had been abandoned. Someone was promoting their own [fork](https://github.com/rmalbrecht/VaillantCloud) but that hadn't been updated for 3 months either. There were another 30 older forks too.
+
+I decided to go with the original and see how I got on. To configure the integration you need the email and password you use with the myVAILLANT app. You then have a long list of options for what types of data you want to retrieve and how often to retrieve it.
+
+It seems that Vaillant enforces an aggressive quota on calls to their API. There are lots of warnings about "quota exceeded" errors if you ask for too much data too frequently. I started with the defaults, which update most sensors every 5 minutes. This is OK for long term trends but not much use if you're trying to understand what's going on during a single heating cycle. 
+
+You get access to indoor and outdoor temperature, flow rate, flow temperature, water temperature, system pressure and all the settings you can tweak in the app. There's also data about energy use but, like the app, it's infrequently updated and coarse grained. 
+
+A few days ago, most of the sensors became "unavailable" and the Home Assistant logs started filling up with "quota exceeded" errors. Vaillant had tightened up their quotas again, with some APIs limited to one call an hour. After changing the update rate to once an hour, the integration limped back into life. 
+
+At this point the repo burst back into life and there were a succession of new releases trying to fix the problem. Vaillant appeared to have set their quotas to match query patterns from their app. The APIs with ultra low quotas were for data that changed infrequently, like the current time zone. Clearly the app was caching more aggressively than the integration. After a short game of whack-a-mole all the effected APIs were cached in the integration too. There were also additional options to further restrict the data returned.
+
+At this point I knew that I only needed the standard set of data. Once I turned off all the optional data, the handy "Vaillant API request count" sensor showed me that the integration was averaging 2-3 calls per update. I was able to increase the update rate to once a minute without exceeding the quota. 
+
+# Emoncms Integration
+
+* Open Energy Monitoring hardware setup and configured as part of the heat pump installation
+* Figuring out what I can do with it now
+* Emoncms.org uses pay-as-you-go pricing. You need an API key to access the data.
+* When you buy Open Energy Monitoring hardware you get API credits that should be good for several years
+* Asked Damon and he put me in touch with his contact at Open Energy Monitoring and they sorted me out with a read key
+* API read key
+* Choose feeds
+* Once per minute updates
+* Docs suggest that Emoncms runs locally on the data logger and then synchronizes with Emoncms.org. Can I retrieve the data locally?
+
+# Home Battery
+
+# Met Office Weather
+
+* Register at [Met Office DataHub](https://datahub.metoffice.gov.uk)
+* Choose Global Spot subscription and free plan
+* Copy the ludicrously long API key
+* Add the Met Office integration (Home Assistant standard integration rather than HACS)
+* Paste the API key into the options
+
+# Predicting Energy Use
 
 * Predicting energy use
   * Heat loss formula is Heat Loss = House specific constant x dT
@@ -25,6 +69,8 @@ wise words
   * Can't modify variables defined at outer scope (e.g. increment sum inside a loop)
   * Have to create a namespace object to hold the variable which can be modified from any scope
 
+# Statistics
+
 * Stats
   * Split electric/heat energy from open energy monitoring into heating and hot water using utility meter (daily)
   * Heat energy generated has 1kWh granularity which isn't great when metering
@@ -37,29 +83,16 @@ wise words
   * Avoids having previous days value used for average/max/min
   * Average of daily COP across year is NOT SCOP. For that need to calculate total energy output/used. Which would need a custom dashboard card with `energy-date-selection` integration. Or read off the graphs and use a calculator if you really want to know ...
 
-# Vaillant Integration
+# Dashboards
 
-* Vaillant aggressively restricting API quota so minimizing data retrieved from there to ensure automations work when I need them, using Open Energy Monitoring where possible
-* Outage due to change a few days ago with one call an hour quotas for APIs where data returned changes infrequently. e.g. Current time zone, homes owned by account, systems owned by each home. 
-* Updates to Vaillant integration to aggressively cache the ultra low quota stuff, give greater control of what additional data is retrieved. Turned all the optional stuff off. Back to updates of core sensors once a minute. If you want more data, will need to drop update rate to every 2, 3, or 5 minutes.
+## Heat Pump Overview
 
-# Emoncms Integration
+## Heat Pump Detail
 
-* API read key
-* Choose feeds
-* Once per minute updates
 * Can't beat the Emoncms web view for detailed look at the data - pulled into dashboard using a web card
 * Some limited URL parameters for view (power vs histogram), time to display, explicit start and end timestamps
 
-# Met Office Integration
-
-* Register at [Met Office DataHub](https://datahub.metoffice.gov.uk)
-* Choose Global Spot subscription and free plan
-* Copy the ludicrously long API key
-* Add the Met Office integration (Home Assistant standard integration rather than HACS)
-* Paste the API key into the options
-
-# Custom Weather Card
+## Weather
 
 * [Platinum weather card](https://github.com/Makin-Things/platinum-weather-card)
   * Looks good on paper but only a subset of attributes provided by Met Office were picked up
