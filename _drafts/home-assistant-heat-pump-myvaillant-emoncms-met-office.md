@@ -27,47 +27,78 @@ At this point the repo burst back into life and there were a succession of new r
 
 At this point I knew that I only needed the standard set of data. Once I turned off all the optional data, the handy "Vaillant API request count" sensor showed me that the integration was averaging 2-3 calls per update. I was able to increase the update rate to once a minute without exceeding the quota. 
 
+I was very pleased with myself until I noticed that the reported values change much less frequently than once a minute. This seems to be something in the myVAILLANT backend. I see the same behavior in the app. At least now the values reported by the app and Home Assistant change at the same time.
+
 # Emoncms Integration
 
-* Open Energy Monitoring hardware setup and configured as part of the heat pump installation
-* Figuring out what I can do with it now
-* Emoncms.org uses pay-as-you-go pricing. You need an API key to access the data.
-* When you buy Open Energy Monitoring hardware you get API credits that should be good for several years
-* Asked Damon and he put me in touch with his contact at Open Energy Monitoring and they sorted me out with a read key
-* API read key
-* Choose feeds
-* Once per minute updates
-* Docs suggest that Emoncms runs locally on the data logger and then synchronizes with Emoncms.org. Can I retrieve the data locally?
+{% include candid-image.html src="/assets/images/home-assistant/emoncms-integration.png" alt="Emoncms Integration" %}
+
+Open Energy Monitoring [hardware](https://shop.openenergymonitor.com/level-3-heat-pump-monitoring-bundle-emonhp/) was setup and configured as part of the heat pump installation. It's primarily there for additional monitoring by our installer, Heat Geek. That doesn't stop me figuring out what I can do with it too. 
+
+The data gets sent to [Emoncms.org](https://emoncms.org/). Poking around their web site reveals that they have a pay-as-you-go pricing model. You need an API key to access the data. However, it looks like you pay for data written not read. When you buy the hardware you get API credits that should be good for several years. Best case scenario, it's all been paid for and I just need someone to give me access. 
+
+I asked Damon, our local Heat Geek, and he put me in touch with his contact at Open Energy Monitoring. They sorted me out with an API read key. 
+
+You're asked for a server URL and API read key when you configure an instance of Emoncms in Home Assistant. After that you're presented with a list of data feeds that you can subscribe to. Data feeds are equivalent to sensors in Home Assistant. That is, a measured or calculated value over a time. Unsurprisingly, the integration creates a sensor in Home Assistant for each feed you select. Strangely, the sensors are "loose", not associated with any device. This means they appear at the top level of the oveview dashboard, mixed in with your own helpers and templates.
+
+{% include candid-image.html src="/assets/images/home-assistant/emoncms-feeds.png" alt="Emoncms Feeds" %}
+
+There were 8 feeds that looked useful. You get flow rate, flow temperature and return temperature from the heat meter, together with calculated values for heat power and energy generated (in Watts and kWh).  The electricity meter gives you power and energy consumed (also in Watts and kWh). The final feed is the DHW sensor which is either 0 when the heating circuit is active or 1 when the DHW circuit is active. 
+
+The integration is hardcoded to retrieve values once a minute.
 
 # Home Battery
 
+Now that I've got all that data, what am I going to do with it? My most pressing problem is our [home battery]({% link _posts/2023-08-28-alpha-ess-smile5-home-battery.md %}). We charge the 10kWh battery overnight when electricity is cheap. I have a Home Assistant [automation]({% link _posts/2025-09-15-home-assistant-helpers-template-solar-forecasts.md %}) that sets the target state of charge based on our typical electricity consumption (5-7kWh) and the next days solar generation forecast (0-10kWh).
+
+Our typical electricity consumption is going to look very different now that we have a heat pump. It's also going to vary hugely depending on the season. 
+
+We run the heat pump using weather compensation. The energy generated is based entirely on the difference between the outdoor temperature and the desired indoor temperature. If I have a good hourly weather forecast for the next day, I should be able to create a heating forecast that I can add into the battery state of charge automation. 
+
 # Met Office Weather
 
-* Register at [Met Office DataHub](https://datahub.metoffice.gov.uk)
-* Choose Global Spot subscription and free plan
-* Copy the ludicrously long API key
-* Add the Met Office integration (Home Assistant standard integration rather than HACS)
-* Paste the API key into the options
+Home Assistant comes bundled with weather forecast and solar generation forecasts based on data from the Norwegian Meterological Institute. I found the solar generation forecast to be inaccurate in the UK and moved on to one from [Open-Meteo](https://open-meteo.com/). This is meant to use data from a variety of national weather services, including the UK's Met Office. The solar forecast is a great improvement, however the weather forecast is often inaccurate and doesn't match the forecast on the Met Office's own web site. 
 
-# Predicting Energy Use
+Time to go direct. Home Assistant includes a [Met Office integration](https://www.home-assistant.io/integrations/metoffice/) out of the box but it needs an API key. Fortunately, getting one is free and pretty painless. 
 
-* Predicting energy use
-  * Heat loss formula is Heat Loss = House specific constant x dT
-  * Design says 6.11 kW heat loss at 18 degrees inside, -3 outside
-  * dT = 21, therefore heat loss is 291 W per degree
-  * Passive gain equivalent to three degrees an hour from occupant heat, solar gain, other electricial devices. Equivalent to target temperate - OT threshold (cut off below which heat pump won't bother turning on)
-  * Get hourly weather forecast and determine dT for each hour
-  * Sum up 291 * dT for each hour to get Wh of heat needed
-  * Electricity needed to generate that heat is heat needed / COP. 
-  * Design gives minimum efficiency guarantee of 3.8 at max 45 degrees flow rate (dT up to 21 degrees)
-  * Measured efficiency of 5 running at minimum output at 10 degrees outside.
-  * Actual COP [depends on](https://energy-stats.uk/how-to-measure-vaillant-arotherm-cop/) your installation, outside temperature and flow temperature
-  * Given fixed target temperature, fixed installation, flow temp is a function of outside temperature (via heat curve)
-  * Pragmatic approach is to measure COP at different outside temperatures and use a lookup table for expected COP given expected temperature
+Register an account at [Met Office DataHub](https://datahub.metoffice.gov.uk). All you need is a valid email address. Choose the Global Spot subscription and pick the free plan. Copy the ludicrously long API key and paste it into the integration's options page. 
 
-* Jinja
-  * Can't modify variables defined at outer scope (e.g. increment sum inside a loop)
-  * Have to create a namespace object to hold the variable which can be modified from any scope
+# Predicting Heating Demand
+
+The heat pump needs to produce enough heat to counter-balance the heat loss from the building. [Heat loss calculations](https://www.h2xengineering.com/blogs/calculating-heat-loss-simple-understandable-guide/) are complex but the underlying formula is simple. It boils down to `Heat Loss = House specific constant * dT` where `dT` is the difference between outside temperature and desired indoor temperature. 
+
+The heat pump system design produced by our installers says that we have 6.11kW heat loss at 18°C inside, -3°C outside. That's a `dT` of 21, with a heat loss of 291W per degree. I'm going to assume passive gain of 3°C from occupant heat, solar gain, electrical devices, etc. That matches the Vaillant heat pump `OT threshold` setting. This is the outside temperature above which the heat pump won't bother turning on. You typically set that at 3°C below your target indoor temperature. In our case that's 17°C, so `dt = 14 - outside temperature`.
+
+The idea is simple. Get the hourly weather forecast for tomorrow and determine `dT` for each hour. Sum up `291 * dT` for each hour to get the watt hours of heat needed. The electrical power needed to generate that heat is `heat needed / COP`. Actual COP [depends on](https://energy-stats.uk/how-to-measure-vaillant-arotherm-cop/) your installation, outside temperature and flow temperature.
+
+Our design includes a minimum efficiency guarantee COP of 3.8 at -3°C. At the current outdoor temperature of 10°C the measured COP is about 5. I'm going to start with a naive linear interpolation between 5 and 3.8 for temperatures below 10°C, then adjust as I get more real world data.
+
+{% raw %}
+
+```jinja
+{% set forecasts = forecast['weather.met_office_crookes'].forecast | list %}
+{% set start = today_at('07:00') + timedelta(days=1) %}
+{% set end = today_at('21:00') + timedelta(days=1) %}
+{% set ns = namespace(sum=0.0) %}
+{% for slot in forecasts %}
+  {% set dt = slot.datetime | as_datetime %}
+  {% set t = slot.temperature | float %}
+  {% if dt >= start and dt <= end and t < 14 %}
+    {% set cop = 5.0 %}
+    {% if t < 10 %}
+      {% set cop = 5.0 - (10 - t) * 0.0923 %}
+    {% endif %}
+    {% set ns.sum = ns.sum + (14 - t) * 0.291 / cop %}
+  {% endif %}
+{% endfor %}
+{{ ns.sum | round(3) }}
+```
+
+{% endraw %}
+
+We currently run the heat pump between 7:00 and 21:00 in peak time, then again during off-peak hours between 23.30 and 5.30. I'm only interested in heat demand during peak time. I store the output in a helper entity so that I can show the heating forecast on a dashboard, generate statistics, etc. 
+
+The Jinja templating language used by Home Assistant has some quirks. One of them is that you can't modify variables defined at an outer scope (such as incrementing a sum inside a loop), unless you define them within a [namespace](https://jinja.palletsprojects.com/en/stable/templates/#assignments).
 
 # Statistics
 
