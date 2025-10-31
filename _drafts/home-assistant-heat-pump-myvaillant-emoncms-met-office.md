@@ -102,36 +102,51 @@ The Jinja templating language used by Home Assistant has some quirks. One of the
 
 # Statistics
 
-* Stats
-  * Split electric/heat energy from open energy monitoring into heating and hot water using utility meter (daily)
-  * Heat energy generated has 1kWh granularity which isn't great when metering
-  * Apparently this is common for heat meters
-  * Power is reported to nearest Watt so switched to an integral over power for my dashboards
-  * Energy stats for myVaillant are too coarse grained and infrequently updated
-  * Calculate COP for each per day just before daily reset, also time when nothing running.
-  * More complicated to get fine grained COP and also less meaningful as dependent on where cycle boundaries lie
-  * Hack to make stats somewhat useful. Mark entity as `unavailable` for period during day before COP calculated.
-  * Avoids having previous days value used for average/max/min
-  * Average of daily COP across year is NOT SCOP. For that need to calculate total energy output/used. Which would need a custom dashboard card with `energy-date-selection` integration. Or read off the graphs and use a calculator if you really want to know ...
+I use the heat pump in three different modes. There's heating during the day, hot water (DHW) during the day and preloading during off-peak hours. My off-peak overnight electricity is a quarter of the cost during the day. I charge the battery, charge the hot water system with as much heat as I can and charge the house with heat too.
 
-# Dashboards
+I want to understand energy consumption and efficiency for each mode. The energy stats from myVaillant are too coarse grained and infrequently updated. The Emoncms integration gives me total increasing sensors for electricity consumed and heat generated in kWh. Perfect for statistics. I use a [utility meter]({% link _posts/2025-09-22-home-assistant-integral-utility-meter.md %}) to split the energy sensors into three separate daily sensors for Heating, DHW and Off-Peak. 
 
-## Heat Pump Overview
+That's when I discovered that the heat meter provides readings with a 1kWh granularity. Apparently this is [common](https://community.openenergymonitor.org/t/necessary-feeds-for-heatpump-app/26621/3) with hardware heat meters. Weirdly, the meter is happy to provide power readings in watts. I used an integral helper to convert the power readings into my own accumulated energy sensor. 
 
-## Heat Pump Detail
+{% include candid-image.html src="/assets/images/home-assistant/heat-pump-weekly-graphs.png" alt="Heat Pump Weekly Statistics Graphs" %}
 
-* Can't beat the Emoncms web view for detailed look at the data - pulled into dashboard using a web card
-* Some limited URL parameters for view (power vs histogram), time to display, explicit start and end timestamps
+I use a template sensor to calculate COP for Heating, DHW and Off-Peak each day. It involves a bit of a hack to make COP based statistics useful. The sensor is marked as `unavailable` for the period during the day before the overall COP is calculated. This avoids having the previous days value used for average/max/min statistics. It's then easy to use the Home Assistant statistics graph to create [statistics dashboards]({% link _posts/2025-09-29-home-assistant-dashboard-custom-cards-statistics.md %}).
 
-## Weather
+{% include candid-image.html src="/assets/images/home-assistant/heat-pump-daily-stats.png" alt="Heat Pump Daily Statistics" %}
 
-* [Platinum weather card](https://github.com/Makin-Things/platinum-weather-card)
-  * Looks good on paper but only a subset of attributes provided by Met Office were picked up
-  * Couldn't get daily forecast slots to work at all
-  * No significant updates for last 3 years. Looks like it predates changes in 2023.9 for how detailed forecast data is accessed
-  * There's a [fork](https://github.com/tommyjlong/platinum-weather-card) which hacks in support but now I've found hourly weather card I'm not bothered anymore ...
-* [Hourly weather card](https://github.com/decompil3d/lovelace-hourly-weather)
-  * Brilliant!
-  * Great overview of day ahead
-  * Pulls in wind and precipitation too
-  * Sprinkle of templating support so you can do things like show tomorrows weather from a fixed start point tomorrow
+I also have an overview section that gives me a high level summary. I can see that my heat energy integral (Generated) is close to the heat meter reading (Metered) over time. In contrast, my peak time heating forecast (Forecast) is consistently too high when compared with the actual heat produced (Consumed). I've been steadily reducing the heat curve since I implemented the forecast as actual heat loss is lower than the estimate from the design. 
+
+We've also had a few colder days recently, down to 5°C. To my surprise, COP is still around 5. It's not cold enough for the heat pump to run continuously, so it's still at minimum power (where it's most efficient) with longer cycles (also more efficient). I suspect COP will stay around 5 until I hit the point where the heat pump runs continuously and then has to ramp up the power. 
+
+Time to go back and tweak the forecast.
+
+# Heat Pump Dashboard
+
+{% include candid-image.html src="/assets/images/home-assistant/heating-dashboard.png" alt="Heat Pump Dashboard" %}
+
+I put together a summary dashboard that shows the current state of the system together with recent activity. I used sensor cards for the basic temperature sensors. I tried something more sophisticated for Power and Flow. These are are Mini Graph Cards that each combine 3 sensors on one graph. The Power card shows electricity consumed (blue), heat generated (red) and changes the background shading during a DHW cycle. The Flow card shows flow temperature (red), return temperature (green) and flow rate (blue shading).
+
+I had some fun configuring a gauge card to show system pressure with custom colors for warning and error zones. 
+
+{% include candid-image.html src="/assets/images/home-assistant/heating-dashboard-detail.png" alt="Heat Pump Detail Dashboard" %}
+
+You can't beat the Emoncms web view for a detailed look at the data. So, I didn't try. I just pull it into my detailed dashboard using a web card. There's also a history graph for the temperature sensors.
+
+The default web view isn't that useful, showing a histogram over the full set of recorded data. It does support a limited set of URL parameters which aren't well documented. I had to poke around in the source code to find them all. If you add `&hours=24&mode=power` to the end of the standard URL, you get a more useful starting point. There are also `start` and `end` parameters which take timestamps for exact control of the timeline to display.
+
+# Weather Dashboard
+
+Now that I have access to more detailed and accurate weather it would be a shame if I didn't make more use of it. I have the standard Home Assistant weather card on my dashboard but it's pretty limited in what it can do. I found this [article](https://markus-haack.com/weather-cards-in-home-assistant-my-top-picks/) helpful when navigating the landscape of custom Home Assistant weather cards.
+
+{% include candid-image.html src="/assets/images/home-assistant/weather-dashboard.png" alt="Weather Dashboard" %}
+
+I started with the [Platinum weather card](https://github.com/Makin-Things/platinum-weather-card), shown top left. It looks good on paper. An overview area, configurable slots to display a huge variety of different weather attributes, an area for daily summaries. Unfortunately, only a subset of the attributes provided by the Met Office weather were picked up. I couldn't get daily forecast slots to work at all.
+
+On further inspection, I realized that there haven't been any updates in 3 years. That predates significant changes in Home Assistant 2023.9 for how detailed forecast data is accessed. I'm using it to display an overview, the actual outdoor temperature from myVAILLANT, sunrise and sunset, and the few Met Office attributes that it does support.
+
+There is a [fork](https://github.com/tommyjlong/platinum-weather-card) which hacks in support for the new weather system. However, I'm not interested now that I've found the [Hourly weather card](https://github.com/decompil3d/lovelace-hourly-weather). This thing is brilliant. I use it in the "Today" section to provide an overview for the next few hours. It pulls in min/max temperatures, wind direction and speed, precipitation probability and amount. 
+
+There's a sprinkling of templating support for defining which hours to show. I've used it in the "Tomorrow" section to show forecasts from 7.00 to 22.00 on the day after today. The documentation explains the common use cases very clearly. 
+
+I use the standard weather card to provide an overview of the next few days weather, then throw in my solar and heating forecasts too. 
+
