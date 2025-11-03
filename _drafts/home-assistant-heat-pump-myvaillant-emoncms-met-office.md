@@ -5,9 +5,9 @@ tags: home-assistant
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 
-Now that we have a heat pump [up and running]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}), the obvious next job is to get it hooked up to Home Assistant. Our heat pump is a Vaillant AroTHERM plus. A quick search of the Home Assistant Community Store turns up the [myVAILLANT](https://github.com/signalkraft/mypyllant-component) integration which uses the same API as Vaillant's myVAILLANT app. 
+Now that we have a heat pump [up and running]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}), the obvious next job is to get it hooked up to Home Assistant. Our heat pump is a Vaillant AroTHERM plus. A quick search of the Home Assistant Community Store turns up the [myVAILLANT](https://github.com/signalkraft/mypyllant-component) integration, which uses the same API as Vaillant's myVAILLANT app. 
 
-We also have [Open Energy Monitoring](https://openenergymonitor.org/) hooked up which sends data to their [Emoncms.org](https://emoncms.org/) backend. There's a built in Home Assistant [integration](https://www.home-assistant.io/integrations/emoncms/) for that.
+We also have [Open Energy Monitoring](https://openenergymonitor.org/) installed which sends data to their [Emoncms.org](https://emoncms.org/) backend. There's a built in Home Assistant [integration](https://www.home-assistant.io/integrations/emoncms/) for that.
 
 # myVAILLANT Integration
 
@@ -15,19 +15,19 @@ We also have [Open Energy Monitoring](https://openenergymonitor.org/) hooked up 
 
 When I first added the myVAILLANT integration it hadn't been updated in 5 months. There was some nervous chatter wondering if it had been abandoned. Someone was promoting their own [fork](https://github.com/rmalbrecht/VaillantCloud) but that hadn't been updated for 3 months either. There were another 30 older forks too.
 
-I decided to go with the original and see how I got on. To configure the integration you need the email and password you use with the myVAILLANT app. You then have a long list of options for what types of data you want to retrieve and how often to retrieve it.
+I decided to go with the original and see how I got on. To configure the integration you need the email address and password you use with the myVAILLANT app. You then have a long list of options for what types of data you want to retrieve and how often to retrieve it.
 
-It seems that Vaillant enforces an aggressive quota on calls to their API. There are lots of warnings about "quota exceeded" errors if you ask for too much data too frequently. I started with the defaults, which update most sensors every 5 minutes. This is OK for long term trends but not much use if you're trying to understand what's going on during a single heating cycle. 
+It seems that Vaillant enforces an aggressive quota on calls to their API. There are lots of warnings about "quota exceeded" errors if you ask for too much data too frequently. I started with the defaults, which update most sensors every 5 minutes. That's OK for long term trends but not much use if you're trying to understand what's going on during a single heating cycle. 
 
 You get access to indoor and outdoor temperature, flow rate, flow temperature, water temperature, system pressure and all the settings you can tweak in the app. There's also data about energy use but, like the app, it's infrequently updated and coarse grained. 
 
 A few days ago, most of the sensors became "unavailable" and the Home Assistant logs started filling up with "quota exceeded" errors. Vaillant had tightened up their quotas again, with some APIs limited to one call an hour. After changing the update rate to once an hour, the integration limped back into life. 
 
-At this point the repo burst back into life and there were a succession of new releases trying to fix the problem. Vaillant appeared to have set their quotas to match query patterns from their app. The APIs with ultra low quotas were for data that changed infrequently, like the current time zone. Clearly the app was caching more aggressively than the integration. After a short game of whack-a-mole all the effected APIs were cached in the integration too. There were also additional options to further restrict the data returned.
+At this point the repo burst into action and there were a succession of new releases trying to fix the problem. Vaillant appeared to have set their quotas to match query patterns from their app. The APIs with ultra low quotas were for data that changed infrequently, like the current time zone. Clearly the app was caching more aggressively than the integration. After a short game of whack-a-mole all the effected APIs were cached in the integration too. There were also additional options to further restrict the data returned.
 
-At this point I knew that I only needed the standard set of data. Once I turned off all the optional data, the handy "Vaillant API request count" sensor showed me that the integration was averaging 2-3 calls per update. I was able to increase the update rate to once a minute without exceeding the quota. 
+After using the integration for a few days I knew that I only needed the standard set of data. Once I turned off all the optional data, the handy "Vaillant API request count" sensor showed me that the integration was averaging 2-3 calls per update. I was able to increase the update rate to once a minute without exceeding the quota. 
 
-I was very pleased with myself until I noticed that the reported values change much less frequently than once a minute. This seems to be something in the myVAILLANT backend. I see the same behavior in the app. At least now the values reported by the app and Home Assistant change at the same time.
+I was very pleased with myself until I noticed that the reported values change much less frequently than once a minute. This seems to be something on the myVAILLANT side. I see the same behavior in the app. [According to some](https://energy-stats.uk/sensocomfort-room-temp-mod-inactive-active-or-expanded/#Sensitivity_Location), the SensoCOMFORT controller only reports changes every five minutes. At least now the values reported by the app and Home Assistant change at the same time.
 
 # Emoncms Integration
 
@@ -39,7 +39,7 @@ The data gets sent to [Emoncms.org](https://emoncms.org/). Poking around their w
 
 I asked Damon, our local Heat Geek, and he put me in touch with his contact at Open Energy Monitoring. They sorted me out with an API read key. 
 
-You're asked for a server URL and API read key when you configure an instance of Emoncms in Home Assistant. After that you're presented with a list of data feeds that you can subscribe to. Data feeds are equivalent to sensors in Home Assistant. That is, a measured or calculated value over a time. Unsurprisingly, the integration creates a sensor in Home Assistant for each feed you select. Strangely, the sensors are "loose", not associated with any device. This means they appear at the top level of the oveview dashboard, mixed in with your own helpers and templates.
+You're asked for a server URL and API read key when you configure an instance of Emoncms in Home Assistant. After that you're presented with a list of data feeds that you can subscribe to. Data feeds are equivalent to sensors in Home Assistant. That is, a measured or calculated value over time. Unsurprisingly, the integration creates a sensor in Home Assistant for each feed you select. Strangely, the sensors are "loose", not associated with any device. This means they appear at the top level of the oveview dashboard, mixed in with your own helpers and templates.
 
 {% include candid-image.html src="/assets/images/home-assistant/emoncms-feeds.png" alt="Emoncms Feeds" %}
 
@@ -102,7 +102,7 @@ The Jinja templating language used by Home Assistant has some quirks. One of the
 
 # Statistics
 
-I use the heat pump in three different modes. There's heating during the day, hot water (DHW) during the day and preloading during off-peak hours. My off-peak overnight electricity is a quarter of the cost during the day. I charge the battery, charge the hot water system with as much heat as I can and charge the house with heat too.
+I use the heat pump in three different modes. There's heating during the day, hot water (DHW) during the day and preloading during off-peak hours. My off-peak overnight electricity is a quarter of the price during the day. I charge the battery, charge the hot water system with as much heat as I can and charge the house with heat too.
 
 I want to understand energy consumption and efficiency for each mode. The energy stats from myVaillant are too coarse grained and infrequently updated. The Emoncms integration gives me total increasing sensors for electricity consumed and heat generated in kWh. Perfect for statistics. I use a [utility meter]({% link _posts/2025-09-22-home-assistant-integral-utility-meter.md %}) to split the energy sensors into three separate daily sensors for Heating, DHW and Off-Peak. 
 
@@ -114,7 +114,7 @@ I use a template sensor to calculate COP for Heating, DHW and Off-Peak each day.
 
 {% include candid-image.html src="/assets/images/home-assistant/heat-pump-daily-stats.png" alt="Heat Pump Daily Statistics" %}
 
-I also have an overview section that gives me a high level summary. I can see that my heat energy integral (Generated) is close to the heat meter reading (Metered) over time. In contrast, my peak time heating forecast (Forecast) is consistently too high when compared with the actual heat produced (Consumed). I've been steadily reducing the heat curve since I implemented the forecast as actual heat loss is lower than the estimate from the design. 
+I also have an overview section that gives me a high level summary. I can see that my heat energy integral (Generated) is close to the heat meter reading (Metered) over time. In contrast, my peak time heating forecast (Forecast) is consistently too high when compared with the actual heat used (Consumed). I've been steadily reducing the heat curve since I implemented the forecast as actual heat loss is lower than the estimate from the design. 
 
 We've also had a few colder days recently, down to 5°C. To my surprise, COP is still around 5. It's not cold enough for the heat pump to run continuously, so it's still at minimum power (where it's most efficient) with longer cycles (also more efficient). I suspect COP will stay around 5 until I hit the point where the heat pump runs continuously and then has to ramp up the power. 
 
@@ -124,7 +124,7 @@ Time to go back and tweak the forecast.
 
 {% include candid-image.html src="/assets/images/home-assistant/heating-dashboard.png" alt="Heat Pump Dashboard" %}
 
-I put together a summary dashboard that shows the current state of the system together with recent activity. I used sensor cards for the basic temperature sensors. I tried something more sophisticated for Power and Flow. These are are Mini Graph Cards that each combine 3 sensors on one graph. The Power card shows electricity consumed (blue), heat generated (red) and changes the background shading during a DHW cycle. The Flow card shows flow temperature (red), return temperature (green) and flow rate (blue shading).
+I put together a summary dashboard that shows the current state of the system together with recent activity. I used sensor cards for the basic temperature sensors. I tried something more sophisticated for Power and Flow. These are [Mini Graph Cards](https://github.com/kalkih/mini-graph-card) that each combine 3 sensors on one graph. The Power card shows electricity consumed (blue), heat generated (red) and changes the background shading during a DHW cycle. The Flow card shows flow temperature (red), return temperature (green) and flow rate (blue shading).
 
 I had some fun configuring a gauge card to show system pressure with custom colors for warning and error zones. 
 
