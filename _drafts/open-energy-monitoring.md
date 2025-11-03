@@ -4,6 +4,7 @@ tags: gear
 ---
 
 wise words
+
 * Covered briefly when talking about Heat Pump installation and initial Home Assistant setup.
 * Worth a deeper dive
 * Like Home Assistant, runs on a small Raspberry Pi level computer. Install the software on your own hardware or buy a kit from Open Energy Monitoring shop.
@@ -30,7 +31,6 @@ wise words
 * First time you connect you'll start with a network configuration page
 * I continued to "Emoncms login" and used the username and password in the manual
 
-
 * The emonHP is actually running a local copy of Emoncms, the same system that I use to explore the data logged to Emoncms.org
 * This is the full interface rather than the read only web view
 
@@ -49,3 +49,23 @@ wise words
 * Shutdown emonHP, removed the WiFi extender, moved the Vaillant myConnect plug up to the socket, removed the extension brick and plugged emonHP back in. Booted up in about 5 seconds.
 * Confirmed all still working.
 * Much tidier. And now I have an ethernet cable, wifi extender and extension block to add to my stash of things that will come in handy one day.
+
+# Local Logging
+
+* Currently input data is batched up on the emonHP and then synced every 30 seconds to Emoncms.org. No local data storage.
+* Can [log locally](https://docs.openenergymonitor.org/emoncms/intro-rpi.html#logging-data-locally) as well as sending to Emoncms.org
+* Can pull direct into Home Assistant without relying on round trip via the internet
+* Bit worried about how much space is available for data storage. Manual says that standard setup has 10 GB of data storage which is enough for 138 years with 6 feeds at 10s resolution.
+
+{% include candid-image.html src="/assets/images/home-assistant/emonhp-system-info.png" alt="Emoncms System Info" %}
+
+* Mine appears to be the standard setup with 10GB free on the `/var/opt/emoncms` data partition
+* You create feeds from inputs using the spanner icons on the inputs page
+
+{% include candid-image.html src="/assets/images/home-assistant/emoncms-inputs-feeds.png" alt="Emoncms Inputs after feeds configured" %}
+
+* Badge added to each input when you create a feed
+* Rather than exposing the heatmeter_Energy input with its 1kWh granularity, I used the "Power to kWh" input processor to calculate energy over time from the power input. This is equivalent to an integral in Home Assistant but should be more accurate as the inputs in Emoncms are updated every 10 seconds rather than once a minute.
+
+* Go to Apps, create a new instance of My Heatpump app, configure the available feeds and get locally running version of Emoncms.org web view
+* Can also build your own graphs, visualizations and dashboards
