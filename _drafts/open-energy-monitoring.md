@@ -8,6 +8,7 @@ wise words
 * Covered briefly when talking about Heat Pump installation and initial Home Assistant setup.
 * Worth a deeper dive
 * Like Home Assistant, runs on a small Raspberry Pi level computer. Install the software on your own hardware or buy a kit from Open Energy Monitoring shop.
+* The one I've got looks like it came pre-configured to send data to an account already setup on Emoncms.org. There's a QR code on the side that takes you to a web view of the data.
 
 {% include candid-image.html src="/assets/images/home-assistant/emonTx5.jpg" alt="emonHP data logger" %}
 
@@ -22,6 +23,7 @@ wise words
 * One of the sockets is being used by a WiFi extender with an ethernet cable connected to the emonHP (out of shot at the top).
 * Which is weird because I can see a WiFi antenna sticking out of the top of the emonHP.
 * The [installation instructions](https://files.openenergymonitor.org/emonhp.pdf) say that it supports both Ethernet and WiFi
+* The electrician that installed it was under the impression that WiFi wasn't supported. Maybe previous generations were ethernet only. Or maybe using a WiFi extender means you could just plug it in without having to configure anything on the emonHP. 
 * Press the button on the front to cycle through different screens on the small LCD display
 * Each screen displays information or allows you to perform an action like shutdown, toggle Wireless AP, toggle SSH access
 * Ethernet screen shows that Ethernet is connected and provides the IP address
@@ -65,7 +67,40 @@ wise words
 {% include candid-image.html src="/assets/images/home-assistant/emoncms-inputs-feeds.png" alt="Emoncms Inputs after feeds configured" %}
 
 * Badge added to each input when you create a feed
+* Two badges on Power input as I create two feeds from it, one direct one by applying an input processor to transform the values
 * Rather than exposing the heatmeter_Energy input with its 1kWh granularity, I used the "Power to kWh" input processor to calculate energy over time from the power input. This is equivalent to an integral in Home Assistant but should be more accurate as the inputs in Emoncms are updated every 10 seconds rather than once a minute.
+* FlowRate also has two badges. This time because I had to preprocess the input values before logging to a feed. The flow rate values reported by the heat meter are not in litres per minute. I found a [forum post](https://community.openenergymonitor.org/t/emonhp-how-to-create-flow-rate-feed/25046/2) explaining that you need to multiply by `16 2/3` to get litres per minute. No idea why, but when I do it, I get the same values reported from emoncms.org. 
 
 * Go to Apps, create a new instance of My Heatpump app, configure the available feeds and get locally running version of Emoncms.org web view
 * Can also build your own graphs, visualizations and dashboards
+
+# Local Logs into Home Assistant
+
+* Emoncms integration and "Add Entry" - can have as many as you like
+* Keep the entry for emoncms.org until I've transitioned over and confident everything is working
+* URL is `http://192.168.1.160` which creates entities with weird looking names, e.g. "emoncms@192.168.1.160 flowrate"
+* Went through and gave them all sensible names, icons and entity ids
+
+{% include candid-image.html src="/assets/images/home-assistant/emonhp-sensors.png" alt="EmonHP Sensors with sensible names and icons" %}
+
+* Only one sensor has units
+* Checked emoncms source. Has a mapping table for each type of unit to corresponding Home Assistant sensor definition. 
+* Gets unit type from list of feeds used when configuring at `/feed/list.json`
+
+```json
+[
+  {"id":"1","userid":"1","name":"elec","tag":"heatpump","public":"","size":"30172","engine":"5","unit":"","value":25.8,"time":1762271000},
+  {"id":"3","userid":"1","name":"elec_kwh","tag":"heatpump","public":"","size":"30040","engine":"5","unit":"","value":236.387,"time":1762271000},
+  {"id":"4","userid":"1","name":"heat","tag":"heatpump","public":"","size":"30008","engine":"5","unit":"","value":0,"time":1762271000},
+  {"id":"5","userid":"1","name":"heat_kwh","tag":"heatpump","public":"","size":"30008","engine":"5","unit":"kWh","value":22.748589999992,"time":1762271000},
+  {"id":"8","userid":"1","name":"flowrate","tag":"heatpump","public":"","size":"29900","engine":"5","unit":"","value":0.834,"time":1762271000},
+  {"id":"9","userid":"1","name":"flowT","tag":"heatpump","public":"","size":"29888","engine":"5","unit":"","value":21.35,"time":1762271000},
+  {"id":"10","userid":"1","name":"returnT","tag":"heatpump","public":"","size":"29880","engine":"5","unit":"","value":21.29,"time":1762271000},
+  {"id":"11","userid":"1","name":"dhw","tag":"gpio","public":"","size":"29844","engine":"5","unit":"","value":0,"time":1762271001}
+]
+```
+
+* Only the feed which converts power to energy over time has unit defined
+* Turns out that once you've created feeds on inputs tab you have to go to feeds tab and explicitly define units for them
+* Tried to use "Reconfigure" to update Home Assistant integration but it just marked all the sensors as "no longer provided"
+* Deleted them all, deleted the entry and started again. To my surprise when the entities were recreated, Home Assistant reused the names, icons and entity ids I applied the first time round.
