@@ -104,3 +104,4 @@ wise words
 * Turns out that once you've created feeds on inputs tab you have to go to feeds tab and explicitly define units for them
 * Tried to use "Reconfigure" to update Home Assistant integration but it just marked all the sensors as "no longer provided"
 * Deleted them all, deleted the entry and started again. To my surprise when the entities were recreated, Home Assistant reused the names, icons and entity ids I applied the first time round.
+* Gave it a day to get some real data aggregating. All looked good so switched my dashboards, utility meters and template sensors to use local data
