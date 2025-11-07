@@ -5,11 +5,11 @@ tags: gear home-assistant
 
 I touched on [Open Energy Monitoring](https://openenergymonitor.org/) briefly when talking about my [heat pump install]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}) and [Home Assistant integration]({% link _posts/2025-11-03-home-assistant-heat-pump-myvaillant-emoncms-met-office.md %}). It's worth a deeper dive.
 
-Open Energy Monitoring is an [open source business](https://openenergymonitor.org/homepage/about), similar to Home Assistant in a lot of ways but at a smaller scale. They supply hardware for monitoring renewable energy systems with a particular focus on heat pumps. They also manage and maintain a software platform for [storing, visualizing](https://emoncms.org/) and [sharing](https://heatpumpmonitor.org/) monitoring data. 
+Open Energy Monitoring is an [open source business](https://openenergymonitor.org/homepage/about), similar to Home Assistant in a lot of ways, but at a smaller scale. They supply hardware for monitoring renewable energy systems with a particular focus on heat pumps. They also manage and maintain a software platform for [storing, visualizing](https://emoncms.org/) and [sharing](https://heatpumpmonitor.org/) monitoring data. 
 
 # Current Installation
 
-My heat pump installation includes a [Level 3 Heat Pump Monitoring Bundle](https://shop.openenergymonitor.com/level-3-heat-pump-monitoring-bundle-emonhp/). It came pre-configured to send data to an account on Emoncms.org that my installer, [Heat Geek](https://www.heatgeek.com/), use to monitor performance of my system. There's a QR code on the side of the emonHP data logger that takes me to a web view of the data. 
+My heat pump installation includes a [Level 3 Heat Pump Monitoring Bundle](https://shop.openenergymonitor.com/level-3-heat-pump-monitoring-bundle-emonhp/). It came pre-configured to send data to an account on [Emoncms.org](https://emoncms.org/) that my installer, [Heat Geek](https://www.heatgeek.com/), use to monitor performance. There's a QR code on the side of the emonHP data logger that takes me to a [web view](https://emoncms.org/app/view?name=MyHeatpump&readkey=0857dc997fcec673ed927f5a0b113cc9) of the data. 
 
 {% include candid-image.html src="/assets/images/home-assistant/emonTx5.jpg" alt="emonHP data logger" %}
 
@@ -49,7 +49,7 @@ I unplugged the ethernet cable. The LCD screen confirms that it's disconnected. 
 
 {% include candid-image.html src="/assets/images/home-assistant/emoncms-network.png" alt="Emoncms Network Tab" %}
 
-I shutdown the emonHP, removed the WiFi extender, moved the Vaillant myConnect plug up to the socket, removed the extension brick and plugged the emonHP back in. It took about 5 seconds to boot up. I confirmed that everything is still working.
+I shut down the emonHP, removed the WiFi extender, moved the Vaillant myConnect plug up to the socket, removed the extension brick and plugged the emonHP back in. It took about 5 seconds to boot up. Everything is still working.
 
 That's much tidier. And now I have an ethernet cable, WiFi extender and extension brick to add to my stash of things that will come in handy one day.
 
@@ -85,9 +85,9 @@ You can also build your own graphs, visualizations and dashboards.
 
 # Home Assistant Integration
 
-The Emoncms integration I used to bring data in from Emoncms.org allows you to integrate with as many servers as you like. Use "Add Entry" to add another. I'm going to keep the existing entry for Emoncms.org until I've transitioned over and confident everything is working.
+The [Emoncms integration](https://www.home-assistant.io/integrations/emoncms/) I used to bring data in from Emoncms.org allows you to integrate with as many servers as you like. Use "Add Entry" to add another. I'm going to keep the existing entry for Emoncms.org until I've transitioned over and confident everything is working.
 
-The URL for my local server is `http://192.168.1.160`, which creates entities with weird looking names, e.g. "emoncms@192.168.1.160 flowrate". I went through them all and gave them sensible names, icons and entity ids in the entity settings editor.
+The URL for my local server is `http://192.168.1.160`, which creates entities with weird looking names, like "emoncms@192.168.1.160 flowrate". I went through them all and gave them sensible names, icons and entity ids in the entity settings editor.
 
 {% include candid-image.html src="/assets/images/home-assistant/emonhp-sensors.png" alt="EmonHP Sensors with sensible names and icons" %}
 
@@ -114,6 +114,6 @@ I gave it a day to get some real data aggregating. All looked good so I switched
 
 # Conclusion
 
-One day of tinkering later, I'm in the same place that I started, except my data is accessible with 30 seconds less latency. I'll also continue to have access to it if the internet goes down. 
+One day of tinkering later, I'm in the same place that I started, except my data is accessible with 30 seconds less latency. I'll also continue to have access to it if the internet goes down. However, I now also have the option of monitoring inputs in close to real time, updated every 10 seconds. 
 
-I wish more smart devices would provide local APIs. Instead, most of them depend on a remote server. If you're lucky there'll be a public API to retrieve your data. If not, you'll have to rely on someone reverse engineering it. Then hope that they don't change the API on a whim, or discontinue the service. 
+I wish more smart devices would provide local APIs. Instead, most of them depend on a remote server. If you're lucky there'll be a public API to retrieve your data. If not, you'll have to rely on someone reverse engineering it. Then hope that they don't change the API on a whim, or [discontinue the service]({% link _posts/2025-09-01-home-assistant.md %}). 
