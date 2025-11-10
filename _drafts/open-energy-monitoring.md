@@ -41,7 +41,7 @@ The emonHP is actually running a local copy of Emoncms, the same system that I u
 
 You can see the raw inputs coming from the heat meter, electricity meter and DHW sensor (apparently connected to gpio pin 15). 
 
-Emonhub lets you edit local configuration, including the integration with the heat and electricity meters, as well as syncing of data to Emoncms.org. There's a Sync tab which appears to be a separate system for more fine grained sync of data to remote systems. It's not being used for anything. 
+The Emonhub tab lets you edit local configuration, including the integration with the heat and electricity meters, as well as syncing of data to Emoncms.org. There's a Sync tab which appears to be a separate system for more fine grained sync of data to remote systems. It's not being used for anything. 
 
 There's lots more admin stuff including a Network tab. Let's try turning the Wifi on. Pick my home network, provide the password, success. I confirmed on the LCD screen that WiFi is now enabled and has its own IP address. Pointing a web browser at the WiFi IP address works too.
 
@@ -61,7 +61,7 @@ I added a DHCP reservation on the router to ensure that the emonHP always has th
 
 # Local Logging
 
-Input data is batched up on the emonHP and then synced every 30 seconds to Emoncms.org. There's no local data storage. However, you can [log locally](https://docs.openenergymonitor.org/emoncms/intro-rpi.html#logging-data-locally) as well as sending to Emoncms.org. In principle I should be able to get data into Home Assistant without having to rely on a round trip via the internet. 
+Input data is batched up on the emonHP and then synced every 30 seconds to Emoncms.org. Nothing is being stored locally. However, you can enable [local logging](https://docs.openenergymonitor.org/emoncms/intro-rpi.html#logging-data-locally), as well as sending to Emoncms.org. In principle I should be able to get data into Home Assistant without having to rely on a round trip via the internet. 
 
 I was a bit worried about how much space is available for local data storage. The manual says that the standard setup has 10GB of data storage which is "enough for 138 years with 6 feeds at 10s resolution".
 
@@ -80,6 +80,8 @@ The FlowRate input also has two badges. This time because I had to preprocess th
 # My Heat Pump
 
 The web view that I currently use to visualize Open Energy Monitoring data is an instance of the "My Heat Pump" app. Apps are prebuilt visualizations. You create an instance of an app using the Apps tab. You configure the app by specifying the feeds it should use. A couple of minutes later and I have a locally running version of the Emoncms.org web view.
+
+{% include candid-image.html src="/assets/images/home-assistant/my-heatpump-local.png" alt="My HeatPump app running locally" %}
 
 You can also build your own graphs, visualizations and dashboards. 
 
