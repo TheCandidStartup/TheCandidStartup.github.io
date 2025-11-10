@@ -71,7 +71,7 @@ This is an annotated history graph from Home Assistant. The blue line shows the 
   
 {% include candid-image.html src="/assets/images/home-assistant/dhw-with-check-valves.png" alt="After check valves fitted" %}
 
-* Much better. Holding heat for at least 4 hours.
+* Much better. Store loses a little less than 1°C per hour. 
 
 # Blending Down
 
@@ -145,10 +145,13 @@ This is an annotated history graph from Home Assistant. The blue line shows the 
 
 # Costs
 
-* Want small hysteresis so that you get fast response to DHW demand. Top up with hysteresis at 2.5°C is really inefficient.  
+* Want small hysteresis so that you get fast response to DHW demand. Top up with hysteresis at 2.5°C is really inefficient. Store takes around 2 hours to lose 2.5°C, so there will be many DHW cycles during the day. 
+* The MiniStore tall is [specified](https://newarkcylinders.co.uk/wp-content/uploads/2025/11/Heat-Geek-Mini-Store-v1.4-Specification-Installation-Booklet-Nov-2025.pdf) to lose 1.27kWh over 24 hours. It takes 1.16Wh to raise 1L of water by 1°C. It stores 110L of water so loses 11.5Wh per litre per 24 hours, or 10°C. The NanoStore loses 10°C in 8 hours, or 30°C in 24 hours.
+* MiniStore is supplied with 50mm insulation, prototype NanoStore has 20mm hand applied. Suggests that more/better insulation should help. 
+* The MiniStore XS holds 60L so might be a fairer comparison for what the NanoStore could achieve. It loses 0.96kWh, or 16Wh per litre, equivalent to 13.5°C over 24 hours. Still well over twice as good as the NanoStore. 
 
 {% include candid-image.html src="/assets/images/home-assistant/hot-water-top-up.png" alt="Hot Water Top Up" %}
 
-* This example is adding 5°C to see if that's more efficient. 10 minutes of ramp up time for zero heat gain, 5 minutes gaining heat while flow temperature climbs to 70 degrees, then all the built up heat dumped. Adds 0.3kWh of heat to the store at a COP of 0.5, then dumps 1kWh of built up heat. 
+* Each has 10 minutes of ramp up time for zero heat gain, 5 minutes gaining heat while flow temperature climbs to 70 degrees, then all the built up heat dumped. Adds 0.3kWh of heat to the store at a COP of 0.5, then dumps 1kWh. In the winter the heat is dumped into the heating circuit, which is useful but inefficient. In the summer, the hot water will sit in the external pipes between the heat pump and the NanoStore, with the heat gradually radiating away. 
 * Boost shower: 10 minute ramp up (0.28 kWh, COP 0.7), 10 minute combi shower (0.56 kWh, COP 3), 7 minutes reheat (0.4 kWh, COP 1.3). Overall 1.25kWh, COP 2. Cost 40p at peak rate, 10p using stored off-peak from home battery.
 * Gas combi for same heat would be 2.5kWh gas (assuming 100% efficiency). Looking at our old gas bills (30 minute smart metering) confirms that to be about right. Cost 15p. 
