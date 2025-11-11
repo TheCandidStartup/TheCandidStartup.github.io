@@ -3,84 +3,99 @@ title: Heat Geek NanoStore
 tags: gear
 ---
 
-wise words
+A few weeks ago I described our [heat pump installation]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}), which included a mystery hot water system. There was more than enough to say about the heat pump itself. The mystery hot water system deserves its own post. As you'll see, it also needed a few weeks to work some of the kinks out. 
 
-* 110L MiniStore Tall for hot water as minimal room in airing cupboard where boiler lives
-* Airing cupboard is 690mm deep, 600mm wide and 2200mm tall. 
-* Ministore Tall is a cylinder with 475mm diameter, 1100mm tall. Volume 0.195m³ external, 50mm insulation, internal capacity 110L. 
-* Allowing room for pipework round the sides it will just fit. 
+The mystery hot water system, as some of you already guessed, is a prototype Heat Geek NanoStore. 
+
+Traditionally, heat pumps are paired with a large hot water cylinder. This is heated low and slow, the way heat pumps work best, once or twice a day. It needs enough capacity to cover the household's hot water needs for the day. Modern cylinders are supplied with a large amount of insulation preinstalled. You need plenty of space.
 
 {% include candid-image.html src="/assets/images/home-assistant/airing-cupboard.jpg" alt="Airing Cupboard" %}
 
-* MiniStore is small cylinder plumbed in reverse to act as a heat store / "combi"
+We didn't have much space. Our old combi boiler was installed in a narrow airing cupboard. The cupboard is 690mm deep, 600mm wide and 2400mm tall (floor to ceiling). The heat pump plumbing, controls and hot water system all had to fit in the same space. Ideally, leaving as much space as possible for storage. A modern hot water cylinder doesn't fit.
 
-* NanoStore guinea pigs
-  * Offer from Heat Geek to be one of the first NanoStore installs
-  * Plate heat exchanger - see Heat Geek video
-  * [Nordic Tec BA-115-100](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/323-plate-heat-exchanger-nordic-ba-115-100-2-3400kw.html) plate heat exchanger
-  * Stores heat in the metal body of the heat exchanger as well as the water inside it
-  * More compact, much better energy transfer
-  * Two ESBE VTA 370/570 series thermostatic mixing valves, 20-55 degrees range, adjustment knob to select temperature from 1 to 6.
-  * One to reduce hot water from the heat exchanger to safe temperature
-  * Other plumbed in reverse to act as a diverting valve so that water flowing from the heat pump only goes into the heat exchanger when it's reached a suitable temperature.
-  * Discount, free open energy monitoring and guarantee to replace with MiniStore if it didn't work for us
+# MiniStore
+
+Heat Geek have an existing solution for this problem, the MiniStore. A MiniStore is a small hot water cylinder plumbed in reverse. The heat pump directly heats the water in the tank. Cold water flows through a central coil, picking up heat, connecting into the domestic hot water supply. The cylinder acts as a heat store. 
+
+There's enough stored heat to cover a few minutes of hot water demand. That, in theory, gives just enough time for the heat pump to kick in, ramp up and start replacing the lost heat. Our heat pump is capable of generating 9.5kW of heat when running flat out, equivalent power to an average electric shower. The end result is effectively a heat pump "combi".
+
+Our original design included a 110L MiniStore Tall. The cylinder has a 475mm diameter and is 1100mm tall, including 50mm of insulation all round. The external volume is 0.195m³. Allowing room for access and pipework round the sides it will just fit. 
+
+MiniStore's come in a variety of sizes, down to the 60L MiniStore XS. The smaller they get, the less well they work. There's less heat stored, fewer minutes of hot water, they're less effective at transferring heat. Any smaller than the XS and they don't work at all. 
+
+# NanoStore
+
+This is where the NanoStore comes in. Instead of starting with a hot water cylinder and adapting it to work as a heat exchanger, the NanoStore starts with a heat exchanger and adapts it to work as a heat store. 
+
+Heat Geek have done some experiments of their own with [promising results](https://www.youtube.com/watch?v=Zbq4Mq4waNk). They were looking for volunteers to try a prototype NanoStore for real. They offered us a discount, free [Open Energy Monitoring]({% link _posts/2025-11-10-open-energy-monitoring.md %}), and a guarantee to replace it with a MiniStore if it didn't work out for us. 
+
+The NanoStore in Adam's video is built around a [Nordic Tec BA-115-100](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/323-plate-heat-exchanger-nordic-ba-115-100-2-3400kw.html) plate heat exchanger. Heat is stored in the metal body of the heat exchanger as well as the 30L of water inside it. Add a thick layer of insulation and you have a heat store. It's more compact than a MiniStore, with much better energy transfer.
+
+{% include candid-image.html src="/assets/images/home-assistant/plate-heat-exchanger-nordic-ba-115.jpg" alt="Nordic Tec Plate Heat Exchanger BA-115" %}
+
+The complete solution adds two mixing valves. One blends hot water from the heat exchanger down to a safe temperature, which also increases the volume of water that can be supplied. The other is on the heat pump side of the exchanger. It acts as a diverting valve so that water flowing from the heat pump only goes into the heat exchanger when it's reached a suitable temperature.
 
 {% include candid-image.html src="/assets/images/home-assistant/original-plumbing-schematic.svg" alt="Plumbing Schematic" %}
 
-* Heat Exchanger much bigger than the one in the video. Based on the external dimensions looks like a [BA-115-170](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/1472-plate-heat-exchanger-nordic-ba-115-170-25-6300kw.html). Weighs over 100 Kg so very difficult for two people to maneuver up the stairs and into a narrow cupboard.
-* Sitting on floor as too heavy to wall mount. 535mm deep, 253mm wide and 428mm high
-* Been heavily insulated and sits on feet so actual dimensions are 620mm deep, 320mm wide and 550mm high. Volume is 0.109m³. Holds about 60L of water total, with the steel body equivalent to another 12.5L. 
-* Same volume as a 60L MiniStore XS but higher heat capacity, little less than a regular 80L MiniStore but significantly smaller. 
-* Being cuboid leaves more usable space. Occupies space below lower shelf in picture.
-* According to Nordic Tec website it's a "large industrial plate heat exchanger" with "significant weight" that is "not a heat exchanger for single-family homes".
-* Of course Heat Geek aren't using it in a typical way. Needs to be big enough to act as a heat store for the time it takes for the heat pump to react and build up to full power.
-* NanoStore is all about combi-like operation. Water has eight times the heat capacity of steel, so a 110L MiniStore can store much more heat than a 100Kg NanoStore. NanoStore is much better at transferring the heat generated by the heat pump, once it starts running. 
-* The one we've got is so much bigger because we have two showers and they want to see whether both can be used simultaneously. Plus installing a range of sizes gives them more data to work out the optimal size for future installs.
-* Heat exchanger plus [open energy monitoring level 3](https://shop.openenergymonitor.com/level-3-heat-pump-monitoring-bundle-emonhp/) is £3000 worth of kit, at list prices, so we got a good deal for being guinea pigs.
+Our heat exchanger is twice the size of the one in the video. Based on the external dimensions, it looks like a [BA-115-170](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/1472-plate-heat-exchanger-nordic-ba-115-170-25-6300kw.html). It weighs over 100kg, so very difficult for two people to maneuver up the stairs and into a narrow cupboard. It's about the same size as the old combi boiler, but has to sit on the floor as it's too heavy to wall mount. 
 
-* Thermal Siphoning
-* First proper test on Saturday
-* Tail end of Storm Amy, much colder day. Never above 10 degrees, mostly around 8.
-* Heat pump running but only for DHW cycles, every 60-90 minutes. No heating cycle at all. 
-* Messaged Damon who replied almost instantly. Suggested bumping heat curve right up to 2.2 to give 55 degree flow temp, to force heating to kick in.
-* After a long drawn out few minutes it finally kicked in. Took an hour to get house up to temperature. I went back to design heat curve of 0.7.
-* House stayed at temperature but behavior was the same. A DHW cycle every 60-90 minutes. No heating cycle. COP around 2.5. 
+The heat exchanger is 535mm deep, 253mm wide and 428mm high. However, it's been heavily insulated and sits on feet. The overall dimensions are 620mm deep, 320mm wide and 550mm high. The external volume is 0.109m³ and it holds about 60L of water total. Water has 8 times the heat capacity of steel, so the 100kg body is equivalent to another 12.5L of water. 
+
+{% include candid-image.html src="/assets/images/home-assistant/nano-store.jpg" alt="NanoStore prototype in situ" %}
+
+The mixing valves are two ESBE VTA 370/570 series thermostatic mixing valves. They have a 20-55°C range, with an adjustment knob to select temperature from 1 to 6.
+
+The NanoStore holds the same volume of water as a 60L MiniStore XS but has a higher overall heat capacity. It's a little less than a regular 80L MiniStore while being significantly smaller. The cuboid shape means there's more usable space. The NanoStore fits into the space below the lower shelf in the original picture. 
+
+According to the Nordic Tec website, the BA-115-170 is a "large industrial plate heat exchanger" with "significant weight" that is "not a heat exchanger for single-family homes". Of course Heat Geek aren't using it in a typical way. It needs to be big enough to act as a heat store for the time it takes for the heat pump to react and build up to full power.
+
+The one we've got is so much bigger because we have two showers and Heat Geek want to see whether both can be used simultaneously. Plus installing a range of sizes gives them more data to work out the optimal size for future installs.
+
+The Heat exchanger plus [Open Energy Monitoring level 3](https://shop.openenergymonitor.com/level-3-heat-pump-monitoring-bundle-emonhp/) is £3000 worth of kit, at list prices, so we got a good deal for being guinea pigs.
+
+# Non-stop DHW Cycles
+
+The installation was completed late on Friday so my first proper day of testing was Saturday. It was the tail end of storm Amy, a much colder day than the previous week. It was never above 10°C, mostly around 8°C.
+
+The heat pump was running but only for DHW (domestic hot water) cycles, every 60-90 minutes. No heating cycles. I messaged Damon, our installer, who replied almost instantly. He suggested bumping the heat curve right up to 2.2 to give 55°C flow temp, which would force a heating cycle.
+
+After a long drawn out few minutes it finally kicked in. Took an hour to get the house up to temperature, after which I went back to the design heat curve of 0.7.  The house stayed at temperature but the overall behavior was the same. A DHW cycle every 60-90 minutes. No heating cycle. COP around 2.5. 
 
 {% include candid-image.html src="/assets/images/home-assistant/dhw-thermal-siphoning.png" alt="Thermal Siphoning" %}
 
 This is an annotated history graph from Home Assistant. The blue line shows the reported hot water temperature, the red line is the heat pump flow temperature. The blue shading shows when the heat pump is generating heat with the hot water circuit active. The red shading shows when it's generating heat with the heating circuit active. The rest of the time water is being pumped round the heating circuit but the heat pump isn't generating heat.
 
-* Tried increasing hysteresis from 2.5 to 4. Makes no difference. 
-* Energy integral never got low enough for heating cycle to start before next DHW cycle.
-* Target flow temperature was around 25 degrees and actual flow temperature was about that or higher most of the time
-* Where was the heat coming from? Given rapid loss of heat from heat exchanger (without airing cupboard or outside of insulation feeling over warm) seemed most likely that it was escaping into the heating circuit.
-* Almost at the same time got a message from Damon saying it was most likely to be thermal siphoning which would need to be fixed by adding no-return check valves to the installation. 
-* Turned off the hot water. We can heat on demand when we need it and use immediately.
-* Normal heating cycle kicked in after a couple of hours.
-* Reasonable COP around 5
-* At minimum level heat pump kicks out 3 kW of heat using 600 W of electricity. With a temperature delta of 7 degrees, heat pump was on 50% of the time. Cycle it settled at was 45 minutes on, 45 minutes off. Can tweak the energy integral threshold for starting a new cycle to change cycle length. May try increasing it to see how much more efficient a longer cycle is (and whether it makes room temperature oscillate too much).
+I tried increasing cylinder hysteresis from 2.5°C to 4°C, so that DHW cycles would be less frequent. Made barely any difference. After a DHW cycle, the flow temperature never drops far enough to trigger a heating cycle before the start of the next DHW cycle.
 
-* Damon messaged again the following day. Whole team were heading out for a remote week long job but would send one of them back a day early so they can fit the valves on Friday. Also offered to cover my electricity costs until problem sorted.
-* Rearranged again to the following Monday
-* Belt and braces approach with four check valves. Two spring loaded ones on the inflows and two flutter valves on the outflows.
+# Thermosiphoning
+
+Where was the heat coming from? Given the rapid loss of heat from the heat exchanger,without the airing cupboard or outside of the insulation feeling over warm, it seemed most likely that it was escaping into the heating circuit. Almost at the same time, I got a message from Damon saying it was most likely to be [thermosiphoning](https://en.wikipedia.org/wiki/Thermosiphon). Fixing it would need no-return check valves to be installed.
+
+I suspect this is a consequence of floor mounting the heat exchanger with all connections on top. It's easy for convection to move heat up the heat pump return connection and on to where it joins the return from the heating circuit. Similarly, heat can also convect up the cold water supply pipe. 
+
+I turned off the hot water. We can heat on demand when we need it and use it immediately. The normal heating cycle kicked in after a couple of hours.  Reasonable COP around 5.
+
+Damon messaged again the following day. The whole team were heading out for a remote week long job but he would send one of them back a day early so they can fit the valves on Friday. He also offered to cover my electricity costs until the problem is sorted. At the end of the week, he had to rearrange again to the following Monday. 
+
+Installation took an afternoon to do. It was a belt and braces approach using four check valves. Two spring loaded ones on the inflows and two flutter valves on the outflows. Some of the pipework runs had to be altered to get long enough straight sections to fit the valves in.
 
 {% include candid-image.html src="/assets/images/home-assistant/plumbing-schematic.svg" alt="Plumbing Schematic with check valves" %}
 
-* Took an afternoon to do. Needed to alter some of the pipework runs to get long enough straight sections to fit the valves in
-* Fired everything up, turned on hot water and heating, crossed fingers.
+We fired everything up, turned on the hot water and heating, and crossed fingers.
   
 {% include candid-image.html src="/assets/images/home-assistant/dhw-with-check-valves.png" alt="After check valves fitted" %}
 
-* Much better. Store loses a little less than 1°C per hour. 
+Much better. Store loses a little less than 1°C per hour. 
 
 # Blending Down
 
 {% include candid-image.html src="/assets/images/home-assistant/esbe-vta372-mixing-valve.png" alt="ESBE VTA 370/570 series mixing valves" %}
 
-* Initially hot water blending valve was on max
-* Hot water came out scalding and then reduced linearly
-* Turned down to 4.5 which seems to be about 45 degrees at the valve, 41 or so at the tap
-* After complaints and checking temperatures at all taps and showers ended up at 5.5 out of 6 to give water hot enough for everybody, everywhere.
+Initially, the hot water blending valve was set on maximum. Hot water came out of the shower head scalding hot, then gradually reduced in temperature, leading to constantly having to bump the shower temperature up. 
+
+I turned it down from 6 to 4.5. On testing, I thought I was getting 41°C at the tap, so maybe 45°C out of the valve. After several complaints from the rest of the household and checking temperatures at all taps and showers, I ended up setting the valve to 5.5. That gives a stable temperature at the shower with water hot enough for everybody, at every outlet. 
+
+There does seem to be a psychological element at play. It's not enough that the water is hot enough. You need the maximum temperature to be a little bit too hot, so that you can turn it down and feel that you've got it just right. 
 
 # Instant Hot Water
 
