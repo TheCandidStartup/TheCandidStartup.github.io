@@ -3,9 +3,7 @@ title: Heat Geek NanoStore
 tags: gear
 ---
 
-A few weeks ago I described our [heat pump installation]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}), which included a mystery hot water system. There was more than enough to say about the heat pump itself. The mystery hot water system deserves its own post. As you'll see, it also needed a few weeks to work some of the kinks out. 
-
-The mystery hot water system, as some of you already guessed, is a prototype Heat Geek NanoStore. 
+A few weeks ago I described our [heat pump installation]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}), which included a mystery hot water system. The mystery hot water system, as some of you already guessed, is a prototype Heat Geek NanoStore. 
 
 Traditionally, heat pumps are paired with a large hot water cylinder. This is heated low and slow, the way heat pumps work best, once or twice a day. It needs enough capacity to cover the household's hot water needs for the day. Modern cylinders are supplied with a large amount of insulation preinstalled. You need plenty of space.
 
@@ -19,9 +17,9 @@ Heat Geek have an existing solution for this problem, the MiniStore. A MiniStore
 
 There's enough stored heat to cover a few minutes of hot water demand. That, in theory, gives just enough time for the heat pump to kick in, ramp up and start replacing the lost heat. Our heat pump is capable of generating 9.5kW of heat when running flat out, equivalent power to an average electric shower. The end result is effectively a heat pump "combi".
 
-Our original design included a 110L MiniStore Tall. The cylinder has a 475mm diameter and is 1100mm tall, including 50mm of insulation all round. The external volume is 0.195m³. Allowing room for access and pipework round the sides it will just fit. 
+Our original design included a 110L MiniStore Tall. The cylinder has a 475mm diameter and is 1100mm tall, including 50mm of insulation all round. The external volume is 0.195m³. Allowing room for access and pipework round the sides, it will just fit. 
 
-MiniStore's come in a variety of sizes, down to the 60L MiniStore XS. The smaller they get, the less well they work. There's less heat stored, fewer minutes of hot water, they're less effective at transferring heat. Any smaller than the XS and they don't work at all. 
+MiniStores come in a variety of sizes, down to the 60L MiniStore XS. The smaller they get, the less well they work. There's less heat stored, fewer minutes of hot water, less effective at transferring heat. Any smaller than the XS and they don't work at all. 
 
 # NanoStore
 
@@ -63,13 +61,13 @@ After a long drawn out few minutes it finally kicked in. Took an hour to get the
 
 {% include candid-image.html src="/assets/images/home-assistant/dhw-thermal-siphoning.png" alt="Thermal Siphoning" %}
 
-This is an annotated history graph from Home Assistant. The blue line shows the reported hot water temperature, the red line is the heat pump flow temperature. The blue shading shows when the heat pump is generating heat with the hot water circuit active. The red shading shows when it's generating heat with the heating circuit active. The rest of the time water is being pumped round the heating circuit but the heat pump isn't generating heat.
+This is an annotated history graph from Home Assistant. The blue line shows the reported hot water temperature, the red line is the heat pump flow temperature. The blue shading shows when the heat pump is generating heat with the DHW circuit active. The red shading shows when it's generating heat with the heating circuit active. The rest of the time water is being pumped round the heating circuit but the heat pump isn't generating heat.
 
 I tried increasing cylinder hysteresis from 2.5°C to 4°C, so that DHW cycles would be less frequent. Made barely any difference. After a DHW cycle, the flow temperature never drops far enough to trigger a heating cycle before the start of the next DHW cycle.
 
 # Thermosiphoning
 
-Where was the heat coming from? Given the rapid loss of heat from the heat exchanger,without the airing cupboard or outside of the insulation feeling over warm, it seemed most likely that it was escaping into the heating circuit. Almost at the same time, I got a message from Damon saying it was most likely to be [thermosiphoning](https://en.wikipedia.org/wiki/Thermosiphon). Fixing it would need no-return check valves to be installed.
+Where was the heat coming from? Given the rapid loss of heat from the heat exchanger, without the airing cupboard or outside of the insulation feeling over warm, it seemed most likely that it was escaping into the heating circuit. Almost at the same time, I got a message from Damon saying it was most likely to be [thermosiphoning](https://en.wikipedia.org/wiki/Thermosiphon). Fixing it would need no-return check valves to be installed.
 
 I suspect this is a consequence of floor mounting the heat exchanger with all connections on top. It's easy for convection to move heat up the heat pump return connection and on to where it joins the return from the heating circuit. Similarly, heat can also convect up the cold water supply pipe. 
 
@@ -93,80 +91,104 @@ Much better. Store loses a little less than 1°C per hour.
 
 Initially, the hot water blending valve was set on maximum. Hot water came out of the shower head scalding hot, then gradually reduced in temperature, leading to constantly having to bump the shower temperature up. 
 
-I turned it down from 6 to 4.5. On testing, I thought I was getting 41°C at the tap, so maybe 45°C out of the valve. After several complaints from the rest of the household and checking temperatures at all taps and showers, I ended up setting the valve to 5.5. That gives a stable temperature at the shower with water hot enough for everybody, at every outlet. 
+I turned the blending valve down from 6 to 4.5. On testing, I thought I was getting 41°C at the tap, so maybe 45°C out of the valve. After several complaints from the rest of the household and checking temperatures at all taps and showers, I ended up setting the valve to 5.5. That gives a stable temperature at the shower with water hot enough for everybody, at every outlet. 
 
 There does seem to be a psychological element at play. It's not enough that the water is hot enough. You need the maximum temperature to be a little bit too hot, so that you can turn it down and feel that you've got it just right. 
 
 # Instant Hot Water
 
-* Idea is that NanoStore holds enough heat to provide hot water until the heat pump kicks in and ramps up to full power "combi" mode
-* Using shower at natural flow rate. We're at the top of a hill with low water pressure, so not excessive flow. About 8L a minute. 
-* Getting 5 minutes of hot water before shower starts to go cold, ending up at around 30 degrees. Not freezing cold but not a pleasant experience. Kept going for another 10 minutes in the name of science. Didn't get any hotter. 
+The idea is that the NanoStore holds enough heat to provide hot water until the heat pump kicks in and ramps up to full power "combi" mode. My first test was using the shower at its natural flow rate. We're at the top of a hill with low water pressure, so it's not excessive flow. About 8L a minute.
+
+I got 5 minutes of hot water before the shower started to go cold, ending up at around 30 degrees. Not freezing cold but not a pleasant experience. I kept going for another 10 minutes in the name of science. It didn't get any hotter. 
 
 {% include candid-image.html src="/assets/images/home-assistant/shower-8l-55d.png" alt="Shower at 8 L/min with store target 55°C" %}
 
-* Yellow line shows *perceived* hot water temperature. Didn't have a thermometer to hand. Three things jump out.
-* Takes 3 minutes from starting shower to DHW demand being signalled. Water had been reheated to 55°C target shortly before test. Sensor is on outside of tank near the cold water inlet. Idea is that it should react quickly when water is drawn off. Down side is that it lags when heating water. Once temperature equalized across store, water was actually at 59°C. With 2.5°C hysteresis below target, temperature has to fall to 52.5°C before DHW triggered.
-* During the first 5 minutes of the DHW cycle the store is *losing* heat. The return temperature is higher than the flow temperature. We're 8 minutes into the shower before there's a net heat gain.
-* There's a one minute delay from DHW demand to the heat pump starting. It ramps up quickly to its minimum 600W power level. It takes a long 8 minutes for it to get to it's 3300W full power. Barely increasing while the store is actively losing heat then ramping up slightly faster. Once its going full throttle its putting out 9.5kW of heat, equivalent to the average electric shower.
+This is an annotated power graph from Open Energy Monitoring. The red and green lines are flow and return temperatures. The blue and brown shading are electric power in and heat power out. I've added the the yellow line which shows *perceived* hot water temperature. I didn't have a thermometer to hand. Three things jump out.
+
+It took 3 minutes from starting to shower before DHW demand was signalled. The water had been heated to a 55°C target shortly before the test. The temperature sensor sits between the body of the heat exchanger and the surrounding insulation, close to the cold water inlet. The idea is that it should react quickly when water is drawn off. The downside is that it lags when heating water. Once temperature had equalized across the store, it ended up at 59°C. With a 2.5°C hysteresis, the temperature has to fall to 52.5°C before a DHW cycle is triggered.
+
+Once the DHW cycle starts, the NanoStore *loses* heat for the first 3 minutes. The return temperature is higher than the flow temperature. We're 8 minutes into the shower before there's a net heat gain. The average shower would be over by now. 
+
+There's a one minute delay from DHW demand to the heat pump starting. It ramps up quickly to its minimum 600W power level. It takes a long 8 minutes for it to get to it's 3300W full power. Power barely increases while the store is actively losing heat, then starts ramping up slightly faster. Once it's going full throttle, it puts out the expected 9.5kW of heat.
 
 # Hot Water Theory
 
-* How much initial hot water should we expect?
-* Store holds 60L of water at around 55°C. There's 30L on the DHW side and 30L on the heat pump side. Turn on the shower, and 30L of water at 55°C flows out, then gets blended down to about 45°C.
-* Assume incoming cold water at 10°C. Blending at a 4:1 ratio of hot:cold averages out at 46°C. Giving 37.5L after blending.
-* At 8L a minute that's about 4.5 minutes of hot water.
-* Cold water enters the heat exchange as the hot water is drawn off. The other side of the heat exchanges is at 55°C, so will warm the incoming water. Let's assume the heat exchanger does its job and raises the water to at least 45°C. That needs an increase of 35°C. The hot side of the heat exchanger holds 30L of water and the equivalent of another 6L in the steel body. Heating 1L of water by 35°C will decrease the temperature of the heat exchange by about 1°C. 
-* Around another minute of showering before the temperature is reduced too far for the heat exchanger to work effectively.
-* Gives at most 5.5 minutes of hot water which is close to what I experienced.
+How much initial hot water should we expect? The NanoStore holds 60L of water at around 55°C. There's 30L on the DHW side and 30L on the heat pump side. Turn on the shower, and 30L of water at 55°C flows out, then gets blended down to about 45°C.
+
+Assume incoming cold water at 10°C. Blending at a 4:1 ratio of hot:cold averages out at 46°C. Giving 37.5L after blending. At 8L a minute that's about 4.5 minutes of hot water.
+
+Cold water enters the heat exchanger as the hot water is drawn off. The other side of the heat exchanger is at 55°C, so will warm the incoming water. Let's assume the heat exchanger does its job and raises the water to at least 45°C. That's an increase of 35°C. The hot side of the heat exchanger holds 30L of water and the equivalent of another 6L in the steel body. Heating 1L of water by 35°C will decrease the temperature of the heat exchanger by about 1°C. After another minute of showering the temperature is reduced too far for the heat exchanger to work effectively. 
+
+So, we should expect at most 5.5 minutes of hot water, which is close to what I experienced.
 
 # Best Case Scenario
 
-* Adam from Heat Geek suggested using water saving shower heads for a 6L a minute flow rate and heating the store to 65°C.
-* Blending at 2:1 averages out at 46.5°C, giving 45L after blending.
-* At 6L a minute that's about 7.5 minutes of hot water.
-* Would then have at most 3 minutes more with the heat exchanger temperature reducing from 65°C to 47°C.
-* Will that be enough? Let's put it to the test.
+Adam from Heat Geek suggested using water saving shower heads for a 6L a minute flow rate and heating the store to 65°C. Blending at 2:1 averages out at 46.5°C, giving 45L after blending. At 6L a minute that's about 7.5 minutes of hot water. You'd then get at most 3 minutes more with the heat exchanger temperature reducing from 65°C to 47°C.
+
+Will that be enough? Let's put it to the test.
 
 {% include candid-image.html src="/assets/images/home-assistant/shower-6l-65d.png" alt="Shower at 6 L/min with store target 65°C" %}
 
+The water was preheated to 65°C but there was a delay before showering. The water was at 63°C when I started. That's in the expected range for a 2.5°C hysteresis and should be the best case scenario. The DHW cycle kicks in after a minute of showering. 
+
+To my great surprise the water started going cold after 5 minutes. However, this time it went hot again 4 minutes later. Not quite as hot as when it started but an adequate temperature. It maintained that temperature to the end of the shower.
+
+What's going on? The downside of starting the DHW cycle sooner, is that the heat store starts losing heat sooner. Heat is being drawn out of the stored water. Clearly, the diverting valve isn't working as intended. Some of the initial cold water from the heat pump is passing through the store, removing heat and circulating it back to the heat pump. 
+
+That heat isn't lost. Eventually it comes back round, just as the heat pump hits full power, going into "combi" mode at a sustained 55°C flow temperature, 49°C return. 
+
 # Diverting Valve
 
-* Don't know what heat pump diverting valve was initially set to
-
-{% include candid-image.html src="/assets/images/home-assistant/divert-valve-initial.png" alt="DHW cycle with initial setting for divert valve" %}
+My first thought was that the diverting valve had the wrong setting. It was installed with the mark for the current setting facing the back wall. The only number you could see, facing you, was 3. There was only movement one way, so it was set at one end of the range. Just in case it was the wrong end, I tried changing it all the way to the opposite end of the range. 
 
 {% include candid-image.html src="/assets/images/home-assistant/divert-valve-min.png" alt="DHW cycle with min setting for divert valve" %}
 
-* DHW: 0.669kWh consumed, 1.096 generated, COP 1.64. Post heat dump: 1.029 kWh
+This must be the minimum setting, and the original setting was the maximum, theoretically opening up at 55°C. I changed the setting back to how it was. 
 
-{% include candid-image.html src="/assets/images/home-assistant/divert-valve-max.png" alt="DHW cycle with max setting (3 visible) for divert valve" %}
+The valve must be partially open at lower temperatures for the store to lose heat. I also have my suspicions that it doesn't fully open at high temperatures. On some of my overnight DHW runs,  heating to 65°C on cheap rate electricity, the flow temperature approaches 80°C and the heat pump shuts down. Open Energy Monitoring shows a DHW cycle is still active but the heat pump isn't doing anything. Water temperature eventually settles around 63°C. Which suggests that not enough heat is getting into the store.
 
-* DHW: 0.589kWh consumed, 0.458 generated, COP 0.78. Post heat dump: 1.159 kWh
+Those of you paying attention to the plumbing schematics may have already realized that there's something odd about the diverting valve. It isn't a diverting valve. It's a mixing valve plumbed in backwards. Water from the heat pump is connected to the outlet, with the cold water inlet connected to the NanoStore and the hot water inlet to the return pipe. 
 
-{% include candid-image.html src="/assets/images/home-assistant/divert-valve-5.png" alt="DHW cycle with max-1 setting (2 visible) for divert valve" %}
+You can see that it might work. A mixing valve opens the cold water inlet when the valve gets too hot. When water from the heat pump gets to temperature, the valve gets hot which should open the cold water side, letting water into the NanoStore. 
 
-{% include candid-image.html src="/assets/images/home-assistant/divert-valve-5-long-shower.png" alt="DHW cycle with max-1 setting, long shower" %}
+There's nothing in the ESBE data sheet which suggests that it can be used backwards. ESBE also sell a dedicated thermostatic diverting valve, which makes me think it's not the same as a backwards mixer. 
 
-* Valve not stable! Same valve settings, 10 degree difference in when it starts charging NanoStore.
-* Annotated with tank temperature in yellow. Very coarse grained, updates sent by Vaillant sensoCOMFORT at 5 minute intervals.
-* Sensor near cold water inlet so can quickly respond to water draw. However, not representative of temperature at hot water outlet, at heat pump inlet or what the current "stored" temperature is. 
-* Suspect some correlation between temperature at valve "cold inlet" (connected to NanoStore heat pump inlet) and temperature needed at "hot inlet" (connected to heat pump return flow) for valve to open. 
+Damon has ordered a replacement valve. Apparently, there were none in the country, so it had to be ordered from Sweden. At the time of writing, the valve has arrived and is waiting for Damon to get back from a remote job. I'm hoping that it will prevent the store from losing heat and allow the NanoStore to gain heat more quickly when it opens. If I'm really lucky the heat pump will decide to ramp more quickly when it sees that the heat produced is being used.
 
 # Boost Shower Strategy
 
-* Heating to 62 at end of cheap window at 5am still at 42 at 9pm for washing up if no one's had a shower
-* Plenty left if there's been a shower cycle during the day
+Until then we're using a boost shower strategy. I do a DHW run to 62°C at 5am, the end of the cheap rate period. Hot water is off during the rest of the day. If no one has a shower, the water gradually cools to 42°C at the end of the day, with occasional use for hand washing and washing up. 
+
+When someone wants a shower, they put the hot water on boost. Then wait for 10 minutes. The heat pump should now be running at full power with the flow rate up to 55°C, ready to go into "combi" mode. We get hot showers at full flow rate that easily last 15 minutes. Lower the flow rate to 6L, and you can shower indefinitely. 
+
+The biggest downside is if you leave it too long before getting in the shower. There's a 5 minute window until the water reaches temperature and the heat pump turns off. Miss that and you'll be back to a cold shower after 5 minutes. 
+
+# Insulation
+
+The NanoStore loses 10°C in under 8 hours. The MiniStore Tall is [specified](https://newarkcylinders.co.uk/wp-content/uploads/2025/11/Heat-Geek-Mini-Store-v1.4-Specification-Installation-Booklet-Nov-2025.pdf) to lose 1.27kWh over 24 hours. It takes 1.16Wh to raise 1L of water by 1°C. The MiniStore Tall holds 110L of water, which means it loses 11.5Wh per litre over 24 hours. Which is near enough 10°C.
+
+The MiniStore is supplied preassembled with 50mm insulation around the inner cylinder. The prototype NanoStore has 20mm of hand applied insulation. Which suggests that more or better insulation should help. 
+
+The space around the NanoStore isn't useful for anything. It's too close to the sides of the cupboard. We're going to try packing the space with more insulation and see how much of a difference that makes. 
 
 # Costs
 
-* Want small hysteresis so that you get fast response to DHW demand. Top up with hysteresis at 2.5°C is really inefficient. Store takes around 2 hours to lose 2.5°C, so there will be many DHW cycles during the day. 
-* The MiniStore tall is [specified](https://newarkcylinders.co.uk/wp-content/uploads/2025/11/Heat-Geek-Mini-Store-v1.4-Specification-Installation-Booklet-Nov-2025.pdf) to lose 1.27kWh over 24 hours. It takes 1.16Wh to raise 1L of water by 1°C. It stores 110L of water so loses 11.5Wh per litre per 24 hours, or 10°C. The NanoStore loses 10°C in 8 hours, or 30°C in 24 hours.
-* MiniStore is supplied with 50mm insulation, prototype NanoStore has 20mm hand applied. Suggests that more/better insulation should help. 
-* The MiniStore XS holds 60L so might be a fairer comparison for what the NanoStore could achieve. It loses 0.96kWh, or 16Wh per litre, equivalent to 13.5°C over 24 hours. Still well over twice as good as the NanoStore. 
+When set up for instant hot water, the NanoStore will be recharged whenever it loses 2.5°C. Unfortunately, that's a really inefficient way to use a heat pump.
 
 {% include candid-image.html src="/assets/images/home-assistant/hot-water-top-up.png" alt="Hot Water Top Up" %}
 
-* Each has 10 minutes of ramp up time for zero heat gain, 5 minutes gaining heat while flow temperature climbs to 70 degrees, then all the built up heat dumped. Adds 0.3kWh of heat to the store at a COP of 0.5, then dumps 1kWh. In the winter the heat is dumped into the heating circuit, which is useful but inefficient. In the summer, the hot water will sit in the external pipes between the heat pump and the NanoStore, with the heat gradually radiating away. 
-* Boost shower: 10 minute ramp up (0.28 kWh, COP 0.7), 10 minute combi shower (0.56 kWh, COP 3), 7 minutes reheat (0.4 kWh, COP 1.3). Overall 1.25kWh, COP 2. Cost 40p at peak rate, 10p using stored off-peak from home battery.
-* Gas combi for same heat would be 2.5kWh gas (assuming 100% efficiency). Looking at our old gas bills (30 minute smart metering) confirms that to be about right. Cost 15p. 
+Each cycle has 10 minutes of ramp up time for zero heat gain, 5 minutes gaining heat while flow temperature climbs to 70 degrees, then all the excess built up heat is dumped. It adds 0.3kWh of heat to the store at a COP of 0.5, with 1kWh left over. In the winter the excess heat is dumped into the heating circuit, which is useful but inefficient. In the summer, the hot water will sit in the external pipes between the heat pump and the NanoStore, with the heat gradually radiating away. 
+
+The new valve should shorten the cycle time and get more of the generated heat into the store. In addition, the extra insulation should reduce the number of DHW cycles needed during the day.
+
+In contrast, the boost shower strategy is already pretty efficient, all things considered. There's a 10 minute ramp up (0.28 kWh, COP 0.7), followed by a 10 minute combi shower (0.56 kWh, COP 3) and then 7 minutes reheating the water (0.4 kWh, COP 1.3). Overall that's 1.25kWh used, with a COP of 2. The new valve should help push that up even higher. 
+
+Current cost is 40p at peak rate, or 10p using stored off-peak electricity from our home battery. Our old gas combi would use 2.5kWh gas to produce the same amount of heat (assuming 100% efficiency). Looking at our old gas bills (with detailed smart meter based usage) confirms that to be about right. Would have cost 15p. 
+
+# Coming Up
+
+Did the new valve and extra insulation make any difference? Will the promise of instant hot water be delivered? If it does, do we end up using it in that mode or carry on with the boost shower strategy?
+
+What happens when it gets really cold?
+
+Is the NanoStore worthwhile? Does it work well enough to keep it?
