@@ -167,6 +167,8 @@ The biggest downside is if you leave it too long before getting in the shower. T
 
 The NanoStore loses 10°C in under 8 hours. The MiniStore Tall is [specified](https://newarkcylinders.co.uk/wp-content/uploads/2025/11/Heat-Geek-Mini-Store-v1.4-Specification-Installation-Booklet-Nov-2025.pdf) to lose 1.27kWh over 24 hours. It takes 1.16Wh to raise 1L of water by 1°C. The MiniStore Tall holds 110L of water, which means it loses 11.5Wh per litre over 24 hours. Which is near enough 10°C.
 
+The MiniStore XS holds 60L so might be a fairer comparison for what the NanoStore could achieve. It loses 0.96kWh, or 16Wh per litre, equivalent to 13.5°C over 24 hours. Still well over twice as good as the NanoStore. 
+
 The MiniStore is supplied preassembled with 50mm insulation around the inner cylinder. The prototype NanoStore has 20mm of hand applied insulation. Which suggests that more or better insulation should help. 
 
 The space around the NanoStore isn't useful for anything. It's too close to the sides of the cupboard. We're going to try packing the space with more insulation and see how much of a difference that makes. 
