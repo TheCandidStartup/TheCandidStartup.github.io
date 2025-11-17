@@ -9,7 +9,9 @@ Traditionally, heat pumps are paired with a large hot water cylinder. This is he
 
 {% include candid-image.html src="/assets/images/home-assistant/airing-cupboard.jpg" alt="Airing Cupboard" %}
 
-We didn't have much space. Our old combi boiler was installed in a narrow airing cupboard. The cupboard is 690mm deep, 600mm wide and 2400mm tall (floor to ceiling). The heat pump plumbing, controls and hot water system all had to fit in the same space. Ideally, leaving as much space as possible for storage. A modern hot water cylinder doesn't fit.
+We didn't have much space. Our old combi boiler was installed in a narrow airing cupboard. The cupboard is 690mm deep, 600mm wide and 2400mm tall (floor to ceiling). The heat pump plumbing, controls and hot water system all had to fit in the same space. Ideally, leaving as much space as possible for storage. 
+
+A modern hot water cylinder doesn't fit.
 
 # MiniStore
 
@@ -17,9 +19,9 @@ Heat Geek have an existing solution for this problem, the MiniStore. A MiniStore
 
 There's enough stored heat to cover a few minutes of hot water demand. That, in theory, gives just enough time for the heat pump to kick in, ramp up and start replacing the lost heat. Our heat pump is capable of generating 9.5kW of heat when running flat out, equivalent power to an average electric shower. The end result is effectively a heat pump "combi".
 
-Our original design included a 110L MiniStore Tall. The cylinder has a 475mm diameter and is 1100mm tall, including 50mm of insulation all round. The external volume is 0.195m³. Allowing room for access and pipework round the sides, it will just fit. 
+Our original design included a 110L MiniStore Tall. The cylinder has a 475mm diameter and is 1100mm tall, including 50mm of insulation all round. The external volume is 195L. Allowing room for access and pipework round the sides, it will just fit. 
 
-MiniStores come in a variety of sizes, down to the 60L MiniStore XS. The smaller they get, the less well they work. There's less heat stored, fewer minutes of hot water, less effective at transferring heat. Any smaller than the XS and they don't work at all. 
+MiniStores come in a variety of sizes, down to the 60L MiniStore XS. The smaller they get, the less well they work. There's less heat stored, fewer minutes of hot water, they're less effective at transferring heat. Any smaller than the XS and they don't work at all. 
 
 # NanoStore
 
@@ -35,17 +37,19 @@ The complete solution adds two mixing valves. One blends hot water from the heat
 
 {% include candid-image.html src="/assets/images/home-assistant/original-plumbing-schematic.svg" alt="Plumbing Schematic" %}
 
-Our heat exchanger is twice the size of the one in the video. Based on the external dimensions, it looks like a [BA-115-170](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/1472-plate-heat-exchanger-nordic-ba-115-170-25-6300kw.html). It weighs over 100kg, so very difficult for two people to maneuver up the stairs and into a narrow cupboard. It's about the same size as the old combi boiler, but has to sit on the floor as it's too heavy to wall mount. 
+Our heat exchanger is twice the size of the one in the video. Based on the external dimensions, it looks like a [BA-115-170](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/1472-plate-heat-exchanger-nordic-ba-115-170-25-6300kw.html). It weighs just over 100kg, so very difficult for two people to maneuver up the stairs and into a narrow cupboard. It's about the same size as the old combi boiler, but has to sit on the floor as it's too heavy to wall mount. The connectors are a massive 2.5 inch in diameter which means they need adaptors to connect to domestic pipework. The team needed half a day of installation time, and a lot of swearing, to get all the joints to seal. 
 
-The heat exchanger is 535mm deep, 253mm wide and 428mm high. However, it's been heavily insulated and sits on feet. The overall dimensions are 620mm deep, 320mm wide and 550mm high. The external volume is 0.109m³ and it holds about 60L of water total. Water has 8 times the heat capacity of steel, so the 100kg body is equivalent to another 12.5L of water. 
+The heat exchanger is 535mm deep, 253mm wide and 428mm high for a volume of 58L. However, it's been heavily insulated and sits on feet. The overall dimensions are 620mm deep, 320mm wide and 550mm high. The volume of cupboard space occupied is 109L. 
+
+The data sheet doesn't say how much water it holds but we can work it out. Stainless steel has a density of 8kg per litre, so 100kg of steel needs 12.5L of space, leaving 45.5L for water. Conveniently, water has 8 times the heat capacity of steel, which means a litre of steel holds the same heat as a litre of water. The overall heat capacity is equivalent to 58L of water.
 
 {% include candid-image.html src="/assets/images/home-assistant/nano-store.jpg" alt="NanoStore prototype in situ" %}
 
 The mixing valves are two ESBE VTA 370/570 series thermostatic mixing valves. They have a 20-55°C range, with an adjustment knob to select temperature from 1 to 6.
 
-The NanoStore holds the same volume of water as a 60L MiniStore XS but has a higher overall heat capacity. It's a little less than a regular 80L MiniStore while being significantly smaller. The cuboid shape means there's more usable space. The NanoStore fits into the space below the lower shelf in the original picture. 
+The NanoStore has equivalent heat capacity to a 60L MiniStore XS and occupies roughly the same volume of space. However, the cuboid shape means there's more usable space. The NanoStore fits into the space below the lower shelf in the original picture. 
 
-According to the Nordic Tec website, the BA-115-170 is a "large industrial plate heat exchanger" with "significant weight" that is "not a heat exchanger for single-family homes". Of course Heat Geek aren't using it in a typical way. It needs to be big enough to act as a heat store for the time it takes for the heat pump to react and build up to full power.
+According to the Nordic Tec website, the BA-115-170 is a "large industrial plate heat exchanger" with "significant weight" that is "not a heat exchanger for single-family homes". Of course, Heat Geek aren't using it in a typical way. It needs to be big enough to act as a heat store for the time it takes for the heat pump to react and build up to full power.
 
 The one we've got is so much bigger because we have two showers and Heat Geek want to see whether both can be used simultaneously. Plus installing a range of sizes gives them more data to work out the optimal size for future installs.
 
@@ -61,7 +65,7 @@ After a long drawn out few minutes it finally kicked in. Took an hour to get the
 
 {% include candid-image.html src="/assets/images/home-assistant/dhw-thermal-siphoning.png" alt="Thermal Siphoning" %}
 
-This is an annotated history graph from Home Assistant. The blue line shows the reported hot water temperature, the red line is the heat pump flow temperature. The blue shading shows when the heat pump is generating heat with the DHW circuit active. The red shading shows when it's generating heat with the heating circuit active. The rest of the time water is being pumped round the heating circuit but the heat pump isn't generating heat.
+This is an annotated history graph from [Home Assistant]({% link _posts/2025-11-03-home-assistant-heat-pump-myvaillant-emoncms-met-office.md %}). The blue line shows the reported hot water temperature, the red line is the heat pump flow temperature. The blue shading shows when the heat pump is generating heat with the DHW circuit active. The red shading shows when it's generating heat with the heating circuit active. The rest of the time water is being pumped round the heating circuit but the heat pump isn't generating heat.
 
 I tried increasing cylinder hysteresis from 2.5°C to 4°C, so that DHW cycles would be less frequent. Made barely any difference. After a DHW cycle, the flow temperature never drops far enough to trigger a heating cycle before the start of the next DHW cycle.
 
@@ -73,7 +77,7 @@ I suspect this is a consequence of floor mounting the heat exchanger with all co
 
 I turned off the hot water. We can heat on demand when we need it and use it immediately. The normal heating cycle kicked in after a couple of hours.  Reasonable COP around 5.
 
-Damon messaged again the following day. The whole team were heading out for a remote week long job but he would send one of them back a day early so they can fit the valves on Friday. He also offered to cover my electricity costs until the problem is sorted. At the end of the week, he had to rearrange again to the following Monday. 
+Damon messaged again the following day. The whole team were heading out for a remote week-long job but he would send one of them back a day early so they can fit the valves on Friday. He also offered to cover my electricity costs until the problem is sorted. At the end of the week, he had to rearrange again to the following Monday. 
 
 Installation took an afternoon to do. It was a belt and braces approach using four check valves. Two spring loaded ones on the inflows and two flutter valves on the outflows. Some of the pipework runs had to be altered to get long enough straight sections to fit the valves in.
 
@@ -113,17 +117,17 @@ There's a one minute delay from DHW demand to the heat pump starting. It ramps u
 
 # Hot Water Theory
 
-How much initial hot water should we expect? The NanoStore holds 60L of water at around 55°C. There's 30L on the DHW side and 30L on the heat pump side. Turn on the shower, and 30L of water at 55°C flows out, then gets blended down to about 45°C.
+How much initial hot water should we expect? The NanoStore holds 45L of water at around 55°C. There's 22.5L on the DHW side and 22.5L on the heat pump side. Turn on the shower, and 22.5L of water at 55°C flows out, then gets blended down to about 45°C.
 
-Assume incoming cold water at 10°C. Blending at a 4:1 ratio of hot:cold averages out at 46°C. Giving 37.5L after blending. At 8L a minute that's about 4.5 minutes of hot water.
+Assume incoming cold water at 10°C. Blending at a 4:1 ratio of hot:cold averages out at 46°C. Giving 28L after blending. At 8L a minute that's about 3.5 minutes of hot water.
 
-Cold water enters the heat exchanger as the hot water is drawn off. The other side of the heat exchanger is at 55°C, so will warm the incoming water. Let's assume the heat exchanger does its job and raises the water to at least 45°C. That's an increase of 35°C. The hot side of the heat exchanger holds 30L of water and the equivalent of another 6L in the steel body. Heating 1L of water by 35°C will decrease the temperature of the heat exchanger by about 1°C. After another minute of showering the temperature is reduced too far for the heat exchanger to work effectively. 
+Cold water enters the heat exchanger as the hot water is drawn off. The other side of the heat exchanger is at 55°C, so will warm the incoming water. Let's assume the heat exchanger does its job and raises the water to at least 45°C. That's an increase of 35°C. The hot side of the heat exchanger holds 22.5L of water and the equivalent of another 12.5L in the steel body. Heating 1L of water by 35°C will decrease the temperature of the heat exchanger by about 1°C.  That gives at least another minute of showering before the temperature is reduced too far for the heat exchanger to work effectively. 
 
-So, we should expect at most 5.5 minutes of hot water, which is close to what I experienced.
+So, we should expect about 4.5 minutes of hot water, which is close to what I experienced.
 
 # Best Case Scenario
 
-Adam from Heat Geek suggested using water saving shower heads for a 6L a minute flow rate and heating the store to 65°C. Blending at 2:1 averages out at 46.5°C, giving 45L after blending. At 6L a minute that's about 7.5 minutes of hot water. You'd then get at most 3 minutes more with the heat exchanger temperature reducing from 65°C to 47°C.
+Adam from Heat Geek suggested using water saving shower heads for a 6L a minute flow rate and heating the store to 65°C. Blending at 2:1 averages out at 46.5°C, giving 34L after blending. At 6L a minute that's about 5.5 minutes of hot water. You'd then get at most 3 minutes more with the heat exchanger temperature reducing from 65°C to 47°C.
 
 Will that be enough? Let's put it to the test.
 
@@ -145,7 +149,7 @@ My first thought was that the diverting valve had the wrong setting. It was inst
 
 This must be the minimum setting, and the original setting was the maximum, theoretically opening up at 55°C. I changed the setting back to how it was. 
 
-The valve must be partially open at lower temperatures for the store to lose heat. I also have my suspicions that it doesn't fully open at high temperatures. On some of my overnight DHW runs,  heating to 65°C on cheap rate electricity, the flow temperature approaches 80°C and the heat pump shuts down. Open Energy Monitoring shows a DHW cycle is still active but the heat pump isn't doing anything. Water temperature eventually settles around 63°C. Which suggests that not enough heat is getting into the store.
+The valve must be partially open at lower temperatures for the store to lose heat. I also have my suspicions that it doesn't fully open at high temperatures. On some of my overnight DHW runs,  heating to 65°C on cheap rate electricity, the flow temperature approaches 80°C and the heat pump shuts down. Open Energy Monitoring shows a DHW cycle is still active but the heat pump isn't doing anything. Water temperature eventually settles around 63°C. Which suggests that not enough of the generated heat is getting into the store.
 
 Those of you paying attention to the plumbing schematics may have already realized that there's something odd about the diverting valve. It isn't a diverting valve. It's a mixing valve plumbed in backwards. Water from the heat pump is connected to the outlet, with the cold water inlet connected to the NanoStore and the hot water inlet to the return pipe. 
 
@@ -153,7 +157,7 @@ You can see that it might work. A mixing valve opens the cold water inlet when t
 
 There's nothing in the ESBE data sheet which suggests that it can be used backwards. ESBE also sell a dedicated thermostatic diverting valve, which makes me think it's not the same as a backwards mixer. 
 
-Damon has ordered a replacement valve. Apparently, there were none in the country, so it had to be ordered from Sweden. At the time of writing, the valve has arrived and is waiting for Damon to get back from a remote job. I'm hoping that it will prevent the store from losing heat and allow the NanoStore to gain heat more quickly when it opens. If I'm really lucky the heat pump will decide to ramp more quickly when it sees that the heat produced is being used.
+Damon has ordered a replacement valve. Apparently, there were none in the country, so it had to be shipped from Sweden. At the time of writing, the valve has arrived and is waiting for Damon to get back from another remote job. I'm hoping that it will prevent the store from losing heat and allow the NanoStore to gain heat more quickly when it opens. If I'm really lucky the heat pump will decide to ramp more quickly when it sees that the heat produced is being used.
 
 # Boost Shower Strategy
 
@@ -161,13 +165,21 @@ Until then we're using a boost shower strategy. I do a DHW run to 62°C at 5am, 
 
 When someone wants a shower, they put the hot water on boost. Then wait for 10 minutes. The heat pump should now be running at full power with the flow rate up to 55°C, ready to go into "combi" mode. We get hot showers at full flow rate that easily last 15 minutes. Lower the flow rate to 6L, and you can shower indefinitely. 
 
-The biggest downside is if you leave it too long before getting in the shower. There's a 5 minute window until the water reaches temperature and the heat pump turns off. Miss that and you'll be back to a cold shower after 5 minutes. 
+The biggest downside is if you leave it too long before getting in the shower. There's a 5 minute window until the water reaches temperature and the heat pump turns off. Miss that and you'll be back to a cold shower after 5 minutes.
+
+# Leaks
+
+Just as Damon was heading off to his remote job, I noticed a couple of water trails down the front of the NanoStore. You can see them in the picture above. There wasn't any running water but they were wet to the touch. The floor directly below the NanoStore was also wet. 
+
+It looked like water was seeping out of the join in the insulation. I felt behind the insulation and the body of the heat exchanger was wet. 
+
+Damon was unavailable but Heat Geek found another local Heat Geek who came round the next day. There was a small leak at the cold water inlet. Water had spread across the body of the heat exchanger and then made its way out via gaps in the insulation. The connection joint was resealed and, touch wood, is still holding a week later.
 
 # Insulation
 
 The NanoStore loses 10°C in under 8 hours. The MiniStore Tall is [specified](https://newarkcylinders.co.uk/wp-content/uploads/2025/11/Heat-Geek-Mini-Store-v1.4-Specification-Installation-Booklet-Nov-2025.pdf) to lose 1.27kWh over 24 hours. It takes 1.16Wh to raise 1L of water by 1°C. The MiniStore Tall holds 110L of water, which means it loses 11.5Wh per litre over 24 hours. Which is near enough 10°C.
 
-The MiniStore XS holds 60L so might be a fairer comparison for what the NanoStore could achieve. It loses 0.96kWh, or 16Wh per litre, equivalent to 13.5°C over 24 hours. Still well over twice as good as the NanoStore. 
+The MiniStore XS holds 60L so should be a fairer comparison for what the NanoStore could achieve. It loses 0.96kWh, or 16Wh per litre, equivalent to 13.5°C over 24 hours. Still much better than the NanoStore. 
 
 The MiniStore is supplied preassembled with 50mm insulation around the inner cylinder. The prototype NanoStore has 20mm of hand applied insulation. Which suggests that more or better insulation should help. 
 
@@ -183,14 +195,11 @@ Each cycle has 10 minutes of ramp up time for zero heat gain, 5 minutes gaining 
 
 The new valve should shorten the cycle time and get more of the generated heat into the store. In addition, the extra insulation should reduce the number of DHW cycles needed during the day.
 
-In contrast, the boost shower strategy is already pretty efficient, all things considered. There's a 10 minute ramp up (0.28 kWh, COP 0.7), followed by a 10 minute combi shower (0.56 kWh, COP 3) and then 7 minutes reheating the water (0.4 kWh, COP 1.3). Overall that's 1.25kWh used, with a COP of 2. The new valve should help push that up even higher. 
+In contrast, the boost shower strategy is already pretty efficient, all things considered. There's a 10 minute ramp up (0.28 kWh, COP 0.7), followed by a 10 minute combi shower (0.56 kWh, COP 3) and then 7 minutes reheating the water (0.4 kWh, COP 1.3). Overall that's 1.25kWh used, with a COP of 2. The new valve should help push that up higher. 
 
-Current cost is 40p at peak rate, or 10p using stored off-peak electricity from our home battery. Our old gas combi would use 2.5kWh gas to produce the same amount of heat (assuming 100% efficiency). Looking at our old gas bills (with detailed smart meter based usage) confirms that to be about right. Would have cost 15p. 
+Current cost is 40p per shower at peak rate, or 10p using stored off-peak electricity from our home battery. Our old gas combi would use 2.5kWh gas to produce the same amount of heat (assuming 100% efficiency). Looking at our old gas bills (with detailed smart meter based usage) confirms that to be about right. Would have cost 15p. 
 
 # Coming Up
 
-Did the new valve and extra insulation make any difference? Will the promise of instant hot water be delivered? If it does, do we end up using it in that mode or carry on with the boost shower strategy?
+Did the new valve and extra insulation make any difference? Will the promise of instant hot water be delivered? And, what happens when it gets really cold outside?
 
-What happens when it gets really cold?
-
-Is the NanoStore worthwhile? Does it work well enough to keep it?
