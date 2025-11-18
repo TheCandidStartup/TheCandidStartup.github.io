@@ -58,7 +58,7 @@ The top gauge is the heat pump power consumption. It needs to be above 3kW for "
       color: var(--success-color)
 ```
 
-The bottom gauge is the return flow temperature to the heat pump. Painful experience shows it needs to be above 55°C to ensure a decent temperature in the tank and at least 45°C on the other side of the NanoStore heat exchanger when relying on "combi" mode. Once the temperature goes past 65°C (the red zone), the tank temperature will soon reach target and the heat pump will shut down.
+The bottom gauge is the return flow temperature to the heat pump. Painful experience shows it needs to be above 55°C to ensure a decent temperature in the tank and enough headroom for "combi" mode. Once the temperature goes past 65°C (the red zone), the tank temperature will soon reach target and the heat pump will shut down.
 
 ```yaml
 - type: gauge
@@ -76,7 +76,7 @@ The bottom gauge is the return flow temperature to the heat pump. Painful experi
       color: var(--error-color)
 ```
 
-I can't use tank temperature directly as that comes via the myVaillant app with it's five minute granularity. All the sensors I'm relying on come from [Open Energy Monitoring]({% link _posts/2025-11-10-open-energy-monitoring.md %}) and are updated once a minute. 
+I can't use tank temperature directly as that comes via the myVaillant app with its five minute granularity. All the sensors I'm relying on come from [Open Energy Monitoring]({% link _posts/2025-11-10-open-energy-monitoring.md %}) and are updated once a minute. 
 
 
 # Home Assistant UX
@@ -95,7 +95,7 @@ So far, there's not much you can configure per user in Home Assistant, beyond re
 
 # Default Dashboard
 
-You can make a custom dashboard the default on a per device basis in the dashboard settings menu. That's not needed in my case because the Home Assistant Companion app remembers the last used page and restores it on startup.
+You can make a custom dashboard the default, on a per device basis, in the dashboard settings menu. That's not needed in my case because the Home Assistant Companion app remembers the last used page and restores it on startup.
 
 I can install the app on each device, log in with the guest user and select the shower view on my custom dashboard. Whenever the app is started, the guest user is automatically logged back in and the shower view selected.
 
@@ -105,7 +105,7 @@ There's still a chance that they could fat finger an item in the sidebar menu an
 
 [Kiosk Mode](https://github.com/NemesisRE/kiosk-mode) is a third party integration for Home Assistant available via [HACS]({% link _posts/2025-09-01-home-assistant.md %}). The usual use case is to configure the app when running on a dedicated device, like a wall mounted tablet.
 
-The integration lets you choose which parts of the normal frontend UX to hide. The most common choices are to hide the side bar and top header. Beyond that are a wealth of options to control access in fine grained detail.
+The integration lets you choose which parts of the normal frontend UX to hide. The most common choices are to hide the sidebar and top header. Beyond that are a wealth of options to control access in fine grained detail.
 
 I'm going to start by disabling the sidebar. Kiosk mode is only active for specified dashboards. You need to edit the configuration YAML for each dashboard and add the appropriate kiosk mode options.
 
@@ -127,7 +127,7 @@ kiosk_mode:
 
 There's no point doing all this work unless my shower dashboard works better than the Vaillant app. The Home Assistant emoncms integration pulls data from my local Open Energy Monitoring data logger every minute. That just about works. There's a five minute window before the heat pump will shut down, so plenty of time to notice that the gauges have jumped into the green.
 
-Unfortunately, it doesn't feel great, especially if you're watching the gauges. It can seem like an eternity waiting for them to change. It's especially annoying when I know that the data logger updates every ten seconds. 
+Unfortunately, it doesn't feel great, especially if you're watching the gauges. It can seem like an eternity waiting for them to change. It's especially annoying when I know that the data logger captures changes every ten seconds. 
 
 Home Assistant integrations that poll a remote data source follow a common pattern. You create a `Coordinator` object and pass it to the Home Assistant core. The coordinator has an `update_interval` property that defines how often data should be updated. The Home Assistant core calls the coordinator back when it's time to update the data. 
 
@@ -186,7 +186,7 @@ actions:
         - sensor.emonhp_heat
 ```
 
-There's a huge amount of flexibility here. You can tune the update rate of any sensor as needed. For example, I could have enabled high frequency updates just when a DHW cycle is active. In my case, there's no worries about overwhelming the remote server. It lives in the airing cupboard three metres away from the Home Assistant instance that is the one and only client making requests.
+There's a huge amount of flexibility here. You can tune the update rate of any sensor as needed. For example, I could have enabled high frequency updates just when a DHW cycle is active. In my case, there's no worries about overwhelming the remote server. It lives in the airing cupboard three meters away from the Home Assistant instance that is the one and only client making requests.
 
 I was worried that updating a list of entities would mean redundantly calling the same feed list API for each entity. Fortunately, Home Assistant has debouncing logic which batches up calls to the same coordinator update method so that it only runs once.
 
