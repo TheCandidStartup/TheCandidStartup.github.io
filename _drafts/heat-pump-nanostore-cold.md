@@ -16,6 +16,8 @@ wise words
 | 18↑↑ | 1➤5.2➤3.9 | 15.9➤15.3➤15.9 | 1.3 | 26 | 4.45 | 4.3➤4.9➤4.5 | 630 | 75% |
 | 19 | 0.7➤1.2➤-1.1 | 16.3➤17.1➤16.1 | 1.95 | 86 | 3.72 | 4.0➤4.1➤3.7 | 700➤900 | 100% |
 | 20 | -1➤1.5➤0.3 | 16.2➤17.5➤16.9 | 4.19 | 0 | 3.93 | 3.6➤4.2➤4.0 | 900➤650 ➤750 | 100% |
+| 21 | -0.5➤2.8➤1.3 | 16.5➤18➤16.9 | 4.32 | 0 | 3.9 | 3.9➤4.2➤4.1 | 850➤650 | 90% |
+| 22 | 2.5➤5.7➤4.3 | 15.8➤15.3➤16.5 | 0.45 | 78 | 4.31 | 4.4➤4.2➤4.5 | 650 | 90% |
 
 * Nov 12: Outdoor: 11-13°C, Solar: 0.1kWh, Indoor: 16.3-16.9°C, Peak COP: 5.5, Insta COP: 6.0, 550W 20%, HC: 0.55
 * Nov 13: Outdoor 8-12°C, Solar: 2.1kWh, Indoor: 16.2-17.6°C, Peak COP: 5.2, Insta COP: 5.8, 550W 20%, HC: 0.55
@@ -106,6 +108,8 @@ wise words
 {% include candid-image.html src="/assets/images/home-assistant/defrost-cycle.png" alt="Defrost Cycle" %}
 
 * This cycle on Nov 21 with outdoor temperature at 0°C.
+* Defrosts are easily recognized in Open Energy Monitoring from the V shaped flow temperature curve.
+* Flow temperature drops below return temperature as heat is removed
 * Blue line on graph is instantaneous COP
 * Leading into defrost cycle COP is a steady 3.8
 * Over a period of 30 minutes, COP falls off a cliff, down to 2.5 when heat pump starts defrost cycle
@@ -127,8 +131,21 @@ wise words
 * Defrost cycle starts at 5.23, before water is up to temperature
 * Notice that the heat pump doesn't ramp the power up during the DHW cycle and heat output is dropping all the time, showing need for defrost.
 * Interesting that it switches to heating circuit before running defrost. Avoids taking the heat from your hot water tank.
+* [Chatter](https://community.openenergymonitor.org/t/arotherm-hot-water-starting-outside-schedule/28047/4) on the forums suggests that this is expected, Vaillant Arotherm always takes heat from heating circuit
+* Nothing explicit in Vaillant docs. However, the descriptions of failure codes relating to defrosts always reference the heating circuit.
 * Still an unpleasant surprise if you're having a shower with heat pump running full blast DHW NanoStore combi mode when defrost cycle kicks in.
 * Reduced performance pre-defrost means experience won't have been great before hand either
+
+{% include candid-image.html src="/assets/images/home-assistant/defrost-dhw-active.png" alt="False alarm defrost during DHW cycle" %}
+
+* Then I saw this during a DHW cycle.
+* It looks kind of like a defrost was attempted here. 
+* Note the V shaped flow temperature curve at the start of the DHW cycle
+* Much smaller than normal defrost. If it is trying to do it with DHW active, it won't be able to extract much heat because diverter valve mostly bypasses NanoStore until flow temperature is high enough.
+* Before DHW cycle heat pump had been running continuously at minimum power with a steady COP of 4.4. None of the tell-tale signs that a defrost is needed.
+* If you look really closely you can see that heat pump turned off just *before* the DHW demand came in. The drop in flow temperature is the normal end of heating cycle. Then once DHW circuit is active, some hot water is returned from the NanoStore and gets pumped round the circuit with the heat pump resulting in the rising part of the V.
+* It then takes the heat pump much longer than normal to do it's pre-flight checks and power up again to start heating the water
+* End result wad that it took 22 minutes to be ready for showering rather than the usual 10
 
 # Hypervolt Charger Current Limit
 
