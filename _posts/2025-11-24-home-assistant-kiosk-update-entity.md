@@ -113,7 +113,7 @@ My initial impression from scanning the documentation and reading forum posts wa
 
 Fortunately, there's an escape hatch. When using a web browser, add `?disable_km` to the end of the URL to disable kiosk mode for that page. Then go back and use the right settings.
 
-Kiosk Mode options can be global, specific only to non-admin users, or to specific named users. Both JavaScript and Jinja templates are supported for arbitrary conditional logic. A common pattern is to use an input helper to control whether kiosk mode is enabled with a dashboard button that turns it on and off. 
+Kiosk Mode options can be global, specific only to non-admin users, or specific to named users. Both JavaScript and Jinja templates are supported for arbitrary conditional logic. A common pattern is to use an input helper to control whether kiosk mode is enabled with a dashboard button that turns it on and off. 
 
 Once I got my head round it, the options I needed were simple enough
 
