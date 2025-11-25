@@ -3,7 +3,23 @@ title: Heat Pump Cold Weather Performance
 tags: gear home-assistant
 ---
 
-wise words
+We had a cold snap here in the UK. Over a few days, temperatures dropped from consistently over 10°C to days at or below freezing. Perfect weather for dialing in a heat pump. 
+
+# Weather Compensation
+
+Heat pumps run best using [weather compensation](https://www.vaillant.co.uk/advice/understanding-heating-technology/heating-controls/keep-your-home-in-balance-the-benefits-of-weather-compensation/). The amount of heat lost by a house is proportional to the difference in temperature between the outside and inside. Weather compensation uses an external sensor to measure the outside temperature and determine the amount of heat required to match the heat lost. 
+
+We have a [Vaillant Arotherm plus]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}) heat pump. Vaillant heat pumps use a constant flow rate around the heating circuit. They vary the flow temperature of the water to adjust the heat output. A heat curve parameter is used to map between `targetTemperature - outsideTemperature` and desired `flowTemperature`. The larger the heat curve parameter, the higher the flow temperature and the higher the heat output. 
+
+The initial heat curve setting is calculated based on your expected heat loss. We have an expected heat loss of 6kW at -3°C outside and 17°C inside. That's equivalent to 300W per degree difference. The corresponding heat curve setting is 0.7.
+
+The expected heat loss is an estimate. You typically need to nudge it up or down depending on how close the estimate is to the actual heat loss. This process works best in cold weather when other heat sources (solar gain, occupancy, cooking) are less significant.
+
+The usual rule of thumb is to keep reducing the heat curve every few days, one step at a time, until you're too cold. Then nudge it back up one step and call it done. Since we've had the heat pump installed, I've gradually reduced the heat curve down to 0.55, where it's been for a while. 
+
+In theory you can run the heating system entirely on weather compensation, ignoring the temperature reading from the sensoCOMFORT thermostat. Vaillant calls this "Inactive" mode and is how our system was commissioned. 
+
+# Reference Data
 
 | Day | Outdoor °C | Indoor °C | Solar kWh | DHW mins | Daily COP | Insta COP | Power W | Runs |
 |-|-|-|-|-|-|-|-|
@@ -12,21 +28,30 @@ wise words
 | 14 | 7.7➤6.0 | 17.2➤16.7 | 0 | 43 | 4.89 | 5.0 | 600 | 50% |
 | 15↑ | 6.5➤8.2➤7.5 | 16.5➤16.9 | 0 | 46 | 5.35 | 5.2➤5.4➤5.3 | 580 | 50% |
 | 16↓ | 6➤6.3➤4.2 | 16.8➤17.5➤17.3 | 0.8 | 22 | 4.42 | 4.6➤4.4 | 630 | 66% |
-| 17 | 1.7➤4.2➤0.6 | 16.7➤18➤16.9 | 5 | 48 | 3.99 | 4.0➤4.4➤4.1 | 630 | 80% | 
+| 17* | 1.7➤4.2➤0.6 | 16.7➤18➤16.9 | 5 | 48 | 3.99 | 4.0➤4.4➤4.1 | 630 | 80% | 
 | 18↑↑ | 1➤5.2➤3.9 | 15.9➤15.3➤15.9 | 1.3 | 26 | 4.45 | 4.3➤4.9➤4.5 | 630 | 75% |
-| 19 | 0.7➤1.2➤-1.1 | 16.3➤17.1➤16.1 | 1.95 | 86 | 3.72 | 4.0➤4.1➤3.7 | 700➤900 | 100% |
-| 20 | -1➤1.5➤0.3 | 16.2➤17.5➤16.9 | 4.19 | 0 | 3.93 | 3.6➤4.2➤4.0 | 900➤650 ➤750 | 100% |
-| 21 | -0.5➤2.8➤1.3 | 16.5➤18➤16.9 | 4.32 | 0 | 3.9 | 3.9➤4.2➤4.1 | 850➤650 | 90% |
+| 19* | 0.7➤1.2➤-1.1 | 16.3➤17.1➤16.1 | 1.95 | 86 | 3.72 | 4.0➤4.1➤3.7 | 700➤900 | 100% |
+| 20* | -1➤1.5➤0.3 | 16.2➤17.5➤16.9 | 4.19 | 0 | 3.93 | 3.6➤4.2➤4.0 | 900➤650 ➤750 | 100% |
+| 21* | -0.5➤2.8➤1.3 | 16.5➤18➤16.9 | 4.32 | 0 | 3.9 | 3.9➤4.2➤4.1 | 850➤650 | 90% |
 | 22 | 2.5➤5.7➤4.3 | 15.8➤15.3➤16.5 | 0.45 | 78 | 4.31 | 4.4➤4.2➤4.5 | 650 | 90% |
 
-* Nov 12: Outdoor: 11-13°C, Solar: 0.1kWh, Indoor: 16.3-16.9°C, Peak COP: 5.5, Insta COP: 6.0, 550W 20%, HC: 0.55
-* Nov 13: Outdoor 8-12°C, Solar: 2.1kWh, Indoor: 16.2-17.6°C, Peak COP: 5.2, Insta COP: 5.8, 550W 20%, HC: 0.55
-* Nov 14: Outdoor: 6-8°C, Solar: 0kWh, Indoor: 16.2-17.3°C, Peak COP: 4.9, Insta COP: 5.0, 600W 50%, HC: 0.55
-* Nov 15: Outdoor: 6-8°C, Solar: 0kWh, Indoor: 16.1-16.9°C, Peak COP: 5.3, Insta COP: 5.4, 580W 50%, HC: 0.55 -> 0.60
-* Nov 16: Outdoor: 4-7°C, Solar: 0.8kWh, Indoor: 16.3-17.5°C, Peak COP: 4.4, Insta COP: 4.6, 630W 66%, HC: 0.60 -> 0.55
-* Nov 17: Outdoor: 1-4°C, Solar: 5kWh, Indoor: 16.5-18°C, Peak COP: 4.0, Insta COP: 4.3, 630W 80%, HC: 0.55, Defrost first thing in morning, last thing at night
-* Nov 18: Outdoor: 1.5-5.2°C, Solar: 1.3kWh, Indoor: 15.3-16.2°C, Peak COP: 4.4, Insta COP: 4.6, 630W 75%, HC: 0.55-> 0.60 -> 0.65, Couple of defrosts overnight
-* Nov 19: Outdoor 0.5-3°C, 770W 100%, HC: 0.65, Defrosts every 2 hours
+* Covers peak time hours when heating active with target at 17°C (6am to 9pm)
+* Set back after 9pm to let house cool a little to help promote sleep
+* Picking back up during cheap off peak hours to try and be back at 17°C for start of next day
+* Days annotated with significant events. Up (↑) and down (↓) arrows when I nudge the heating curve up or down on step.
+* Asterisk (*) when heat pump defrosted during the day
+* Each column can have one, two or three entries. 
+* One entry if value covers whole day or is continuous value that was constant through the day
+* Two entries if continuous value that started at first, ended at second with roughly linear change through the day
+* Three entries if continuous value that started at first, ended at third with a curve during the day. Second entry is maximum value if curve upwards, minimum if curve downwards.
+* Outdoor is temperature from sensoCOMFORT external sensor used for weather compensation
+* Indoor is indoor temperature reported by sensoCOMFORT. Should be 17°C.
+* Solar is energy produced by solar panels. Proxy for effect of solar gain. 
+* DHW is number of minutes that DHW circuit active and hence heating off.
+* Daily COP is the overall COP during peak hours
+* Insta COP is instantaneous COP reported by Open Energy Monitoring once heat pump has settled into a steady state
+* Power is electricity used by heat pump
+* Runs is percentage of the time that heat pump is running
 
 # Heating Forecast
 
@@ -62,11 +87,12 @@ wise words
 
 {% include candid-image.html src="/assets/images/home-assistant/double-dhw.png" alt="Double DHW cycles overnight" %}
 
-* Started on November 14th when the weather first turned colder
+* Started on November 15th when the weather turned colder
 * Have a 60 minute window for water heating using noise reduction mode to force low and slow behavior
 * Tank sensor gets hot enough to turn off at 62°C but manages to drop 2.5°C within a few minutes, triggering another DHW run. 
 * Think this is tank equalizing once DHW cycle ends. Also see dip in temperature that then recovers on milder nights.
-* Even on coldest night, hot water run only taking 30 minutes so shortened window. Also means 30 minutes less cooling time before water used.
+* Increased hysteresis to 4°C and reduced window to 40 minutes. 
+* Even on coldest night, hot water run taking just over 30 minutes. Also means 30 minutes less cooling time before water used.
 * Doesn't matter if cycle is clipped slightly.
 
 # Pointless Heating Cycles
@@ -127,25 +153,28 @@ wise words
 
 {% include candid-image.html src="/assets/images/home-assistant/defrost-during-dhw.png" alt="Defrost during DHW cycle" %}
 
-* Overnight DHW run, normally lasting from 5.00 to 5.30
-* Defrost cycle starts at 5.23, before water is up to temperature
+* Overnight DHW run, normally lasting from 4.50 to 5.30
+* Defrost cycle starts at 5.12 and lasts until 5.18, characteristic V shape with return temperature above flow temperature
+* Window not long enough to get water to target of 62°C if there's a defrost. Hot water temperature peaked at 50.5°C.
 * Notice that the heat pump doesn't ramp the power up during the DHW cycle and heat output is dropping all the time, showing need for defrost.
 * Interesting that it switches to heating circuit before running defrost. Avoids taking the heat from your hot water tank.
 * [Chatter](https://community.openenergymonitor.org/t/arotherm-hot-water-starting-outside-schedule/28047/4) on the forums suggests that this is expected, Vaillant Arotherm always takes heat from heating circuit
+* Important that it works this way given our NanoStore hot water system. Diverter valve returns water directly to heat pump if temperature below 45°C. Means there wouldn't be enough water volume for effective defrosting if DHW circuit remained active. 
+* Heat for defrosting is taken from the circuit inside the house for defrosting. Needs to be enough volume of water that heat can be extracted without the return temperature falling below 13°C. Arotherm Plus 7kw requires 40L. 
 * Nothing explicit in Vaillant docs. However, the descriptions of failure codes relating to defrosts always reference the heating circuit.
-* Still an unpleasant surprise if you're having a shower with heat pump running full blast DHW NanoStore combi mode when defrost cycle kicks in.
+* If defrost cycle kicks in while you're having a shower in "combi" mode you'll get at most another 5 minutes of hot water before it turns cold. 
 * Reduced performance pre-defrost means experience won't have been great before hand either
 
-{% include candid-image.html src="/assets/images/home-assistant/defrost-dhw-active.png" alt="False alarm defrost during DHW cycle" %}
+# Worst Case Scenario DHW Boost
 
-* Then I saw this during a DHW cycle.
-* It looks kind of like a defrost was attempted here. 
-* Note the V shaped flow temperature curve at the start of the DHW cycle
-* Much smaller than normal defrost. If it is trying to do it with DHW active, it won't be able to extract much heat because diverter valve mostly bypasses NanoStore until flow temperature is high enough.
+{% include candid-image.html src="/assets/images/home-assistant/long-dhw-boost.png" alt="Long DHW Boost Time" %}
+
+* The first time I saw this I thought I was seeing a defrost with DHW active. Which would have been bad.
 * Before DHW cycle heat pump had been running continuously at minimum power with a steady COP of 4.4. None of the tell-tale signs that a defrost is needed.
 * If you look really closely you can see that heat pump turned off just *before* the DHW demand came in. The drop in flow temperature is the normal end of heating cycle. Then once DHW circuit is active, some hot water is returned from the NanoStore and gets pumped round the circuit with the heat pump resulting in the rising part of the V.
 * It then takes the heat pump much longer than normal to do it's pre-flight checks and power up again to start heating the water
-* End result wad that it took 22 minutes to be ready for showering rather than the usual 10
+* End result was that it took 22 minutes to be ready for showering rather than the usual 10
+* If this happens with an instant how water setup you're going to be left very disappointed
 
 # Hypervolt Charger Current Limit
 
@@ -157,3 +186,21 @@ wise words
 * Can see overall import from grid capped at 14kW, with hypervolt power mirroring change in demand from heat pump. Once shower ends, charger is running at full power. 
 * UK [nominal voltage](https://www.claudelyons.com/understanding-uk-voltage-supply-variation/) is 230V with a tolerance of +10% to -6%. An upper limit of 14kW is consistent with an ALM limit of 60A at an actual voltage of 233V. 
 * Glad that the installer went with the more conservative setting leaving plenty of head room below the supply fuse.
+
+# Active Mode
+
+* Drunk the cool-aid and have been running in inactive mode until now. "It's the most efficient way of running a heat pump".
+* Tune heat curve right and you'll generate the right amount of heat to compensate for your house's heat loss
+* Problem is that there are too many other variables to take into account
+* Solar gain on sunny days can increase temperature by a couple of degrees
+* Increased occupancy, lots of cooking, long sessions on the PlayStation all add heat
+* Heating off during DHW runs. With NanoStore you have a DHW run every time you take a shower. Time that heating is off varies unpredictably.
+* Energy integral is paused during DHW, so nothing compensates for lost heating. Takes a long time for a perfectly tuned heat curve to recover temperature.
+* Defrosts actively remove heat. Again, no compensation for what's been lost.
+* Lost my fear of active mode after reading [Mick Wall's blog](https://energy-stats.uk/sensocomfort-room-temp-mod-inactive-active-or-expanded/)
+* Active just tweaks the flow temperature by a degree or two. It doesn't cause excessive cycling. It's the equivalent of me nudging the heat curve up or down to try and compensate for solar gain or someone having a long shower.
+* Switched to active mode on Nov 23.
+
+| Day | Outdoor °C | Indoor °C | Solar kWh | DHW mins | Daily COP | Insta COP | Power W | Runs |
+|-|-|-|-|-|-|-|-|
+| 24 | 3.1➤6.3➤3.6 | 16.1➤17.0➤16.9 | 0.47 | 0 | 4.28 | 4.4➤4.7➤4.4 | 640 | 60% |
