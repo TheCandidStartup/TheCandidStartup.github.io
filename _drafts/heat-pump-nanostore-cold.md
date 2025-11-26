@@ -19,7 +19,11 @@ The usual rule of thumb is to keep reducing the heat curve every few days, one s
 
 In theory you can run the heating system entirely on weather compensation, ignoring the temperature reading from the sensoCOMFORT thermostat. Vaillant calls this "Inactive" mode and is how our system was commissioned. 
 
+During the day we have a target temperature of 17°C. The other members of the household are cold-blooded and start complaining of being too hot if the temperature goes over 18°C. I start to feel properly cold below 16°C. There's a two degree comfortable range that I'm aiming for. 
+
 # Reference Data
+
+I've collected a set of hopefully useful data each day during the cold weather.
 
 | Day | Outdoor °C | Indoor °C | Solar kWh | DHW mins | Daily COP | Insta COP | Power W | Runs |
 |-|-|-|-|-|-|-|-|
@@ -35,30 +39,47 @@ In theory you can run the heating system entirely on weather compensation, ignor
 | 21* | -0.5➤2.8➤1.3 | 16.5➤18➤16.9 | 4.32 | 0 | 3.9 | 3.9➤4.2➤4.1 | 850➤650 | 90% |
 | 22 | 2.5➤5.7➤4.3 | 15.8➤15.3➤16.5 | 0.45 | 78 | 4.31 | 4.4➤4.2➤4.5 | 650 | 90% |
 
-* Covers peak time hours when heating active with target at 17°C (6am to 9pm)
-* Set back after 9pm to let house cool a little to help promote sleep
-* Picking back up during cheap off peak hours to try and be back at 17°C for start of next day
-* Days annotated with significant events. Up (↑) and down (↓) arrows when I nudge the heating curve up or down on step.
-* Asterisk (*) when heat pump defrosted during the day
-* Each column can have one, two or three entries. 
-* One entry if value covers whole day or is continuous value that was constant through the day
-* Two entries if continuous value that started at first, ended at second with roughly linear change through the day
-* Three entries if continuous value that started at first, ended at third with a curve during the day. Second entry is maximum value if curve upwards, minimum if curve downwards.
-* Outdoor is temperature from sensoCOMFORT external sensor used for weather compensation
-* Indoor is indoor temperature reported by sensoCOMFORT. Should be 17°C.
-* Solar is energy produced by solar panels. Proxy for effect of solar gain. 
-* DHW is number of minutes that DHW circuit active and hence heating off.
-* Daily COP is the overall COP during peak hours
-* Insta COP is instantaneous COP reported by Open Energy Monitoring once heat pump has settled into a steady state
-* Power is electricity used by heat pump
-* Runs is percentage of the time that heat pump is running
+The table is densely packed, so I have some explaining to do. Each day covers the peak time hours when heating is active with a target temperature of 17°C (6am to 9pm). There's a setback temperature of 15°C after 9pm to help promote sleep. The target temperature drives up during cheap off-peak hours to try and be back at 17°C for the start of the next day.
+
+Days are dates in November 2025. Each day is annotated with significant events. Up (↑) and down (↓) arrows show when I nudged the heating curve up or down one step. Asterisks (*) show when the heat pump defrosted during the day (see more on that below).
+
+Each column can have one, two or three values. There's one entry if the value is a summary for the entire day, or is a continuous changing value that was pretty much constant through the day. Two values describe a roughly linear change during the day starting at 6am with the first value, ending at 9pm with the second value. Three entries describe a curve between 6am and 9pm with the middle value being the maximum or minimum value during the day, depending on the shape of the curve. 
+
+The Outdoor temperature is from the Vaillant sensoCOMFORT external sensor used for weather compensation. Indoor temperature is from the sensoCOMFORT thermostat in the hall. If all's going well it should be 16°C - 18°C.
+
+Solar is energy produced by our solar panels. I'm using it as a crude proxy for the effect of solar gain. At this time of year, anything over 4kWh is a really sunny day. 
+
+DHW is the number of minutes that the DHW circuit is active, and hence the heating is off. Daily COP is the overall COP during peak hours. Insta COP is instantaneous COP reported by [Open Energy Monitoring]({% link _posts/2025-11-10-open-energy-monitoring.md %}) once the heat pump has settled into a steady state during each heating cycle. 
+
+Power is the instantaneous electrical power used by the heat pump. Runs is the percentage of the time that the heat pump is running. The heat pump has a minimum power level around 500-600W. If that produces too much heat, the heat pump has to cycle on and off. 
+
+# Pointless Heating Cycles
+
+I was surprised how low the outside temperature has to get before the heat pump runs continuously. There was always some cycling unless the temperature stayed consistently below 2°C. 
+
+{% include candid-image.html src="/assets/images/home-assistant/pointless-cycles.png" alt="Pointless Cycling" %}
+
+This is late in the day on Nov 17th. It's 1°C outside, 17.1°C inside. The heat curve is 0.55 with a corresponding target flow temperature around 29°C. I thought it would finally be cold enough for the heat pump to run continuously at minimum power. This is as close as it got. COP is 4.1.
+
+When the heat pump starts up, it always has a power profile where it ramps up beyond the power it needs long term and then throttles back. This is normal behavior, just part of the startup sequence needed to get the heat pump running properly. In this case, it adds just enough additional heat to tip the energy integral over the edge and make the heat pump cycle.
+
+It's a catch 22 situation. If the heat pump ran continuously at minimum power there would be no need to cycle. However, the heat pump is cycling, so it can't run continuously at minimum power. 
+
+{% include candid-image.html src="/assets/images/home-assistant/continuous-running.png" alt="Continuous Running" %}
+
+This is from Nov 20th. It's 1.5°C outside, 17.6°C inside. I've turned the heat curve up to 0.65 with a corresponding target flow temperature of 32°C. The heat pump ran continuously all day, at minimum power around midday. COP was also 4.1 despite the higher target flow temperature.
+
+On Nov 21st we're cycling again. It's 2°C outside, which drops the target flow temperature to 31.5°C, just below what can be sustained at minimum power.
 
 # Heating Forecast
 
-* Original version assumed COP = 5 over 10°C, then linear interpolation down to 3.8 at -3°C due to lack of data
-* Seems reasonable to assume COP of 5 down to 6°C
-* Gets complicated and non-linear below that. However, doesn't much matter. Point is to determine how much to charge battery. Below 6°C battery will end up being charged to 100% anyway.
-* Still like to get prediction close, so will do a linear interpolation again from COP 5 at 6°C down to COP 4 at 0°C, then extrapolating after that.
+I try to [predict]({% link _posts/2025-11-03-home-assistant-heat-pump-myvaillant-emoncms-met-office.md %}) the next day's peak time heating load so that I know how much charge I need to add to my home battery overnight. I don't want to charge to 100%, then find that it's a mild and sunny day and there's nowhere to put the excess solar I've generated. 
+
+The initial implementation was based on limited performance data. At the time, outdoor temperature hadn't gone below 10°C and I was consistently seeing a COP around 5. My installation has a minimum performance guarantee of 380% efficiency, whatever that means. Given the lack of better data, my forecast uses a linear interpolation between a COP of 5 at 10°C and a COP of 3.8 at -3°C.
+
+Now I have much better data. First, it looks like it's reasonable to assume a COP of 5 for temperatures above 6°C. After that it gets complicated and non-linear. However, it doesn't much matter. The point of the forecast is to determine how much to charge the battery. Wtih temperatures below 6°C, the battery will end up being charged to 100% anyway.
+
+I'd still like to get the prediction somewhat close, with minimal effort, so will do a linear interpolation again from COP 5 at 6°C down to COP 4 at 0°C, then extrapolating after that.
 
 {% raw %}
 
@@ -95,22 +116,7 @@ In theory you can run the heating system entirely on weather compensation, ignor
 * Even on coldest night, hot water run taking just over 30 minutes. Also means 30 minutes less cooling time before water used.
 * Doesn't matter if cycle is clipped slightly.
 
-# Pointless Heating Cycles
 
-{% include candid-image.html src="/assets/images/home-assistant/pointless-cycles.png" alt="Pointless Cycling" %}
-
-* Nov 17th. 1°C outside, 17.1°C inside. Heat Curve 0.55. Target flow temperature 29°C. 
-* Thought it would finally be cold enough for heat pump to run continuously at lowest power
-* This as close as it got. COP 4.1
-* When heat pump starts up it always has this power profile where it ramps up beyond the power it needs long term and then throttles back.
-* In this case it does just enough to tip the energy integral over the edge and make the heat pump cycle
-* If it just ran at minimum power it would be fine
-
-{% include candid-image.html src="/assets/images/home-assistant/continuous-running.png" alt="Continuous Running" %}
-
-* Nov 20th. 1.5°C outside, 17.6°C inside.  Heat Curve 0.65. Target flow temperature 32°C.
-* Heat pump running continuously all day. COP also 4.1 despite higher target flow temperature due to higher heat curve. 
-* Nov 21. 2°C outside, 17.6°C inside. Heat Curve 0.65. Target flow temperature 31.5°C. Just warm enough to throw some cycles in. 
 
 # Cold Weather Showers
 
@@ -186,6 +192,16 @@ In theory you can run the heating system entirely on weather compensation, ignor
 * Can see overall import from grid capped at 14kW, with hypervolt power mirroring change in demand from heat pump. Once shower ends, charger is running at full power. 
 * UK [nominal voltage](https://www.claudelyons.com/understanding-uk-voltage-supply-variation/) is 230V with a tolerance of +10% to -6%. An upper limit of 14kW is consistent with an ALM limit of 60A at an actual voltage of 233V. 
 * Glad that the installer went with the more conservative setting leaving plenty of head room below the supply fuse.
+
+# Heating Curve Adjustments
+
+As outdoor temperatures started dropping over the first four days, I noticed indoor temperatures were also trending down. Still in the comfortable range, but below 17°C all day by Nov 15th. I lost my nerve and nudged the heating curve up.
+
+The following day, indoor temperature peaked at 17.5°C. I decided I'd panicked unnecessarily and nudged it back down. The following day, on the back of strong solar gain, we hit 18°C. 
+
+Temperatures plunged close to freezing overnight, starting the following day at 15.9°C. The house never recovered, staying below 16°C all day. I nudged the curve up around midday, then again a few hours later after it seemed to have made no difference.
+
+The next three days looked good. Indoor temperatures were always in the 16-18°C range. I thought I'd cracked it. Then on the final day temperatures were in the 15.3-16.5°C range.
 
 # Active Mode
 
