@@ -73,11 +73,11 @@ On Nov 21st we're cycling again. It's 2°C outside, which drops the target flow 
 
 # Heating Forecast
 
-I try to [predict]({% link _posts/2025-11-03-home-assistant-heat-pump-myvaillant-emoncms-met-office.md %}) the next day's peak time heating load so that I know how much charge I need to add to my home battery overnight. I don't want to charge to 100%, then find that it's a mild and sunny day and there's nowhere to put the excess solar I've generated. 
+I try to [predict]({% link _posts/2025-11-03-home-assistant-heat-pump-myvaillant-emoncms-met-office.md %}) the next day's peak time heating load so that I know how much charge to add to my home battery overnight. I don't want to charge to 100%, then find that it's a mild and sunny day and there's nowhere to put the excess solar I've generated. 
 
-The initial implementation was based on limited performance data. At the time, outdoor temperature hadn't gone below 10°C and I was consistently seeing a COP around 5. My installation has a minimum performance guarantee of 380% efficiency, whatever that means. Given the lack of better data, my forecast uses a linear interpolation between a COP of 5 at 10°C and a COP of 3.8 at -3°C.
+The initial implementation was based on limited performance data. At the time, outdoor temperature hadn't gone below 10°C and I was consistently seeing a COP around 5. My installation has a minimum performance guarantee of 380% efficiency, whatever that means. Given the lack of better data, my forecast used a linear interpolation between a COP of 5 at 10°C and a COP of 3.8 at -3°C.
 
-Now I have much better data. First, it looks like it's reasonable to assume a COP of 5 for temperatures above 6°C. After that it gets complicated and non-linear. However, it doesn't much matter. The point of the forecast is to determine how much to charge the battery. Wtih temperatures below 6°C, the battery will end up being charged to 100% anyway.
+Now I have much better data. First, it looks like it's reasonable to assume a COP of 5 for temperatures above 6°C. After that it gets complicated and non-linear. However, it doesn't much matter. The point of the forecast is to determine how much to charge the battery. With temperatures below 6°C, the battery will end up being charged to 100% anyway.
 
 I'd still like to get the prediction somewhat close, with minimal effort, so will do a linear interpolation again from COP 5 at 6°C down to COP 4 at 0°C, then extrapolating after that.
 
@@ -104,94 +104,59 @@ I'd still like to get the prediction somewhat close, with minimal effort, so wil
 
 {% endraw %}
 
-# Double DHW Cycles
-
-{% include candid-image.html src="/assets/images/home-assistant/double-dhw.png" alt="Double DHW cycles overnight" %}
-
-* Started on November 15th when the weather turned colder
-* Have a 60 minute window for water heating using noise reduction mode to force low and slow behavior
-* Tank sensor gets hot enough to turn off at 62°C but manages to drop 2.5°C within a few minutes, triggering another DHW run. 
-* Think this is tank equalizing once DHW cycle ends. Also see dip in temperature that then recovers on milder nights.
-* Increased hysteresis to 4°C and reduced window to 40 minutes. 
-* Even on coldest night, hot water run taking just over 30 minutes. Also means 30 minutes less cooling time before water used.
-* Doesn't matter if cycle is clipped slightly.
-
-
-
-# Cold Weather Showers
-
-{% include candid-image.html src="/assets/images/home-assistant/cold-weather-showers.png" alt="Cold Weather Showers" %}
-
-* Nov 19th, 0°C outside, cold water at kitchen tap 7°C.
-* Back to back showers using shower dashboard to ensure heat pump at full power and return temp over 55°C.
-* Stable temperature at shower head, a little bit more heat than wanted available
-* Still worked but maybe lucky that we both had quite quick showers. First was 9 minutes, second 5 minutes.
-* Return flow down to 46°C at end of first shower
-
 # Defrosts
 
-* In cold weather ice can build up on the back of the heat pump which reduces performance. The heat pump will [defrost itself when needed](https://www.vaillant.co.uk/advice/understanding-heating-technology/heat-pumps/can-my-heat-pump-defrost-itself/) by reversing operation. It temporarily moves heat from inside the house to heat up the back of the heat pump and melt the ice. 
-* The heat pump uses it's own temperature and pressure sensors to determine when a defrost is needed.
-* The impact of ice built up is also visible in reduced performance
-* Saw my first defrost cycle on Nov 17 when temperature was below 4°C all day.
-* Usually one or two during the day
-* At coldest point, morning of Nov 19 around 1°C, was defrosting every two hours.
+In cold weather, ice can build up on the back of the heat pump, which reduces performance. The heat pump will [defrost itself when needed](https://www.vaillant.co.uk/advice/understanding-heating-technology/heat-pumps/can-my-heat-pump-defrost-itself/) by reversing operation. It temporarily moves heat from inside the house to heat up the back of the heat pump and melt the ice. 
 
+The heat pump uses its own temperature and pressure sensors to determine when a defrost is needed. The impact of ice built up is also visible in reduced performance. 
+
+I saw my first defrost cycle on Nov 17 when the temperature was below 4°C all day. On cold days, there were are usually one or two defrosts during the day, with more overnight. At the coldest point, on the morning of Nov 19, there were three defrosts, one every two hours. 
+s
 {% include candid-image.html src="/assets/images/home-assistant/defrost-cycle.png" alt="Defrost Cycle" %}
 
-* This cycle on Nov 21 with outdoor temperature at 0°C.
-* Defrosts are easily recognized in Open Energy Monitoring from the V shaped flow temperature curve.
-* Flow temperature drops below return temperature as heat is removed
-* Blue line on graph is instantaneous COP
-* Leading into defrost cycle COP is a steady 3.8
-* Over a period of 30 minutes, COP falls off a cliff, down to 2.5 when heat pump starts defrost cycle
-* Once cycle is over and heat pump has settled down, COP is up to 4.1
-* When heating cycle restarts after defrost, seems to be an extra large ramp up before throttling back, resulting in noticeably higher starting flow temperature which in turn can trigger cycling. 
+This is a defrost cycle from Nov 21 with an outdoor temperature at 0°C. Defrosts are easily recognized in Open Energy Monitoring from the V shaped flow temperature curve. The telltale sign is that the flow temperature drops to below the return temperature as heat is removed. 
+
+The blue line on the graph is instantaneous COP. In the hours leading up to the defrost cycle, COP was a steady 3.8. Over a period of 30 minutes, COP falls off a cliff, down to 2.5 when the defrost cycle starts. Once the defrost is over and the heat pump has settled down, COP goes up to 4.1.
+
+When the heating cycle restarts after defrost, there seems to be an extra large ramp up before throttling back. This results in a noticeably higher starting flow temperature which in turn can trigger cycling. 
 
 {% include candid-image.html src="/assets/images/home-assistant/heat-pump-defrost-steam.jpg" alt="Heat Pump Defrost Steam" %}
 
-* Captured dramatic image at just the wrong moment
-* When I arrived black panel at back of heat pump was white with a thin layer of frost
-* Disappears seemingly all at once in clouds of steam (barely visible)
-* Missed the most dramatic moment. When heat pump goes back to normal operation one last big cloud of steam is blown out of the front.
-* Much more than usual level of condensate, first time I've seen water on the floor
-* Fortunately there's a natural slope under the heat pump to the drain. No freezing hazard in front of the heat pump. 
+I captured this dramatic image at just the wrong moment. When I arrived the black panel on the back of the heat pump was white with a thin layer of frost. It disappeared seemingly all at once into clouds of steam (barely visible in the photo). 
+
+I missed the most dramatic moment. When the heat pump goes back to normal operation, one last big cloud of steam is blown out of the front, which is fun if you're standing there at the time. 
+
+All that steam results in more than the usual level of condensate. This is the first time I've seen water on the ground. Fortunately, there's a natural slope under the heat pump leading to the drain. There's no freezing hazard in front of the heat pump. 
 
 {% include candid-image.html src="/assets/images/home-assistant/defrost-during-dhw.png" alt="Defrost during DHW cycle" %}
 
-* Overnight DHW run, normally lasting from 4.50 to 5.30
-* Defrost cycle starts at 5.12 and lasts until 5.18, characteristic V shape with return temperature above flow temperature
-* Window not long enough to get water to target of 62°C if there's a defrost. Hot water temperature peaked at 50.5°C.
-* Notice that the heat pump doesn't ramp the power up during the DHW cycle and heat output is dropping all the time, showing need for defrost.
-* Interesting that it switches to heating circuit before running defrost. Avoids taking the heat from your hot water tank.
-* [Chatter](https://community.openenergymonitor.org/t/arotherm-hot-water-starting-outside-schedule/28047/4) on the forums suggests that this is expected, Vaillant Arotherm always takes heat from heating circuit
-* Important that it works this way given our NanoStore hot water system. Diverter valve returns water directly to heat pump if temperature below 45°C. Means there wouldn't be enough water volume for effective defrosting if DHW circuit remained active. 
-* Heat for defrosting is taken from the circuit inside the house for defrosting. Needs to be enough volume of water that heat can be extracted without the return temperature falling below 13°C. Arotherm Plus 7kw requires 40L. 
-* Nothing explicit in Vaillant docs. However, the descriptions of failure codes relating to defrosts always reference the heating circuit.
-* If defrost cycle kicks in while you're having a shower in "combi" mode you'll get at most another 5 minutes of hot water before it turns cold. 
-* Reduced performance pre-defrost means experience won't have been great before hand either
+There's a regular DHW (domestic hot water) run lasting from 4.50 to 5.30, catching the last of the cheap electricity rate. During this run, a defrost cycle starts at 5.12 and lasts until 5.18. Again, you can see the characteristic V shape with return temperature above flow temperature.
 
-# Worst Case Scenario DHW Boost
+My 40 minute timed DHW period isn't long enough to fully heat the water if there's a defrost. The target is 62°C, the actual temperature achieved peaked at 50.5°C.
 
-{% include candid-image.html src="/assets/images/home-assistant/long-dhw-boost.png" alt="Long DHW Boost Time" %}
+During the initial DHW cycle, notice that the heat pump doesn't ramp the power up, meanwhile heat output is dropping all the time. Definitely time for a defrost. 
 
-* The first time I saw this I thought I was seeing a defrost with DHW active. Which would have been bad.
-* Before DHW cycle heat pump had been running continuously at minimum power with a steady COP of 4.4. None of the tell-tale signs that a defrost is needed.
-* If you look really closely you can see that heat pump turned off just *before* the DHW demand came in. The drop in flow temperature is the normal end of heating cycle. Then once DHW circuit is active, some hot water is returned from the NanoStore and gets pumped round the circuit with the heat pump resulting in the rising part of the V.
-* It then takes the heat pump much longer than normal to do it's pre-flight checks and power up again to start heating the water
-* End result was that it took 22 minutes to be ready for showering rather than the usual 10
-* If this happens with an instant how water setup you're going to be left very disappointed
+The most interesting thing is that the heat pump switches to the heating circuit before running the defrost. This avoids taking the heat from your hot water tank. [Chatter](https://community.openenergymonitor.org/t/arotherm-hot-water-starting-outside-schedule/28047/4) on the forums suggests that this is expected, Vaillant Arotherms always take heat from the heating circuit.
+
+It's important that it works this way if you're using a MiniStore/NanoStore hot water system. These are usually installed with a diverter valve that returns water directly to the heat pump if flow temperature is below 45°C. That means there wouldn't be enough water volume for effective defrosting if the DHW circuit remained active. 
+
+Heat for defrosting is taken from the heating circuit inside the house. There needs to be enough volume of water that heat can be extracted without the return temperature falling below 13°C. The Arotherm Plus 7kw requires a minimum of 40L volume. 
+
+There's nothing in the Vaillant docs that explicitly says defrosts always use the heating circuit. However, descriptions of failure codes relating to defrosts always reference the heating circuit.
 
 # Hypervolt Charger Current Limit
 
+Our Hypervolt EV charger [includes](https://support.hypervolt.co.uk/en/knowledge-base/home-3-pro-installation-guide) an automatic load management (ALM) system. It limits overall current coming from the grid by throttling down the charger when needed. The three documented settings are 60A, 80A and 100A. My supply fuse is 80A. I don't know what the installer had set mine to.
+
+I finally get to see it in action. On the evening of Nov 19 I plugged the car in to charge overnight and Octopus [scheduled]({% link _posts/2025-10-06-home-assistant-octopus-repair-blueprint.md %}) an immediate charge. Our home battery was empty after running the heat pump continuously all day, so that started charging too. One of us was using the shower, so the heat pump was running flat out. Another was cooking, adding another 2kW to the overall demand.
+
 {% include candid-image.html src="/assets/images/home-assistant/hypervolt-current-limiting.png" alt="Hypervolt Current Limiting" %}
 
-* Hypervolt charger [includes](https://support.hypervolt.co.uk/en/knowledge-base/home-3-pro-installation-guide) an automatic load management (ALM) system which limits overall current coming from the grid by throttling down the charger when needed. 
-* Wasn't sure what the installer had set mine to. The three documented settings are 60A, 80A and 100A. My supply fuse is 80A. 
-* Finally get to see it in action. Evening of Nov 19. Plugged car in to charger and Octopus scheduled an immediate charge. Home battery was empty after running heat pump continuously all day so that started charging too. One of us was using the shower, so the heat pump was running flat out. Another was cooking adding another 2kW to the overall demand.
-* Can see overall import from grid capped at 14kW, with hypervolt power mirroring change in demand from heat pump. Once shower ends, charger is running at full power. 
-* UK [nominal voltage](https://www.claudelyons.com/understanding-uk-voltage-supply-variation/) is 230V with a tolerance of +10% to -6%. An upper limit of 14kW is consistent with an ALM limit of 60A at an actual voltage of 233V. 
-* Glad that the installer went with the more conservative setting leaving plenty of head room below the supply fuse.
+You can see overall import from the grid is capped at about 14kW. The power being drawn by the Hypervolt is mirroring the change in demand from the heat pump. Once the shower ends, the charger hits full power.
+
+The UK [nominal grid voltage](https://www.claudelyons.com/understanding-uk-voltage-supply-variation/) is 230V with a tolerance of +10% to -6%. An upper limit of 14kW is consistent with an ALM limit of 60A at an actual voltage of 233V. 
+
+I'm glad the installer went with the more conservative setting, leaving plenty of head room below the supply fuse limit.
 
 # Heating Curve Adjustments
 
@@ -205,18 +170,25 @@ The next three days looked good. Indoor temperatures were always in the 16-18°C
 
 # Active Mode
 
-* Drunk the cool-aid and have been running in inactive mode until now. "It's the most efficient way of running a heat pump".
-* Tune heat curve right and you'll generate the right amount of heat to compensate for your house's heat loss
-* Problem is that there are too many other variables to take into account
-* Solar gain on sunny days can increase temperature by a couple of degrees
-* Increased occupancy, lots of cooking, long sessions on the PlayStation all add heat
-* Heating off during DHW runs. With NanoStore you have a DHW run every time you take a shower. Time that heating is off varies unpredictably.
-* Energy integral is paused during DHW, so nothing compensates for lost heating. Takes a long time for a perfectly tuned heat curve to recover temperature.
-* Defrosts actively remove heat. Again, no compensation for what's been lost.
-* Lost my fear of active mode after reading [Mick Wall's blog](https://energy-stats.uk/sensocomfort-room-temp-mod-inactive-active-or-expanded/)
-* Active just tweaks the flow temperature by a degree or two. It doesn't cause excessive cycling. It's the equivalent of me nudging the heat curve up or down to try and compensate for solar gain or someone having a long shower.
-* Switched to active mode on Nov 23.
+I've drunk the Kool-Aid and have been running in inactive mode until now. After all, "it's the most efficient way of running a heat pump". It would be a moral failure on my part if did anything else.
+
+All you need to do is tune the heat curve correctly and you'll generate the right amount of heat to compensate for your house's heat loss. If the  temperature drops too low for some reason, you lose less heat than expected, and eventually the temperature will gradually increase back to the target. If the temperature goes too high for some reason, you lose more heat than expected, and eventually the temperature will gradually reduce back to the target.
+
+The problem is that there are too many other factors to take into account. Solar gain on sunny days can increase temperature by a couple of degrees. Increased occupancy, lots of cooking, long sessions on the PlayStation all add heat.
+
+On the other hand, the heating is off during DHW runs. With a MiniStore/NanoStore hot water system you have a DHW run every time you take a shower. The amount of time that the heating is off varies day to day. The energy integral calculation is paused during DHW, so nothing compensates for the lost heating. It takes a long time for a perfectly tuned heat curve to recover temperature.
+
+Defrosts actively remove heat. Again, there's no compensation for what's been lost. Every day is different, making it hard to determine the "correct" heat curve. And even if you do have the right curve, it takes too long to recover from those external factors. Before temperature reverts to target, something else comes along that sends it off course again.
+
+I lost my fear of active mode after reading [Mick Wall's blog](https://energy-stats.uk/sensocomfort-room-temp-mod-inactive-active-or-expanded/). Active is still primarily driven by weather compensation. It just tweaks the flow temperature by a degree or two if the current temperature is too far from target. It doesn't cause excessive cycling. It's the equivalent of me nudging the heat curve up or down to try and compensate for solar gain or a long shower.
+
+I switched to active mode on Nov 23.
 
 | Day | Outdoor °C | Indoor °C | Solar kWh | DHW mins | Daily COP | Insta COP | Power W | Runs |
 |-|-|-|-|-|-|-|-|
-| 24 | 3.1➤6.3➤3.6 | 16.1➤17.0➤16.9 | 0.47 | 0 | 4.28 | 4.4➤4.7➤4.4 | 640 | 60% |
+| 24* | 3.1➤6.3➤3.6 | 16.1➤17.0➤16.9 | 0.47 | 0 | 4.28 | 4.4➤4.7➤4.4 | 640 | 60% |
+| 25* | 2.3➤5.1➤3.0 | 16.7➤18.0➤16.9 | 4.51 | 54 | 4.22 | 4.1➤4.6➤4.2 | 640 | 70% |
+| 26 | 1➤5.5 | 16.9➤17.3➤16.2 | 3.39 | 99 | 4.42 | 4.1➤4.5 | 700➤640 | 80% |
+
+So far I've been much happier. No noticeable reduction in efficiency. Temperatures maintained within the comfortable range. The massive solar gain on the 25th was quickly moderated down. No problems caused by the near two hours of DHW time on the 26th. 
+
