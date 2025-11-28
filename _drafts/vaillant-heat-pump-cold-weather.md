@@ -49,7 +49,7 @@ The Outdoor temperature is from the Vaillant sensoCOMFORT external sensor used f
 
 Solar is energy produced by our solar panels. I'm using it as a crude proxy for the effect of solar gain. At this time of year, anything over 4kWh is a really sunny day. 
 
-DHW is the number of minutes that the DHW circuit is active, and hence the heating is off. Daily COP is the overall COP during peak hours. Insta COP is instantaneous COP reported by [Open Energy Monitoring]({% link _posts/2025-11-10-open-energy-monitoring.md %}) once the heat pump has settled into a steady state during each heating cycle. 
+DHW is the number of minutes that the DHW circuit is active, and hence the heating is off. Daily COP is the overall COP during peak hours. Insta COP is instantaneous COP reported by [Open Energy Monitoring]({% link _posts/2025-11-10-open-energy-monitoring.md %}), once the heat pump has settled into a steady state during each heating cycle. 
 
 Power is the instantaneous electrical power used by the heat pump. Runs is the percentage of the time that the heat pump is running. The heat pump has a minimum power level around 500-600W. If that produces too much heat, the heat pump has to cycle on and off. 
 
@@ -110,8 +110,8 @@ In cold weather, ice can build up on the back of the heat pump, which reduces pe
 
 The heat pump uses its own temperature and pressure sensors to determine when a defrost is needed. The impact of ice built up is also visible in reduced performance. 
 
-I saw my first defrost cycle on Nov 17 when the temperature was below 4°C all day. On cold days, there were are usually one or two defrosts during the day, with more overnight. At the coldest point, on the morning of Nov 19, there were three defrosts, one every two hours. 
-s
+I saw my first defrost cycle on Nov 17 when the temperature was below 4°C all day. On cold days, there were usually one or two defrosts during the day, with more overnight. At the coldest point, on the morning of Nov 19, there were three defrosts, one every two hours. 
+
 {% include candid-image.html src="/assets/images/home-assistant/defrost-cycle.png" alt="Defrost Cycle" %}
 
 This is a defrost cycle from Nov 21 with an outdoor temperature at 0°C. Defrosts are easily recognized in Open Energy Monitoring from the V shaped flow temperature curve. The telltale sign is that the flow temperature drops to below the return temperature as heat is removed. 
@@ -170,9 +170,9 @@ The next three days looked good. Indoor temperatures were always in the 16-18°C
 
 # Active Mode
 
-I've drunk the Kool-Aid and have been running in inactive mode until now. After all, "it's the most efficient way of running a heat pump". It would be a moral failure on my part if did anything else.
+I've drunk the Kool-Aid and have been running in inactive mode since the heat pump was installed. After all, "it's the most efficient way of running a heat pump". It would be a moral failure on my part if did anything else.
 
-All you need to do is tune the heat curve correctly and you'll generate the right amount of heat to compensate for your house's heat loss. If the  temperature drops too low for some reason, you lose less heat than expected, and eventually the temperature will gradually increase back to the target. If the temperature goes too high for some reason, you lose more heat than expected, and eventually the temperature will gradually reduce back to the target.
+All you need to do is tune the heat curve correctly and you'll generate the right amount of heat to compensate for your house's heat loss. If the  temperature drops too low for some reason, you lose less heat than expected, and eventually the temperature will naturally increase back to the target. If the temperature goes too high for some reason, you lose more heat than expected, and eventually the temperature will naturally reduce back to the target.
 
 The problem is that there are too many other factors to take into account. Solar gain on sunny days can increase temperature by a couple of degrees. Increased occupancy, lots of cooking, long sessions on the PlayStation all add heat.
 
@@ -189,6 +189,7 @@ I switched to active mode on Nov 23.
 | 24* | 3.1➤6.3➤3.6 | 16.1➤17.0➤16.9 | 0.47 | 0 | 4.28 | 4.4➤4.7➤4.4 | 640 | 60% |
 | 25* | 2.3➤5.1➤3.0 | 16.7➤18.0➤16.9 | 4.51 | 54 | 4.22 | 4.1➤4.6➤4.2 | 640 | 70% |
 | 26 | 1➤5.5 | 16.9➤17.3➤16.2 | 3.39 | 99 | 4.42 | 4.1➤4.5 | 700➤640 | 80% |
+| 27 | 10.4➤12.7➤9.6 | 16.5➤17.0 | 0.65 | 0 | 5.26 | 5.7 | 530 | 30% |
 
-So far I've been much happier. No noticeable reduction in efficiency. Temperatures maintained within the comfortable range. The massive solar gain on the 25th was quickly moderated down. No problems caused by the near two hours of DHW time on the 26th. 
+So far I've been much happier. No noticeable reduction in efficiency. Temperatures maintained within the comfortable range. The massive solar gain on the 25th was quickly moderated down. No problems caused by the near two hours of DHW time on the 26th. The 27th was a mild dull day with no significant external heat gains or losses. Indoor temperature was within half a degree of target all day. 
 
