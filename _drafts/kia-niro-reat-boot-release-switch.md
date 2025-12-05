@@ -7,8 +7,11 @@ wise words
 
 * Normally trouble free EV started having problems on October 25th
 * Lucy had taken it up to the Lake District for the [OMM](https://theomm.com/the-omm/) event.
-* As she entered the car parking field, the boot sprang open. It took a couple of goes to get it to stay shut.
+* As she entered the car parking field and paused, waiting for instructions, the boot sprang open. It took a couple of goes to get it to stay shut.
 * All normal until she returned to the car after the event. The 12v battery was dead.
+* Long story short, the boot release switch was the culprit.
+
+{% include candid-image.html src="/assets/images/car/81720G5000-tailgate-switch.jpg" alt="Kia Niro Rear Boot Release Switch" %}
 
 * Unless you have an EV, you may not realize that they have two batteries. The big high power Lithium-Ion battery used to drive the motor and a normal 12v car battery used for the rest of the electrical systems.
 * Two reasons for this. First, car electrical systems are designed to work with 12v DC. It's easier to use standard parts rather than custom stuff that can work with the big battery directly. Second, it's safer if the 400v/800v high power drive circuits are only powered on when needed. 
@@ -28,7 +31,7 @@ wise words
 
 * Distinctive looking graph. Battery shows steady drain with brief additional drops in voltage every hour or so. Battery gets worryingly low overnight. I had to start the car up twice a day so that the main battery could charge the 12v back up again. 
 * We've got a problem. Have heard stories before of 12v battery drain caused by the boot latch not closing properly. Which fits with the issues we had with the boot not closing. 
-* Rang our local Kia dealer. They agreed that the car needed to come in. The first slot they had available was, wait for it, on 29th December. Seven weeks of charging the car twice a day and worrying whether it will start if we go on a trip somewhere.
+* Rang our local Kia dealer. They agreed that the car needed to come in. The first slot they had available was, wait for it, on 29th December. Seven weeks of charging the 12v twice a day and worrying whether the car will start if we go on a trip somewhere.
 * Lucy rang the local independent garage and they said they could take a look at the boot latch on the 11th. I took the car in and described the problems we'd been having with the 12v battery drain. At which point they refused to take the car. "We're mechanics. You need an Auto Electrician".
 * First time I'd heard that phrase. It turns out modern cars really are computers on wheels. Anything electrical needs a specialist. Apparently, there are lots of local auto electricians who offer a mobile service.
 * Googled and rang round. The auto electricians that offer a mobile service won't touch EVs. I found one that would work on EVs but only if we brought the car to their workshop. The earliest slot they had was on the 18th. 
@@ -68,18 +71,21 @@ There's a "tail gate relay" fuse for the relays that power the boot latch lock a
 * The problems with the switch are intermittent, but clearly getting worse. 
 * Looking closely, I can see that the rubber seal over the top of the switch is degrading and perforated. It's possible that water has got into the mechanism. 
 
+{% include candid-image.html src="/assets/images/car/old-switch-surface.jpg" alt="Old Switch Surface" %}
+
 # Switch Replacement Theory
 
 * The easiest fix is to replace the switch with a new one. 
-* Every previous time we've had a problem that needed a new part, the Kia dealer ended up having to order a replacement from Korea. They won't order a part until they've seen the car and they won't look at the car until 29th December.
-* A quick search throws up lots of sellers. They divide into three categories. First, there's Ebay sellers who will ship a part direct from China for £15, arriving in a month. Then there's the Ebay sellers who will ship a part direct from China for £35, arriving in a couple of weeks. Finally, there are UK based sellers who will ship a part for £80+ pounds, presumably from the UK, arriving in a few days.
+* Every previous time we've had a problem that needed a new part under warranty, the Kia dealer ended up having to order a replacement from Korea. They won't order a part until they've seen the car and they won't look at the car until 29th December.
+* Confusingly the part is called "Rear Boot Release Switch" in the UK and "Tail Gate Handle" in the rest of the world. Best to search for the part number, 81720-G5000.
+* A quick search throws up lots of sellers. They divide into three categories. First, there's Ebay sellers who will ship a part direct from China for £15, arriving in a month. Then there's the Amazon sellers who will ship a part direct from China for £35, arriving in a couple of weeks. Finally, there are UK based sellers who will ship a part for £80+ pounds, presumably from the UK, arriving in a few days.
 * Assuming we can get the part, can we fit it ourselves or will we need to find a garage to do it?
 * Naturally, I did my research, and found a YouTube video. I couldn't find one for a Kia Niro, but a Kia Sportage should be [close enough](https://youtu.be/QaVP4CdzJDA?si=DRA3ahIR8UOP3VA9). 
 * Modern cars are not just computers on wheels, they're modular computers on wheels. Each module is a self-contained assembly with a plug that connects into the cars wiring harness. The hardest part is removing the plastic trim covering up the internals. Once you've done that, unplug the old switch, release the catches that hold it in place and plug a new one in.
 
 # Trim Removal
 
-* Before ordering a replacement switch I wanted to confirm that (a) we could remove the plastic switch and (b) unplugging the old switch would stop the boot opening itself. 
+* Before ordering a replacement switch I wanted to confirm that (a) we could remove the plastic trim and (b) unplugging the old switch would stop the boot opening itself. 
 
 {% include candid-image.html src="/assets/images/car/boot-plastic-trim.jpg" alt="Boot Plastic Trim" %}
 
@@ -94,4 +100,43 @@ There's a "tail gate relay" fuse for the relays that power the boot latch lock a
 * There's a wiring harness from the top corner of the tailgate connecting to all the tailgate modules, including the boot latch and boot release switch. Each module has a plastic connector which you squeeze and pull to unplug. 
 * We unplugged the switch, put the boot latch relay fuse back in, and everything was fine. Boot closed and stayed closed. No battery drain. Of course we were stuck having to open the boot from the inside using the manual release. 
 
+# Waiting for a Part
+
+* Ordered a replacement switch on 20th November from [kiapartsdirect.co.uk](https://kiapartsdirect.co.uk/). Was willing to pay the premium for fast delivery and the promise of a genuine Kia part.
+* Kia Parts Direct is run by Fish Brothers, a Kia dealer in Swindon. Online reviews looked OK so we gave it a try.
+* Automated email to confirm order followed by confirmation on 22nd November that our order had been processed and should be delivered within 2 working days
+* Part arrived on November 26th, 3 working days later. Good enough. 
+
+{% include candid-image.html src="/assets/images/car/switch-packaging.jpg" alt="Kia Genuine Parts Switch Packaging" %}
+
+# Switch Removal
+
+* Getting the old switch out proved more of a challenge than I'd hoped
+* From the outside it looks like it should be simple enough
+
 {% include candid-image.html src="/assets/images/car/boot-latch-and-switch.jpg" alt="Boot Switch (top) and Latch (bottom)" %}
+
+* Release whatever holds the switch in place on the inside and it should drop out
+* The back of the switch slides into a hole in the metal boot panel and is held in place by four metal clips
+* Here's a cross-section diagram that hopefully makes the problem clear
+
+{% include candid-image.html src="/assets/images/car/boot-cross-section.svg" alt="Boot Cross-Section" %}
+
+* When the switch is slid into place the metal clips on the side (two shown in diagram) are squashed, then spring open to hold the switch in place
+* To get it out I need to push all four clips flush against the switch body and then pop it out
+* That would be awkward enough. It becomes impossible because the boot latch mechanism blocks access.
+* The boot latch is held in place by three bolts. Removing it should be simple enough. Putting it back correctly requires a torque wrench to tension the bolts correctly. It's also one more thing to go wrong in unknown territory for us.
+* Lucy figured out the solution. We don't need the old switch intact, we just need it out. Before I could stop her, she attacked the outside of the switch with a flat head screwdriver, sliding it between the switch and the metal boot panel, then levering away.
+* In a triumph for brute force and ignorance, the switch ejected from the back of the car accompanied by load pinging noises.
+* On closer inspection of the new switch, we realized that the metal clips are just pushed onto the plastic body of the switch. Pull hard enough and the clips ping off. 
+
+# Result
+
+* The rest of the procedure was undramatic
+* We found as many of the old clips as we could
+* Pushed in the new switch with a satisfying click as the clips sprung into place
+* Plugged in the connector and plastic popper that pins the wire to the boot panel
+* Checked that the boot closed and that the switch opens it again
+* Repeated a few times. No issues with the boot springing open.
+* Pushed the plastic trim back into place, remembering to put the two screws back
+* Monitored the battery over the next week. No issues at all.
