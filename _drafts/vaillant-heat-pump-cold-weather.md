@@ -3,7 +3,7 @@ title: Heat Pump Cold Weather Performance
 tags: gear home-assistant
 ---
 
-We had a cold snap here in the UK. Over a few days, temperatures dropped from consistently over 10°C to days at or below freezing. Perfect weather for dialing in a heat pump. 
+We had a cold snap here in the UK. Over a few days, temperatures dropped from consistently over 10°C, to days at or below freezing. Perfect weather for dialing in a [heat pump]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}). 
 
 # Weather Compensation
 
@@ -13,7 +13,7 @@ We have a [Vaillant Arotherm plus]({% link _posts/2025-10-27-vaillant_arotherm_h
 
 The initial heat curve setting is calculated based on your expected heat loss. We have an expected heat loss of 6kW at -3°C outside and 17°C inside. That's equivalent to 300W per degree difference. The corresponding heat curve setting is 0.7.
 
-The expected heat loss is an estimate. You typically need to nudge it up or down depending on how close the estimate is to the actual heat loss. This process works best in cold weather when other heat sources (solar gain, occupancy, cooking) are less significant.
+The expected heat loss is an estimate. You typically need to nudge the curve up or down depending on how close the estimate is to the actual heat loss. This process works best in cold weather when other heat sources (solar gain, occupancy, cooking) are less significant.
 
 The usual rule of thumb is to keep reducing the heat curve every few days, one step at a time, until you're too cold. Then nudge it back up one step and call it done. Since we've had the heat pump installed, I've gradually reduced the heat curve down to 0.55, where it's been for a while. 
 
@@ -43,9 +43,9 @@ The table is densely packed, so I have some explaining to do. Each day covers th
 
 Days are dates in November 2025. Each day is annotated with significant events. Up (↑) and down (↓) arrows show when I nudged the heating curve up or down one step. Asterisks (*) show when the heat pump defrosted during the day (see more on that below).
 
-Each column can have one, two or three values. There's one entry if the value is a summary for the entire day, or is a continuous changing value that was pretty much constant through the day. Two values describe a roughly linear change during the day starting at 6am with the first value, ending at 9pm with the second value. Three entries describe a curve between 6am and 9pm with the middle value being the maximum or minimum value during the day, depending on the shape of the curve. 
+Each column can have one, two or three values. There's one entry if the value is a summary for the entire day, or is a continuous changing value that was pretty much constant through the day. Two values describe a roughly linear change starting at 6am with the first value, ending at 9pm with the second value. Three entries describe a curve between 6am and 9pm with the middle value being the maximum or minimum value during the day, depending on the shape of the curve. 
 
-The Outdoor temperature is from the Vaillant sensoCOMFORT external sensor used for weather compensation. Indoor temperature is from the sensoCOMFORT thermostat in the hall. If all's going well it should be 16°C - 18°C.
+The Outdoor temperature is from the Vaillant sensoCOMFORT external sensor used for weather compensation. Indoor temperature is from the sensoCOMFORT thermostat in the hall. If all's going well it should be 16 - 18°C.
 
 Solar is energy produced by our solar panels. I'm using it as a crude proxy for the effect of solar gain. At this time of year, anything over 4kWh is a really sunny day. 
 
@@ -61,7 +61,7 @@ I was surprised how low the outside temperature has to get before the heat pump 
 
 This is late in the day on Nov 17th. It's 1°C outside, 17.1°C inside. The heat curve is 0.55 with a corresponding target flow temperature around 29°C. I thought it would finally be cold enough for the heat pump to run continuously at minimum power. This is as close as it got. COP is 4.1.
 
-When the heat pump starts up, it always has a power profile where it ramps up beyond the power it needs long term and then throttles back. This is normal behavior, just part of the startup sequence needed to get the heat pump running properly. In this case, it adds just enough additional heat to tip the energy integral over the edge and make the heat pump cycle.
+When the heat pump starts up, it always has a power profile where it ramps up beyond the power it needs long term and then throttles back. This is normal behavior, just part of the startup sequence needed to get the heat pump running properly. In this case, it adds just enough additional heat to tip the [energy integral]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}) over the edge and make the heat pump cycle.
 
 It's a catch 22 situation. If the heat pump ran continuously at minimum power there would be no need to cycle. However, the heat pump is cycling, so it can't run continuously at minimum power. 
 
@@ -73,7 +73,7 @@ On Nov 21st we're cycling again. It's 2°C outside, which drops the target flow 
 
 # Heating Forecast
 
-I try to [predict]({% link _posts/2025-11-03-home-assistant-heat-pump-myvaillant-emoncms-met-office.md %}) the next day's peak time heating load so that I know how much charge to add to my home battery overnight. I don't want to charge to 100%, then find that it's a mild and sunny day and there's nowhere to put the excess solar I've generated. 
+I use Home Assistant to [predict]({% link _posts/2025-11-03-home-assistant-heat-pump-myvaillant-emoncms-met-office.md %}) the next day's peak time heating load so that I know how much charge to add to my home battery overnight. I don't want to charge to 100%, then find that it's a mild and sunny day and there's nowhere to put the excess solar I've generated. 
 
 The initial implementation was based on limited performance data. At the time, outdoor temperature hadn't gone below 10°C and I was consistently seeing a COP around 5. My installation has a minimum performance guarantee of 380% efficiency, whatever that means. Given the lack of better data, my forecast used a linear interpolation between a COP of 5 at 10°C and a COP of 3.8 at -3°C.
 
@@ -110,7 +110,7 @@ In cold weather, ice can build up on the back of the heat pump, which reduces pe
 
 The heat pump uses its own temperature and pressure sensors to determine when a defrost is needed. The impact of ice built up is also visible in reduced performance. 
 
-I saw my first defrost cycle on Nov 17 when the temperature was below 4°C all day. On cold days, there were usually one or two defrosts during the day, with more overnight. At the coldest point, on the morning of Nov 19, there were three defrosts, one every two hours. 
+I saw my first defrost cycle on Nov 17 when the temperature was below 4°C all day. On cold days there were usually one or two defrosts during the day, with more overnight. At the coldest point, on the morning of Nov 19, there were three defrosts, one every two hours. 
 
 {% include candid-image.html src="/assets/images/home-assistant/defrost-cycle.png" alt="Defrost Cycle" %}
 
@@ -138,7 +138,7 @@ During the initial DHW cycle, notice that the heat pump doesn't ramp the power u
 
 The most interesting thing is that the heat pump switches to the heating circuit before running the defrost. This avoids taking the heat from your hot water tank. [Chatter](https://community.openenergymonitor.org/t/arotherm-hot-water-starting-outside-schedule/28047/4) on the forums suggests that this is expected, Vaillant Arotherms always take heat from the heating circuit.
 
-It's important that it works this way if you're using a MiniStore/NanoStore hot water system. These are usually installed with a diverter valve that returns water directly to the heat pump if flow temperature is below 45°C. That means there wouldn't be enough water volume for effective defrosting if the DHW circuit remained active. 
+It's important that it works this way if you're using a [MiniStore/NanoStore]({% link _posts/2025-11-17-heat-geek-nano-store.md %}) hot water system. These are usually installed with a diverter valve that returns water directly to the heat pump if flow temperature is below 45°C. That means there wouldn't be enough water volume for effective defrosting if the DHW circuit remained active. 
 
 Heat for defrosting is taken from the heating circuit inside the house. There needs to be enough volume of water that heat can be extracted without the return temperature falling below 13°C. The Arotherm Plus 7kw requires a minimum of 40L volume. 
 
