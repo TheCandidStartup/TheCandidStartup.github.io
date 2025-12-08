@@ -1,5 +1,5 @@
 ---
-title: Kia Niro Rear Boot Release Switch
+title: Kia e-Niro 12v Battery Drain
 tags: gear
 ---
 
