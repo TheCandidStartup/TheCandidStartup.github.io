@@ -15,7 +15,7 @@ A modern hot water cylinder doesn't fit.
 
 # MiniStore
 
-Heat Geek have an existing solution for this problem, the MiniStore. A MiniStore is a small hot water cylinder plumbed in reverse. The heat pump directly heats the water in the tank. Cold water flows through a central coil, picking up heat, connecting into the domestic hot water supply. The cylinder acts as a heat store. 
+Heat Geek have an existing solution for this problem, the [MiniStore](https://newarkcylinders.co.uk/heatgeekministore/?utm_source=thecandidstartup&utm_medium=referral). A MiniStore is a small hot water cylinder plumbed in reverse. The heat pump directly heats the water in the tank. Cold water flows through a central coil, picking up heat, connecting into the domestic hot water supply. The cylinder acts as a heat store. 
 
 There's enough stored heat to cover a few minutes of hot water demand. That, in theory, gives just enough time for the heat pump to kick in, ramp up and start replacing the lost heat. Our heat pump is capable of generating 9.5kW of heat when running flat out, equivalent power to an average electric shower. The end result is effectively a heat pump "combi".
 
@@ -25,11 +25,11 @@ MiniStores come in a variety of sizes, down to the 60L MiniStore XS. The smaller
 
 # NanoStore
 
-This is where the NanoStore comes in. Instead of starting with a hot water cylinder and adapting it to work as a heat exchanger, the NanoStore starts with a heat exchanger and adapts it to work as a heat store. 
+This is where the [NanoStore](https://newarkcylinders.co.uk/heat-geek-nano-store-coming-soon/?utm_source=thecandidstartup&utm_medium=referral) comes in. Instead of starting with a hot water cylinder and adapting it to work as a heat exchanger, the NanoStore starts with a heat exchanger and adapts it to work as a heat store. 
 
 Heat Geek have done some experiments of their own with [promising results](https://www.youtube.com/watch?v=Zbq4Mq4waNk). They were looking for volunteers to try a prototype NanoStore for real. They offered us a discount, free [Open Energy Monitoring]({% link _posts/2025-11-10-open-energy-monitoring.md %}), and a guarantee to replace it with a MiniStore if it didn't work out for us. 
 
-The NanoStore in Adam's video is built around a [Nordic Tec BA-115-100](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/323-plate-heat-exchanger-nordic-ba-115-100-2-3400kw.html) plate heat exchanger. Heat is stored in the metal body of the heat exchanger as well as the 30L of water inside it. Add a thick layer of insulation and you have a heat store. It's more compact than a MiniStore, with much better energy transfer.
+The prototype NanoStore in Adam's video is built around a [Nordic Tec BA-115-100](https://nordictec-store.com/ba-115-serie-0115mplate-2-thread-/323-plate-heat-exchanger-nordic-ba-115-100-2-3400kw.html) plate heat exchanger. Heat is stored in the metal body of the heat exchanger as well as the 30L of water inside it. Add a thick layer of insulation and you have a heat store. It's more compact than a MiniStore, with much better energy transfer.
 
 {% include candid-image.html src="/assets/images/home-assistant/plate-heat-exchanger-nordic-ba-115.jpg" alt="Nordic Tec Plate Heat Exchanger BA-115" %}
 
