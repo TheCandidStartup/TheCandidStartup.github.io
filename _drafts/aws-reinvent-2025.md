@@ -5,11 +5,14 @@ tags: aws
 
 Once again I'm spending the week after re:Invent gorging on [YouTube videos](https://reinvent.awsevents.com/on-demand/) at 1.5x speed. I'm using the same approach as last year to find more nuggets of gold and less corporate filler.
 
-Unlike last year, there's no keynote highlights video, so I'll need to skip through the customer segments and AI hype myself. 
+Unlike last year, there's no keynote highlights video, so I'll need to skip through the customer segments and AI hype myself. So much AI slop that lots of interesting stuff was announced in the week *before* re:Invent. 
+
+My focus is on fundamental serverless building blocks for my cloud spreadsheet project: Lambda, S3, DynamoDB, SQS, CloudFront
 
 #  Matt Garman - CEO keynote
 
 I can save you some time here. If you're not interested in AI, skip straight to the last 10 minutes of the keynote.
+* 
 
 * [YouTube](https://youtu.be/q3Sb9PemsSo?si=YBxpYTxmzerAXbEt)
 * AI infrastructure for AI agents
@@ -42,6 +45,8 @@ I can save you some time here. If you're not interested in AI, skip straight to 
 * [YouTube](https://youtu.be/3Y1G9najGiI?si=rPE3gXkyRn0BYEEY)
 * Back to the Future, time travel opening video looking at all the previous times programmers were about to become obsolete
 * Werner's last keynote - got better things to do at AWS
+* Normally find Werner's keynotes interesting and though provoking. Think he's running out of steam. This year's was ... OK.
+
 * Will AI take my job? ...maybe
 * Will AI make me obsolete? ...No, if you evolve
 * Comparing progress in the Renaissance to how engineers need to think
@@ -298,3 +303,148 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Health check server which can take failing servers out of service (update DNS)
 * What if health check server goes bad and tries to take every server out of service? Use multiple health check servers and only take something out of service if a quorum agree that it's bad.
 * We never make local decisions about health of distributed system.
+
+# An insider's look into architecture choices for Amazon DynamoDB
+
+* Not so much about the specific choices, more about how choices are made, help your team make choices for you application
+* Tenets: Context for team, shared understanding, priorities, how decisions are made
+* DynamoDB Tenets: Security, Durability, Availability, Predictable low latency (in that order)
+* Core concepts for distributed systems - multiple servers, replication, failure, coordination, routing. Confusingly presented as argument between the presenters. 
+* What choices did DynamoDB make for Routing, Metadata management, Limits?
+* Routing
+* Request goes to random request router via DNS and load balancers, spread across AZs with dedicated load balancer per AZ
+* Storage nodes have 3 replicas spread across 3 AZs
+* Correlated failures more likely across AZs, could lose load balancer, request routers and one storage node
+* For availability want to spread requests across AZs: e.g. router in AZ1 calls storage in AZ2
+* For latency want to keep with AZ. Requests to AZ1 LB go to routers to AZ1 and take to storage node in AZ1
+* "Split horizon" DNS prefers addresses in same AZ as caller
+* Have to go cross AZ in case of failure. e.g. If router goes down in AZ2, LB has to send requests to AZ1 and AZ3. Static stability planning ensures each AZ has enough spare capacity provisioned to handle it's share of extra traffic if an AZ goes down.
+* What if one AZ receives significantly more traffic than others? Lots of DNS magic to try and keep it balanced. If too much traffic enters, LBs will send to other AZs to balance. 
+* Lots of complexity at database level to keep traffic balanced to storage nodes given different requirements for strong and weakly consistent reads for which storage nodes they can talk to. 
+* Metadata Management
+* Router has to validate caller identity, check caller has access to table, check you're within limits, work out which storage node cluster owns table, work out which partition within cluster you need to access
+* Storage node has to enforce rate limiting, retrieve right encryption key from KMS
+* Design goal is to do all of that within 10s of microseconds
+* While also coping with partition create, move, split and delete
+* Metadata system has to handle huge load
+* Could add cache to request router but now have situation where large fleet of servers is driving requests to small fleets. Very dangerous. If caches go stale, metadata system falls over.
+* Added another layer of cache. Central, scalable, MemDS caching system. Control plane and storage nodes push updates to MemDS. Request routers still have local caches in front of MemDS.
+* Eventual consistent cache on top of eventual consistant cache.
+* All MetaData is versioned. Storage nodes are ultimate source of truth. If request router uses v20 cached metadata to talk to storage node it can tell router that's out of date and tell it where it moved partition to.
+* Hedging. If router has local cache miss, it makes two requests to different MemDS servers and uses first returned.
+* Constant work. Even if there's a local cache hit, make two requests to MemDS in background. Ensures MemDS can handle it if all caches go stale. 
+* Long-lived connections. Request router is caching data. Want high chance that more requests from same client use same request router. More DNS tricks + right sizing pool of routers.
+* Limits
+* Limits exist to ensure predictable low latency given physical hardware constraints
+* 1000 write unit, 3000 read unit limit per partition
+* Why transaction and item size limits? Predictable low latency.
+* Secondary indexes limited to 20 because of replication lag impacting latency.
+
+# Dive deep into Amazon DynamoDB
+
+* Deep dive through the lens of two real world customer problems
+* Really engaging presentation
+
+* The curious case of the throttled table
+* Unexpected write throttling
+* System to manage collection of survey data
+* Legacy RDBMS system rewritten to DynmamoDB. Legacy system handled 600 TPS peak.
+* New system needs to handle 45000 TPS, seeing throttling 800 TPS
+* Workflow: read a table and write to three tables
+* Privacy important. Separate PII and survey response tables, each with a random id (PiD,SiD). Tied together by entry in RandomID table (PK=PiD,SK=SiD) with restricted access. One way hash to map random id -> national user id.
+* App workflow: Generate random id (PiD,SiD pair), record PII and survey, update nation id to store hash(Pid,SiD)
+* Tables are scaled, PKs are high cardinality and random. How can this possibly result in write throttling?
+* RandomID and NationalID tables have GSIs. Hash -> nationalId, SiD -> PiD.
+* Item sizes are 500 bytes for PII, 2K for survey, 400 bytes for NationalId. All small.
+* Random Ids are generated in advance and populated in table. Statutory requirement to verify all ids are unique. Microservice that returns the next unused id by progressive paginated scan.
+* Where is throtlling? It's on the PII table.
+* DynamoDB scales horizontally, hash based partitioning of tables. Compute hash of primary keys, stored in sorted order, then partitioned.
+* Hash needs to be fast, have even distribution, be deterministic, avalanche (small change in value results in big unpredictable change to hash)
+* Problem is that RandomID and PII table have same PK AND pre-populating RandomId table stores them in sorted order on hash(PiD). 
+* Each id you retrieve has hash(pid) close to previous value. When you insert into PII table, you choose partition based on hash(pid). All your writes go into the first partition, then you move on and they all go into second partition, etc.
+* Unintended consequence of global deterministic hash. If hash was table specific wouldn't have been a problem. Intend to fix this in future.
+* Simplest fix for customer was to make hash for PII table different by adding a fixed prefix character to the PK. Avalanche property of hash function means hash value very different to that on RandomId table and now writes are randomly distributed.
+* Now AWS know about this problem, find it's surprisingly common, at least a couple of support incidents a year
+* Debugging throttling: Use throttled-keys-only with CloudWatch Contributor Insights (much cheaper than logging everything), new error codes with actionable detail
+* Multi-attribute keys for GSIs remove need for funky synthetic keys
+
+* The bizarre latency conundrum
+* Customer that ran a big batch process once a day. Huge 2000X spike in traffic while process running. Low traffic interactive app rest of the time.
+* Latency is low and predictable during the batch process. Latency is high and unpredictable the rest of the time!
+* App has a few thousand app servers all accessing DynamoDB, enough to handle batch process load
+* Simulated similar traffic pattern and got same result.
+* Requests routed to LB -> Request Rooter -> Storage Node
+* Each request needs metadata which is cached
+* If connections are long lived and hit same router, get the benefit of cache
+* Problem is the 2000X difference in load. During batch process all app servers are busy, same app server makes multiple requests using same connection, gets the benefit of caching. Rest of the time, app servers are barely used. 10 TPS total. 
+* Customer over-provisioned for static stability and future plans.
+* Solution: Send interactive traffic to a much smaller number of app servers.
+
+# DynamoDB: Resilience & lessons from the Oct 2025 service disruption
+
+* Security, Durability, Availability, Predictable Low Latency
+* Oct 20th failed to meet standard on Availability
+* Correction of Error post mortem
+* Sharing Lessons Learned
+* DynamoDB was root cause of wider scale disruption
+* Problem was DNS returning zero IPs for clients wanting to connect to DynamoDB -> failure to connect
+* How DynamoDB uses DNS
+* Everything gets harder every time you scale up an order of magnitude
+* e.g. Single LB -> multiple LBs, multiple instance types across fleet rather than all the same.
+* 100s of LBS per region, 1000s of instances behind each LB.
+* DNS here is resolving dynamodb.us-east-1.api.aws
+* During event DNS query was successful but returned zero IP addresses
+* Control plane updates DNS records as load balancers added/removed/updated. Each LB has a weight. Some LBs can handle more traffic because they're on a bigger instance type. Automated process for updating weights as LBs change.
+* Automated failure handling using health checks to remove unhealthy LBs. For partial failures (e.g. overloaded LB), reduce weight.
+* Latency is important. Try to route client requests to geographically close LB.
+* DNS Management System per region
+* Planner that looks at state of system and decides how to adjust DNS setup
+* Plan is JSON versioned file written to S3
+* Enactor reads plan and updates Route 53
+* Enactor is designed to be bullet proof, minimum dependencies, keep working if other things break
+* Three independent instances for redundancy. Update process is idempotent so doesn't matter that they all do the same thing.
+* Should all work fine but hard to reason about. Decided to add a lock. Pattern used a lot in AWS. Everyone else uses DynamoDB to implement the lock!
+* Dependencies are S3 and route 53. Don't want to add more. Can we use route 53 to implement lock? Use presence of TXT record as lock.
+* TXT record includes instance that holds lock and time stamp to show progress being made.
+* Locking protocol is to delete record and then recreate with new timestamp (single transaction). Delete will fail if existing record isn't what you expect (someone else has lock). Works great.
+* If someone else holds lock, you backoff and retry. 
+* Building DNS alias tree: dynamodb.us-east-1.api.aws -> plan-101.ddb.aws -> lb-1, lb-2, ...
+* On change build plan-102 tree and then point top level alias at it when you're happy. Rollback is easy if you later find plan is back.
+* Id for each record is a UUID. Nightmare for debugging ...
+* Lots of different top level endpoints, each with their own TXT record lock (simplest way to make it work in DNS).
+* Bug is a race condition between installing new plan and cleaning up old records
+* Repeating pattern. Two enactors try to grab lock at same time. One backs off. Other enactors get through several rounds of updates.
+* Backoff expires. Get unlucky. Same thing happens multiple times, with same enactor backing off. Backoff protocol (exponential?) causes it to fall further and further behind.
+* Eventually enactor gets the lock and installs a very stale plan, older than thought possible.
+* Record cleaner removes really old plans
+* Race between enactor 1 wanting to clean up old records after install plan 145, enactor 2 wants to install plan 146 and enactor 3 wants to install plan 110
+* Enactor 3 installs plan 110 and then enactor 1 immediately deletes it because its too old, leaving top record pointing at nothing
+* Installing old plan is OK because its an eventually consistent system, will soon write a newer plan on top
+* Problem is that system (top level pointing at nothing) is an inconsistent state. Protocol for writing new plan fails.
+* Mitigation
+* Hundreds of alarms go off. One pointed directly at root cause but got lost in the noise.
+* All internal recovery procedures/tools assume that enactor can be used. Enactor is what broke.
+* Updated internal tooling and fixed DNS after 2.5 hours
+* Long recovery due to cached bad data
+* Froze DNS update in other regions
+* Fixed race after two days, rolling deploy over following week. DNS automation re-enabled.
+* Lessons learned
+* Splunking around in logs. So much cruft built up over the years. No nice neat audit trail.
+* Used AI (Amazon Q) to extract cause and effect, build up timeline of relevant events.
+* Testing races is difficult. Unit tests pass almost all the time.
+* Use formal modeling to validate protocol. Didn't have one for enactor. Used Q to speed up production of a model in time to validate fix.
+* Found original design was actually correct, implementation had diverged from design over time.
+* Used Q to find deviation of actual code with formal model. Fixed problem. Q validated that code now consistent with model.
+* Isolation: One DNS update had region wide impact. Some parts of DynamoDB have cell based architecture. Can we extend that to DNS?
+* Cell based architecture needs a way to route requests to the right cell. Usual way is to add a cell router at the front end. 
+* Downside is that cell router and DNS are both regional. For most services this is OK.
+* At scale of DynamoDB makes sense to have per cell DNS endpoint and DNS configuration
+* Use CNAME entries per customer (accountid.ddb.region.api.aws) that point at specific cell
+* Needs everyone on latest SDK to enable
+* Fundamental trade off of isolation vs global knowledge
+* More complex system tends to fail more often. Is it worth adding more complexity for more isolation?
+* Turns out generating plans way more frequently than needed
+* Maybe divide updates into stuff that can happen more slowly and stuff that has to happen immediately
+* But maybe better if you're exercising common path all the time. Lots of trade offs to consider.
+* Separation between planner and enactor really nice pattern. Can freeze generation of new plans in a crisis. Think about what you can freeze in your system.
+* Understand your dependencies and which are strong dependencies (must be there) and weak dependencies (won't cause request to fail completely if down)
