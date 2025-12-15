@@ -11,19 +11,19 @@ We started having problems on October 25th. Lucy had taken the car up to the Lak
 
 All seemed normal until she returned to the car a couple of days later, after the event. The 12V battery was dead.
 
-Unless you have an EV, you may not realize that they have two batteries. The big high power Lithium-Ion battery used to drive the motor and a normal 12V car battery used for the rest of the electrical systems.
+Unless you have an EV, you may not realize that they have two batteries. The big high power lithium-ion battery used to drive the motor and a normal 12V car battery used for the rest of the electrical systems.
 
 There are two reasons for this. First, car electrical systems are designed to work with 12V DC. It's easier to use standard parts rather than custom stuff that can work with the big battery directly. Second, it's safer if the 400V high power drive circuits are only powered on when needed. The car runs off the 12V battery until you put it in drive mode. Once in drive mode, it recharges the 12V from the big battery.
 
 Perhaps surprisingly, EVs often have problems with their 12V batteries. The battery doesn't have much work to do. There's no starter motor to turn over. Starting the car is just a matter of activating a relay. Manufacturers cut their costs by fitting a more basic, lower capacity 12V battery. There's also a theory that turning over a starter motor regularly helps keep a 12V battery in good condition.
 
-Our original 12V battery died a couple of years ago. Our experiences then prompted us to fit a battery monitor and buy a cheap jump starter. As there's no starter motor to turn over, you don't need much to jump start an EV. A small Lithium-Ion power bank will do the job.
+Our original 12V battery died a couple of years ago. Our experiences then prompted us to fit a battery monitor and buy a cheap jump starter. As there's no starter motor to turn over, you don't need much to jump start an EV. A small lithium-ion power bank will do the job.
 
-Lucy opened the car with the mechanical key and jump started the car without trouble. It seemed fine after that. I checked the battery monitor when she got home and all looked normal.
+Lucy opened the car with the mechanical key and jump started it without trouble. It seemed fine after that. I checked the battery monitor when she got home and all looked normal.
 
 # Rapid Battery Drain
 
-On November 3rd the 12V started draining rapidly. We last used the car on Nov 4th. By the morning of Nov 5th the battery was completely dead. Down to 9v according to the battery monitor. We next tried to use it on Nov 7th. Jump starting didn't work.
+On November 3rd the 12V started draining rapidly without us noticing. We last used the car on Nov 4th. By the morning of Nov 5th the battery was completely dead. Down to 9v according to the battery monitor history. We next tried to use it on Nov 7th. Jump starting didn't work.
 
 Normally when you connect the jump starter, the car turns on in standby mode, as it does when unlocking with the key fob. You put your foot on the brake and press the start button to turn on everything else, including the main battery.
 
@@ -89,7 +89,7 @@ That's why it started working when I disconnected and reconnected the battery.
 
 Why all this trouble with the boot? 
 
-The switch is dodgy. It sends repeated "button pressed" signals without anyone pressing the switch. The computer gets the boot release switch pressed signal, confirms that the key fob is in range and then sends power to the relay which powers the boot latch open motor.
+The release switch is dodgy. It sends repeated "button pressed" signals without anyone pressing the switch. The computer gets the boot release switch pressed signal, confirms that the key fob is in range and then sends power to the relay which powers the boot latch open motor.
 
 That's why the boot stays shut if the key fob is out of range or when the car is driving. It's not a problem with the boot latch.
 
@@ -159,7 +159,7 @@ The boot latch is held in place by three bolts. Removing it should be simple eno
 
 Lucy figured out the solution. We don't need the old switch intact, we just need it out. Before I could stop her, she attacked the outside of the switch with a flat head screwdriver, sliding it between the switch and the metal boot panel, then levering away.
 
-In a triumph for brute force and ignorance, the switch ejected from the back of the car accompanied by load pinging noises. On closer inspection of the new switch, we realized that the metal clips are just pushed onto the plastic body of the switch. Pull hard enough and the clips ping off. 
+In a triumph for brute force and ignorance, the switch ejected from the back of the car accompanied by load pinging noises. On closer inspection of the new switch, we realized that the metal clips are just pushed onto the plastic body of the switch. Pull hard enough and the clips spring off. 
 
 # Result
 
