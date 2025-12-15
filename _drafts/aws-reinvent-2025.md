@@ -448,3 +448,64 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * But maybe better if you're exercising common path all the time. Lots of trade offs to consider.
 * Separation between planner and enactor really nice pattern. Can freeze generation of new plans in a crisis. Think about what you can freeze in your system.
 * Understand your dependencies and which are strong dependencies (must be there) and weak dependencies (won't cause request to fail completely if down)
+
+# Wrangling chaos: atoms of emergence
+
+* [YouTube](https://www.youtube.com/watch?v=60bqVu2HEOw)
+* Level 500 Chalk Talk. Not recorded at re:Invent. Colm MacCarthaigh ran the same session on Twitch after re:Invent and made a YouTube recording available.
+* Emergence: Complex property that emerges from what should be a simple system
+* Scope is request/response distributed systems
+* Control system theory useful for achieving a stable system
+* Have a target value and current value. Difference between the two is the error. Control system should make changes proportional to the size of the error.
+* Controller works better if it takes into account the history of the error (effectively the integral of current value over time). cf. Energy integral in heat pump controls.
+* Final refinement is to add adjustment proportional to the slope of the error (effectively the derivative of current value over time).
+* Control theory says you need all three for system to be stable. This is a PID controller.
+* Problem is sudden shocks. Classic example of car going down hill in icy weather. Put foot on brake to slow down. If you push too hard, wheels can lock up and the car speeds up. Have to take foot off brake.
+* Similar problem can happen in request/response systems in overload conditions. Common approach is to start throttling requests if you detect overload. Sometimes that can make things much worse.
+* In real world systems requests don't come in randomly, usually correlated. 
+* e.g. Clients often make a chain of requests (abandon when one fails), with a retry loop around them.
+* Graph of number of requests vs throttling rate (percentage of requests that are rejected). No retries.
+* Binomial distribution with all requests in chain made at 0% throttling and 1 request made (the first in the chain) at 100% throttling. As you increase the rate of throttling the number of requests made goes down. Exactly what you'd expect.
+* Simulate chain of calls with up to two total retries. Makes all requests in chain at 0% throttling, and 3 requests at 100% throttling (initial request + two retries). In between you get a weird graph where the number of requests goes *up* as you start throttling until about 35% and then drops.
+* Bad news for a control system if error sometimes goes the wrong way.
+* Map out all possible patterns of requests for chain of 3 with up to two retries. Get an asymmetric histogram with least common at the edges (two ways to get 3 and 9 requests), peak at 6 requests (10 ways), with more ways of getting 7 or 8 than 4 or 5.
+* Weird graph is effectively this request distribution * basic binomial distribution
+* In real world developers tend to add more retries. e.g. Adding retry loop around the whole request chain. Effect is to make the peak number of requests more pronounced and to require a higher rate of throttling before request rates come down. e.g. 60% for chain of 3 with up to 2 retries for individual request and up to 2 of whole chain.
+* Counter-intuitive result. Throttle 50% of requests in real world system and you will probably see *increased* load.
+* Can completely fix this with small tweak to throttling logic. Instead of throttling requests randomly, throttle entire client. Either all requests from a client are throttled or none of them are. 
+* Or fix on client side using global token bucket for all requests on client (implemented in AWS SDK).
+* Crazy that CS degrees don't include control theory. Book recommendation: Designing Distributed Control Systems.
+
+* Triggers for metastable behavior
+* Caching. In normal usage only small proportion of requests go to origin. If cache restarts, they all do. Often origin can't keep up. Simple fix is to always call origin (cache just used to improve latency). Saw this with DynamoDB. Alternative is some sort of back pressure system to slow caller down.
+* Layers. Eg. Front end -> middleware -> Storage. Retry amplification from retries at each layer. Clients give up, server side retries keep going, making it even worse when clients retry.
+* Can mitigate with back pressure, smaller timeout value for each successive layer, switch to LIFO queue of requests when system gets overloaded, idempotent requests so that retry can use result from prior request.
+
+# A tale of two transactions
+
+* [YouTube](https://youtu.be/SNnUpYvBfow)
+* Marc Brooker comparing Aurora DSQL and Aurora PostgreSQL by looking at how transactions are handled in each system
+* Isolation levels are a trade off between where we add complexity for application programmers: achieving correctness or achieving performance.
+* Stronger isolation -> easier to achieve correctness but lower concurrency, lower throughput, high availability is hard. Very dependent on traffic patterns.
+* Weak isolation -> in theory get better concurrency and performance but in practice dealing with correctness issues at application level makes it even slower.
+* Coordination is needed for isolation. Different implementation approaches can reduce or move coordination but can't avoid it.
+* Snapshot isolation is sweet spot?
+  * Never see uncommitted data
+  * Reads are repeatable
+  * Reads all come from a single logical point in time
+  * Conflicting writes are rejected
+  * NOT serializable
+* Snapshot isolation cost depends on number of writes
+* Serializable isolation cost depends on number of reads and writes
+* Serializable pushes complexity onto application programmer as they have to minimize number of reads in a transaction to achieve good performance / avoid contention
+* Relative performance of different isolation levels depends entirely on your application's data access patterns. No panacea.
+* Aurora PostgreSQL vs DSQL for snapshot isolation
+* PostgreSQL uses MVCC. Version of each row for each transaction. 
+* Needs to keep track of all versions between lowest xid (all lower are committed) and highest xid (all transactions higher still running)
+* Lots of global coordination needed - fine for single server implementation
+* DSQL does all coordination at commit time
+* Both: No need for read locks, readers don't block writers, writers don't block readers
+* DSQL: Clients can't control lock-hold times, no need for long-lived locks at all, lower latency (coordination only at commit)
+* PostgreSQL: Earlier knowledge that a transaction can't commit (less wasted work), no transaction run time limit
+* DSQL: Clients can't block each other, everything AZ local until you get to commit
+* Both have Strong snapshot isolation (strong = strongly consistent). However, PostgreSQL doesn't if you use read replicas (eventual consistent updates to replica).
