@@ -3,18 +3,20 @@ title: AWS re:Invent 2025
 tags: aws
 ---
 
-Once again I'm spending the week after re:Invent gorging on [YouTube videos](https://reinvent.awsevents.com/on-demand/) at 1.5x speed. I'm using the same approach as last year to find more nuggets of gold and less corporate filler.
+Once again, I spent the week after re:Invent gorging on [YouTube videos](https://reinvent.awsevents.com/on-demand/) at 1.5x speed. I'm using the same approach as [last year]({% link _posts/2024-12-20-aws-reinvent-2024.md %}) to find more nuggets of gold and less corporate filler. That is, get a list of new announcements from the keynotes, then look for technical sessions on the interesting stuff. Finally, look for technical presentations from speakers I know are good.
 
-Unlike last year, there's no keynote highlights video, so I'll need to skip through the customer segments and AI hype myself. So much AI slop that lots of interesting stuff was announced in the week *before* re:Invent. 
+Unlike last year, there's no keynote highlights video, so I'll need to skip through the customer segments and AI hype myself. It looks like there's so much AI slop that lots of interesting stuff was announced in the week *before* re:Invent. 
 
-My focus is on fundamental serverless building blocks for my cloud spreadsheet project: Lambda, S3, DynamoDB, SQS, CloudFront
+# Keynotes
 
-#  Matt Garman - CEO keynote
+##  Matt Garman - CEO keynote
 
-I can save you some time here. If you're not interested in AI, skip straight to the last 10 minutes of the keynote.
-* 
+I can save you some time here. If you're not interested in AI, skip straight to the end of the keynote, where Matt goes through 25 non-AI announcements in ten minutes. 
 
 * [YouTube](https://youtu.be/q3Sb9PemsSo?si=YBxpYTxmzerAXbEt)
+
+AI Hype
+
 * AI infrastructure for AI agents
 * Announce: AI Factories - like Outposts for AI, embedded in customer data centers
 * Still trying to push Trainium
@@ -27,9 +29,11 @@ I can save you some time here. If you're not interested in AI, skip straight to 
 * Announce: AgentCore Evaluations, inspect agent quality based on real-world behavior, correctness, helpfulness, safety
 * Announce: AWS Transform Custom, customize AWS Transform AI migration tool to understand your custom languages, frameworks, etc.
 * Announce: Kiro Autonomous agent, more Autonomous, Scalable, Long-running than current Kiro agents. Context maintained indefinitely, rather than session based.
-* Announce: AWS Security Agent, scans code and design documents for vulnerabilities. On-demand pentesting.
+* Announce: AWS Security Agent, scans code and design documents for vulnerabilities. On-demand pen-testing.
 * Announce: AWS DevOps Agent, investigates incidents, access insights from observability tools, maps resources, identify root cause, recommend CI/CD guardrails to avoid same problem again
-* 25 announcements in 10 minutes
+
+Everything else in ten minutes.
+
 * Announce: New compute instances x8i, x8aedz, c8a, c8ine, m8azn, m3 ultra, m4 max
 * Announce: Lambda durable functions
 * Announce: S3: Max 50TB object size, batch 10X faster, Intelligent-tiering for S3 tables, cross-region replication for S3 tables, S3 access points for FSx for NetApp ONTAP, GA for S3 Vectors
@@ -40,51 +44,58 @@ I can save you some time here. If you're not interested in AI, skip straight to 
 * Announce: Unified data store in CloudWatch using S3 tables
 * Announce: RDS: 256TB max size for SQL Server and Oracle DBs, optimize CPUs for SQL server, support SQL Server developer edition, database savings plans
 
-# Werner Vogels - CTO keynote
+## Werner Vogels - CTO keynote
+
+Werner announced that this is his last re:Invent keynote. He's not leaving AWS, presumably he has better things to do with his time. Normally, I find Werner's keynotes interesting and thought provoking. With this one, I think he's running out of steam. It was ... OK.
+
+We open with the usual high production value, spoof video opening. This time with a Back to the Future theme, looking at all the previous times in history that programmers were predicted to become obsolete. 
 
 * [YouTube](https://youtu.be/3Y1G9najGiI?si=rPE3gXkyRn0BYEEY)
-* Back to the Future, time travel opening video looking at all the previous times programmers were about to become obsolete
-* Werner's last keynote - got better things to do at AWS
-* Normally find Werner's keynotes interesting and though provoking. Think he's running out of steam. This year's was ... OK.
-
 * Will AI take my job? ...maybe
 * Will AI make me obsolete? ...No, if you evolve
 * Comparing progress in the Renaissance to how engineers need to think
-* Renaissance Developer Framework
-* 1. Curiosity, experimentation, willingness to fail
-* Yerkes-Dodson Law - learn the most when you're under some level of pressure (not too much)
-* 2. Think in systems, not isolated parts
-* Dynamic systems are shaped by feedback loops
-* Donella Meadows: [Leverage Points: Places to Intervene in a System](https://donellameadows.org/archives/leverage-points-places-to-intervene-in-a-system/)
-* Need to understand the bigger picture
-* 3. Communication of thinking is as important as thinking itself
-* AI tools replace precise language of programming language with ambiguous prompts
-* Specifications reduce ambiguity
-* Plug for Kiro - spec driven development
-* AI for rapid prototypes, many prototypes with different types of spec
-* Feature driven specs: Requirements, Design and Task documents. Mirror how you would plan development before AI.
-* Prompt -> Spec -> Tweak Spec -> Generate code
-* 4. Developer is an owner. Developer owns the quality of the software, whatever tool they're using.
-* Will spend less time writing code, more time reviewing code
-* Verification Debt: AI generates code faster than you can understand it
-* Hallucination: AI generates something that looks plausible but isn't what you really want
-* Spec driven development, automated reasoning, automated testing all help
-* Need mechanisms to convert good intentions to good outcomes. e.g. Code reviews, durability reviews, stop ship defects
-* Keep doing human-to-human code reviews. Best ways of learning, transferring knowledge
-* 5. Developers need to be polymaths
-* Expand your knowledge, depth and breadth of understanding
-* Unique mix of personal, functional, industry skills
-* Expert in field but enough understanding of larger scope
 
-# Breakout Sessions
+Renaissance Developer Framework
 
-* Filtered to 300 and 440 level talks, tagged Breakout or Builders session
-* Looked at Lambda related talks first as Durable functions only interesting announcement at re:Invent
+1. Curiosity, experimentation, willingness to fail
+  * Yerkes-Dodson Law - learn the most when you're under some level of pressure (not too much)
+2. Think in systems, not isolated parts
+  * Dynamic systems are shaped by feedback loops
+  * Donella Meadows: [Leverage Points: Places to Intervene in a System](https://donellameadows.org/archives/leverage-points-places-to-intervene-in-a-system/)
+  * Need to understand the bigger picture
+3. Communication of thinking is as important as thinking itself
+  * AI tools replace precise language of programming language with ambiguous prompts
+  * Specifications reduce ambiguity
+  * Plug for Kiro - spec driven development
+  * AI for rapid prototypes, many prototypes with different types of spec
+  * Feature driven specs: Requirements, Design and Task documents. Mirror how you would plan development before AI.
+  * Prompt -> Spec -> Tweak Spec -> Generate code
+4. Developer is an owner. Developer owns the quality of the software, whatever tool they're using.
+  * Will spend less time writing code, more time reviewing code
+  * Verification Debt: AI generates code faster than you can understand it
+  * Hallucination: AI generates something that looks plausible but isn't what you really want
+  * Spec driven development, automated reasoning, automated testing all help
+  * Need mechanisms to convert good intentions to good outcomes. e.g. Code reviews, durability reviews, stop ship defects
+  * Keep doing human-to-human code reviews. Best ways of learning, transferring knowledge
+5. Developers need to be polymaths
+  * Expand your knowledge, depth and breadth of understanding
+  * Unique mix of personal, functional, industry skills
+  * Expert in field but enough understanding of larger scope
 
-# Deep Dive into AWS Lambda Durable Functions
+# New Announcements
+
+Bit sparse this year. Lambda Durable Functions is the only announcement that I found interesting enough to look at, together with the tenant isolation feature announced the week before re:Invent.
+
+## Deep Dive into AWS Lambda Durable Functions
+
+Lambda functions work best for short lived, compute intensive tasks. An individual Lambda invocation is limited to 15 minutes at most. You pay for the time the function is running, including when it's waiting for IO to complete. If the function fails, you will need some external process that retries it later. Durable functions address these weaknesses. 
+
+The name is slightly misleading. It's still a Lambda function with all the same limits per invocation. The trick is that the function will be invoked repeatedly until complete. That includes retries for failures, restarts after waiting for an external process, and restarts because the current invocation ran out of time. 
+
+You divide your function into separate steps which checkpoint their progress as you go. When the function restarts, you load the last checkpoint and resume from there. You're supplied with an SDK that provides high level abstractions built on the underlying checkpoint and replay model.
 
 * [YouTube](https://youtu.be/XJ80NBOwsow)
-* Current state Lamba for stateless, short-lived compute, Step functions for cross-service orchestration and EventBridge for event-driven architecture
+* Current state: Lambda for stateless short-lived compute, Step functions for cross-service orchestration and EventBridge for event-driven architecture
 * How do you do application logic orchestration?
 * Assertion: What developers really want is to write code like it's a monolith (everything in one place) but deploy like it's microservices (decoupled, independent scaling)
 * Do it all in Lambda environment using durable functions, including local development and testing
@@ -113,23 +124,23 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
   * Checkpointing of each step in your workflow, tracing progress. Whatever you return (if anything) is checkpointed.
   * Automatic retries with backoff and jitter for failing steps
   * Idempotency/Deduplication to ensure only one instance of durable function is running at a time
-  * Replay ensures same version of function used as first invocation
+  * Replay ensures same version of function code used as first invocation
   * Wait for time or callback from external service or condition met (e.g. via polling remote service)
   * On hard failure can apply compensation pattern ("saga"), and undo earlier steps with same durability guarantees
-* Parallel - creates child context and executes any steps on that child context in parallel
-* Wait for callback - you get given a callback id to pass to some remote service. When service has done whatever it needs it calls a new Lambda callback API, passing the id, which then restarts the durable function.
+* Parallel: creates child context and executes any steps on that child context in parallel
+* Wait for callback: you get given a callback id to pass to some remote service. When service has done whatever it needs it calls a new Lambda callback API, passing the id, which then restarts the durable function.
 * Kiro works really well due to standardized structure of durable functions
-* NodeJS, Python and OCI runtimes supported at launch
-* Async invoke (e.g. event driven) can live upto a year, direct invoke is still limited to 15 minutes (makes no sense for caller to hang on the line for longer)
+* NodeJS, Python and OCI (open container) runtimes supported at launch
+* Async invoke (e.g. event driven) can live up to a year, direct invoke is still limited to 15 minutes (makes no sense for caller to hang on the line for longer)
 * However, within that 15 minutes function is durable, so retry will connect to same instance
 * "ExectionName" parameter used to deduplicate repeat invokes of same instance, ensure only one runs
-* Durable invokes - call another lambda function and calling durable function waits for completion
-* Event Source mappings still synchronous (15 minute) limit so as not to break concurrency controls. Can call a normal Lambda that then does an async invoke of durable lambda.
+* Durable invokes: call another lambda function and calling durable function waits for completion
+* Event Source mappings still synchronous (15 minute limit) so as not to break concurrency controls. Can call a normal Lambda that then does an async invoke of durable lambda.
 * All existing service integrations (e.g S3, EventBridge, API Gateway) "just work" the same way they do for normal lambda
 * Important that you use versioned Lambdas so that replay is deterministic
 * x86/ARM architectures, DLQs, Layers and extensions, VPC attachment, concurrency settings, SnapStart, Powertools all supported
 * Security: New policy to enable use of durable functions and step/wait primitives
-* Checkpoints encrypted at rest. At launch only AWS managed keys supported
+* Checkpoints encrypted at rest. At launch only AWS managed keys supported.
 * `context.logger` is replay aware so don't get pointless duplicates on replay
 * X-Ray, CloudWatch metrics, EventBridge monitoring
 * Quotas
@@ -151,7 +162,11 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
   * Orchestrate across AWS services vs orchestrating at the application level
   * Whichever you like better
 
-# Secure Multi-Tenant SaaS with AWS Lambda: A Tenant Isolation Deep Dive
+## Secure Multi-Tenant SaaS with AWS Lambda: A Tenant Isolation Deep Dive
+
+AWS has incredibly good multi-tenant infrastructure with hardware enforced isolation. Then SaaS vendors come along and build their own half-assed multi-tenancy on top, that depends entirely on application logic to enforce customer separation. What if  SaaS vendors could use some of that AWS magic for their customers?
+
+Now they can, for Lambda at least. Tenant isolation ensures that each of your tenants gets it's own Lambda execution environment. No noisy neighbour effects, no leaking of customer data via shared context.
 
 * [YouTube](https://youtu.be/FWxwfcI7FTA)
 * Recently launched Tenant Isolation feature
@@ -161,11 +176,11 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Lambda isolation using Firecracker VMs
 * Every function instance has dedicated vCPU, memory, network bandwidth and virtual disk
 * Execution environments share *nothing* across different functions
-* Execution environments share environment variables, IAM roles/permissions, code across instances of the same function, shared context
+* Execution environments share environment variables, IAM roles/permissions, code and shared context across instances of the same function.
 * Multi-tenant SaaS application will have instances of a function for different customers running in the same execution environment
 * App responsible for making sure that data can't leak between tenants that reuse the same execution environment
   * Function-per-tenant model. Define a separate copy of function per tenant. Good isolation but complex CI/CD/operations. Custom routing layer.
-  * App framework/business logic that tries to enforce isolation. Simple CI/CD/ops but easy to screw up if you get business logic wrong. Noisy neighbours issues. Ensuring that shared context is clean when switching tenant. 
+  * App framework/business logic that tries to enforce isolation. Simple CI/CD/ops but easy to screw up if you get business logic wrong. Noisy neighbors issues. Ensuring that shared context is clean when switching tenant. 
   * Tenant Isolation Mode - Lambda will create dedicated execution environments for each tenant
 * Flag when you create function to enable tenant isolation mode
 * Need to provide `tenantId` parameter when you invoke instance of function, at API level passed as `x-amz-tenant-id` header
@@ -175,7 +190,7 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Concurrency quotas still apply, provisioned concurrency not supported, direct invoke or via API gateway only
 * TenantId automatically injected as property into JSON based logs
 * In CloudWatch each Lambda function gets own log group and each execution environment gets own log stream. How it's always worked. Now those streams are tenant specific. Each tenant will have one or more log streams, tagged with tenantId. Can setup filter to see logs for specific function and log streams with a particular tenantId.
-* For other observability providers include tenantId as another dimension
+* For other observability providers, include tenantId as another dimension
 * API Gateway integration - configure mappings between tenant id in incoming API request to AWS header
 * Incoming tenant id can be anything you want - header, request parameter, request path, request body, authorizer id, authorizer custom property, domain prefix, ...
 * Sample code for JWT authorizer
@@ -185,12 +200,23 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Function invocation now has some shared function level permissions + fine grained tenant specific permissions
 * For example, can have per-tenant S3 bucket and infrastructure level enforcement of access limits
 
-# From Trigger to Execution: The Journey of Events in AWS Lambda
+# Technical Breakout Sessions
+
+I'm not going to be able to fill my time with exciting new announcements, so I'm going to see if I can find any nuggets in the technical sessions for the services most relevant to me. My focus is on fundamental serverless building blocks for my cloud spreadsheet project: Lambda, S3 and DynamoDB.
+
+As last year, I found the [unofficial re:Invent planner](https://reinvent-planner.cloud/) to be most helpful. I filtered to 300 and 400 level talks, tagged Breakout or Builders session, then filtered by service.
+
+## Lambda
+
+#### From Trigger to Execution: The Journey of Events in AWS Lambda
+
+This one is a game of two halves. Two presenters, each handling half of the presentation in their own style. I found the first half a really useful tour of Lambda internals, focusing on the different invoke models. The second half was more philosophical and high level, not helped by garbled presentation that jumped around a lot. 
 
 * [YouTube](https://youtu.be/4zFJ3zDWgeM)
-* Part one: Lambda fundamentals
-* Deep dive into how each invoke model works, lots of detail and high speed
-* Lambda managed instances - announced Sunday? Get to choose which specific instance type your Lambda runs on. Reserved instances, savings plans.
+
+Part one: Lambda fundamentals
+* Deep dive into how each invoke model works, lots of detail at high speed
+* Announce: Lambda managed instances: Get to choose which specific instance type your Lambda runs on. Reserved instances, savings plans.
 * Invoke model - synchronous request/response (ALB, API Gateway), asynchronous event (S3, EventBridge), event source mapping batch processing stream/queue (Kinesis, SQS)
 * Async event puts messages into internal Lambda managed SQS queues with a fleet of pollers which retrieve message and do a sync invoke. Rely on SQS semantics to retry on failure. 
 * Event source mapping is very similar, but your queue that Lambda managed pollers connect to and do sync invoke. 
@@ -202,8 +228,7 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Scaling: For stream want to go as fast as you can, for queue want to scale within safe limit that won't overwhelm downstream services
 * SQS event mapping has two error mechanisms. SQS DLQ for repeated failures to process message, Lambda invoke failure for throttling/network issues
 
-* Part two: Lambda as queuing service
-* More philosophical - skip this if not interested, presentation kind of garbled
+Part two: Lambda as queuing service
 * Lessons from queue theory: Buffers smooth variance, specialize workers for different workload types, control variance to prevent instability, coordinate shared resouces through centralized control
 * Look at event invoke architectures in even more detail through queue theory lens
 * Shuffle sharding over a set of SQS queues
@@ -214,15 +239,16 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 
 # The Art of Embracing Failures in Serverless Architectures
 
+An engaging talk about handling failures. Goes back to fundamentals but also includes specific, actionable advice.
+
 * [YouTube](https://youtu.be/hSkElcxjdfs)
-* Engaging talk about handling failures. Goes back to fundamentals but also includes specific, actionable advice.
 * Serverless architectures are still computers connected by a network underneath. All the same failure modes still exist, but manifest in different ways.
-* Fundamental way of handling failures in distributed systems are timeouts and retries
+* The fundamental ways of handling failures in distributed systems are timeouts and retries
 * Example: Data -> Kinesis -> Lambda. Retry logic built into SDK.
 * Retries are fundamentally selfish. My call is more important than anything else.
 * Retries can cause cascading failures, especially if failure because system is close to capacity
 * SDK retries only "retryable" failures, up to 3 times, with exponential backoff.
-* Request across a network can fail with no why of knowing whether request or response was lost. Timeout after which you assume request has failed.
+* Request across a network can fail with no way of knowing whether request or response was lost. Timeout after which you assume request has failed.
 * Original JS SDK default timeout is two minutes! Latest version is infinite!!
 * Make sure you configure appropriate timeout. Choosing right value is difficult.
 * Timeout that's too short can lead to retry storm
@@ -231,11 +257,15 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Kinesis batch operation can return partial failure if service limit exceeded, part of batch succeeds, rest fails
 * Need to understand failure cases for each service, which are retryable and what you need to do
 * Lambda polling from Kinesis can result in large number of concurrent lambdas. Easy to hit Lambda concurrency limits. Even worse, limit is per-account so can cause unrelated Lambda to fail.
-* Lambda batch processing failure default behavior is to retry repeatedly until data expires. Disaster if there's a poison pill record. Also reprocessing all the other good records. Even worse, no other records in shard will be processed.
+* Lambda batch processing failure default behavior is to retry repeatedly until data expires. Disaster if there's a poison pill record. You end up repeatedly reprocessing all the other good records. Even worse, no other records in shard will be processed.
 * Once bad data expires, can resume processing. But next record probably also just about to expire. Can end up losing loads of data due to single bad record.
 * At minimum, limit retries. More advanced, bisect batch to isolate and report bad record while processing the rest.
 
-# Amazon S3 performance: Architecture, design and optimization
+## S3
+
+### Amazon S3 performance: Architecture, design and optimization
+
+Teaching you enough about S3 architecture so that you can achieve high performance when using S3.
 
 * [YouTube](https://youtu.be/JNN5Aw5kVFI)
 * Leveraging S3 architecture to achieve high-performance
@@ -249,7 +279,7 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * AWS Common Runtime - Best practices baked in
 * CRT has configuration for target throughout in Gbps. Easy way to match level of parallelism to available bandwidth on current instance
 
-* Managing concurrent requests
+Managing concurrent requests
 * S3 prefix - parts of object name delimited by separator (looks like a directory but isn't)
 * Application can achieve at least 3500 PUT/s or 5500 GET/s per partitioned S3 prefix
 * As S3 detects load, it partitions data on prefix. The more different prefixes, the more you can scale. While S3 scaling out, can see 503 errors.
@@ -258,7 +288,7 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * All partitions created for day1 are unused on following days. Need to do same scale out process for day2, with 503 errors likely again. Keep on repeating.
 * Want to use a prefix structure which reuses partitions once they're created. Push day to right end of object name.
 
-* Amazon Express One Zone
+Amazon Express One Zone
 * Super fast object storage. Single digit millisecond access, 2M GET/s per directory bucket, 10X data access compared to S3 standard
 * Use case is large data processing where high durability isn't needed. e.g. ML training, caches, interactive querying, media streaming.
 * Architecture co-locates storage with compute in single AZ, special purpose S3 directory buckets for high transaction rates, session based access for faster auth
@@ -266,14 +296,16 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Directory bucket has high scalability up front, doesn't rely on prefix based scaling
 * Directory bucket is hierarchical (actually is directories) rather than normal buckets flat namespace. Better performance when listing.
 
-# Deep dive on Amazon S3
+### Deep dive on Amazon S3
+
+This talk happens every year at re:Invent, but content changes each time. This year, the focus is on S3's design for availability.
 
 * [YouTube](https://youtu.be/S4swTRi1i0w)
-* Looking at S3 design for availability
 * Availability = dealing with failure
 * Need to look at failure through physical view. Drives & servers. Racks & buildings. Overload & network. Transient & permanent.
 * Dealing with it means meeting design goals. 99.99% availability, 99.999999999% durability, strong read after write consistency.
-* What had to change to achieve strong read after write consistency?
+
+What had to change to achieve strong read after write consistency?
 * Metadata stored in index system. Most queries are metadata queries. Quorum based storage. Reads/Writes need to succeed on majority of storage nodes.
 * Originally not read after write consistent because metadata is heavily cached
 * Made it consistent by implementing cache coherence using a replicated journal. 
@@ -287,7 +319,7 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Now consistent and available. 
 * Overall high availability: Need many servers to choose from, while only required to succeed on some, with ability to reconfigure quickly on failure, always a quorum based algorithm somewhere.
 
-* Failure at implementation level
+Failure at implementation level
 * Identify failure domains and correlated failures
 * Server failure => correlated failure of all drives on that server, similar for rack and AZ failures
 * Deployment waves to avoid correlated failure if deploy is bad
@@ -304,8 +336,77 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * What if health check server goes bad and tries to take every server out of service? Use multiple health check servers and only take something out of service if a quorum agree that it's bad.
 * We never make local decisions about health of distributed system.
 
-# An insider's look into architecture choices for Amazon DynamoDB
+## DynamoDB
 
+### Advanced data modeling with Amazon DynamoDB
+
+There wasn't a "new announcement" talk that covered the new support for multi-attribute composite keys announced just before re:Invent. I'm hoping it will be included in this talk somewhere.
+
+* [YouTube](https://youtu.be/PGfyJX8eS48)
+* Unique characteristics of DynamoDB: Fully managed, consumption-based pricing, consistent performance at any scale
+* Items mapped to partitions by hashing partition key then stored in order based on partition key + sort key
+* DynamoDB mental model: Each action maps to one contiguous disk operation within an unbounded amount of storage
+* Read single item, write single item, query range of items stored next to each other
+* Secondary indexes: fully managed copies of data with different key structure, enable additional read-based access patterns
+* Two types of index. Almost always want Global Secondary Index (GSI). Local Secondary Index (LSI) needs deep understanding before using.
+* Data modelling = how to structure data so that you can do the operations you want using simple DynamoDB actions
+* Modeling meta-goals: maintain the integrity of the data, make it easy to operate on the data
+* Maintain a valid schema in your application code, including any application constraints
+* Avoid inconsistency with duplicated data (denormalizing)
+* Writing: What's the right primary key to address each type of item?
+* Reading: What primary key and indexes are needed to filter efficiently?
+* Data modeling process - before writing any code: know your domain, identify constraints, data distribution, size of items, access patterns
+
+Multi-attribute composite keys for GSIs
+* Previously had to combine attributes manually into synthetic keys for use in indexes
+* Duplicated data that you need to keep in sync, complexities around multi-attribute sorting as all values normalized to synthetic string
+* Composite key can have up to 4 attributes for partition key and 4 attributes for sort key (8 in total)
+* Fixes all the issues with synthetic keys
+* MUST include all partition key attributes in query
+* MAY include sort key conditions but attributes included must follow SQL composite index rules: include attributes from left-to-right, no skipping
+* Won't solve overloaded index problems when doing single table design
+
+Secondary index cost management
+* Every write to update a secondary index costs money, 5-20x cost of read
+* Use multi-attribute composite keys instead of synthetic keys wherever possible
+* Only add indexes you really need
+* Reuse secondary index when
+  * Lots of overlap between read patterns (e.g. orders vs active orders)
+  * Overall search space is small (e.g. admin users within all users). Rule of thumb: If retrieving everything is less than 1 MB (one DynamoDB query page), don't bother with an additional index.
+* Do you need to put all items in index? Use sparse index which contains just relevant items.
+* Do you need the full item in the index? Project just the attributes you need. Easy to change over time.
+
+Schema evolution
+* If you should identify all your access patterns before you start, does that mean you can't evolve your schema over time?
+* No - but some patterns are always hard to model in DynamoDB
+  * Aggregations: "How many transactions has customer X done each month"
+  * Complex filtering: Filtering/Sorting by 2 or more properties, all of which are optional
+* Three main types of evolution
+  1. Schema change that doesn't change data access. e.g. Adding new unindexed attribute. Trivially easy, update application schema management code.
+  2. New index on existing attribute. GSI can be added at any time. DynamoDB will backfill index.
+  3. Change to existing data. Update application code to start writing in the new way, then run backfill process to scan table for old items, run UpdateItem. Finally, add code that depends on new item format. Tooling exists to help.
+* Lots of cases where multi-attribute keys avoid the need for (3)
+* Some changes are really hard.
+  * Changing primary key. Need to create a new table and replicate data into it using the new key. Rare as DynamoDB kind of forces you to use good primary keys.
+  * Combining/splitting items.
+* More normalized your table is, the easier it is to change
+
+Anti-patterns
+* Kitchen-sink item collection. e.g. 47 different types of record that all have user id as primary key. Overloaded item collections can make sense (single table design) but only if the different item types need to be retrieved together.
+  * Pre-joining (e.g. Order + OrderItem)
+  * Vertical sharding. Splitting logical entity into two separate items because one is more frequently updated than the other
+  * Advanced streaming use case where you need ordering across item types (needs an LSI too!)
+* Over-normalized model. Should have fewer tables in DynamoDB than RDBMS
+* Rule of thumb: Only put different entity types in same item collection if retrieved together. Only put different entity types in same table if members of same item collection.
+* Hiding the DynamoDB API. Application API should map pretty much 1:1 with DynamoDB API
+* Not using the full DynamoDB API. e.g. Implementing increment by GetItem, increment value, PutItem. Can do whole thing in single action with a conditional update expression.
+* Strongly consistent read as default. Use eventual consistency where it makes sense.
+* Large items. Be aware of size boundaries (1KB for write, 4KB for read, 1MB for query) and consider when modelling.
+* Overuse of transactions. Use them when you need to, when they add value.
+
+### An insider's look into architecture choices for Amazon DynamoDB
+
+* [YouTube](https://youtu.be/4GKXx9vIqsk)
 * Not so much about the specific choices, more about how choices are made, help your team make choices for you application
 * Tenets: Context for team, shared understanding, priorities, how decisions are made
 * DynamoDB Tenets: Security, Durability, Availability, Predictable low latency (in that order)
@@ -340,8 +441,9 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Why transaction and item size limits? Predictable low latency.
 * Secondary indexes limited to 20 because of replication lag impacting latency.
 
-# Dive deep into Amazon DynamoDB
+### Dive deep into Amazon DynamoDB
 
+* [YouTube](https://youtu.be/B05YpQ089w8)
 * Deep dive through the lens of two real world customer problems
 * Really engaging presentation
 
@@ -380,8 +482,9 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Customer over-provisioned for static stability and future plans.
 * Solution: Send interactive traffic to a much smaller number of app servers.
 
-# DynamoDB: Resilience & lessons from the Oct 2025 service disruption
+### DynamoDB: Resilience & lessons from the Oct 2025 service disruption
 
+* [YouTube](https://youtu.be/YZUNNzLDWb8)
 * Security, Durability, Availability, Predictable Low Latency
 * Oct 20th failed to meet standard on Availability
 * Correction of Error post mortem
@@ -449,7 +552,9 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Separation between planner and enactor really nice pattern. Can freeze generation of new plans in a crisis. Think about what you can freeze in your system.
 * Understand your dependencies and which are strong dependencies (must be there) and weak dependencies (won't cause request to fail completely if down)
 
-# Wrangling chaos: atoms of emergence
+# Favorite Speakers
+
+## Colm MacCarthaigh - Wrangling chaos: atoms of emergence
 
 * [YouTube](https://www.youtube.com/watch?v=60bqVu2HEOw)
 * Level 500 Chalk Talk. Not recorded at re:Invent. Colm MacCarthaigh ran the same session on Twitch after re:Invent and made a YouTube recording available.
@@ -481,7 +586,7 @@ export const handler = withDurableExecution(async (event: {orderId: string}, con
 * Layers. Eg. Front end -> middleware -> Storage. Retry amplification from retries at each layer. Clients give up, server side retries keep going, making it even worse when clients retry.
 * Can mitigate with back pressure, smaller timeout value for each successive layer, switch to LIFO queue of requests when system gets overloaded, idempotent requests so that retry can use result from prior request.
 
-# A tale of two transactions
+## Marc Brooker - A tale of two transactions
 
 * [YouTube](https://youtu.be/SNnUpYvBfow)
 * Marc Brooker comparing Aurora DSQL and Aurora PostgreSQL by looking at how transactions are handled in each system
