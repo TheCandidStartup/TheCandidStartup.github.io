@@ -406,36 +406,42 @@ Anti-patterns
 
 ### An insider's look into architecture choices for Amazon DynamoDB
 
+This is less about the specific choices made for DynamoDB and more about how choices are made and to help your team make choices for your application. The overriding theme is to establish common *tenets* for your team. Once the team has a shared understanding about your team's priorities and non-negotiables, you empower individual team members to make decisions for themselves.
+
+Sections of the presentation are presented as an argument between presenters which makes it hard to follow the thread.
+
 * [YouTube](https://youtu.be/4GKXx9vIqsk)
-* Not so much about the specific choices, more about how choices are made, help your team make choices for you application
 * Tenets: Context for team, shared understanding, priorities, how decisions are made
 * DynamoDB Tenets: Security, Durability, Availability, Predictable low latency (in that order)
-* Core concepts for distributed systems - multiple servers, replication, failure, coordination, routing. Confusingly presented as argument between the presenters. 
+* Core concepts for distributed systems: multiple servers, replication, failure, coordination, routing. 
 * What choices did DynamoDB make for Routing, Metadata management, Limits?
-* Routing
+
+Routing
 * Request goes to random request router via DNS and load balancers, spread across AZs with dedicated load balancer per AZ
 * Storage nodes have 3 replicas spread across 3 AZs
-* Correlated failures more likely across AZs, could lose load balancer, request routers and one storage node
+* Correlated failures more likely within AZs, could lose load balancer, request routers and one storage node
 * For availability want to spread requests across AZs: e.g. router in AZ1 calls storage in AZ2
-* For latency want to keep with AZ. Requests to AZ1 LB go to routers to AZ1 and take to storage node in AZ1
-* "Split horizon" DNS prefers addresses in same AZ as caller
+* For latency want to keep within AZ. Requests to AZ1 LB go to routers in AZ1 which talk to storage node in AZ1
+* Use "Split horizon" DNS to prefer addresses in same AZ as caller
 * Have to go cross AZ in case of failure. e.g. If router goes down in AZ2, LB has to send requests to AZ1 and AZ3. Static stability planning ensures each AZ has enough spare capacity provisioned to handle it's share of extra traffic if an AZ goes down.
 * What if one AZ receives significantly more traffic than others? Lots of DNS magic to try and keep it balanced. If too much traffic enters, LBs will send to other AZs to balance. 
 * Lots of complexity at database level to keep traffic balanced to storage nodes given different requirements for strong and weakly consistent reads for which storage nodes they can talk to. 
-* Metadata Management
+
+Metadata Management
 * Router has to validate caller identity, check caller has access to table, check you're within limits, work out which storage node cluster owns table, work out which partition within cluster you need to access
 * Storage node has to enforce rate limiting, retrieve right encryption key from KMS
 * Design goal is to do all of that within 10s of microseconds
 * While also coping with partition create, move, split and delete
 * Metadata system has to handle huge load
-* Could add cache to request router but now have situation where large fleet of servers is driving requests to small fleets. Very dangerous. If caches go stale, metadata system falls over.
+* Could add cache to request router but now have situation where large fleet of servers is driving requests to small fleet. Very dangerous. If caches go stale, metadata system falls over.
 * Added another layer of cache. Central, scalable, MemDS caching system. Control plane and storage nodes push updates to MemDS. Request routers still have local caches in front of MemDS.
-* Eventual consistent cache on top of eventual consistant cache.
+* Eventual consistent cache on top of eventual consistent cache.
 * All MetaData is versioned. Storage nodes are ultimate source of truth. If request router uses v20 cached metadata to talk to storage node it can tell router that's out of date and tell it where it moved partition to.
 * Hedging. If router has local cache miss, it makes two requests to different MemDS servers and uses first returned.
 * Constant work. Even if there's a local cache hit, make two requests to MemDS in background. Ensures MemDS can handle it if all caches go stale. 
 * Long-lived connections. Request router is caching data. Want high chance that more requests from same client use same request router. More DNS tricks + right sizing pool of routers.
-* Limits
+
+Limits
 * Limits exist to ensure predictable low latency given physical hardware constraints
 * 1000 write unit, 3000 read unit limit per partition
 * Why transaction and item size limits? Predictable low latency.
@@ -443,25 +449,27 @@ Anti-patterns
 
 ### Dive deep into Amazon DynamoDB
 
-* [YouTube](https://youtu.be/B05YpQ089w8)
-* Deep dive through the lens of two real world customer problems
-* Really engaging presentation
+This year's DynamoDB deep dive uses the lens of two real world customer problems. Each customer reports unexpected DynamoDB behavior to customer support. The development team have to figure out what's going on. 
 
-* The curious case of the throttled table
+It makes for a really engaging presentation, following along as more clues are unearthed, seeing if you can guess the solution before the end.
+
+* [YouTube](https://youtu.be/B05YpQ089w8)
+
+The curious case of the throttled table
 * Unexpected write throttling
 * System to manage collection of survey data
 * Legacy RDBMS system rewritten to DynmamoDB. Legacy system handled 600 TPS peak.
-* New system needs to handle 45000 TPS, seeing throttling 800 TPS
+* New system needs to handle 45000 TPS, seeing throttling at 800 TPS
 * Workflow: read a table and write to three tables
 * Privacy important. Separate PII and survey response tables, each with a random id (PiD,SiD). Tied together by entry in RandomID table (PK=PiD,SK=SiD) with restricted access. One way hash to map random id -> national user id.
-* App workflow: Generate random id (PiD,SiD pair), record PII and survey, update nation id to store hash(Pid,SiD)
+* App workflow: Generate random id (PiD,SiD pair), record PII and survey, update national id table to store hash(Pid,SiD)
 * Tables are scaled, PKs are high cardinality and random. How can this possibly result in write throttling?
-* RandomID and NationalID tables have GSIs. Hash -> nationalId, SiD -> PiD.
+* RandomID and NationalID tables have GSIs. SiD -> PiD, Hash -> nationalId, 
 * Item sizes are 500 bytes for PII, 2K for survey, 400 bytes for NationalId. All small.
 * Random Ids are generated in advance and populated in table. Statutory requirement to verify all ids are unique. Microservice that returns the next unused id by progressive paginated scan.
 * Where is throtlling? It's on the PII table.
 * DynamoDB scales horizontally, hash based partitioning of tables. Compute hash of primary keys, stored in sorted order, then partitioned.
-* Hash needs to be fast, have even distribution, be deterministic, avalanche (small change in value results in big unpredictable change to hash)
+* Hash needs to be fast, have even distribution, be deterministic, and avalanche (small change in value results in big unpredictable change to hash)
 * Problem is that RandomID and PII table have same PK AND pre-populating RandomId table stores them in sorted order on hash(PiD). 
 * Each id you retrieve has hash(pid) close to previous value. When you insert into PII table, you choose partition based on hash(pid). All your writes go into the first partition, then you move on and they all go into second partition, etc.
 * Unintended consequence of global deterministic hash. If hash was table specific wouldn't have been a problem. Intend to fix this in future.
@@ -470,12 +478,12 @@ Anti-patterns
 * Debugging throttling: Use throttled-keys-only with CloudWatch Contributor Insights (much cheaper than logging everything), new error codes with actionable detail
 * Multi-attribute keys for GSIs remove need for funky synthetic keys
 
-* The bizarre latency conundrum
+The bizarre latency conundrum
 * Customer that ran a big batch process once a day. Huge 2000X spike in traffic while process running. Low traffic interactive app rest of the time.
 * Latency is low and predictable during the batch process. Latency is high and unpredictable the rest of the time!
 * App has a few thousand app servers all accessing DynamoDB, enough to handle batch process load
 * Simulated similar traffic pattern and got same result.
-* Requests routed to LB -> Request Rooter -> Storage Node
+* Requests routed to LB -> Request Router -> Storage Node
 * Each request needs metadata which is cached
 * If connections are long lived and hit same router, get the benefit of cache
 * Problem is the 2000X difference in load. During batch process all app servers are busy, same app server makes multiple requests using same connection, gets the benefit of caching. Rest of the time, app servers are barely used. 10 TPS total. 
@@ -484,6 +492,10 @@ Anti-patterns
 
 ### DynamoDB: Resilience & lessons from the Oct 2025 service disruption
 
+Remember the big outage when AWS US East went down and broke the internet? It was caused by DynamoDB going down. Why did DynamoDB go down? It was DNS. Or more precisely, it was a bug in the DynamoDB control plane that misconfigured DNS so that dynamodb.us-east-1.api.aws resolved to zero IP addresses.
+
+This is the story of how it happened, in exhaustive detail.
+
 * [YouTube](https://youtu.be/YZUNNzLDWb8)
 * Security, Durability, Availability, Predictable Low Latency
 * Oct 20th failed to meet standard on Availability
@@ -491,7 +503,8 @@ Anti-patterns
 * Sharing Lessons Learned
 * DynamoDB was root cause of wider scale disruption
 * Problem was DNS returning zero IPs for clients wanting to connect to DynamoDB -> failure to connect
-* How DynamoDB uses DNS
+
+How DynamoDB uses DNS
 * Everything gets harder every time you scale up an order of magnitude
 * e.g. Single LB -> multiple LBs, multiple instance types across fleet rather than all the same.
 * 100s of LBS per region, 1000s of instances behind each LB.
@@ -512,7 +525,7 @@ Anti-patterns
 * Locking protocol is to delete record and then recreate with new timestamp (single transaction). Delete will fail if existing record isn't what you expect (someone else has lock). Works great.
 * If someone else holds lock, you backoff and retry. 
 * Building DNS alias tree: dynamodb.us-east-1.api.aws -> plan-101.ddb.aws -> lb-1, lb-2, ...
-* On change build plan-102 tree and then point top level alias at it when you're happy. Rollback is easy if you later find plan is back.
+* On change build plan-102 tree and then point top level alias at it when you're happy. Rollback is easy if you later find plan is bad.
 * Id for each record is a UUID. Nightmare for debugging ...
 * Lots of different top level endpoints, each with their own TXT record lock (simplest way to make it work in DNS).
 * Bug is a race condition between installing new plan and cleaning up old records
@@ -522,16 +535,18 @@ Anti-patterns
 * Record cleaner removes really old plans
 * Race between enactor 1 wanting to clean up old records after install plan 145, enactor 2 wants to install plan 146 and enactor 3 wants to install plan 110
 * Enactor 3 installs plan 110 and then enactor 1 immediately deletes it because its too old, leaving top record pointing at nothing
-* Installing old plan is OK because its an eventually consistent system, will soon write a newer plan on top
-* Problem is that system (top level pointing at nothing) is an inconsistent state. Protocol for writing new plan fails.
-* Mitigation
+* Installing old plan is OK because its an eventually consistent system, will soon write a newer plan on top. *Sounds weird to me. Why not check whether currently installed plan is newer and if so give up on old plan?*
+* Problem is that system (top level pointing at nothing) is in an inconsistent state. Protocol for writing new plan fails.
+
+Mitigation
 * Hundreds of alarms go off. One pointed directly at root cause but got lost in the noise.
 * All internal recovery procedures/tools assume that enactor can be used. Enactor is what broke.
 * Updated internal tooling and fixed DNS after 2.5 hours
 * Long recovery due to cached bad data
 * Froze DNS update in other regions
 * Fixed race after two days, rolling deploy over following week. DNS automation re-enabled.
-* Lessons learned
+
+Lessons learned
 * Splunking around in logs. So much cruft built up over the years. No nice neat audit trail.
 * Used AI (Amazon Q) to extract cause and effect, build up timeline of relevant events.
 * Testing races is difficult. Unit tests pass almost all the time.
@@ -556,18 +571,23 @@ Anti-patterns
 
 ## Colm MacCarthaigh - Wrangling chaos: atoms of emergence
 
+Chalk talks are the most technical (level 500) sessions at re:Invent. They aren't recorded. They started after I stopped attending re:Invent in person, so I've never seen one. This year, Colm MacCarthaigh repeated his chalk talk on Twitch, and uploaded a recording to YouTube.
+
+Time to find out what I've been missing out on.
+
 * [YouTube](https://www.youtube.com/watch?v=60bqVu2HEOw)
-* Level 500 Chalk Talk. Not recorded at re:Invent. Colm MacCarthaigh ran the same session on Twitch after re:Invent and made a YouTube recording available.
 * Emergence: Complex property that emerges from what should be a simple system
-* Scope is request/response distributed systems
+* Scope of talk is request/response distributed systems
+
+Control system theory
 * Control system theory useful for achieving a stable system
-* Have a target value and current value. Difference between the two is the error. Control system should make changes proportional to the size of the error.
-* Controller works better if it takes into account the history of the error (effectively the integral of current value over time). cf. Energy integral in heat pump controls.
-* Final refinement is to add adjustment proportional to the slope of the error (effectively the derivative of current value over time).
+* Have a target value and current value. Difference between the two is the error. Control system should make changes Proportional to the size of the error.
+* Controller works better if it takes into account the history of the error (effectively the Integral of error over time). cf. Energy integral in [heat pump controls]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}).
+* Final refinement is to add adjustment proportional to the slope of the error (effectively the Derivative of current value over time).
 * Control theory says you need all three for system to be stable. This is a PID controller.
 * Problem is sudden shocks. Classic example of car going down hill in icy weather. Put foot on brake to slow down. If you push too hard, wheels can lock up and the car speeds up. Have to take foot off brake.
 * Similar problem can happen in request/response systems in overload conditions. Common approach is to start throttling requests if you detect overload. Sometimes that can make things much worse.
-* In real world systems requests don't come in randomly, usually correlated. 
+* In real world systems requests don't come in randomly, they're usually correlated. 
 * e.g. Clients often make a chain of requests (abandon when one fails), with a retry loop around them.
 * Graph of number of requests vs throttling rate (percentage of requests that are rejected). No retries.
 * Binomial distribution with all requests in chain made at 0% throttling and 1 request made (the first in the chain) at 100% throttling. As you increase the rate of throttling the number of requests made goes down. Exactly what you'd expect.
@@ -581,15 +601,16 @@ Anti-patterns
 * Or fix on client side using global token bucket for all requests on client (implemented in AWS SDK).
 * Crazy that CS degrees don't include control theory. Book recommendation: Designing Distributed Control Systems.
 
-* Triggers for metastable behavior
+Triggers for metastable behavior
 * Caching. In normal usage only small proportion of requests go to origin. If cache restarts, they all do. Often origin can't keep up. Simple fix is to always call origin (cache just used to improve latency). Saw this with DynamoDB. Alternative is some sort of back pressure system to slow caller down.
 * Layers. Eg. Front end -> middleware -> Storage. Retry amplification from retries at each layer. Clients give up, server side retries keep going, making it even worse when clients retry.
 * Can mitigate with back pressure, smaller timeout value for each successive layer, switch to LIFO queue of requests when system gets overloaded, idempotent requests so that retry can use result from prior request.
 
 ## Marc Brooker - A tale of two transactions
 
+This is advertised as a comparison between Aurora DSQL and Aurora PostgreSQL by looking at how transactions are handled in each system. In practice, it's a broad review of how databases have historically implemented different isolation levels and the the implications of those choices. Eventually, it gets into a little bit of detail on DSQL and PostgreSQL choices, but this section feels rushed.
+
 * [YouTube](https://youtu.be/SNnUpYvBfow)
-* Marc Brooker comparing Aurora DSQL and Aurora PostgreSQL by looking at how transactions are handled in each system
 * Isolation levels are a trade off between where we add complexity for application programmers: achieving correctness or achieving performance.
 * Stronger isolation -> easier to achieve correctness but lower concurrency, lower throughput, high availability is hard. Very dependent on traffic patterns.
 * Weak isolation -> in theory get better concurrency and performance but in practice dealing with correctness issues at application level makes it even slower.
@@ -604,7 +625,8 @@ Anti-patterns
 * Serializable isolation cost depends on number of reads and writes
 * Serializable pushes complexity onto application programmer as they have to minimize number of reads in a transaction to achieve good performance / avoid contention
 * Relative performance of different isolation levels depends entirely on your application's data access patterns. No panacea.
-* Aurora PostgreSQL vs DSQL for snapshot isolation
+
+Aurora PostgreSQL vs DSQL for snapshot isolation
 * PostgreSQL uses MVCC. Version of each row for each transaction. 
 * Needs to keep track of all versions between lowest xid (all lower are committed) and highest xid (all transactions higher still running)
 * Lots of global coordination needed - fine for single server implementation
