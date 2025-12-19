@@ -6,6 +6,7 @@ tags: aws
 wise words
 
 * What's the full set of features?
+* Looks like a Lambda specific version of [Temporal](https://docs.temporal.io/evaluate/understanding-temporal#durable-execution)
 * How does it compare vs STEP or rolling your own durability on top of SQS/DynamoDB/S3?
 * How does the pricing stack up?
 
