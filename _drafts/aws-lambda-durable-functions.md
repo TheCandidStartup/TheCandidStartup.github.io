@@ -48,13 +48,15 @@ Step functions
 
 # Implications
 
-* 3X cheaper than STEP functions
+* Between 3X cheaper and 3X more expensive than STEP functions depending on checkpoint size
+* Charge for data written sneaks up on you, no separate charge with STEP functions, STEP is cheaper once checkpoints bigger than 68KB.
 * STEP encourages finer-grained workflows so often even more expensive
 * Complex multi-state control logic in STEP turns into code running in a durable function
 * Easy to make steps coarser so you need less operations at the cost of more work to redo from last checkpoint on failure
 * With Durable functions you're paying separately for the underlying compute but control logic doesn't need much
 * Interesting choices when calling out to external services. Do you make the call and leave the Lambda running until you get a response, or structure as a callback and shutdown the Lambda while waiting for a response?
 * Using a callback needs an external service that is willing to call you back. Tight coupling. Cost is at least two operations, which is equivalent to a GB-second of compute. For a reasonably sized Lambda and external service with acceptable latency, it will be cheaper and faster just to make the request and leave the Lambda running while you wait. If you can overlap the IO with some useful compute, even better. Only makes sense if you're waiting for some long running job or a human in the loop. 
+* If you have large state you will need custom serializers and write most of it to S3. Cheaper once checkpoints over 20KB.
 
 # Rolling your own
  
@@ -83,3 +85,13 @@ Step functions
 | 8KB | $10 | $5.40 | $8 | $0.65 |
 | 64KB | $24 | $6.025 | $8 | $0.925 |
 | 256KB | $72 | $6.025 | $8 | $0.925 |
+
+# Function Versions
+
+* Durable functions ensures that replays use the same version of the function as the initial invocation
+* This is a pain to replicate when rolling your own
+* Easy enough to identify which version was active when message added to queue by including the version as a message field
+* However, you can't define an event source mapping that directs to different versions of the Lambda function
+* Could use a router Lambda function which forwards to the version specific Lambda, but it has to sit there and wait for response
+* More heavyweight approach is to use a separate SQS queue for each Lambda version. Add message to the queue for the latest version. Delete queues for old versions once empty. Can use SNS+filter to map the message to the right queue, or make it the producer's responsibility.
+* Or make it the Lambda function's responsibility to cope with older versions of messages. At extreme end, each deploy include multiple copies of the code with a switch on entry to dispatch to the right version. 
