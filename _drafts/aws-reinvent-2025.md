@@ -5,7 +5,7 @@ tags: aws
 
 Once again, I spent the week after re:Invent gorging on [YouTube videos](https://reinvent.awsevents.com/on-demand/) at 1.5x speed. I'm using the same approach as [last year]({% link _posts/2024-12-20-aws-reinvent-2024.md %}) to find more nuggets of gold and less corporate filler. That is, get a list of new announcements from the keynotes, then look for technical sessions on the interesting stuff. Finally, look for technical presentations from speakers I know are good.
 
-Unlike last year, there's no keynote highlights video, so I'll need to skip through the customer segments and AI hype myself. It looks like there's so much AI slop that lots of interesting stuff was announced in the week *before* re:Invent. 
+Unlike last year, there's no keynote highlights video, so I'll need to skip through the customer segments and AI hype myself. It looks like there's so much AI slop that lots of interesting stuff had to be announced in the week *before* re:Invent. 
 
 # Keynotes
 
@@ -458,7 +458,7 @@ It makes for a really engaging presentation, following along as more clues are u
 The curious case of the throttled table
 * Unexpected write throttling
 * System to manage collection of survey data
-* Legacy RDBMS system rewritten to DynmamoDB. Legacy system handled 600 TPS peak.
+* Legacy RDBMS system rewritten to DynamoDB. Legacy system handled 600 TPS peak.
 * New system needs to handle 45000 TPS, seeing throttling at 800 TPS
 * Workflow: read a table and write to three tables
 * Privacy important. Separate PII and survey response tables, each with a random id (PiD,SiD). Tied together by entry in RandomID table (PK=PiD,SK=SiD) with restricted access. One way hash to map random id -> national user id.
@@ -467,7 +467,7 @@ The curious case of the throttled table
 * RandomID and NationalID tables have GSIs. SiD -> PiD, Hash -> nationalId, 
 * Item sizes are 500 bytes for PII, 2K for survey, 400 bytes for NationalId. All small.
 * Random Ids are generated in advance and populated in table. Statutory requirement to verify all ids are unique. Microservice that returns the next unused id by progressive paginated scan.
-* Where is throtlling? It's on the PII table.
+* Where is throttling? It's on the PII table.
 * DynamoDB scales horizontally, hash based partitioning of tables. Compute hash of primary keys, stored in sorted order, then partitioned.
 * Hash needs to be fast, have even distribution, be deterministic, and avalanche (small change in value results in big unpredictable change to hash)
 * Problem is that RandomID and PII table have same PK AND pre-populating RandomId table stores them in sorted order on hash(PiD). 
@@ -608,7 +608,7 @@ Triggers for metastable behavior
 
 ## Marc Brooker - A tale of two transactions
 
-This is advertised as a comparison between Aurora DSQL and Aurora PostgreSQL by looking at how transactions are handled in each system. In practice, it's a broad review of how databases have historically implemented different isolation levels and the the implications of those choices. Eventually, it gets into a little bit of detail on DSQL and PostgreSQL choices, but this section feels rushed.
+This is advertised as a comparison between Aurora DSQL and Aurora PostgreSQL by looking at how transactions are handled in each system. In practice, it's a broad review of how databases have historically implemented different isolation levels and the implications of those choices. Eventually, it gets into a little bit of detail on DSQL and PostgreSQL choices, but this section feels rushed.
 
 * [YouTube](https://youtu.be/SNnUpYvBfow)
 * Isolation levels are a trade off between where we add complexity for application programmers: achieving correctness or achieving performance.
