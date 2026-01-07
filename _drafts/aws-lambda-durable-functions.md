@@ -11,7 +11,67 @@ You divide your function into separate steps which checkpoint their progress as 
 
 You can think of Lambda Durable Functions as a serverless implementation of [Temporal](https://docs.temporal.io/evaluate/understanding-temporal#durable-execution), built on top of the existing AWS Lambda platform.
 
-# Example Durable Function
+# SDK
+
+* The initial release of Durable Functions includes [SDKs](https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-sdk.html). For JavaScript, TypeScript and Python. NodeJS and Python runtimes are supported.
+* The SDK includes Step, Wait and Callback primitives.
+* You can write idiomatic async/await code to define a workflow that chains together multiple steps
+
+```ts
+import { DurableContext, withDurableExecution } from "@aws/durable-execution-sdk-js";
+
+export const handler = withDurableExecution(
+  async (event: any, context: DurableContext) => {
+    
+    const step1Output = await context.step("step1", async () => {
+      return await doStep1(event.input);
+    });
+    
+    const step2Output = await context.step("step2", async () => {
+      return await doStep2(step1Output);
+    });
+    
+    // Create shipment
+    const step3Output = await context.step("step3", async () => {
+      return await doStep3(step2Output);
+    });
+    
+    return step3Output.results;
+  }
+);
+```
+
+* The SDK automatically checkpoints each step by serializing the return value.
+* The SDK also supports more complex workflow patterns including Parallel execution, Mapping steps over collections, Child contexts, and Composition of multiple durable functions.
+
+# Retries
+
+* Durable functions [automatically retry](https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-sdk-retries.html) failing steps.
+* Need to configure an appropriate retry strategy for each step (optional third argument to `context.step`)
+* Don't rely on the defaults
+* Retry strategy is invoked when an exception is thrown within a step
+* Strategy determines whether to retry and how long to delay before retry occurs
+
+```ts
+  const step1Output = await context.step("step1", async () => {
+    return await doStep1(event.input);
+  }, {
+    retryStrategy: (error, attemptCount) => {
+      if (attemptCount >= 5) {
+        return { shouldRetry: false };
+      }
+      // Exponential backoff: 2s, 4s, 8s, 16s, 32s (capped at 300s)
+      const delay = Math.min(2 * Math.pow(2, attemptCount - 1), 300);
+      return { shouldRetry: true, delay: { seconds: delay } };
+    }
+  });
+```
+
+* Typical strategy would limit number of retries and use exponential backoff and jitter
+* May want to change strategy depending on type of error
+* SDK implements retry by checkpointing the retry state, exiting the current Lambda invocation and requesting a restart after the specified delay. The durable function service starts a new Lambda invocation which loads the retry checkpoint and checkpoints from previous steps.
+* Your Lambda handler is executed from the top, but the SDK short circuits any completed steps, immediately returning the checkpointed value rather than executing the step again. Meaningful execution resumes from the failed step. 
+* This approach only works if all control logic outside each step is deterministic.
 
 # Lambda Pricing
 
@@ -34,7 +94,68 @@ Lambda Durable Functions
 
 # STEP Functions
 
-# Example STEP Function
+* AWS STEP functions is an existing serverless service that provides durable workflows.
+* Going further back in time, there's also AWS SWF (Simple Workflow Service).
+* STEP functions were billed as a simpler, serverless replacement for SWF.
+* At a high level, there's a high degree of overlap between STEP functions and Lambda durable functions.
+* Both support durable workflows lasting up to a year, with automated retries
+
+# Amazon States Language
+
+* In STEP functions, workflows are defined declaratively using the [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) DSL.
+* Workflows are structured as state machines. Each state performs some action using input passed from the previous state and generating output passed to subsequent states. 
+* Transitions specify how control passes from one state to another.
+* The state machine includes Task and Wait primitives. Tasks can interact directly with supported AWS services, execute Lambda functions and call arbitrary https APIs.
+
+```json
+{
+  "StartAt": "Step1",
+  "States": {
+    "Step1": {
+      "Type": "Task",
+      "Resource": "arn...doStep1",
+      "InputPath": "$.Input",
+      "Next": "Step2"
+    }
+    "Step2": {
+      "Type": "Task",
+      "Resource": "arn...doStep2",
+      "Next": "Step3"
+    }
+    "Step3": {
+      "Type": "Task",
+      "Resource": "arn...doStep3",
+      "OutputPath": "$.Results",
+      "End": true
+    }
+  }
+}
+```
+
+* A large part of the states language is concerned with specifying how to extract the values that a task needs from the input to the state and in turn map results from the task to the output of the state. In contrast, this is just regular code in Lambda durable functions.
+
+# Retries
+
+* Failing tasks can be automatically retried based on a declared error strategy
+
+```json
+  "Step1": {
+    "Type": "Task",
+    "Resource": "arn...doStep1",
+    "InputPath": "$.Input",
+    "Next": "Step2",
+    "Retry": {
+      "ErrorEquals": [ "States.ALL" ],
+      "MaxAttempts": 5,
+      "IntervalSeconds": 2,
+      "BackoffRate": 2
+    }
+  }
+```
+
+* Declare multiple different strategies for different errors rather than match all value of `States.ALL`.
+* Standard retry patterns provided, just declare what you want rather than writing code for it.
+* On the other hand, you're limited to what's provided. In Lambda durable functions you implement retry as code and have full flexibility to do what you like.
 
 # STEP Pricing
 
