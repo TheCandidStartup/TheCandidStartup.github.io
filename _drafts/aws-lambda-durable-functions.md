@@ -3,7 +3,7 @@ title: AWS Lambda Durable Functions
 tags: aws
 ---
 
-Lambda functions work best for short lived, compute intensive tasks. An individual Lambda invocation is limited to 15 minutes at most. You pay for the time the function is running, including when it's waiting for IO to complete. If the function fails, you will need some external process that retries it later. Durable functions address these weaknesses. 
+[Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) functions work best for short lived, compute intensive tasks. An individual Lambda invocation is limited to 15 minutes at most. You pay for the time the function is running, including when it's waiting for IO to complete. If the function fails, you will need some external process that retries it later. [Lambda Durable Functions](https://docs.aws.amazon.com/lambda/latest/dg/durable-functions.html) address these weaknesses. 
 
 The name is slightly misleading. It's still a Lambda function with all the same limits per invocation. The trick is that the function will be invoked repeatedly until complete. That includes retries for failures, restarts after waiting for an external process, and restarts because the current invocation ran out of time. 
 
@@ -13,9 +13,9 @@ You can think of Lambda Durable Functions as a serverless implementation of [Tem
 
 # SDK
 
-* The initial release of Durable Functions includes [SDKs](https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-sdk.html). For JavaScript, TypeScript and Python. NodeJS and Python runtimes are supported.
-* The SDK includes Step, Wait and Callback primitives.
-* You can write idiomatic async/await code to define a workflow that chains together multiple steps
+The initial release of Durable Functions includes [SDKs](https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-sdk.html) for JavaScript, TypeScript and Python. NodeJS and Python runtimes are supported.
+
+The SDK includes Step, Wait and Callback primitives. You can write idiomatic async/await code to define a workflow that chains together multiple steps.
 
 ```ts
 import { DurableContext, withDurableExecution } from "@aws/durable-execution-sdk-js";
@@ -41,16 +41,13 @@ export const handler = withDurableExecution(
 );
 ```
 
-* The SDK automatically checkpoints each step by serializing the return value.
-* The SDK also supports more complex workflow patterns including Parallel execution, Mapping steps over collections, Child contexts, and Composition of multiple durable functions.
+The SDK automatically checkpoints each step by serializing the return value. The SDK also supports more complex workflow patterns including Parallel execution, Mapping steps over collections, Child contexts, and Composition of multiple durable functions. Your code implements whatever logic you want to control the flow of execution from step to step. 
 
 # Retries
 
-* Durable functions [automatically retry](https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-sdk-retries.html) failing steps.
-* Need to configure an appropriate retry strategy for each step (optional third argument to `context.step`)
-* Don't rely on the defaults
-* Retry strategy is invoked when an exception is thrown within a step
-* Strategy determines whether to retry and how long to delay before retry occurs
+Durable functions [automatically retry](https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-sdk-retries.html) failing steps. Each step is configured with a retry strategy. There is a default but you absolutely shouldn't rely on it. Configure your own appropriate strategy for each step via the optional third argument to  `context.step`.
+
+The retry strategy is invoked when an exception is thrown within a step. The strategy determines whether to retry and how long to delay before the retry occurs.
 
 ```ts
   const step1Output = await context.step("step1", async () => {
@@ -67,13 +64,17 @@ export const handler = withDurableExecution(
   });
 ```
 
-* Typical strategy would limit number of retries and use exponential backoff and jitter
-* May want to change strategy depending on type of error
-* SDK implements retry by checkpointing the retry state, exiting the current Lambda invocation and requesting a restart after the specified delay. The durable function service starts a new Lambda invocation which loads the retry checkpoint and checkpoints from previous steps.
-* Your Lambda handler is executed from the top, but the SDK short circuits any completed steps, immediately returning the checkpointed value rather than executing the step again. Meaningful execution resumes from the failed step. 
-* This approach only works if all control logic outside each step is deterministic.
+A typical strategy would limit the maximum number of retries and use exponential backoff and jitter. You can use the `error` object to alter your strategy depending on the type of error. 
 
-# Lambda Pricing
+The SDK implements retry by checkpointing the retry state, exiting the current Lambda invocation and requesting a restart after the specified delay. The durable function service starts a new Lambda invocation which loads the retry checkpoint together with the checkpoints from previous steps.
+
+Your Lambda handler is executed from the top, but the SDK short circuits any completed steps, immediately returning the checkpointed value rather than executing the step again. Meaningful execution resumes from the failed step.
+
+This approach only works if all control logic outside each step is deterministic. It also assumes steps have no side channels or side effects which impact the behavior of later steps.
+
+# Pricing
+
+You pay the normal costs for each Lambda function invocation as well as additional costs for checkpoints and retries.
 
 Lambda
 * 1M requests and 400k GB-seconds of compute free per month
@@ -82,15 +83,16 @@ Lambda
 Lambda Durable Functions
   * No explicit free tier benefits
   * Durable operations (steps, waits, callbacks) at $8.00/M
-  * Each retry of a step counts as another operation, callbacks are at least 2 operations (one to create, one to process result)
   * Data written (persisted from durable ops) $0.25/GB, or $0.25/M (1KB write)
   * Data retained (during execution and afterwards) at $0.15/GB-month
-  * Max checkpoint size is 256KB - use S3 or DynamoDB for large checkpoints
-  * For compound operations, if more than 256KB is returned, result isn't stored and is reconstructed from sub-operation results on replay
 
-* Interesting choices when calling out to external services. Do you make the call and leave the Lambda running until you get a response, or structure as a callback and shutdown the Lambda while waiting for a response?
-* Using a callback needs an external service that is willing to call you back. Tight coupling. Cost is at least two operations, which is equivalent to a GB-second of compute. For a reasonably sized Lambda and external service with acceptable latency, it will be cheaper and faster just to make the request and leave the Lambda running while you wait. If you can overlap the IO with some useful compute, even better. Only makes sense if you're waiting for some long running job or a human in the loop. 
-* If you have large state you will need custom serializers and write most of it to S3. Cheaper once checkpoints over 20KB.
+Each retry of a step counts as another operation. Callbacks require at least 2 operations (one to create the callback, one to process the result).
+
+The maximum checkpoint size is 256KB. Use a custom serializer to write data to S3 or DynamoDB for large checkpoints. Using S3 will be cheaper once checkpoints are over 20KB. For compound operations, if more than 256KB is returned, the result isn't stored. Instead, on retry, the compound result is reconstructed from sub-operation results.
+
+There are interesting choices when calling out to external services. Do you make the call and leave the Lambda running until you get a response, or structure the interaction as a callback and shutdown the Lambda while waiting for a response?
+
+Using a callback needs an external service that is willing to call you back. The cost is at least two operations, which is equivalent to a GB-second of compute. For a reasonably sized Lambda and external service with acceptable latency, it will be cheaper and faster just to make the request and leave the Lambda running while you wait. If you can overlap the IO with some useful compute, even better. Callbacks only makes sense if you're waiting for some long running job or a human in the loop.
 
 # STEP Functions
 
@@ -133,6 +135,7 @@ Lambda Durable Functions
 ```
 
 * A large part of the states language is concerned with specifying how to extract the values that a task needs from the input to the state and in turn map results from the task to the output of the state. In contrast, this is just regular code in Lambda durable functions.
+* The states language also supports more complex workflow patterns including Parallel execution, Maps, and Choices.
 
 # Retries
 
@@ -166,16 +169,18 @@ Step functions
 
 # Durable Functions vs STEP
 
-* Between 3X cheaper and 3X more expensive than STEP functions depending on checkpoint size
-* Charge for data written sneaks up on you, no separate charge with STEP functions, STEP is cheaper once checkpoints bigger than 68KB.
-* STEP encourages finer-grained workflows so often even more expensive
-* Complex multi-state control logic in STEP turns into code running in a durable function
-* Easy to make steps coarser so you need less operations at the cost of more work to redo from last checkpoint on failure
-* With Durable functions you're paying separately for the underlying compute but control logic doesn't need much
+My first reaction was shock at how much more expensive STEP functions are. A STEP state transition is more than 3 times the price of a Lambda Durable Functions step. However, it's not an equivalent comparison. Lambda Durable Functions has a separate charge for checkpointing the output of each step. This is included in the transition charge with STEP. STEP becomes cheaper once checkpoints are over 68KB. 
 
+On the other hand, STEP encourages finer-grained workflows. You can end up with separate tasks for each interaction with an external service, with control logic implemented using multiple Choice tasks. That's a lot of transitions.
+
+Complex multi-state control logic in STEP turns into code running in a durable function. It's easy to make steps coarser so you need less operations, at the cost of more work to redo on failure. With Durable Functions you're paying separately for the underlying compute but control logic doesn't need much compute. If you're willing to provide your own custom checkpoint serialization and store data over 20KB in S3, you can ensure that per step costs are no worse than half the price of a STEP function transition.
+
+The best use case for STEP functions is workflows combining multiple AWS services. The simplicity, integration and observability may well be worth the higher cost. In cases where you're using STEP to orchestrate calls across application Lambda functions, it's a no-brainer to combine them into one Durable Function and eliminate the dependency on STEP. 
 
 # Roll Your Own
  
+Durable Functions is built on top of normal Lambda function invocations. It's always interesting to think through what it would take to build something equivalent yourself. Would it be more flexible or better fitted to your needs? How do the costs compare? Is the pricing for Durable Functions a fair reflection of the value being provided?
+
 * Fundamental operations are checkpoint and replay
 * Replay is easily achieved by putting an SQS queue in front of a regular Lambda function
 * Use `ReportBatchItemFailures` so that you can return explicit response for each message. Unless you say message has been successfully processed it will be redelivered triggering another invocation.
@@ -186,6 +191,23 @@ Step functions
 * For checkpoints up to 8KB write to DynamoDB directly, otherwise write important properties to DynamoDB and put the body in an S3 object.
 * Use a new item for each checkpoint (durable function invocation id in  partition key, checkpoint sequence id in sort key)
 * Can read complete checkpoint log with a single Query (up to 1MB of response).
+
+# De-Duplicating Function Invocations
+
+* Durable functions ensures only one running function invocation at a time
+* External requests are de-duplicated
+* Once a step starts running there won't be any repeat of earlier steps as retry will restart from checkpoint
+* Steps need to be idempotent because they can be retried after failure, but you can be sure that a step won't be run again once it has completed and checkpointed. 
+
+* Standard SQS queue has at least once semantics for message processing. Which means a message could be processed more than once, which is equivalent to multiple running function invocations
+* Also nothing that prevents client retries from adding duplicated messages to queue
+* Options
+  1. Function is deterministic and idempotent. Doesn't matter if there are duplicates. You may have some cases like this but not generally possible.
+  2. De-duplicate step completion. Checkpoint at end of step uses conditional write and bails out if duplicate invocation. May get code for earlier steps running concurrently with later ones before bail out.
+  3. Step leases. At start of STEP create DynamoDB entry with expiry as a lease (expiry < message visibility timeout). If you fail to get lease, bail out.  At end of step use conditional write on lease valid to replace lease with checkpoint. If someone else has lease bail out. If step fails, lease expires, then message visibility timeout expires, message redelivered with lease available.
+  4. Use SQS FIFO queues for exactly-once semantics and 5 minute de-duplication window in exchange for 25% higher cost and lower throughput. Still have problem that there may be failure between writing checkpoint and deleting message from SQS which will result in message being delivered again.
+
+FIFO queues always seem to have some gotcha that prevents them from being an easy solution. My preference would be a combination of option 2 and 3. Option 2 doesn't cost any extra, so do it as standard. For many steps that may be enough. For any steps where you need stronger guarantees, use Option 3. 
 
 # Roll Your Own Pricing
 
@@ -207,6 +229,7 @@ S3
 * $0.023/GB-month storage
 
 * Basic operation cost (checkpoint)
+  * Create lease in DynamoDB: $0.625/M
   * Checkpoint metadata to DynamoDB: $0.625/M per KB
   * Checkpoint body to S3: $5.0/M
   * Visibility Timeout: $0.4/M
@@ -219,25 +242,12 @@ S3
 
 | Checkpoint Size | Durable Checkpoint Cost/M | Own Checkpoint Cost/M | Durable Retry Cost/M | Own Retry Cost/M |
 |-|-|-|
-| 1KB | $8.25 | $1.025 | $8 | $0.525 |
-| 8KB | $10 | $5.40 | $8 | $0.65 |
-| 64KB | $24 | $6.025 | $8 | $0.925 |
-| 256KB | $72 | $6.025 | $8 | $0.925 |
+| 1KB | $8.25 | $1.65 | $8 | $0.525 |
+| 8KB | $10 | $6.025 | $8 | $0.65 |
+| 20KB | $13 | $6.65 | $8 | $0.925 |
+| 20KB+ | $13.25 | $6.65 | $8 | $0.925 |
 
-# De-Duplicating Function Invocations
-
-* Steps need to be idempotent because they can be retried after failure
-* Durable functions ensures only one running function invocation at a time
-* External requests are de-duplicated
-* Once a step starts running there won't be any repeat of earlier steps as retry will restart from checkpoint
-
-* Standard SQS queue has at least once semantics for message processing which is equivalent to multiple running function invocations
-* Also nothing that prevents client retries from adding duplicated messages to queue
-* Options
-  * Function is deterministic and idempotent. Doesn't matter if there are duplicates.
-  * De-duplicate step completion. Checkpoint at end of step checks if already done, if so bails out duplicate invocation. May get code for earlier steps running concurrently with later ones before bail out.
-  * Step leases. At start of STEP create DynamoDB entry with expiry as a lease (expiry < message visibility timeout>). If you fail to get lease, bail out. If step fails, lease expires, then message visibility timeout expires, message redelivered with lease available.
-  * Use SQS FIFO queues for exactly-once semantics and 5 minute de-duplication window in exchange for double the cost and lower throughput 
+Using S3 for checkpoints when cheaper (8KB+ for roll your own, 20KB+ for Durable Functions)
 
 # Function Versions
 
