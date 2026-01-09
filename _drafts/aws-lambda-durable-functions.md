@@ -96,18 +96,15 @@ Using a callback needs an external service that is willing to call you back. The
 
 # STEP Functions
 
-* AWS STEP functions is an existing serverless service that provides durable workflows.
-* Going further back in time, there's also AWS SWF (Simple Workflow Service).
-* STEP functions were billed as a simpler, serverless replacement for SWF.
-* At a high level, there's a high degree of overlap between STEP functions and Lambda durable functions.
-* Both support durable workflows lasting up to a year, with automated retries
+[AWS STEP functions](https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html) is an existing serverless service that provides durable workflows. Going further back in time, there's also AWS SWF (Simple Workflow Service). STEP functions were billed as a simpler, serverless replacement for SWF.
+
+At a high level, there's a high degree of overlap between STEP functions and Lambda durable functions. Both support durable workflows lasting up to a year, with automated retries.
 
 # Amazon States Language
 
-* In STEP functions, workflows are defined declaratively using the [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) DSL.
-* Workflows are structured as state machines. Each state performs some action using input passed from the previous state and generating output passed to subsequent states. 
-* Transitions specify how control passes from one state to another.
-* The state machine includes Task and Wait primitives. Tasks can interact directly with supported AWS services, execute Lambda functions and call arbitrary https APIs.
+In STEP functions, workflows are defined declaratively using the [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) DSL. Workflows are structured as state machines. Each state performs some action using input passed from the previous state and generating output passed to subsequent states. Transitions specify how control passes from one state to another.
+
+The state machine includes Task and Wait primitives. Tasks can interact directly with supported AWS services, execute Lambda functions and call arbitrary https APIs.
 
 ```json
 {
@@ -134,12 +131,11 @@ Using a callback needs an external service that is willing to call you back. The
 }
 ```
 
-* A large part of the states language is concerned with specifying how to extract the values that a task needs from the input to the state and in turn map results from the task to the output of the state. In contrast, this is just regular code in Lambda durable functions.
-* The states language also supports more complex workflow patterns including Parallel execution, Maps, and Choices.
+A large part of the states language is concerned with specifying how to extract the values that a task needs from the input to the state and in turn map results from the task to the output of the state. In contrast, this is just regular code in Lambda durable functions. The states language also supports more complex workflow patterns including Parallel execution, Maps, and Choices.
 
 # Retries
 
-* Failing tasks can be automatically retried based on a declared error strategy
+Failing tasks can be automatically retried based on a declared error strategy.
 
 ```json
   "Step1": {
@@ -156,16 +152,15 @@ Using a callback needs an external service that is willing to call you back. The
   }
 ```
 
-* Declare multiple different strategies for different errors rather than match all value of `States.ALL`.
-* Standard retry patterns provided, just declare what you want rather than writing code for it.
-* On the other hand, you're limited to what's provided. In Lambda durable functions you implement retry as code and have full flexibility to do what you like.
+You can declare multiple different strategies for specific errors rather than matching all of them with the special case `States.ALL` value. Standard retry patterns are provided, just declare what you want rather than writing code for it. On the other hand, you're limited to what's provided. In Lambda durable functions you implement retry as code and have full flexibility to do what you like.
 
 # STEP Pricing
 
-Step functions
+The STEP pricing model is much simpler than Lambda Durable Functions. You pay for each transition made from one state to another during execution of your state machine. Each retry counts as an additional transition.
 * 4000 state transitions free per month
 * $25/M state transitions
-* Max input/output from a state 256KB
+
+ Like Durable Functions, the maximum input and output from a state is 256KB.
 
 # Durable Functions vs STEP
 
@@ -181,31 +176,29 @@ The best use case for STEP functions is workflows combining multiple AWS service
  
 Durable Functions is built on top of normal Lambda function invocations. It's always interesting to think through what it would take to build something equivalent yourself. Would it be more flexible or better fitted to your needs? How do the costs compare? Is the pricing for Durable Functions a fair reflection of the value being provided?
 
-* Fundamental operations are checkpoint and replay
-* Replay is easily achieved by putting an SQS queue in front of a regular Lambda function
-* Use `ReportBatchItemFailures` so that you can return explicit response for each message. Unless you say message has been successfully processed it will be redelivered triggering another invocation.
-* Set the message visibility timeout to implement simple time based waits
-* For callback, set visibility timeout to callback timeout. Provide an API that external service calls on callback that sets the visibility timeout to zero.
-* Supports max lifetime of 14 days. For more will need to enqueue a new message when original gets close to maximum lifetime. 
-* For checkpoint save current state to DynamoDB and/or S3. Read state of execution whenever function invoked.
-* For checkpoints up to 8KB write to DynamoDB directly, otherwise write important properties to DynamoDB and put the body in an S3 object.
-* Use a new item for each checkpoint (durable function invocation id in  partition key, checkpoint sequence id in sort key)
-* Can read complete checkpoint log with a single Query (up to 1MB of response).
+The fundamental operations needed are checkpoint and replay. The simplest way to provide replay is to put an SQS queue in front of a regular Lambda function. If your function fails, SQS will redeliver the message after a visibility timeout. You can set the message visibility timeout before failing to implement simple time based waits. 
 
-# De-Duplicating Function Invocations
+For callbacks, set the visibility timeout to match the callback timeout. Provide an API that the external service can call back to which sets the visibility timeout to zero.
 
-* Durable functions ensures only one running function invocation at a time
-* External requests are de-duplicated
-* Once a step starts running there won't be any repeat of earlier steps as retry will restart from checkpoint
-* Steps need to be idempotent because they can be retried after failure, but you can be sure that a step won't be run again once it has completed and checkpointed. 
+SQS supports a maximum lifetime of 14 days. If you need longer, your Lambda function can enqueue a new message when the original message gets close to the maximum lifetime. 
 
-* Standard SQS queue has at least once semantics for message processing. Which means a message could be processed more than once, which is equivalent to multiple running function invocations
-* Also nothing that prevents client retries from adding duplicated messages to queue
-* Options
-  1. Function is deterministic and idempotent. Doesn't matter if there are duplicates. You may have some cases like this but not generally possible.
-  2. De-duplicate step completion. Checkpoint at end of step uses conditional write and bails out if duplicate invocation. May get code for earlier steps running concurrently with later ones before bail out.
-  3. Step leases. At start of STEP create DynamoDB entry with expiry as a lease (expiry < message visibility timeout). If you fail to get lease, bail out.  At end of step use conditional write on lease valid to replace lease with checkpoint. If someone else has lease bail out. If step fails, lease expires, then message visibility timeout expires, message redelivered with lease available.
-  4. Use SQS FIFO queues for exactly-once semantics and 5 minute de-duplication window in exchange for 25% higher cost and lower throughput. Still have problem that there may be failure between writing checkpoint and deleting message from SQS which will result in message being delivered again.
+Checkpoints can be implemented by saving state to DynamoDB and/or S3. Read the saved state each time the function is invoked. 
+
+For lowest cost, write up to 8KB to DynamoDB directly, otherwise write important properties to DynamoDB and put the body in an S3 object. Use a new item for each checkpoint (durable function invocation id in partition key, checkpoint sequence id in sort key). You can then read the complete checkpoint log with a single DynamoDB Query (up to 1MB of response at a time).
+
+You can lower costs further by batch processing messages. Async/await allows you to overlap IO operations for different messages. Use [ReportBatchItemFailures](https://docs.aws.amazon.com/prescriptive-guidance/latest/lambda-event-filtering-partial-batch-responses-for-sqs/best-practices-partial-batch-responses.html) so that you can return an explicit response for each message. 
+
+# Message Duplication
+
+Durable functions ensures there is only one running function invocation at a time. External requests are automatically de-duplicated. Once a step starts running there won't be any repeat of earlier steps as retries will restart from the last checkpoint. Steps need to be idempotent because they can be retried after failure, but you can be sure that a step won't be run again once it has completed and checkpointed. 
+
+Standard SQS queues have at-least-once semantics for message processing. Which means a message could be processed more than once, which is equivalent to multiple running function invocations. There's also nothing that prevents client retries from adding duplicated messages to the queue. If you extend the lifetime of a workflow by enqueueing a new message there's another opportunity for duplicate messages.
+
+There are four options for dealing with message duplication. 
+1. If your function is completely deterministic and idempotent it doesn't matter if there are duplicates. You may sometimes have cases like this but it's not always possible.
+2. De-duplicate step completion. Use a conditional write to DynamoDB for the checkpoint at the end of each step and bail out if someone else has already written it. You may get code for earlier steps running concurrently with later ones before they bail out.
+3. Step leases. When you start a new step, create a DynamoDB entry with an expiry as a lease (expiry time < SQS message visibility timeout). If you fail to get the lease, bail out. At the end of the step use a conditional write to replace a valid lease with a checkpoint. If there's no longer a valid lease, bail out. If the step fails for any reason, the lease will expire, then the message visibility timeout will expire and the message will be redelivered to try again.
+4. Use SQS FIFO queues for exactly-once semantics and a 5 minute de-duplication window in exchange for 25% higher cost and lower throughput. You still have the problem that there may be failure between writing a checkpoint and deleting the message from SQS which will result in the message being re-delivered. 
 
 FIFO queues always seem to have some gotcha that prevents them from being an easy solution. My preference would be a combination of option 2 and 3. Option 2 doesn't cost any extra, so do it as standard. For many steps that may be enough. For any steps where you need stronger guarantees, use Option 3. 
 
