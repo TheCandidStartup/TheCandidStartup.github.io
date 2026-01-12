@@ -122,10 +122,32 @@ max: 4
 
 {% endraw %}
 
+# Results
+
+# Cold Weather Day Time Car Charging
+
+* 10kWh home battery. Not enough to run heat pump all day during cold weather.
+* Octopus changing their terms for Intelligent Go. Smart charging limited to 6 hours a day. Idea is to encourage you to plug car in more often, giving Octopus more charge to optimize when charging happens.
+* Happy to comply. Used to add 50% once or twice a week. Now plugging car in first thing each morning and adding 10%. Give Octopus maximum chance of scheduling day time charging periods.
+
+{% include candid-image.html src="/assets/images/home-assistant/dispatched-off-peak-graph.png" alt="Day Time Charging Scheduled by Octopus" %}
+
+* Octopus Home Assistant integration provides "Intelligent Dispatching" entity which uses planned dispatches responses from API to predict when smart charging is occuring
+* Notice that for second period it starts 5 minutes after car starts charging. Previous poll of API happened just before start of dispatch.
+* Our "Dispatched Off Peak Electricity" helper is bang on, mirroring the car charger
+* Octopus helpfully scheduled an extra 5 minutes of charging after 13:00 which means the entire 13:00 to 13:30 period should be charged at off-peak rates. We take full advantage, extending the "Dispatched Off Peak" period to the next half hour boundary.
+
+{% include candid-image.html src="/assets/images/home-assistant/dispatched-off-peak-octopus-charges.png" alt="Day Time Charging Octopus Charges" %}
+
+* Yes, I did confirm that Octopus charged off-peak rates for the entire 12:00 to 13:30 period.
+* Gave us enough extra juice for the battery to last until peak shower time in the evening.
+
 # Home Battery Management Automation
 
 * Now much simpler
 * Integration exposes single action that changes multiple parameters at once. Need to pass in current values for things you don't want to change.
+
+{% raw %}
 
 ```yaml
 alias: Force charge battery during Octopus Intelligent Smart Charge
@@ -154,6 +176,8 @@ actions:
       chargestopsoc: "{{ states('input_number.alpha_ess_target_soc') }}"
 mode: restart
 ```
+
+{% endraw %}
 
 # Home Batter Management Refactor
 
