@@ -9,7 +9,7 @@ It's been a while since I investigated Home Assistant's [concurrency model]({% l
 
 Now it's time to put theory into practice. I have [two automations]({% link _posts/2025-09-15-home-assistant-helpers-template-solar-forecasts.md %}) that modify the charging settings of my [Alpha ESS Home Battery]({% link _posts/2023-08-28-alpha-ess-smile5-home-battery.md %}). Once changes the settings to prevent the battery discharging while my EV is charging, the other sets a target SOC (state of charge) based on tomorrow's solar generation and heating forecasts. 
 
-The problem is that there's a single action which changes all the settings. Each automation does the equivalent of a read-modify-write process to change the settings its interested in. If the two automations run concurrently you can end up in a mess. At the moment I try to avoid the problem by running the target SOC automation at a time when I'm unlikely to charge the EV and blocking it from running if the EV is charging.
+The problem is that there's a single action which changes all the settings. Each automation does the equivalent of a read-modify-write to change the settings its interested in. If the two automations run concurrently you can end up in a mess. At the moment I try to avoid the problem by running the target SOC automation at a time when I'm unlikely to charge the EV and blocking it from running if the EV is charging.
 
 Let's see if we now have the tools to do this right.
 
@@ -25,7 +25,7 @@ The automation uses queued mode which prevents concurrent execution *and* makes 
 
 # Refactoring
 
-The Composite Automation Pattern works best when automations are focused on modifications of the shared resource. In queued mode, automation actions are equivalent to a critical section. You want to keep them as short as possible and in particular avoid asynchronous operations when possible. 
+The Composite Automation Pattern works best when automations are focused on modifications of the shared resource. In queued mode, automation actions are equivalent to a critical section. You want to keep them as short as possible and in particular avoid including unrelated asynchronous operations. 
 
 Anything that doesn't need to be inside the critical section should be factored out into a separate automation.
 
@@ -37,13 +37,13 @@ The Octopus API accessed via the Octopus Home Assistant integration reports plan
 
 The planned dispatches data is retrieved via [polling a rate limited API]({% link _posts/2025-10-06-home-assistant-octopus-repair-blueprint.md %}). It can be up to five minutes out of date. Sometimes the car starts charging before the dispatch is confirmed.
 
-Instead of using the planned dispatches data, the automation uses EV charging as the trigger. Unfortunately, there's more complexity. There are occasional transient spikes of charging, typically only a few seconds and low total energy used. I don't know if this is a problem with Octopus or the charger. The spikes don't trigger off-peak rates. There's extra logic to filter the spikes out.
+Instead of using the planned dispatches data, the automation uses EV charging as the trigger. Unfortunately, there's more complexity. There are occasional transient spikes of charging, typically only a few seconds and low total energy used. I don't know if this is a problem with Octopus or the charger. The spikes don't trigger off-peak rates. There's extra logic to filter them out.
 
 The current automation is mixing concerns. The battery management automation should react to start/end dispatched off-peak periods. All the complexity of figuring out when those periods start and end should be factored out.
 
 # Dispatched Off-Peak Automation
 
-I use a boolean helper to represent the "Dispatched Off-Peak" state, together with an automation that turns it on and off. This approach gives a lot more flexibility than trying to implement it all-in-one as a template sensor. 
+I added a boolean helper to represent the "Dispatched Off-Peak" state, together with an automation that turns it on and off. This approach gives a lot more flexibility than trying to implement it all-in-one as a template sensor. 
 
 I'm using the composite automation pattern here too, mostly to keep all the logic in one place. There's no concurrency issues as there are no asynchronous operations. We're just reacting to changes in state and updating our helper state. 
 
@@ -251,9 +251,9 @@ There's two different cases to handle. The first case is when the dispatch start
 
 # Home Battery Management Refactor
 
-We got there in the end. All that's left is to complete the Home Battery Management refactor and switch to the composite automation pattern. 
+All that's left is to complete the Home Battery Management refactor and switch to the composite automation pattern. 
 
-I've kept the existing automation that calculates a target SOC based on solar and heating forecasts. I've removed the final action that changes the SOC setting on the battery. That's now done by the battery management automation, triggered by the change in `alpha_ess_target_soc`.
+I've kept the existing separate automation that calculates a target SOC based on solar and heating forecasts. I've removed the final action that changes the SOC setting on the battery. That's now done by the battery management automation, triggered by the change in `alpha_ess_target_soc`.
 
 {% raw %}
 
@@ -318,5 +318,7 @@ max: 4
 {% endraw %}
 
 When updating the battery SOC, I need to make sure the charging period is set as it should be based on the "Dispatched Off-Peak" helper. I could have used some templating magic to do it with a single action but it was quicker to add an `if` and copy the `setbatterycharge` actions I already had for the `then` and `else` clauses.
+
+# Conclusion
 
 I now have a good foundation for more complex logic. For example, in the summer I could let the battery discharge to target SOC if it was above the desired level when charging starts. I could re-calculate the target SOC several times during the day based on current state and the forecast for the remains of the day.
