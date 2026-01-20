@@ -55,3 +55,44 @@ audited 1175 packages in 9s
 * Can ignore and unignore dependencies in the group via comments on the pull request. At first after ignore it looked like nothing happened but after a few minutes the original PR was closed and a new one created, kicking off the CI pipeline again.
 * No notification from GitHub when PRs created, presumably because no reviewer or assignee
 * Only way I could find to assign myself to created PRs is using third party auto-assign-action GitHub action
+
+# Lerna
+
+* Reducing number of dependencies reduces surface area for supply chain attack
+* Lerna pulls in a huge number of dependencies, including Nx
+* Lerna has policy of pinning exact versions of all its dependencies which often causes conflicts, particularly because Lerna is slow to update dependencies
+* Getting fed up of upselling. Every time I make a change which causes a build to fail, Lerna tells me that it's detected a flaky build and suggests moving to a paid for product.
+* Overkill for the simple monorepo functionality I need - run command in each workspace in topological order, version, publish
+* Replace with lerna-lite which is much more focused and modular. Can install support for just the lerna commands you use
+
+```
+% npm uninstall lerna
+
+removed 495 packages, and audited 661 packages in 6s
+```
+
+* Removed nearly half my dependencies
+
+```
+% npm install -D @lerna-lite/cli @lerna-lite/run @lerna-lite/version @lerna-lite/publish
+
+added 295 packages, removed 3 packages, changed 3 packages, and audited 953 packages in 11s
+```
+
+* And added most of them back again. Sigh.
+
+# Trusted Publisher
+
+* Replaces use of long lived npm tokens
+* Configure in npm settings for each package - bit annoying to repeat over and over. Browser auto-fill is your friend.
+* Three required pieces of information
+  * Organization or user: `TheCandidStartup`
+  * Repository: `infinisheet`
+  * Workflow filename: `npm-publish.yml`
+* Then through 2FA again to confirm
+* Unfortunately, when publishing a new package for the first time you have to [push an initial package manually](https://github.com/npm/cli/issues/8544), configure for trusted publishing and then trigger the publish workflow.
+* Had earlier updated publish workflow to use Node 24 so that the correct version of npm that supports trusted publishing will be used
+* Publishing worked first time I tried it
+* Then back through all five packages changing standard publishing access to "Require two-factor authentication and disallow tokens", 2FA confirm again.
+* Finally back to Access Tokens in my npm profile and deleted my publish token
+* Then removed token from GitHub repository secrets and finally removed NODE_PUBLISH_TOKEN environment variable from publish workflow.
