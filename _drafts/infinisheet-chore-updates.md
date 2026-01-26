@@ -164,3 +164,55 @@ Installed node-v22.22.0-darwin-arm64 to /Users/tim/.asdf/installs/nodejs/22.22.0
 
 * Updated GitHub workflows to include Node 22 and 24 in the build/test matrix
 * Docs uses Node 22 but went all the way to Node 24 for publishing as that includes npm 11.5.1 required for eventual trusted publishing
+
+# Storybook
+
+* Last time I tried a minor update ran into trouble with Storybook
+* Appeared to update OK but then encountered TypeScript errors with one of my stories
+* Something in 8.6.5 and later broke type inferencing for arguments to the Story `render` method
+* I have three stories that override render, and all of them have the same errors
+* I thought this would be fixed in a later version so locked version to 8.6.4 in my `package.json` and moved on
+* Now we have `8.6.15`, and `9.X` and `10.X`. I have updated of common packages blocked because 8.6.4 wants an earlier version.
+* I need to move on somehow.
+* Started by removing the locked version (changing `8.6.4` to `^8.6.4`) and running npm update.
+* Still haven't fixed type inferencing problem.
+* Decided to workaround in code so that I can apply major upgrades with the confidence of starting from a working version
+* Here's an example of problem code
+
+```ts
+  render: ( {width: _width, height, ...args} ) => (
+    <AutoSizer style={{ width: '100%', height }}>
+      {({width}) => (
+        <VirtualSpreadsheet width={width} height={height} {...args}/>
+      )}
+    </AutoSizer>
+  )
+```
+
+* Previously TypeScript would infer the exact types for width, height and args and was able to validate that required args were passed to VirtualSpreadsheet
+* Now TypeScript insists that all args are of type any. Which means `width` and `height` don't match and it can't find the required `data` argument in `args`.
+* Adding explicit types to signature of render method doesn't work as TypeScript complains that signature now doesn't match `Story` type
+* Much messing around until I came up with this
+
+```ts
+  render: ( {...input} ) => {
+    const {width: _width, height, ...args} = input as { width: number, height: number, data: typeof testData};
+    return <AutoSizer style={{ width: '100%', height }}>
+      {({width}) => (
+        <VirtualSpreadsheet width={width} height={height} {...args}/>
+      )}
+    </AutoSizer>
+  }
+```
+
+* Instead of changing the type signature of the render method, I cast the arguments to the correct type
+
+## Build Hell
+
+* Everything looked good locally, so checked in
+* Build CI failed on the React 19 part of the build matrix.
+* Logs show install of React 19 causes loads of dependency errors with Storybook components
+* Installed React 19 locally and got the same problem
+* Couldn't figure it out. For some reason kept resolving `@storybook/react` to 8.6.4 and then reporting conflicts with later versions of other Storybook components.
+* In the end resolved it by updating the Storybook versions in my `package.json` from `^8.6.4` to require at least the versions that worked for me locally, a mixture of `^8.6.14` and `^8.6.15`
+* For some reason npm can't resolved the dependencies after installing React 19 if given too free a hand
