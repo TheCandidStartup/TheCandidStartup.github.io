@@ -5,6 +5,13 @@ tags: frontend
 
 I'm putting my money where my mouth is. [NPM provenance statements are great]({% link _posts/2024-06-17-supply-chain-provenance.md %}). Everyone should publish packages with a provenance statement. Including me. 
 
+{% capture note-content %}
+This post describes how to use long-lived access tokens to publish packages with provenance via GitHub actions. Long lived access tokens are no longer best practice. 
+
+Try the [updated version]({% link _posts/2026-01-26-bootstrapping-npm-provenance-github-actions.md %}) that uses [Trusted Publishers](https://docs.npmjs.com/trusted-publishers) instead. 
+{% endcapture %}
+{% include candid-note.html content=note-content %}
+
 I [already have]({% link _posts/2024-06-03-bootstrapping-github-actions.md %}) a GitHub Actions Build CI workflow, so it should have been easy. It took me longer to get up and running than I would have liked. Mostly down to my own stupidity. At least now that I've made the mistakes, you don't have to. 
 
 # TL;DR
