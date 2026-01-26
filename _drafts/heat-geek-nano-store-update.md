@@ -127,7 +127,9 @@ How it all turned out in the end
 * Could
   1. Drop set point to 45°C to allow for stratification. When 45°C reached at bottom of the tank, top should be 56°C. Think of value as the minimum temperature of hot water in the "tank". Increase hysteresis for recharging to 10°C, allowing for 7°C drop at end of DHW run plus 3°C heat loss over time before triggering top up. Instant hot water only works if temperature at sensor drops more than 10°C almost straight away on DHW demand.
   2. Move sensor up. Lowest place that keeps stable temperature as stratification happens. Think of value as average temperature. Set hysteresis to 3°C. Instant hot water only works if temperature as this point drops quickly enough when there's DHW demand. 
-  3. Use separate sensors for stored tank temperature and spotting DHW demand. For example, Adam used a flow sensor on another NanoStore trial. When there's no demand the Vaillant controls see the stored water temperature (high on the heat exchanger), when hot water is drawn off, the flow sensor switches the temperature input to a fixed value just below `setpoint - hysteresis` to force DHW run. 
+  3. Use separate sensors for stored tank temperature and spotting DHW demand. For example, Adam used a flow sensor on another NanoStore trial. When there's no demand the Vaillant controls see the stored water temperature (high on the heat exchanger), when hot water is drawn off, the flow sensor switches the temperature input to a fixed value just below `setpoint - hysteresis` to force DHW run.
+* In test with flow sensor Adam found that ramping time for heat pump is related to store temperature. At low store temperature, heat pump is running at low power, presumably on the basis that it doesn't need much power to heat water at low temperature. As temperature goes up, heat pump power does too. If you connect Vaillant controls to a temperature sensor at 45°C when DHW demand starts, it ramps up within a minute. 
+* Looked for evidence of similar effects with my setup. Impossible to see in Home Assistant data because myVaillant only updates store temperature every 5 minutes combined and low API quotas mean Home Assistant can only poll myVaillant every 2 minutes.
 
 # Mixer Heaven
 
@@ -149,3 +151,11 @@ How it all turned out in the end
 * 3 minutes from start of shower until DHW kicked in
 * After 8.5 minutes shower started to go colder
 * Reduced flow rate to 3-4L/min. Mixer valve happy. No sudden drop in temperature.
+* After 10 minutes heat pump reached 50°C threshold and started adding heat
+* After 11 minutes shower was back at temperature and stayed stable for next 10 minutes of showering (will go indefinitely at 4L/min)
+
+{% include candid-image.html src="/assets/images/home-assistant/diverter-valve-instant-hot-water.png" alt="Diverter Valve instant hot water run" %}
+
+* Open Energy Monitoring graph much more dramatic than shower felt
+* Took so long for heat pump to ramp up that temperature in store was well below 50°C threshold. Get a huge dump of heat into the store, before the cold water pushed out and circulated round closes diverter valve again. After a couple of minutes flow rate is at 50°C again and the cycle repeats.
+* Shower is taking energy out of the store at the same rate that, on average, the heat pump is adding it. The added heat lasts just long enough to keep the shower hot until the next heat dump. 
