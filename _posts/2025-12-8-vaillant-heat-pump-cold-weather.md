@@ -170,7 +170,7 @@ The next three days looked good. Indoor temperatures were always in the 16-18°C
 
 # Active Mode
 
-I've drunk the Kool-Aid and have been running in inactive mode since the heat pump was installed. After all, "it's the most efficient way of running a heat pump". It would be a moral failure on my part if did anything else.
+I've drunk the Kool-Aid and have been running in inactive mode since the heat pump was installed. After all, "it's the most efficient way of running a heat pump". It would be a moral failure on my part if I did anything else.
 
 All you need to do is tune the heat curve correctly and you'll generate the right amount of heat to compensate for your house's heat loss. If the  temperature drops too low for some reason, you lose less heat than expected, and eventually the temperature will naturally increase back to the target. If the temperature goes too high for some reason, you lose more heat than expected, and eventually the temperature will naturally reduce back to the target.
 
