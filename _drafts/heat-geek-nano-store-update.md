@@ -35,13 +35,13 @@ You can see that the flow temperature falls rapidly. The heat pump running at fu
 
 No problem, there's a simple solution. At full power the heat pump is producing more than 9kW of heat, the same as an electric shower. In cold weather, an electric shower keeps the water hot by reducing the flow rate. We should be able to shower indefinitely if we reduce the flow rate to 4L/min. 
 
-Except, it doesn't work. If you go below 6L/min, the water goes cold. 
+Except it doesn't work. If you go below 6L/min, the water goes cold. 
 
-## Blending Valve
+## Mixer Valve
 
-It doesn't make any sense. The heat pump is still producing 9kW of heat. The same heat into a lower volume of water should mean hotter water. The only thing I could think of was the blending valve that keeps the delivered hot water temperature stable while the output from the heat exchanger drops from 60+°C to 50°C .
+It doesn't make any sense. The heat pump is still producing 9kW of heat. The same heat into a lower volume of water should mean hotter water. The only thing I could think of was the mixing valve that keeps the delivered hot water temperature stable while the output from the heat exchanger drops from 60+°C to 50°C .
 
-The blending valve has a 20-55°C range with an adjustment knob to select temperature from 1 to 6. After some experimenting, we ended up with a setting of 5.5 to ensure water hot enough to keep everyone happy. Which should be around 52°C.
+The mixing valve has a 20-55°C range with an adjustment knob to select temperature from 1 to 6. After some experimenting, we ended up with a setting of 5.5 to ensure water hot enough to keep everyone happy. Which should be around 52°C.
 
 “It goes cold at low flow rates” is a very subjective statement from someone shivering in the shower. I decided to do some science and measure temperature at the bathroom tap at different flow rates. To minimize the number of variables I used stored hot water. The heat pump isn't running. I checked the temperature at the start and end of my tests to make sure the store temperature hadn’t had time to drop during testing.
 
@@ -49,11 +49,11 @@ My first test was with water from the overnight DHW run a few hours previously. 
 
 I did a second test with freshly heated water, the tank temperature reading 62°C. This time I thought to try it with the tap fully open. I got 48°C at 12L/min, 43°C at 5L/min and 33°C at 2L/min. 
 
-The valve is an ESBE 370/570 series thermostatic mixing valve. I went and found the [product page](https://esbe.eu/group/products/thermostatic-mixing-valves/vta370-vta570) on their website and went through the details with a fine tooth comb. 
+The valve is an ESBE 370/570 series thermostatic mixing valve. I found the [product page](https://esbe.eu/group/products/thermostatic-mixing-valves/vta370-vta570) on their website and went through the details with a fine tooth comb. 
 
 > The series VTA370 and VTA570 are the number one choice for heating and cooling applications. The valves provide an overtemperature protection function, which is important in order to protect e.g. under floor heating pipes and also the floor itself from an uncontrolled rise of temperature.
 
-> Temperature stability valid at unchanged hot/return water pressure, minimum flow rate 9 L/min. Minimum temperature difference between hot water inlet and mixed water outlet 10°C and recommended maximum temperature difference between cold water and mixed water outlet: 10°C.
+> Temperature stability valid at unchanged hot/return water pressure, minimum flow rate 9 l/min. Minimum temperature difference between hot water inlet and mixed water outlet 10°C and recommended maximum temperature difference between cold water and mixed water outlet: 10°C.
 
 ## The Right Valve for the Job
 
@@ -77,9 +77,9 @@ It's intended for use with domestic hot water rather than underfloor heating, an
 
 The first time I saw this I thought I was seeing a defrost with DHW active. Which would have been bad. Before the DHW cycle started, the heat pump had been running continuously at minimum power with a steady COP of 4.4. There were none of the tell-tale signs that a defrost is needed.
 
-If you look really closely you can see that heat pump turned off just *before* the DHW demand came in. The drop in flow temperature is the normal end of heating cycle. Then once the DHW circuit is active, some hot water is returned from the NanoStore and gets pumped round the circuit resulting in the rising part of the V. 
+If you look really closely you can see that the heat pump turned off just *before* the DHW demand came in. The drop in flow temperature is the normal end of heating cycle. Then once the DHW circuit is active, some hot water is returned from the NanoStore and gets pumped round the circuit resulting in the rising part of the V. 
 
-It then takes the heat pump much longer than normal to do it's pre-flight checks and power up again to start heating the water. The end result was that it took 22 minutes to be ready for showering rather than the usual 10. If this happens with an instant how water setup you're going to be left very disappointed.
+It then takes the heat pump much longer than normal to do it's pre-flight checks and power up again to start heating the water. The end result was that it took 22 minutes to be ready for showering rather than the usual 10. If this happens with an instant hot water setup you're going to be left very disappointed.
 
 ## Insulation
 
