@@ -57,7 +57,7 @@ The valve is an ESBE 370/570 series thermostatic mixing valve. I found the [prod
 
 ## The Right Valve for the Job
 
-Now it makes sense. When showering the maximum flow rate is 8L/min. The flow rate is always below the specified minimum for the valve. The temperature is increasingly inaccurate at low flow rates, always biased towards colder temperatures. 
+Now it makes sense. When showering our maximum flow rate is 8L/min. The flow rate is always below the specified minimum for the valve. The temperature is increasingly inaccurate at low flow rates, always biased towards colder temperatures. 
 
 The valve is intended to prevent excessive temperatures for under floor heating. It's built to always mix some cold water in and to fail safe towards colder temperatures. 
 
@@ -85,7 +85,7 @@ It then takes the heat pump much longer than normal to do it's pre-flight checks
 
 We're losing 1.5°C an hour from the NanoStore, much worse than the 0.5°C expected loss from a MiniStore. While waiting for Damon to install extra insulation we did some experiments of our own. 
 
-We added extra insulation by packing sleeping bags and the former contents of the airing cupboard around and on top of the heat exchanger. Heat loss is down a bit but still over 1°C an hour. We didn't expect much but at least it shows that more insulation will be useful. 
+We packed sleeping bags and the former contents of the airing cupboard around and on top of the heat exchanger. Heat loss is down a bit but still over 1°C an hour. We didn't expect much but at least it shows that more insulation will be useful. 
 
 # Current Status
 
