@@ -3,7 +3,7 @@ title: Heat Geek NanoStore Conclusion
 tags: gear
 ---
 
-[Last time]({% link _drafts/heat-geek-nano-store-update.md %}), I left you with a cliffhanger. I had a long list of issues with our [prototype Heat Geek NanoStore]({% link _posts/2025-11-17-heat-geek-nano-store.md %}), together with a plan to fix them all. 
+[Last time]({% link _posts/2026-02-02-heat-geek-nano-store-update.md %}), I left you with a cliffhanger. I had a long list of issues with our [prototype Heat Geek NanoStore]({% link _posts/2025-11-17-heat-geek-nano-store.md %}), together with a plan to fix them all. 
 
 How did it all work out?
 
