@@ -179,6 +179,8 @@ Installed node-v22.22.0-darwin-arm64 to /Users/tim/.asdf/installs/nodejs/22.22.0
 * Decided to workaround in code so that I can apply major upgrades with the confidence of starting from a working version
 * Here's an example of problem code
 
+{% raw %}
+
 ```ts
   render: ( {width: _width, height, ...args} ) => (
     <AutoSizer style={{ width: '100%', height }}>
@@ -189,10 +191,14 @@ Installed node-v22.22.0-darwin-arm64 to /Users/tim/.asdf/installs/nodejs/22.22.0
   )
 ```
 
+{% endraw %}
+
 * Previously TypeScript would infer the exact types for width, height and args and was able to validate that required args were passed to VirtualSpreadsheet
 * Now TypeScript insists that all args are of type any. Which means `width` and `height` don't match and it can't find the required `data` argument in `args`.
 * Adding explicit types to signature of render method doesn't work as TypeScript complains that signature now doesn't match `Story` type
 * Much messing around until I came up with this
+
+{% raw %}
 
 ```ts
   render: ( {...input} ) => {
@@ -204,6 +210,8 @@ Installed node-v22.22.0-darwin-arm64 to /Users/tim/.asdf/installs/nodejs/22.22.0
     </AutoSizer>
   }
 ```
+
+{% endraw %}
 
 * Instead of changing the type signature of the render method, I cast the arguments to the correct type
 
