@@ -5,7 +5,7 @@ tags: gear
 
 [Last time]({% link _posts/2026-02-02-heat-geek-nano-store-update.md %}), I left you with a cliffhanger. I had a long list of issues with our [prototype Heat Geek NanoStore]({% link _posts/2025-11-17-heat-geek-nano-store.md %}), together with a plan to fix them all. 
 
-How did it all work out?
+How did it work out?
 
 # The Plan
 
@@ -62,7 +62,7 @@ The new diverter valve works as advertised, with some interesting consequences.
 
 {% include candid-image.html src="/assets/images/home-assistant/diverter-valve-overnight-dhw.png" alt="Diverter Valve overnight DHW run" %}
 
-This is an overnight DHW run with the valve set to open at 48°C. Unlike the previous valve, there's now no heat lost at all as the flow temperature ramps. The valve is fully shut below temperature. The valve opens at the required temperature. There's a huge dump of heat with a deltaT up to 13°C. The valve is fully open above temperature.
+This is an overnight DHW run with the valve set to open at 48°C. Unlike the previous valve, there's now no heat lost at all as the flow temperature ramps. The valve is clearly fully shut. Once the valve reaches the required temperature it opens fully and there's a huge dump of heat with a deltaT up to 13°C.
 
 As the cold water pushed out of the bottom of the heat exchanger flows back round through the heat pump, the flow temperature falls back to 42°C, and the valve briefly closes again while the temperature ramps back up. There are spikes of heat as pulses of cooler water circulate round to the heat pump and back, before eventually settling into a steady ramp with an initial 4°C deltaT that narrows to 3°C for flow rates over 50°C.
 
@@ -104,7 +104,7 @@ My first reaction was disappointment. My shower went cold! On reflection, I shou
 
 If you want to shower indefinitely, treat it like an electric shower. A 9kW electric shower will have a 4L/min flow rate in cold weather. If we do the same, we get 12 minutes of stored hot water. Plenty of time for the heat pump to fire up.
 
-Finally, there's no need to wait for the heat pump to notice that hot water is being drawn off. Push the hot water boost button and go and get in the shower. The DHW cycle starts immediately and the heat pump will be up and running by the time you start the shower, hitting full power 5 minutes later.
+Finally, there's no need to wait for the heat pump to notice that hot water is being drawn off. Push the hot water boost button in the myVaillant app and get in the shower. The DHW cycle starts immediately and the heat pump will be up and running by the time you start the shower, hitting full power 5 minutes later.
 
 # Boost Shower
 
@@ -122,7 +122,7 @@ I don't want to heat water higher than needed just to get a longer window. I dec
 
 {% include candid-image.html src="/assets/images/home-assistant/shower-dashboard.png" alt="Shower Dashboard" %}
 
-You now start the shower when return flow rate reaches 45°C (the green region on the dashboard). Again, this is after the end of any valve cycling if we started with cold water in the tank. 
+You now start the shower when return flow rate reaches 45°C (the green region on our [Home Assistant shower dashboard]({% link _posts/2025-11-24-home-assistant-kiosk-update-entity.md %})). Again, this is after the end of any valve cycling if we started with cold water in the tank. 
 
 To make things more predictable I stopped using the tank temperature sensor to end the hot water boost. The set point is now 60°C, which we'll never reach. Instead, I use a Home Assistant automation to cancel the boost once the return flow temperature hits 55°C (the red region on the dashboard).
 
@@ -136,9 +136,9 @@ There was no cycling of the diverter valve, suggesting that most of the stored w
 
 The first shower lasted 5 minutes with 0.6kWh of heat added at a COP of 3.1. That's surprisingly good for a heat pump running flat out on a cold day. The heat exchanger is brilliant at transferring everything the heat pump can produce into the water flowing through, with a deltaT of 6°C.
 
-It took 3 minutes to recharge back to a flow rate of 48°C, adding 0.5kWh of heat at a COP of 2.4. The heat exchanger is designed to work best when water is flowing through both circuits. It's less efficient at heating stationary water, but still has a deltaT of 5°C at these flow temperatures. It's impressive how quickly it recharges to the point where another shower can start.
+It took 3 minutes to recharge back to a flow rate of 48°C, adding 0.5kWh of heat at a COP of 2.4. The heat exchanger is designed to work best when water is flowing through both circuits. It's less efficient at heating stationary water, but still has a deltaT of 4°C at these flow temperatures. It's impressive how quickly it recharges to the point where another shower can start.
 
-The second shower lasted 6 minutes with 0.8kWh of heat added at a COP of 3.1. I pushed this one to the limit, with incoming flow at 47°C when I stopped. Any longer and the shower temperature would start to drop. 
+The second shower lasted 6 minutes with 0.8kWh of heat added at a COP of 3.1. I pushed this one to the limit, with incoming flow at 47°C when I stopped. Any longer and the shower temperature would start to drop. Of course, I could have reduced the flow rate at any time to get a longer shower.
 
 The final recharge took 10 minutes to get up to a flow rate of 55°C. This time we added 1.2kWh heat at a COP of 2.1 Once the temperature sensor had settled, the water at the bottom of the tank was at 41°C. 
 
@@ -185,9 +185,9 @@ Our monthly costs are lower but not as dramatic as the Octopus direct debit crys
 
 So, what hot water system should you get if you have a heat pump installed? 
 
-Firstly, if you have the space, the best choice is a hot water cylinder big enough to meet your daily demand for hot water. Heat it up once a day on cheap overnight electricity and forget about it. This is the cheapest and most efficient way of heating water.
+Firstly, if you have the space, the best choice is a hot water cylinder big enough to meet your daily demand for hot water. Heat it up once a day on cheap overnight electricity and forget about it. This is the cheapest and most efficient way of heating water. COP can be as high as 4.5 with the right cylinder, way better than I can get out of a NanoStore.
 
-If you don't have the space, should you go with a MiniStore or a NanoStore?
+If you don't have the space, or have highly variable hot water demand, should you go with a MiniStore or a NanoStore?
 
 First, a disclaimer. I've never used a MiniStore, so I'm basing this comparison on Newark Cylinder's [performance data](https://newarkcylinders.co.uk/heatgeekministore/), and anecdotal evidence from those that have. We have a higher output temperature (45°C vs 40°C) and lower input temperature (7°C vs 10°C) than the MiniStore performance data. That makes the MiniStore look better than it actually is. 
 
@@ -197,15 +197,15 @@ I rely on OpenEnergy monitoring and Home Assistant to get the most out of the Na
 
 My NanoStore is a prototype unit based on a 60L heat capacity heat exchanger and a hefty amount of hand applied insulation. It's paired with a 7kW Vaillant Arotherm plus heat pump. YMMV.
 
-The 60L NanoStore together with its pipework and valves needs the full 600mm width and 690mm depth of our airing cupboard. It uses 850mm of the cupboard's height. The equivalent heat capacity MiniStore XS is slightly smaller. It's designed to fit in a kitchen base unit so would still use the full 600mm width, but would fit more comfortably in the depth and use 200mm less height.
+The 60L NanoStore together with its pipework and valves needs the full 600mm width and 690mm depth of our airing cupboard. It uses 850mm of the cupboard's height. The equivalent heat capacity MiniStore XS needs the same width and height but uses less depth. It's designed to fit in a kitchen base unit (max depth 560mm).
 
 No MiniStore (not even the 130L XL) will combi indefinitely with a 7kW heat pump. They're designed to use the heat pump to extend the volume of hot water. Our 60L NanoStore does everything we need at a store temperature of 45°C. MiniStores need a store temperature at least 10°C higher.
 
 Apart from size, the 60L NanoStore is better in every way than a 60L MiniStore.
 
-Our original design was for a 110L MiniStore Tall. That would take another 250mm of cupboard height but nearly doubles the stored heat capacity. The advantage is that the extra stored heat lets you sustain high flow rates for longer. A MiniStore Tall would give you a 10 minute shower at 8L/min flow rates with a 55°C store temperature. The NanoStore would need a 65°C store temperature to match it. Heating a larger volume of water to a lower temperature is much more efficient. 
+Our original design was for a 110L MiniStore Tall. That would take another 450mm of cupboard height but nearly doubles the stored heat capacity. The advantage is that the extra stored heat lets you sustain high flow rates for longer. A MiniStore Tall would give you a 10 minute shower at 8L/min flow rates with a 55°C store temperature. The NanoStore would need a 65°C store temperature to match it. Heating a larger volume of water to a lower temperature is much more efficient. 
 
-I don't know yet which versions of the NanoStore will make it into production. A 30L version seems most likely. That's the one in [Adam's video](https://www.youtube.com/watch?v=Zbq4Mq4waNk) which will fit in the same size cupboard as a combi boiler. It fits neatly into the range below the MiniStore XS.
+I don't know yet which versions of the NanoStore will make it into production. A 30L version seems most likely. That's the one in [Adam's video](https://www.youtube.com/watch?v=Zbq4Mq4waNk) which will fit in the same size cupboard as a combi boiler. It sits neatly in the range below the MiniStore XS.
 
 A 30L NanoStore will combi just as well as a 60L NanoStore. Both have a much bigger heat exchanger than needed to transfer 10kW of heat. However, half the stored heat capacity is not enough for a reasonable length shower without the heat pump contributing.
 
@@ -213,6 +213,8 @@ If you don't have the space for anything bigger, a 30L NanoStore should work wel
 
 # Conclusion
 
-Our usage is a mix of short showers at high flow rates and indefinite showers at low flow rates. The NanoStore is a perfect fit for us. I like the flexibility the larger size gives us. It's reassuring that we can get a reasonable shower from stored heat alone. Even better, all this works with a 45°C store temperature. 
+Our usage is a mix of short showers at high flow rates and indefinite showers at low flow rates. The NanoStore is a perfect fit for us. I like the flexibility the larger 60L size gives us. It's reassuring that we can get a reasonable shower from stored heat alone. Even better, all this works with a 45°C store temperature. 
 
 We're sticking with our 60L NanoStore. 
+
+If you get one yourself, make sure they install it the right way up and that they use the right valves for the job. I'm very happy with the ESBE VTD500 diverting valve and VTA320 mixing valve we ended up with. I highly recommend OpenEnergy monitoring and Home Assistant to get the most out of your system.
