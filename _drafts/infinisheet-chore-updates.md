@@ -11,20 +11,12 @@ wise words
 * Now picking up real development again
 * Six months without updating dependencies means another week of update hell, a year since [my last one]({% link _posts/2024-12-09-infinisheet-chore-updates.md %}). 
 
-# Dependabot
+# Minor Updates
 
-* Link to supply chain post
-* Set up to automatically create and validate PRs for minor updates, previously done ad hoc with "npm update"
-* Should have got everything up to date *before* enabling dependabot
-* Too many changes
-* Painful when it fails
-* Edit config file to restrict updates to packages likely to be a problem, wait for bot to run again, repeat.
-* No access to details of failures
-* In future should sort out locally as soon as Dependabot CI run fails
+As usual, I started by applying as many minor and patch updates as I could using `npm update`. Where I ran into build failures, I rolled back the associated updates to deal with individually later. This time the problem cases were API Extractor and TypeDoc.
 
 # API Extractor
 
-* Both excluded from Dependabot minor updates after build failures
 * Naturally, trying updating failure cases individually 
 * API Extractor fails with weird `A tag is already defined using the name @jsx` error. I don't have any `@jsx` tags in my source code
 * Once of the changes listed for API Extractor is update to latest TSDoc library
@@ -224,3 +216,181 @@ Installed node-v22.22.0-darwin-arm64 to /Users/tim/.asdf/installs/nodejs/22.22.0
 * Couldn't figure it out. For some reason kept resolving `@storybook/react` to 8.6.4 and then reporting conflicts with later versions of other Storybook components.
 * In the end resolved it by updating the Storybook versions in my `package.json` from `^8.6.4` to require at least the versions that worked for me locally, a mixture of `^8.6.14` and `^8.6.15`
 * For some reason npm can't resolved the dependencies after installing React 19 if given too free a hand
+
+## Storybook 9
+
+Storybook is now at version 10 but the [migration instructions](https://storybook.js.org/docs/releases/migration-guide) say to upgrade to version 9 first. The version 9 [instructions](https://storybook.js.org/docs/releases/migration-guide-from-older-version) suggest using `npx storybook@latest upgrade` to install the updated packages and apply migrations to handle breaking changes. I guess they weren't updated after version 10 was released. The most recent version 9 release is tagged `v9` so I used that rather than `latest`.
+
+```
+% npx storybook@v9 upgrade
+Need to install the following packages:
+storybook@9.1.17
+Ok to proceed? (y) y
+
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm warn deprecated rimraf@2.6.3: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
+```
+
+Lots of scary warnings. I think these must be temporary dependencies of the upgrade script. The versions I use are much more recent and I don't use `inflight` at all.
+
+
+```
+┌  Storybook Upgrade - v9.1.17
+│
+◇  1 project detected
+│
+●  Upgrading from 8.6.15 to 9.1.17
+│
+◆  Updated package versions in package.json files
+│
+◆  4 automigration(s) detected
+│
+◇  Select automigrations to run
+│  consolidated-imports, remove-addon-interactions, renderer-to-framework, remove-essential-addons
+│
+◆  Completed automigrations for /apps/storybook/.storybook
+│
+◆  Dependencies installed
+│
+▲  Since you are in a monorepo, we advise you to deduplicate your dependencies. We
+│  can do this for you but it might take some time.
+│
+◇  Execute npm run dedupe?
+│  Yes
+│
+◆  Dependencies deduplicated
+│
+◇  Checking the health of your project(s)..
+│
+│  Your Storybook project looks good!
+│
+◇  The upgrade is complete!
+│
+│  Your project(s) have been upgraded successfully! 🎉
+```
+
+* The upgrade went smoothly. Changes were all due to Storybook packages being renamed and/or merged. Required updates to `package.json` and to import statements at the top of my source files.
+* Everything builds and runs without errors.
+
+## Storybook 10
+
+* Lots of activity, frequent updates, three this week. 
+* Decided to leave until things have settled down a bit
+
+# Vite 7
+
+* Nothing scary in the [migration guide](https://vite.dev/guide/migration)
+* Used `npm ls vite` to identify all my tooling dependent on vite and then searched through `package-lock.json` to confirm that they all listed Vite 7 as a supported major version.
+* Guess I just go for it
+
+```
+% npm install -D vite@latest
+
+added 2 packages, changed 1 package, and audited 907 packages in 3s
+```
+
+* Everything builds and runs without errors. Total anti-climax.
+* Unrelated update to the `vite-tsconfig-paths` plugin so did that too
+
+```
+% npm install -D vite-tsconfig-paths@latest
+
+changed 1 package, and audited 907 packages in 2s
+```
+
+* Equally anti-climactic
+
+# Vitest 4
+
+* Long list of breaking changes in the [migration guide](https://vitest.dev/guide/migration.html#vitest-4)
+* Don't think any apply to me
+
+```
+% npm install -D vitest@latest @vitest/ui@latest @vitest/coverage-v8@latest @vitest/coverage-istanbul@latest
+
+added 22 packages, removed 9 packages, changed 15 packages, and audited 920 packages in 5s
+```
+
+* Once again, anti-climactic. Everything builds. Unit tests, code coverage and benchmarks all run.
+
+# ESLint
+
+* `eslint-plugin-react-hooks` has supported new interfaces for a while so can remove `fixupPluginRules(eslintPluginReactHooks)` from my eslint config and uninstall the `@eslint/compat` package it came from
+
+```
+% npm uninstall -D @eslint/compat
+
+removed 1 package, and audited 932 packages in 2s
+```
+
+* Major release of `eslint-plugin-react-hooks` since then (removing legacy support) so may as well update that too
+
+```
+% npm install -D eslint-plugin-react-hooks@latest
+
+added 4 packages, changed 1 package, and audited 933 packages in 2s
+```
+
+* Similarly there's also a major release of `eslint-plugin-react-refresh` dropping legacy support and tweaking the config interface
+
+```
+% npm install -D eslint-plugin-react-refresh@latest
+
+changed 1 package, and audited 932 packages in 2s
+```
+
+* Dependabot threw in a minor update of `typescript-eslint` while I was working through this which deprecated it's wrapper `config` function. Apparently all rolled into base ESLint's new `defineConfig` function. This function also flattens it's arguments meaning you no longer have to guess when to use the `...` spread operator.
+
+Config changes from
+
+```js
+import { fixupPluginRules } from '@eslint/compat';
+import tseslint from "typescript-eslint";
+import reactRefresh from "eslint-plugin-react-refresh";
+
+export default tseslint.config(
+  ...tseslint.configs.recommendedTypeChecked,
+  {
+    plugins: {
+      "react-hooks": fixupPluginRules(eslintPluginReactHooks),
+      "react-refresh": reactRefresh
+    }
+  }
+)
+```
+
+to 
+
+```js
+import { defineConfig } from "eslint/config";
+import tseslint from "typescript-eslint";
+import { reactRefresh } from "eslint-plugin-react-refresh";
+
+export default defineConfig(
+  tseslint.configs.recommendedTypeChecked,
+  reactRefresh.configs.vite(),
+  {
+    plugins: {
+      "react-hooks": eslintPluginReactHooks,
+    }
+  }
+)
+```
+
+# Unit Test Environment
+
+* Another anti-climax. Updated the jsdom and globals packages used for unit test environment to latest versions. No issues.
+
+```
+% npm install -D jsdom@latest
+
+added 11 packages, removed 3 packages, changed 14 packages, and audited 929 packages in 3s
+```
+
+```
+% npm install -D globals@latest
+
+changed 1 package, and audited 929 packages in 1s
+```
