@@ -37,10 +37,10 @@ audited 1175 packages in 9s
 
 * Automation integrated into GitHub that can identify dependencies with known security issues and identify dependencies with newer versions. In both cases, you can configure it to create PRs with updated versions. Crucially, there is a [cooldown](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#cooldown-) option that lets you specify how many days to wait after a package is published before updating to it.
 * Already on when I followed instructions to enable it
-* As I have touched Infinisheet repository in six months there were a few alerts present in the GitHub UI
+* As I have touched Infinisheet repository in six months there were a few security alerts present in the GitHub UI
 * Don't understand why I didn't receive email notification of new alerts. Configured in my notification settings.
 * Haven't set up any specific GitHub permissions as I'm the CandidStartup organization owner
-* Just in case I went belt and braces and explicitly gave myself the all repo admin role on the organization and then also explicitly gave myself access to security alerts.
+* Just in case I went belt and braces and explicitly gave myself the all repo admin role on the organization and then also explicitly gave myself access to security alerts. 
 * Each security alert contains a load of detail on the vulnerability and how to remediate
 
 {% include candid-image.html src="/assets/images/github/dependabot-security-alert.png" alt="Dependabot Security Alert" %}
@@ -50,11 +50,47 @@ audited 1175 packages in 9s
 * In most cases the change is just an update to your package manager's `package-lock` file. However, nice to have the audit trail.
 * Creating a PR will kick off your build workflow so you get confirmation that the update is OK without having to build locally first.
 * Commits messages follow conventional commits standard. You can customize the prefixes used via options.
+* If you use "Squash & Merge" option when approving PR end up with a single commit with a reasonable comment.
 * Can configure dependabot to create PRs for general version updates
+* Set up to automatically create and validate PRs for minor updates, previously done ad hoc with "npm update"
+* Should have got everything up to date *before* enabling dependabot
+* Too many changes
+* Painful when it fails
+* Edit config file to restrict updates to packages likely to be a problem, wait for bot to run again, repeat.
+* No access to details of failures
 * Ignores constraints in `package.json`. I currently have storybook locked to version 8.6.4 because later versions have a bug that broke one of my stories. Dependabot created a PR to update to latest 8.6.14.
 * Can ignore and unignore dependencies in the group via comments on the pull request. At first after ignore it looked like nothing happened but after a few minutes the original PR was closed and a new one created, kicking off the CI pipeline again.
+* Initially thought ignore/unignore were local to the PR being worked on. However, it appears to be a global effect with no visibility of what overrides are in effect. 
+* In future should sort out locally as soon as Dependabot CI run fails
 * No notification from GitHub when PRs created, presumably because no reviewer or assignee
-* Only way I could find to assign myself to created PRs is using third party auto-assign-action GitHub action
+* Only way I could find to assign myself to created PRs is using third party `auto-assign-action` GitHub action
+* By this time I noticed that I still wasn't getting notifications for new security alerts, so I enabled auto-create of PRs for security updates too. At least the `assigned as reviewer to PR` notifications are coming through.
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+    cooldown:
+      default-days: 7
+    groups:
+      minor-version-updates:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      - dependency-name: "typedoc*"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+```
 
 # Lerna
 
@@ -81,18 +117,14 @@ added 295 packages, removed 3 packages, changed 3 packages, and audited 953 pack
 
 * And added most of them back again. Sigh.
 
-# Trusted Publisher
+# pnpm
 
-* Replaces use of long lived npm tokens
-* Configure in npm settings for each package - bit annoying to repeat over and over. Browser auto-fill is your friend.
-* Three required pieces of information
-  * Organization or user: `TheCandidStartup`
-  * Repository: `infinisheet`
-  * Workflow filename: `npm-publish.yml`
-* Then through 2FA again to confirm
-* Unfortunately, when publishing a new package for the first time you have to [push an initial package manually](https://github.com/npm/cli/issues/8544), configure for trusted publishing and then trigger the publish workflow.
-* Had earlier updated publish workflow to use Node 24 so that the correct version of npm that supports trusted publishing will be used
-* Publishing worked first time I tried it
-* Then back through all five packages changing standard publishing access to "Require two-factor authentication and disallow tokens", 2FA confirm again.
-* Finally back to Access Tokens in my npm profile and deleted my publish token
-* Then removed token from GitHub repository secrets and finally removed NODE_PUBLISH_TOKEN environment variable from publish workflow.
+* Alternative package manager in npm ecosystem
+* Main difference is a global deduplicated cache of all package versions used on a machine
+* `node_modules` for each repo uses links into the central package store
+* Less storage required and much faster
+* Natural package hierarchy in monorepo with dedicated node_modules for each package's dependencies. Avoids the problem with npm where you can depend on a package pulled into the monorepo by something else without it being included in your own `package.json`
+* Faster delivery of new features than npm
+* Including, for most recent versions, a cooldown implementation *and* option to block install of packages versions where provenance has been downgraded
+* When I set my monorepo up didn't see any reason to use a non-default package manager. That's changed. Time to make the switch.
+
