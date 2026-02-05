@@ -108,7 +108,7 @@ Finally, there's no need to wait for the heat pump to notice that hot water is b
 
 # Boost Shower
 
-I still think our boost shower strategy is optimal. There's no need for DHW runs during the day to keep hot water close to the nominal temperature. Heat once on cheap rate electric overnight. Only reheat when needed.
+I still think our boost shower strategy is optimal. There's no need for DHW runs during the day to keep water at the bottom of the tank close to the nominal temperature. Heat once on cheap rate electric overnight. Only reheat when needed.
 
 The pain point previously was finding no hot water left for washing up at the end of the day. It's not worth doing a full DHW run, so we ended up boiling a kettle.
 
@@ -199,7 +199,7 @@ My NanoStore is a prototype unit based on a 60L heat capacity heat exchanger and
 
 The 60L NanoStore together with its pipework and valves needs the full 600mm width and 690mm depth of our airing cupboard. It uses 850mm of the cupboard's height. The equivalent heat capacity MiniStore XS needs the same width and height but uses less depth. It's designed to fit in a kitchen base unit (max depth 560mm).
 
-No MiniStore (not even the 130L XL) will combi indefinitely with a 7kW heat pump. They're designed to use the heat pump to extend the volume of hot water. Our 60L NanoStore does everything we need at a store temperature of 45°C. MiniStores need a store temperature at least 10°C higher.
+According to the Newark performance data, no MiniStore (not even the 130L XL) will combi indefinitely with a 7kW heat pump. They're designed to use the heat pump to extend the volume of hot water. Our 60L NanoStore does everything we need at a store temperature of 45°C. MiniStores need a store temperature at least 10°C higher.
 
 Apart from size, the 60L NanoStore is better in every way than a 60L MiniStore.
 
@@ -217,4 +217,4 @@ Our usage is a mix of short showers at high flow rates and indefinite showers at
 
 We're sticking with our 60L NanoStore. 
 
-If you get one yourself, make sure they install it the right way up and that they use the right valves for the job. I'm very happy with the ESBE VTD500 diverting valve and VTA320 mixing valve we ended up with. I highly recommend OpenEnergy monitoring and Home Assistant to get the most out of your system.
+If you get one yourself, make sure it's installed the right way up and is paired with the right valves for the job. I'm very happy with the ESBE VTD500 diverting valve and VTA320 mixing valve we ended up with. I highly recommend OpenEnergy monitoring and Home Assistant to get the most out of your system.
