@@ -119,12 +119,216 @@ added 295 packages, removed 3 packages, changed 3 packages, and audited 953 pack
 
 # pnpm
 
-* Alternative package manager in npm ecosystem
+* [pnpm](https://pnpm.io/) is an alternative package manager in npm ecosystem
 * Main difference is a global deduplicated cache of all package versions used on a machine
 * `node_modules` for each repo uses links into the central package store
 * Less storage required and much faster
 * Natural package hierarchy in monorepo with dedicated node_modules for each package's dependencies. Avoids the problem with npm where you can depend on a package pulled into the monorepo by something else without it being included in your own `package.json`
 * Faster delivery of new features than npm
-* Including, for most recent versions, a cooldown implementation *and* option to block install of packages versions where provenance has been downgraded
+* Including, for most recent versions, a cooldown implementation *and* option to block install of package versions where provenance has been downgraded, together with many other features that [mitigate supply chain attacks](https://pnpm.io/supply-chain-security).
 * When I set my monorepo up didn't see any reason to use a non-default package manager. That's changed. Time to make the switch.
 
+# How to install pnpm
+
+* Didn't think I'd spend so much time thinking about how to install pnpm
+* Your package manager can't install itself
+* Not an issue for npm as it's bundled with NodJS
+* pnpm [documentation](https://pnpm.io/installation) lists 10 different ways of installing it, including using npm
+* One of the options is [Corepack](https://github.com/nodejs/corepack#readme) which is described as a NodeJS package manager manager
+* Has sparked a [heated debate](https://socket.dev/blog/node-js-takes-steps-towards-removing-corepack) in the NodeJS community between those that want to make corepack mandatory and stop bundling npm, and those that want to keep npm and make corepack optional.
+* Latter group seem to have won with [corepack being removed](https://socket.dev/blog/node-js-tsc-votes-to-stop-distributing-corepack) from Node 25 onwards.
+* I already use [asdf]() as a tool version manager on my development machine to manage NodeJS versions, I don't need another one.
+* There is an asdf plugin for pnpm so can use that locally
+* Make it a bit more explicit by setting version to use per repo (stored in `.tool_versions` file) rather than relying on per user setting
+* Using GitHub Actions for CI where runner gets setup with specific versions based on a build matrix
+* pnpm provides a [setup action](https://github.com/pnpm/action-setup) which installs a specified version of pnpm and integrates with GitHub Actions caching
+
+```
+% asdf plugin add pnpm
+updating plugin repository...remote: Enumerating objects: 1994, done.
+remote: Counting objects: 100% (1052/1052), done.
+remote: Compressing objects: 100% (70/70), done.
+remote: Total 1994 (delta 1034), reused 982 (delta 982), pack-reused 942 (from 4)
+Receiving objects: 100% (1994/1994), 590.71 KiB | 12.57 MiB/s, done.
+Resolving deltas: 100% (1193/1193), completed with 24 local objects.
+From https://github.com/asdf-vm/asdf-plugins
+   8b3d536..c0369a1  master                                       -> origin/master
+ * [new branch]      dependabot/github_actions/actions/checkout-6 -> origin/dependabot/github_actions/actions/checkout-6
+ * [new branch]      dependabot/github_actions/amannn/action-semantic-pull-request-6.1.1 -> origin/dependabot/github_actions/amannn/action-semantic-pull-request-6.1.1
+ * [new branch]      dependabot/github_actions/asdf-vm/actions-4  -> origin/dependabot/github_actions/asdf-vm/actions-4
+HEAD is now at c0369a1 feat: add yasm plugin (#1087)
+
+% asdf plugin list
+nodejs
+pnpm
+ruby
+```
+
+* Don't know what all that branch stuff is but it seems to have added the plugin
+
+```
+% asdf install pnpm latest
+Downloading pnpm v9.15.9 from https://registry.npmjs.org/pnpm/-/pnpm-9.15.9.tgz
+```
+
+* Weird, pnpm 10.28 is latest and the one I want for all the supply chain security stuff
+* `asdf list all pnpm` displays a long list of available versions up to 10.28.2
+
+```
+% asdf install pnpm 10.28.2
+Downloading pnpm v10.28.2 from https://registry.npmjs.org/pnpm/-/pnpm-10.28.2.tgz
+```
+
+```
+% asdf local nodejs 22.22.0
+% asdf local pnpm 10.28.2
+```
+
+* I haven't upgraded asdf for a while and got confused because most recent version changed `asdf local` to `asdf set` and I was looking at the wrong docs when trying to refresh my memory of how to define per repo versions.
+
+```
+% pnpm -v
+ WARN  The "workspaces" field in package.json is not supported by pnpm. Create a "pnpm-workspace.yaml" file instead.
+10.28.2
+```
+
+* OK, ready to start migrating
+
+# Migrating from npm
+
+* No recipe in the pnpm docs
+* Found [helpful article](https://britishgeologicalsurvey.github.io/development/migrating-from-npm-to-pnpm/) which pointed me in right direction
+* Delete `node_modules`
+* Add `pnpm-workspace.yaml` and configure as required
+  * Define `packages` for monorepo
+  * `linkWorkspacePackages` to use local packages defined in workspace rather than downloading from npm
+* `pnpm import` to convert npm lock file to pnpm
+* `pnpm install` to install dependencies (add `--frozen-lockfile` if you want it to work like `npm ci`)
+* Replace any `npm` commands in scripts with `pnpm` equivalents
+* Prevent inadvertent use of npm commands
+  * Add `preinstall` and `preupdate` script with `npx only-allow pnpm` which errors when you run `npm install` or `npm update`
+  * Hack `engines` field in `package.json` to specify non-existent version of npm + create `.npmrc` file containing `engine-strict - true`
+* Ideally replace dependencies on other workspace packages with `workspace:*` to ensure they always resolve to current version in workspace. Once done can remove `linkWorkspacePackages` option
+* Use catalogs to replace duplicated dependencies for workspace packages
+
+* Before doing anything else I tried to put protections in place against using npm by mistake. Could not get `only-allow` to work. Was fine when executed directly in terminal but would not work when run as an npm script. Kept reporting `sh` errors when trying to run command.
+* Did the engines + `.npmrc` hack instead. Certainly stops `npm install` and `npm update` from working.
+
+```
+  "engines": {
+    "node": ">= 20",
+    "npm": "Please use pnpm instead of npm to install dependencies",
+    "yarn": "Please use pnpm instead of yarn to install dependencies",
+    "pnpm": ">= 10"
+  },
+```
+
+```
+% pnpm import
+ WARN  2 deprecated subdependencies found: glob@10.5.0, tar@7.5.4
+Progress: resolved 910, reused 0, downloaded 0, added 0, done
+```
+
+* I know about tar security vulnerability, haven't applied patch yet
+* Old version of glob is news to me. Turns out to be a sub-dependency of a sub-dependency of Storybook. Also in my old npm `package-lock.json` but npm didn't warn me about it.
+
+```
+% pnpm install                  
+Scope: all 9 workspace projects
+Lockfile is up to date, resolution step is skipped
+Packages: +827
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Downloading storybook@9.1.17: 9.91 MB/9.91 MB, done
+Downloading @swc/core-darwin-arm64@1.15.11: 9.29 MB/9.29 MB, done
+Progress: resolved 827, reused 0, downloaded 827, added 827, done
+
+devDependencies:
++ @eslint/js 9.39.2
++ @gordonmleigh/rollup-plugin-sourcemaps 0.1.2
++ @lerna-lite/cli 4.11.0
++ @lerna-lite/publish 4.11.1
++ @lerna-lite/run 4.11.1
++ @lerna-lite/version 4.11.1
++ @microsoft/api-extractor 7.55.2
++ @playwright/test 1.58.0
++ @rollup/plugin-typescript 12.3.0
++ @storybook/addon-docs 9.1.17
++ @storybook/react-vite 9.1.17
++ @testing-library/dom 10.4.1
++ @testing-library/jest-dom 6.9.1
++ @testing-library/react 16.3.2
++ @testing-library/user-event 14.6.1
++ @types/node 22.19.7
++ @types/react 18.3.24
++ @types/react-dom 18.3.7
++ @types/react-window 1.8.8
++ @vitejs/plugin-react-swc 4.2.3
++ @vitest/coverage-istanbul 4.0.18
++ @vitest/coverage-v8 4.0.18
++ @vitest/ui 4.0.18
++ eslint 9.39.2
++ eslint-plugin-react 7.37.5
++ eslint-plugin-react-hooks 7.0.1
++ eslint-plugin-react-refresh 0.5.0
++ eslint-plugin-storybook 9.1.17
++ globals 17.3.0
++ jsdom 28.0.0
++ jsdom-testing-mocks 1.16.0
++ neverthrow 8.2.0
++ path 0.12.7
++ react 18.3.1
++ react-dom 18.3.1
++ rimraf 6.1.2
++ rollup 4.57.0
++ rollup-plugin-delete 3.0.2
++ rollup-plugin-dts 6.3.0
++ rollup-plugin-peer-deps-external 2.2.4
++ storybook 9.1.17
++ typedoc 0.28.16
++ typedoc-plugin-coverage 4.0.2
++ typedoc-plugin-extras 4.0.1
++ typescript 5.8.3
++ typescript-eslint 8.54.0
++ vite 7.3.1
++ vite-tsconfig-paths 6.0.5
++ vitest 4.0.18
+
+╭ Warning ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                            │
+│   Ignored build scripts: @swc/core@1.15.11, esbuild@0.25.9, esbuild@0.27.2.                │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.   │
+│                                                                                            │
+╰────────────────────────────────────────────────────────────────────────────────────────────╯
+Done in 9.9s using pnpm v10.28.2
+```
+
+* esbuild and swc are bundlers used by Vite. Both have good reasons for post-install scripts and both packages have provenance. Plus npm already ran these.
+
+```
+pnpm approve-builds
+✔ Choose which packages to build (Press <space> to select, <a> to toggle all, <i> to invert selection) · @swc/core, esbuild
+✔ The next packages will now be built: @swc/core, esbuild.
+Do you approve? (y/N) · true
+node_modules/.pnpm/@swc+core@1.15.11/node_modules/@swc/core: Running postinstall script, done in 442ms
+node_modules/.pnpm/esbuild@0.27.2/node_modules/esbuild: Running postinstall script, done in 651ms
+node_modules/.pnpm/esbuild@0.25.9/node_modules/esbuild: Running postinstall script, done in 850ms
+```
+
+* Updates to package.json scripts
+  * Replace `npx lerna run` with `pnpm run -r`
+  * Replace `npx` with `pnpm exec`
+  * Replace `npm run` with `pnpm run`
+  * Remove `--` from run scripts. With pnpm all arguments before the script name are passed to pnpm while all arguments after are passed to the script.
+  * Replace `npx lerna publish ...` with `pnpm -r publish`
+* If it all works won't need lerna-lite run and publish modules any more.
+
+* Build worked fine apart from one sample app that couldn't resolve imports. Turns out I hadn't included all dependencies. Classic mistake that npm hides.
+* Remember to run `pnpm install` after adding missing dependency to package.json to add missing link to `node_modules`
+* Unit tests didn't work. Couldn't resolve an import from `@candidstartup/infinisheet-types` from common test code in shared/test. This code is automatically pulled into each test via the `setupFiles` option in my vitest config. Cross package imports from source code inside packages works fine.
+* Best guess is that these imports worked previously by resolving via `node_modules`. With npm all local packages are linked into the root `node_modules`, with pnpm they're only linked into `node_modules` for packages that depend on them. Code outside the scope of a package resolves via root `node_modules` so doesn't work.
+* Shouldn't need this. Everything resolves fine in VSCode because I have path aliases for `"@candidstartup/*": ["packages/*/src"]` in my tsconfig.json. I use the `vite-tsconfig-paths` plugin so that vitest can use path aliases in the same way. Clearly not working. Then realized that when I set up monorepo, I only included the plugin in the config for apps, once I added it to the package config it started working.
+* ??? Need to test version and publish, then remove lerna-lite modules
+
+# Mitigating Supply Chain Attacks
+
+* Turn all the options on

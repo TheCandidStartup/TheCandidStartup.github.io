@@ -13,17 +13,16 @@ wise words
 
 # Minor Updates
 
-As usual, I started by applying as many minor and patch updates as I could using `npm update`. Where I ran into build failures, I rolled back the associated updates to deal with individually later. This time the problem cases were API Extractor and TypeDoc.
+As usual, I started by applying as many minor and patch updates as I could using `npm update`. Where I ran into build failures, I rolled back the associated updates to deal with individually later. This time the problem case was API Extractor.
 
 # API Extractor
 
-* Naturally, trying updating failure cases individually 
 * API Extractor fails with weird `A tag is already defined using the name @jsx` error. I don't have any `@jsx` tags in my source code
 * Once of the changes listed for API Extractor is update to latest TSDoc library
 * The TSDoc library has a minor change to "standardize" how `@jsx` (amongst others) is handled
 * Someone else [reported the same error](https://github.com/microsoft/tsdoc/issues/454) when using typedoc
 * Problem seems to be that TSDoc didn't previously define `@jsx` so clients had to do it themselves. Now TSDoc is defining it and erroring out if any client defines it themselves.
-* Updating TypeDoc to latest version got API Extractor working again
+* Updating TypeDoc to latest (major) version got API Extractor working again
 
 # TypeDoc
 
