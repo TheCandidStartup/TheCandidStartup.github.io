@@ -17,7 +17,9 @@ Damon will also add a T-connector at the cold water inlet that can be used as a 
 
 # The Reality
 
-Damon spent 20th January trying to find a way to fit everything into our small airing cupboard. The big problem with standing the heat exchanger on its end is that you need more front-to-back space for the connecting pipework. In the end, the only way of doing it was with connections facing forward towards the door. There's only just enough room to take the pipework round and back while still being able to shut the door.
+Damon spent 20th January trying to find a way to fit everything into our small airing cupboard. The big problem with standing the heat exchanger on its end is that you need more front-to-back space for the connecting pipework. 
+
+To avoid having to rework the existing heating circuit pipework, the heat exchanger has to sit 150mm forward from the back wall. In the end, the only way of doing it was with connections facing forward towards the door. There's only just enough room to take the pipework round and back while still being able to shut the door.
 
 There wasn't enough room to include the T-connector sensor pocket. The tank temperature sensor is on the side of the heat exchanger near the cold water inlet.
 
@@ -197,11 +199,11 @@ I rely on OpenEnergy monitoring and Home Assistant to get the most out of the Na
 
 My NanoStore is a prototype unit based on a 60L heat capacity heat exchanger and a hefty amount of hand applied insulation. It's paired with a 7kW Vaillant Arotherm plus heat pump. YMMV.
 
-The 60L NanoStore together with its pipework and valves needs the full 600mm width and 690mm depth of our airing cupboard. It uses 850mm of the cupboard's height. The equivalent heat capacity MiniStore XS needs the same width and height but uses less depth. It's designed to fit in a kitchen base unit (max depth 560mm).
+The 60L NanoStore together with its pipework and valves uses the full 600mm width and 690mm depth of our airing cupboard. It uses 850mm of the cupboard's height. If you were installing it from scratch, I think you could save 150mm of depth. It would then need the same space as the equivalent heat capacity MiniStore XS. The MiniStore XS is designed to fit in a kitchen base unit (600mm width, max depth 560mm).
 
 According to the Newark performance data, no MiniStore (not even the 130L XL) will combi indefinitely with a 7kW heat pump. They're designed to use the heat pump to extend the volume of hot water. Our 60L NanoStore does everything we need at a store temperature of 45°C. MiniStores need a store temperature at least 10°C higher.
 
-Apart from size, the 60L NanoStore is better in every way than a 60L MiniStore.
+The 60L NanoStore is better in every way than a 60L MiniStore.
 
 Our original design was for a 110L MiniStore Tall. That would take another 450mm of cupboard height but nearly doubles the stored heat capacity. The advantage is that the extra stored heat lets you sustain high flow rates for longer. A MiniStore Tall would give you a 10 minute shower at 8L/min flow rates with a 55°C store temperature. The NanoStore would need a 65°C store temperature to match it. Heating a larger volume of water to a lower temperature is much more efficient. 
 
