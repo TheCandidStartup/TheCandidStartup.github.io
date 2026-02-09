@@ -144,4 +144,4 @@ Damon will also add a T-connector at the cold water inlet that can be used as a 
 
 # Next Time
 
-That's enough for one post. I'll tell you how it all turned out next time. 
+That's enough for one post. I'll tell you how it all turned out [next time]({% link _posts/2026-02-09-heat-geek-nano-store-conclusion.md %}). 
