@@ -120,7 +120,7 @@ It took a few attempts to adjust our strategy for the new reality. The heat exch
 
 The problem is that it's too efficient now. The temperature sensor hits the 45°C set point when the flow rate reaches 53°C. That's too short a window between noticing the shower is ready and getting in. There were repeated occasions where family members got in just after the heat pump turned off. If you only need a short shower that doesn't matter, there will be enough stored. It's not great if you want a long shower.
 
-I don't want to heat water higher than needed just to get a longer window. I decided to extend the window the other way, so you get in while the heat pump is still ramping up and use a couple of minutes of stored water before heat starts being added. I also set the diverter valve to 42°C, the bottom of its range. The idea is to steal a little stored heat when the valve opens in exchange for avoiding cycling and making the final jump up to combi flow temperatures more quickly. This also gets heat into the tank more quickly if we started from cold.
+I don't want to heat water hotter than needed just to get a longer window. I decided to extend the window the other way, so you get in while the heat pump is still ramping up and use a couple of minutes of stored water before heat starts being added. I also set the diverter valve to 42°C, the bottom of its range. The idea is to steal a little stored heat when the valve opens in exchange for avoiding cycling and making the final jump up to combi flow temperatures more quickly. This also gets heat into the tank more quickly if we started from cold.
 
 {% include candid-image.html src="/assets/images/home-assistant/shower-dashboard.png" alt="Shower Dashboard" %}
 
@@ -150,7 +150,7 @@ Overall, the whole DHW cycle generated 3.7kWh of heat at a COP of 2.3. Efficienc
 
 We often have a quick shower without boosting, particularly if we don't need any more hot water that day. Water heating is off, but occasionally a DHW run will happen anyway.
 
-If you shower long enough, the temperature sensor reading drops close to the temperature of the cold water entering the bottom of the heat exchanger. Our mains water can be as low as 7°C in cold weather, with sensor readings below 10°C. Once water stops flowing through the heat exchanger, temperatures equalize a bit, and the sensor reading slowly rises to 20°C.
+If you shower long enough, the temperature sensor reading drops close to the temperature of the cold water entering the bottom of the heat exchanger. Our mains water can be as low as 7°C in cold weather, with sensor readings below 10°C. As Adam never tires of telling me, we have unusually cold mains water. Once water stops flowing through the heat exchanger, temperatures equalize a bit, and the sensor reading slowly rises to 20°C.
 
 Apparently, Vaillant's frost protection feature also applies to hot water cylinders. If the temperature falls significantly below 10°C, it will force a short (and inefficient) DHW run. This isn't documented, but according to [forum posts](https://community.openenergymonitor.org/t/vaillant-arotherm-owners-thread/21891/1058), has been confirmed verbally by Vaillant. There's no way to adjust the thresholds used. 
 
