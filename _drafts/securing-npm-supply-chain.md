@@ -60,7 +60,15 @@ audited 1175 packages in 9s
 * No access to details of failures
 * Ignores constraints in `package.json`. I currently have storybook locked to version 8.6.4 because later versions have a bug that broke one of my stories. Dependabot created a PR to update to latest 8.6.14.
 * Can ignore and unignore dependencies in the group via comments on the pull request. At first after ignore it looked like nothing happened but after a few minutes the original PR was closed and a new one created, kicking off the CI pipeline again.
-* Initially thought ignore/unignore were local to the PR being worked on. However, it appears to be a global effect with no visibility of what overrides are in effect. 
+* Initially thought ignore/unignore were local to the PR being worked on. However, it appears to be a global effect with no visibility of what overrides are in effect. I used `@ignore @microsoft/api-extractor`. In dependabot logs for subsequent runs I found
+
+```
+updater | 2026/02/10 10:50:29 INFO <job_1239501723>   > 7.52.11 - from @dependabot ignore command
+  proxy | 2026/02/10 10:50:29 [044] GET https://registry.npmjs.org/@microsoft%2Fapi-extractor
+  proxy | 2026/02/10 10:50:29 [044] 200 https://registry.npmjs.org/@microsoft%2Fapi-extractor
+updater | 2026/02/10 10:50:29 INFO <job_1239501723> All updates for @microsoft/api-extractor were ignored
+```
+
 * In future should sort out locally as soon as Dependabot CI run fails
 * No notification from GitHub when PRs created, presumably because no reviewer or assignee
 * Only way I could find to assign myself to created PRs is using third party `auto-assign-action` GitHub action
@@ -128,7 +136,7 @@ added 295 packages, removed 3 packages, changed 3 packages, and audited 953 pack
 * Including, for most recent versions, a cooldown implementation *and* option to block install of package versions where provenance has been downgraded, together with many other features that [mitigate supply chain attacks](https://pnpm.io/supply-chain-security).
 * When I set my monorepo up didn't see any reason to use a non-default package manager. That's changed. Time to make the switch.
 
-# How to install pnpm
+# Planning
 
 * Didn't think I'd spend so much time thinking about how to install pnpm
 * Your package manager can't install itself
@@ -142,6 +150,8 @@ added 295 packages, removed 3 packages, changed 3 packages, and audited 953 pack
 * Make it a bit more explicit by setting version to use per repo (stored in `.tool_versions` file) rather than relying on per user setting
 * Using GitHub Actions for CI where runner gets setup with specific versions based on a build matrix
 * pnpm provides a [setup action](https://github.com/pnpm/action-setup) which installs a specified version of pnpm and integrates with GitHub Actions caching
+
+# Installing pnpm
 
 ```
 % asdf plugin add pnpm
@@ -329,6 +339,122 @@ node_modules/.pnpm/esbuild@0.25.9/node_modules/esbuild: Running postinstall scri
 * Shouldn't need this. Everything resolves fine in VSCode because I have path aliases for `"@candidstartup/*": ["packages/*/src"]` in my tsconfig.json. I use the `vite-tsconfig-paths` plugin so that vitest can use path aliases in the same way. Clearly not working. Then realized that when I set up monorepo, I only included the plugin in the config for apps, once I added it to the package config it started working.
 * ??? Need to test version and publish, then remove lerna-lite modules
 
+# GitHub Actions
+
+* Setup for my Build CI action
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x, 24.x]
+        react-version: [18, 19]
+    name: Node ${{ matrix.node-version }} - React ${{ matrix.react-version }}
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+    - run: pnpm install --frozen-lockfile
+    - name: Use React ${{ matrix.react-version }}
+      if: ${{ matrix.react-version == 19 }}
+      run: pnpm -r update react@19 react-dom@19 @types/react@19 @types/react-dom@19
+```
+
+* Added pnpm install using `pnpm/action-setup@v4`
+* Make sure you change `cache` config when setting up Node to `pnpm`
+* `pnpm install` defaults to `--frozen-lockfile` (equivalent to `npm ci`) in CI environments. Wanted to call it out explicitly.
+* Matrix of supported Node and React versions
+* Installs the corresponding version of Node
+* React 18 is embedded in pnpm lock file and `package.json`. If React 19 wanted, upgrade as final step.
+* React 18 builds work, React 19 fail in unit tests for `react-virtual-scroll` and `react-spreadsheet` with multiple errors which suggest mismatched/multiple versions of React in use.
+
+# Peer Dependencies
+
+* Both packages specify React as a peer dependency. 
+* They're library packages. Don't want to force our choice of React version onto app author.
+* How can unit tests run if React is a peer dependency?
+* Modern package managers install missing peer dependencies by default
+* The problem is that pnpm [doesn't](https://github.com/pnpm/pnpm/issues/9900) [upgrade](https://github.com/pnpm/pnpm/issues/8081) peer dependencies
+* Lots of worrying comments on those issues, suggesting manually fixes, or deleting lock file and installing from scratch
+* I found a simpler fix. When you think about it, React is both a dev dependency (needed to build against and run unit tests) and a peer dependency (consumer supplies their own version of React).
+
+```json
+{
+  "peerDependencies": {
+    "react": "18 - 19"
+  },
+  "devDependencies": {
+    "react": "^18.2.0"
+  },
+}
+```
+
+* Specifying both seems to do the trick
+
 # Mitigating Supply Chain Attacks
 
 * Turn all the options on
+* Forced review and whitelist of dependencies that require scripts is on by default
+
+```yaml
+blockExoticSubdeps: true
+minimumReleaseAge: 10080
+trustPolicy: no-downgrade
+```
+
+* `minimumReleaseAge` is the equivalent of dependabot's `cooldown` but in minutes rather than days
+* Failing dependabot with pnpm error
+
+```
+ERR_PNPM_NO_MATCHING_VERSION  No matching version found for tldts@7.0.22 while fetching it from https://registry.npmjs.org/
+```
+
+* Version does exist but was released a few hours less than 7 days ago
+* Earlier releases of pnpm use this confusing error message if asked to install a version more recent than minimum release age
+* Dependabot is still using pnpm 10.16 (latest is 10.29)
+* Weird thing is that according to dependabot logs it was running `pnpm update rollup@4.57.1 --lockfile-only` and `tldts` isn't in the dependency tree for rollup.
+* In fact, same error shows up multiple times all for packages that don't use `tldts`
+* If I run same update command on my machine it works
+* If I set pnpm version to 10.16 it fails but with a different error
+* Going to put this down to dependabot using a massively outdated version of pnpm 10.
+* Open PR to update to 10.23, seemingly abandoned waiting for review
+* For now forget about dependabot, see how easy it is to do manually
+* `pnpm pnpm -r update --no-save` (updates lockfile and node modules but leaves specifies in package.json as is)
+
+```
+ ERR_PNPM_TRUST_DOWNGRADE  High-risk trust downgrade for "@storybook/react-vite@9.1.17" (possible package takeover)
+```
+
+* No provenance for the previous version. 
+* There's a [long thread](https://github.com/pnpm/pnpm/issues/10202) discussing similar issues where patch release for previous major version that didn't have provenance is treated as a downgrade because it was published after a later major version that did have provenance.
+* As far as I can tell, Storybook has never published packages with provenance. This one was published two months ago and I don't see any provenance on any more recent version.
+* There is an option to ignore trust policy check beyond a certain age to ease transition. Added `trustPolicyIgnoreAfter: 43200` to allow anything older than a month. After that, the update worked.
+* Looking at changes made I see that `tldts` has been downgraded from 7.0.22 to 7.0.21. Then I realized. I must have already installed 7.0.22 manually with npm before upgrading to pnpm. The minimum release age constraint is also applied to stuff that's already installed.
+* Lots of updates being done. I think pnpm is updating all transitive dependencies. It looks like npm only updates transitive dependencies if the parent dependency was updated.
+
+# Version and Publish
+
+* After all that versioning (using lerna-lite) and publishing (using pnpm via GitHub Actions trusted publisher) worked without a hitch
+* Can now remove `lerna-lite-run` and `lerna-lite-publish` as no longer needed
+
+```
+pnpm remove -r @lerna-lite/run @lerna-lite/publish
+Scope: all 9 workspace projects
+.                                        |  -53 -----
+.                                        |   +2 +
+Progress: resolved 862, reused 779, downloaded 0, added 2, done
+```
+
+* Getting rid of 53 packages is great but why have 2 been added?
+* As far as I can tell, they haven't. The lock file shows lots of packages being removed and some changes to remaining 2 lerna packages to remove dead dependencies. 
+* 
