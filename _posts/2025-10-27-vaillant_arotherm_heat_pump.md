@@ -197,4 +197,4 @@ We have to use the sensoCOMFORT to make more advanced configuration changes. In 
 
 # Next Time
 
-Oh yes, what about the mystery hot water system? I'll tell you all about that next time. 
+Oh yes, what about the mystery hot water system? I'll tell you all about that [next time]({% link _posts/2025-11-17-heat-geek-nano-store.md %}). 

@@ -201,5 +201,5 @@ Current cost is 40p per shower at peak rate, or 10p using stored off-peak electr
 
 # Coming Up
 
-Did the new valve and extra insulation make any difference? Will the promise of instant hot water be delivered? And, what happens when it gets really cold outside?
+Did the [new valve and extra insulation]({% link _posts/2026-02-02-heat-geek-nano-store-update.md %}) make any difference? Will the promise of instant hot water be delivered? And, what happens when it gets [really cold]({% link _posts/2025-12-8-vaillant-heat-pump-cold-weather.md %}) outside?
 
