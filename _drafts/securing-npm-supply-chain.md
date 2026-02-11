@@ -457,4 +457,17 @@ Progress: resolved 862, reused 779, downloaded 0, added 2, done
 
 * Getting rid of 53 packages is great but why have 2 been added?
 * As far as I can tell, they haven't. The lock file shows lots of packages being removed and some changes to remaining 2 lerna packages to remove dead dependencies. 
-* 
+ 
+# Dependabot Woes
+
+* Dependabot ignores cooldown when applying security fixes, no equivalent for pnpm
+* Now that pnpm is setup, dependabot will fail to create security fix PR if younger than pnpm minimum release age
+* Can manually add exception for that specific version but it's a pain
+
+* Dependabot not great at dealing with chains of dependencies when using pnpm to apply security fix
+* Vulnerability in @isaacs/brace-expansion 5.0.0, fixed in 5.0.1
+* Dependabot tries to use `pnpm update @isaacs/brace-expansion@5.0.1` but that fails because version 5.0.0 is pinned by minimatch 10.1.1. This is fixed by minimatch 10.1.2. There's no constraint preventing update but because dependabot has limited update to brace-expansion it fails.
+* Running `pnpm update` manually sorted it out
+* Still have problem that I can't get GitHub to notify me when new security alert found. Have to rely on creation of PR indirectly notifying me. No notification if PR creation fails.
+
+* Hoping situation will improve as dependabot catches up with rapid progress made by pnpm.
