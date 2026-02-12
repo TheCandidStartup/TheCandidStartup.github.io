@@ -137,7 +137,7 @@ lerna-lite info [dry-run] > git tag v0.13.0 -m v0.13.0
 ...
 ```
 
-The `--sync-workspace-lock` uses `npm install --package-lock-only` to update npm's `package-lock.json` files (with equivalents for other package managers). This reduces the chance of Lerna messing things up. 
+The `--sync-workspace-lock` flag uses `npm install --package-lock-only` to update npm's `package-lock.json` files (with equivalents for other package managers). This reduces the chance of Lerna messing things up. 
 
 # NodeJS Major Update
 
@@ -156,7 +156,7 @@ My GitHub actions build CI workflow includes Node 22 and 24 in the build/test ma
 
 # Storybook
 
-The last time I tried a minor update, I ran into trouble with Storybook. It appeared to update OK but then encountered TypeScript errors with one of my stories.  Something in 8.6.5 and later broke type inferencing for arguments to the Story `render` method.
+The last time I tried a minor update, I ran into trouble with Storybook. It appeared to update OK but then I encountered TypeScript errors with some of my stories.  Something in 8.6.5 and later broke type inferencing for arguments to the Story `render` method.
 
 
 I have three stories that override `render`, and all of them have the same errors. I thought this would be quickly fixed in a later version, so pinned the version to 8.6.4 in my `package.json` and moved on.
@@ -339,9 +339,9 @@ Similarly, there's also a major release of `eslint-plugin-react-refresh` that dr
 changed 1 package, and audited 932 packages in 2s
 ```
 
-My initial minor update upgraded `typescript-eslint` which deprecates its wrapper `config` function. Apparently, its included in ESLint's new `defineConfig` function. The new `defineConfig` function also flattens its arguments meaning you no longer have to guess when to use the `...` spread operator.
+My initial minor update upgraded `typescript-eslint` which deprecates its wrapper `config` function. Apparently, the functionality is now included in ESLint's new `defineConfig` function. The new `defineConfig` function also flattens its arguments meaning you no longer have to guess when to use the `...` spread operator.
 
-Combined that means my config file changes from
+All together that means my config file changes from
 
 ```js
 import { fixupPluginRules } from '@eslint/compat';
