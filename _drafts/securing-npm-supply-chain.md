@@ -103,7 +103,7 @@ When it doesn't work, it's best to use it as a notification that you should do s
 
 # Lerna
 
-Reducing the number of dependencies you consume reduces the surface area for a supply chain attack. I got rid of 200 dependencies when I [replaced lerna with lerna-lite]({% link _drafts/infinisheet-chore-updates.md %}). I was also getting tired of lerna's upselling. Every time I make a change which causes a build to fail, lerna tells me that it's detected a flaky build and suggests moving to a paid for product. No lerna, a flaky build is where it fails *without* making a change.
+Reducing the number of dependencies you consume reduces the surface area for a supply chain attack. I got rid of 200 dependencies when I [replaced lerna with lerna-lite]({% link _posts/2026-02-16-infinisheet-chore-updates.md %}). I was also getting tired of lerna's upselling. Every time I make a change which causes a build to fail, lerna tells me that it's detected a flaky build and suggests moving to a paid for product. No lerna, a flaky build is where it fails *without* making a change.
 
 ```
 % npm uninstall lerna
@@ -485,7 +485,7 @@ Looking at the changes the update made, I see that `tldts` has been downgraded f
 
 I must have already installed 7.0.22 manually with npm before upgrading to pnpm. The minimum release age constraint is also applied to packages that are already installed.
 
-Compared with [npm]({% link _drafts/infinisheet-chore-updates.md %}), pnpm updates many more packages. I think the difference is that pnpm updates all transitive dependencies. It looks like npm only updates transitive dependencies if the parent dependency was updated.
+Compared with [npm]({% link _posts/2026-02-16-infinisheet-chore-updates.md %}), pnpm updates many more packages. I think the difference is that pnpm updates all transitive dependencies. It looks like npm only updates transitive dependencies if the parent dependency was updated.
  
 ## Dependabot vs pnpm
 
