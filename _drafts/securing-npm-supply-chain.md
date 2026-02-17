@@ -467,7 +467,7 @@ ERR_PNPM_TRUST_DOWNGRADE  High-risk trust downgrade for "@storybook/react-vite
 
 I can't see any provenance statements for any previous version on [npm](https://www.npmjs.com/package/@storybook/react-vite/v/10.2.8?activeTab=versions). There's a [long thread](https://github.com/pnpm/pnpm/issues/10202) discussing similar issues where a patch release for a previous major version that never had trust evidence is treated as a downgrade because it was published after a later major version with trust evidence. This typically happens when trust is added to the current main line but not back ported to previous releases which are still receiving patches.
 
-It's the same problem with Storybook. The Storybook 10.X releases were created with trusted publishing but don't have any provenance statements. Storybook publishes using yarn which doesn't support provenance. 
+It's the same problem with Storybook. The Storybook 10.X releases were [created with trusted publishing](https://github.com/storybookjs/storybook/pull/32607) but don't have any provenance statements. Storybook publishes using yarn which doesn't support provenance. 
 
 It's confusing because npm only shows whether a version has a provenance statement. You can't see whether it was created using trusted publishing. Bizarrely, you can see the publisher for the latest version in package search results, but not on the package or version pages.
 
