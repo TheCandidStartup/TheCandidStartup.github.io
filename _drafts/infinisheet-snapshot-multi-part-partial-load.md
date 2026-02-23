@@ -36,3 +36,26 @@ wise words
 * Engine opens snapshot on demand when data is first loaded from it.
 * Content `rowCount` and `colCount` now loaded from snapshot rather than calculated from cell map. Ready for when we partially load from snapshot tiles. Workflow uses openSnapshot, saveTile, saveIndex to create snapshot.
 
+# Six Months Later ...
+
+* Switched to trusted publishing
+* Updated all dependencies
+* Changed package manager
+
+* Had to publish packages twice, despite being part way through rewrite
+* All the unit tests and playwright tests passed
+* Just one weird thing ...
+
+# The bug that wasn't
+
+{% include candid-image.html src="/assets/images/infinisheet/event-source-sync-loading.png" alt="Event Source Sync Story Permanently Loading" %}
+
+* When you switch to story loading tooltip comes up and doesn't go away
+* Start entering data and it sorts itself out
+* Fixing bug good way to get reacquainted with code base
+* And it did help, it just wasn't a bug. Turns out its down to incomplete implementation
+* Loading status now tracks both event log and cell map state. Previously both load together. Moving to state where only pat of cell map in viewport will be loaded, will need to reload if viewport changes.
+* `EventSourcedSpreadsheet` sets viewport to visible area once it knows what it is. `setViewport` method clears cell map loaded flag which is where I stopped six months ago.
+
+# Tile Map
+
