@@ -3,13 +3,13 @@ title: Securing my NPM Supply Chain
 tags: frontend
 ---
 
-The news is full of npm [supply](https://medium.com/exaforce/supply-chain-security-incident-analysis-of-the-lottiefiles-npm-package-compromise-e8f9d894b1bb) [chain](https://about.gitlab.com/blog/gitlab-discovers-widespread-npm-supply-chain-attack/) [attacks](https://www.cisa.gov/news-events/alerts/2025/09/23/widespread-supply-chain-compromise-impacting-npm-ecosystem). I've written before about how package providers can use [provenance]({% link _posts/2024-06-17-supply-chain-provenance.md %}) and [trusted publishing](https://www.thecandidstartup.org/2026/01/26/bootstrapping-npm-provenance-github-actions.html) to help consumers verify that packages haven't been tampered with.
+The news is full of npm [supply](https://medium.com/exaforce/supply-chain-security-incident-analysis-of-the-lottiefiles-npm-package-compromise-e8f9d894b1bb) [chain](https://about.gitlab.com/blog/gitlab-discovers-widespread-npm-supply-chain-attack/) [attacks](https://www.cisa.gov/news-events/alerts/2025/09/23/widespread-supply-chain-compromise-impacting-npm-ecosystem). I've previously described how package providers can use [provenance]({% link _posts/2024-06-17-supply-chain-provenance.md %}) and [trusted publishing](https://www.thecandidstartup.org/2026/01/26/bootstrapping-npm-provenance-github-actions.html) to help consumers verify that packages haven't been tampered with.
 
 Now I want to look at things from the package consumer's point of view. How can I secure my NPM supply chain and stop [my packages](https://www.npmjs.com/search?q=%40candidstartup) from being compromised?
 
 # Applying Updates
 
-My current update process is to run `npm update` on an ad hoc basis. This is not smart. I've pushed provenance as a solution but I'm not checking it before I install packages.
+My current update process is to run `npm update` on an ad hoc basis. That's not smart. I've pushed provenance as a solution but I'm not checking it before I install packages.
 
 In my defense, the client side tooling provided by npm is awful. The only thing that looks at provenance is `npm audit signatures`.
 
@@ -82,9 +82,9 @@ updates:
 
 By default, each update gets its own PR. You combine multiple updates into a single PR by defining an update group. I added an ignore rule for major version updates which I want to continue doing by hand. Dependabot doesn't understand the common convention where versions can take the form `0.major.minor`. I added another rule to handle this case for TypeDoc. Finally, I also ignore minor version changes for TypeScript, which has its own [interesting rules]({% link _posts/2025-04-07-typescript-semantic-versioning.md %}).
 
-I should have got everything up to date *before* enabling dependabot. It's painful when Build CI fails with lots of changes. You have to edit the config file to restrict updates to packages likely to be a problem, wait for the bot to eventually run again, then repeat. In future, I'll sort out everything out locally as soon as a dependabot CI run fails.
+I should have got everything up to date *before* enabling dependabot. It's painful when Build CI fails with lots of changes. You have to edit the config file to restrict updates to packages likely to be a problem, wait for the bot to eventually run again, then repeat. In future, I'll sort everything out locally as soon as a dependabot CI run fails.
 
-You can ignore and unignore dependencies in the group via comments on the pull request. At first after ignore it looked like nothing happened but after a few minutes the original PR was closed and a new one created, kicking off the CI pipeline again. Initially, I thought ignore/unignore were local to the PR being worked on. However, it appears to be a global effect with no visibility of what overrides are active. I used `@dependabot ignore @microsoft/api-extractor`. In dependabot logs for subsequent runs I found this.
+You can ignore and unignore dependencies in the group via comments on the pull request. At first it looked like nothing happened but after a few minutes the original PR was closed and a new one created, kicking off the CI pipeline again. Initially, I thought ignore/unignore were local to the PR being worked on. However, it appears to be a global effect with no visibility of what overrides are active. I used `@dependabot ignore @microsoft/api-extractor`. In dependabot logs for subsequent runs I found this.
 
 ```
 updater | INFO <job_1239501723>   > 7.52.11 - from @dependabot ignore command
@@ -93,7 +93,9 @@ updater | INFO <job_1239501723>   > 7.52.11 - from @dependabot ignore command
 updater | INFO <job_1239501723> All updates for @microsoft/api-extractor were ignored
 ```
 
-Dependabot ignores constraints in `package.json`. I had  Storybook locked to version 8.6.4 because later versions have a bug that broke one of my stories. Dependabot created a PR to update to the latest 8.6.14.
+Once everything was sorted out, I had to remember to unignore `api-extractor` on the next weekly PR. I won't be using ignore again. 
+
+Dependabot also ignores constraints in `package.json`. I had  Storybook locked to version 8.6.4 because later versions have a bug that broke one of my stories. Dependabot created a PR to update to the latest 8.6.14.
 
 There's no notification from GitHub when PRs are created, presumably because newly created PRs have no reviewer or assignee. The only way I could find to automatically assign myself to newly created PRs is by using the third party `auto-assign-action` GitHub action. By this time, I noticed that I still wasn't getting notifications for new security alerts, so I enabled auto-create of PRs for security updates too. At least the "assigned as reviewer to PR" notifications are coming through.
 
@@ -119,7 +121,7 @@ Removing lerna removed nearly half my dependencies.
 added 295 packages, removed 3 packages, changed 3 packages, and audited 953 packages in 11s
 ```
 
-Unfortunately, installing lerna-lite added half of them back again. 
+Unfortunately, installing lerna-lite added a quarter of them back again. 
 
 # pnpm
 
@@ -290,7 +292,7 @@ The engines hack worked for me and blocks both `npm install` and `npm update`.
 
 ## Migrate npm Scripts
 
-You can't build anything yet. You need to go through all of your `package.json` scripts and replace uses of `npm` and `npx` with the pnpm equivalents. For me that boiled down to these steps. 
+You can't build anything yet. You need to go through all of your `package.json` scripts and replace uses of `npm` and `npx` with the pnpm equivalents. For me, that boiled down to these steps. 
 1. Replace `npx lerna run` with `pnpm run -r`
 2. Replace `npx` with `pnpm exec` (when executing an installed module) or `pnpm dlx` (when executing an uninstalled module)
 3. Replace `npm run` with `pnpm run`
@@ -299,7 +301,7 @@ You can't build anything yet. You need to go through all of your `package.json` 
 
 ## Build
 
-The build almost worked first time. There was one sample app that couldn't resolve imports. It turns out that I hadn't included all the required dependencies in the app's `package.json`. This is a classic mistake that npm hides if another package in the repo includes the package.
+The build almost worked first time. There was one sample app that couldn't resolve imports. It turns out that I hadn't included all the required dependencies in the app's `package.json`. This is a classic mistake that npm hides if another package in the repo includes the dependency.
 
 Remember to run `pnpm install` after adding the missing dependency to `package.json`. It will add the missing link to `node_modules`.
 
@@ -421,7 +423,7 @@ Scope: all 9 workspace projects
 Progress: resolved 862, reused 779, downloaded 0, added 2, done
 ```
 
-Getting rid of another 53 packages is great but why have 2 been added?As far as I can tell, they haven't. The lock file shows lots of packages being removed and some changes to the remaining 2 lerna-lite packages to remove dead dependencies. 
+Getting rid of another 53 packages is great but why have 2 been added? As far as I can tell, they haven't. The lock file shows lots of packages being removed and some changes to the remaining 2 lerna-lite packages to remove dead dependencies. 
 
 ## Dependabot
 
