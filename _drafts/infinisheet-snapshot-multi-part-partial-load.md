@@ -211,6 +211,6 @@ All I had to do was add `syncLogsPromise` to the start of the chain (with an ada
 
 Progress has been made, tests all pass, and the persistent loading tooltip is gone. However, it doesn't feel great. There's a lot of coupling between the snapshot and event log. There's a high chance of more async interference between `setViewport`, `setCellVAlueAndFormat` and `syncLogsAsync`. I need to be more discerning about which changes conflict rather than bailing out on any change to content.
 
-Fortunately, I have a cunning plan which I'll tell you about next time. 
+Fortunately, I have a cunning plan which I'll tell you about [next time]({% link _drafts/infinisheet-decoupling-event-log-snapshot.md %}). 
 
 
