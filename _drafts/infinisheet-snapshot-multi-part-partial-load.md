@@ -90,13 +90,13 @@ In the end I made a simplifying assumption. The engine would work entirely in te
 
 I added a `CellRangeCoords` type and associated utility functions. The `setViewport` method on `EventSourcedSpreadsheetData` converts the viewport and calls `setViewportCellRange` on the engine. 
 
-This is all I need for now as currently the item offset mappings are fixed (all cells have the same size). I'll have to revisit this once I support variable size cells. The viewport cell range will also need updating.
-* When items change size
-* When inserting/deleting a row/column if the row/column added/removed from the viewport as a result has a different size
+This is all I need for now as currently the item offset mappings are fixed (all cells have the same size). I'll have to revisit this once I support variable size cells. The viewport cell range will also need updating when:
+* Items change size
+* Inserting/deleting a row/column if the row/column added/removed from the viewport as a result has a different size
 
 # Tile Map
 
-Based on my notes from six months ago, it look like the next step was to load just the cells in the viewport into the in-memory cell map. On reflection, this seems like the wrong way to go. It would mean reloading on any change to the viewport, even scrolling down one line.
+Based on my notes from six months ago, it looks like the next step was to load just the cells in the viewport into the in-memory cell map. On reflection, this seems like the wrong way to go. It would mean reloading on any change to the viewport, even scrolling down one line.
 
 You could have a complex mechanism for caching tiles in memory to speed up reload and support incremental reload for small changes to the viewport. However, it feels wasteful.
 
@@ -143,7 +143,7 @@ It took me a while to figure out where I needed to add calls to `loadTiles`. Obv
 
 # Spreadsheet Data
 
-It seemed more straightforward in `EventSourcedSpreadsheetData`. I added `loadTiles` at the end of the `setViewport` method and inserted a call into the chain of async operations that implements `setCellValueAndFormat`.
+The changes seemed more straightforward in `EventSourcedSpreadsheetData`. I added `loadTiles` at the end of the `setViewport` method and inserted a call into the chain of async operations that implements `setCellValueAndFormat`.
 
 ```ts
 setCellValueAndFormat(row: number, column: number, value: CellValue, 
