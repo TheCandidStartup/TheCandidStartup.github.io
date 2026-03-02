@@ -4,7 +4,7 @@ tags: event-sourced-spreadsheet-data
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 
-[Last time]({% link _drafts/infinisheet-snapshot-multi-part-partial-load.md %}), we got a load-on-demand chunked snapshot format working. It didn't feel great, with too much coupling between in-memory representations for the event log and snapshot. We're going to sort that out now before moving on to a multi-tile snapshot format. 
+[Last time]({% link _posts/2026-03-02-infinisheet-snapshot-multi-part-partial-load.md %}), we got a load-on-demand chunked snapshot format working. It didn't feel great, with too much coupling between in-memory representations for the event log and snapshot. We're going to sort that out now before moving on to a multi-tile snapshot format. 
 
 # A Cunning Plan
 
