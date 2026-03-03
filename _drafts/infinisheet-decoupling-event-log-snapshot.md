@@ -84,9 +84,43 @@ export interface LogSegment {
 
 # Async Interference
 
-* Still have `setViewport`, `syncLogs` and `setCellValueAndFormat` running chained async operations which may interleave
-* Currently check to see if content object has changed since the start of the chain. If so something else has run and we bail out.
-* Worked with `syncLogs` and `setCellValueAndFormat` because both were updating local event log and cell map to match central event log. Didn't matter which handled it as long as they didn't interfere.
-* Doesn't with `setViewport` in the mix as it's doing something independent. Don't want snapshot tile loading to cancel either of the other ops. Or the other ops to cancel tile loading.
-* Do more fine grained checks. Look at the content properties we actually care about.
-* `curr.endSequenceId == this.content.endSequenceId` for change in logs
+We still have the possibility of interference between `setViewport`, `syncLogsAsync` and `setCellValueAndFormat` running chained async operations which can interleave. Currently, we check to see if the content object has changed since the start of the chain. If so, something else has changed the state and we bail out. 
+
+This worked when we only had `syncLogs` and `setCellValueAndFormat` because both were updating the local event log and cell map to match the central event log. It didn't matter which handled it as long as they didn't interfere with each other. 
+
+It doesn't work now that we have `setViewport` in the mix as it's doing something independent. We don't want snapshot tile loading to cancel log updates. Or log updates to cancel tile loading.
+
+The solution is to use more fine grained checks. Immutable data structures make it easy to work out what exactly has changed since the async chain started and whether it matters. 
+
+I started by adding a utility method to determine whether the current content has an event log compatible with earlier content. That is, are they using the same log segment and at the same point in the log?
+
+```ts
+class EventSourcedSpreadsheetEngine {
+  protected isCompatibleLog(curr: EventSourcedSnapshotContent): boolean {
+    const content = this.content;
+    if (content == curr)
+      return true;
+
+    return (content.endSequenceId === curr.endSequenceId && 
+      content.logSegment === curr.logSegment)
+  }
+}
+```
+
+I replaced the `this.content === current` checks in `syncLogsAsync` and `setCellValueAndFormat` with `this.isCompatibleLog(curr)`. I then used a similar approach to check for compatible viewports in `setViewport`.
+
+```ts
+class EventSourcedSpreadsheetEngine {
+  protected isCompatibleViewport(curr: EventSourcedSnapshotContent): boolean {
+    const content = this.content;
+    if (content == curr)
+      return true;
+
+    return equalCellRangeCoords(content.viewportCellRange, curr.viewportCellRange);
+  }
+}
+```
+
+I had to be more precise about which content object I used in each async operation. With the previous check it didn't matter as we only continued if they were the same object. Now it does matter. When you're copying unmodified properties into a new content object they really need to come from the current object rather than the one captured at the start of the chain.
+
+I added new unit tests to validate a variety of different scenarios. Which reminds me, I really need to update my test suite to take all the new code into account. My branch coverage is down to 83%. We can look at it next time.
