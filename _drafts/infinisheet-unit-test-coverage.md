@@ -34,3 +34,25 @@ wise words
 * Defined as an *inclusive* range to match Excel conventions
 * Converting an offset to item where offset is right on the boundary of two cells is treated as start of second cell
 * Need to detect and treat as end of first cell
+* Added tests for `setViewport` and `getViewport` to `SpreadsheetData.interface-test.ts` which covered all implementations. Love it when an investment pays back.
+
+# Event Sourced Spreadsheet Data
+
+* SpreadsheetCellMap
+  * `calcExtents` no longer covered as no longer used
+  * Debated removing it, in the end added a couple of lines to an existing unit test. May come in useful, for debugging if nothing else.
+* SpreadsheetSnapshot
+  * Error handling code uncovered, just passing storage error back up to caller. Defer until a wider look at error handling.
+* SpreadsheetGridTileMap
+  * Couple of logic paths not tested (cases where tile not loaded). Worth adding dedicated unit test.
+  * Error handling as above
+* EventSourcedSpreadsheetWorkflow
+  * Error handling as above
+* EventSourcedSpreadsheetEngine
+  * Error handling as above
+  * Setting viewport to `undefined`
+  * Re-entrant syncLogsAsync calls
+  * Async interference between syncLogsAsync and setCellValueAndFormat (can this still happen?)
+* EventSourcedSpreadsheetData
+  * Async interference between syncLogsAsync and setCellValueAndFormat (both success and conflict error paths)
+  * setViewport to empty and undefined
