@@ -51,8 +51,17 @@ wise words
 * EventSourcedSpreadsheetEngine
   * Error handling as above
   * Setting viewport to `undefined`
-  * Re-entrant syncLogsAsync calls
-  * Async interference between syncLogsAsync and setCellValueAndFormat (can this still happen?)
+  * Re-entrant syncLogsAsync calls - realized these should never happen. Caller should not start a new sync while old still in progress. Turned into error.
+  * Async interference between syncLogsAsync and setCellValueAndFormat. Shouldn't happen anymore because setCellValueAndFormat synchronizes access using promise returned from syncLogsAsync. Turned into an error.
 * EventSourcedSpreadsheetData
   * Async interference between syncLogsAsync and setCellValueAndFormat (both success and conflict error paths)
   * setViewport to empty and undefined
+
+# Async Code Unit Testing
+
+* Hard to test all the different execution permutations of async code
+* At mercy of microtask scheduler and IO timings
+* Vitest fake timers gives you some tools
+* processTicks, nextTimerAsync, runAllTimersAsync
+* When multiple micro-tasks are pending all will run in scheduler determined order
+* To do better need to introduce time delay for async ops and then user fake timer controls to advance time
