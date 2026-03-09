@@ -1,5 +1,5 @@
 ---
-title: Decoupling the Event Log and Snapshot Tiles
+title: Decoupling Event Log and Snapshot Loading
 tags: event-sourced-spreadsheet-data
 thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
@@ -11,7 +11,7 @@ thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 {% capture s_url %}{% link _posts/2023-05-01-spreadsheet-snapshot-data-structures.md %}{% endcapture %}
 I was thinking about the next stage on this scalability journey when I realized where I'd gone wrong. Eventually, we'll need a snapshot format that uses multiple [snapshot segments]({{ s_url | append: "#segments" }}). You make snapshot writes scalable by storing snapshots as multiple segments that are layered on top of each other. Each snapshot write creates a new segment and reuses existing segments from earlier snapshots.
 
-The in-memory representation is a tile map for each segment. When reading the value of a cell you query each tile map in turn, similar to [layered spreadsheet data]({% link _posts/2025-03-17-react-spreadsheet-layered-data.md %}). We can use the same approach to decouple event log and snapshot. All we have to do is put all changes since the last snapshot into a dedicated "edit" layer on top. Now there's minimal coupling between event log updates and snapshot management. There's no need to load snapshot tiles just because there are new cell values in the event log.
+The in-memory representation is a tile map for each segment. When reading the value of a cell, you query each tile map in turn, similar to [layered spreadsheet data]({% link _posts/2025-03-17-react-spreadsheet-layered-data.md %}). We can use the same approach to decouple the event log and snapshot. All we have to do is put all changes since the last snapshot into a dedicated "edit" layer on top. Now there's minimal coupling between event log updates and snapshot management. There's no need to load snapshot tiles just because there are new cell values in the event log.
 
 # Edit Layer
 
@@ -58,11 +58,11 @@ export interface SpreadsheetTileMap {
 }
 ```
 
-Tile maps are immutable so there's no need for `addEntries` and `addEntry`. The `loadTiles` method is far simpler. There's no longer any need to forcibly create empty tiles you can add entries to, or to merge in log entries as tiles are loaded. Merging has moved to snapshot creation where the edit layer changes encoded in a `SpreadsheetCellMap` need to be merged with the last snapshot `SpreadsheetTileMap` before output as a new snapshot. 
+Tile maps are immutable so there's no need for `addEntries` and `addEntry`. The `loadTiles` method is far simpler. There's no longer any need to forcibly create empty tiles you can add entries to, or to merge in log entries as tiles are loaded. Merging has moved to snapshot creation, where the edit layer changes encoded in a `SpreadsheetCellMap` need to be merged with the last snapshot `SpreadsheetTileMap`, before output as a new snapshot. 
 
 # Refactoring Content and Log Segment
 
-The core data structures in the spreadsheet engine are `EventSourcedSnapshotContent` and `LogSegment`. We implement the semantics required by React's `useSyncExternalEventStore`. You access spreadsheet data via an immutable snapshot. The content class is the internal implementation of that snapshot. We ensure the snapshot is immutable by making the content object immutable. Whenever there's a change to spreadsheet state the current content is replaced with a new content object. 
+The core data structures in the spreadsheet engine are `EventSourcedSnapshotContent` and `LogSegment`. We implement the semantics required by React's `useSyncExternalEventStore`. You access spreadsheet data via an immutable content object, exposed as an opaque type. The content class is the internal implementation. Whenever there's a change to spreadsheet state the current content is replaced with a new content object. 
 
 To ensure that this is scalable, content is a small fixed size structure. Each content object corresponds to a position with the event log. The large data structures used for the in-memory representation of the event log are in the `LogSegment` object. All content objects that correspond to positions in the same log segment reference the same `LogSegment` object.
 
@@ -121,6 +121,8 @@ class EventSourcedSpreadsheetEngine {
 }
 ```
 
-I had to be more precise about which content object I used in each async operation. With the previous check it didn't matter as we only continued if they were the same object. Now it does matter. When you're copying unmodified properties into a new content object they really need to come from the current object rather than the one captured at the start of the chain.
+I had to be more precise about which content object I used in each async operation. With the previous check it didn't matter, as we only continued if they were the same object. Now it does matter. When you're copying unmodified properties into a new content object, they really need to come from the current object, rather than the one captured at the start of the chain.
 
-I added new unit tests to validate a variety of different scenarios. Which reminds me, I really need to update my test suite to take all the new code into account. My branch coverage is down to 83%. We can look at it next time.
+# Next Time
+
+Thinking about all the different ways that async operations can be interleaved makes my head hurt. Which is a clear sign that I need to strengthen my unit test suite. We'll look at that next time.
