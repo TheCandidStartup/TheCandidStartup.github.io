@@ -48,17 +48,17 @@ You can think of asynchronous code as a collection of individual operations with
 
 At any time there may be multiple operations that are ready to run. The event loop acts as a scheduler, deciding which operation to run next. My simple unit test defines a sequential chain of operations. The queries run one at a time, with `await` defining a dependency on the previous query.
 
-The code is simple to understand but no more efficient than the equivalent synchronous code. The real power of asynchronous code is when you allow multiple chains of operations to overlap. 
+The code is simple to understand but no more efficient than the equivalent synchronous code. The real power of asynchronous code is when you allow multiple chains of operations to overlap, interleaving operations from different chains.
 
 # Async Interference
 
-I'm currently working on an [event sourced spreadsheet data]({% link _topics/event-sourced-spreadsheet-data.md %}) implementation that provides a great test case. The interface exposes logically independent async functions like `setCellValueAndFormat` and `setViewport` which are implemented as chains of asynchronous operations. These operations interact with common data structures. The implementation has to take [great care]({% link _posts/2026-03-09-infinisheet-decoupling-event-log-snapshot.md %}) to ensure there's no interference between the chains. 
+I'm currently working on an [event sourced spreadsheet data]({% link _topics/event-sourced-spreadsheet-data.md %}) implementation that provides a great test case. The interface exposes logically independent async functions like `setCellValueAndFormat` and `setViewport` which are implemented as chains of asynchronous operations. These operations interact with common data structures. The implementation has to take [great care]({% link _posts/2026-03-09-infinisheet-decoupling-event-log-snapshot.md %}) to ensure there's no interference when operations from different chains are interleaved.
 
 # Immutable Data Structures
 
-* Data structure that I'm using is immutable. Which turns out to be really useful for detecting async interference.
-* Take a reference to data at start of chain. Can then validate that state is what I expect in each operation. 
-* Can decide it's safe to proceed, that operation is now redundant and can be abandoned or that chain should fail.
+The [data structure]({% link _posts/2025-06-02-event-sourced-spreadsheet-data.md %}) that I'm using is immutable. The current state of the spreadsheet is represented by a small content object. Whenever anything changes, the current content is replaced by a new content object. This wasn't done with asynchronous code in mind but turns out to be really useful for detecting async interference.
+
+The first operation in the chain takes a reference to the current content object. Each subsequent operation can check whether the content is still as expected, or has been modified by something else. We can compare current and previous content and decide whether it's safe to proceed, or that the operation is now redundant and can be abandoned or that the chain should fail with an error. 
 
 ```ts
 setCellValueAndFormat(row: number, column: number, value: CellValue, format: CellFormat): ResultAsync<void,SpreadsheetDataError> {
@@ -91,37 +91,89 @@ This is a simplified version of the `setCellValueAndFormat` function. The chain 
 
 # Scheduling
 
-I need to test all the different ways that operations can overlap. Unfortunately, we're at the mercy of the scheduler when it comes to ordering of unconstrained operations.
+Ideally, I'd like to test all the different ways that operations can interleave. Unfortunately, we're at the mercy of the scheduler when it comes to ordering of unconstrained operations.
 
-* Microtasks
-* IO Callbacks
-* Timers
+The JavaScript runtime has two levels of scheduling. At the top level is the event loop. Callbacks are registered to run at specific times or when IO completes. Jobs are executed in order. 
 
-So far my testing has been ad hoc. I tweak the tests until I find a code sequence that results in an order of operations that I haven't seen yet.
-Hard to test all the different execution permutations of async code
-At mercy of microtask scheduler and IO timings
+Each job can contain microtasks. These are asynchronous operations that are ready to run immediately but need to be executed as callbacks to match the required semantics for promises and async/await. When control returns to the event loop at the end of each job, any pending microtasks creating during the job are run *before* the next event loop job. 
+
+So far my testing has been ad hoc. I write an initial version of each test in a natural way. Then I tweak the tests until I find a code sequence that results in an order of operations that I haven't seen yet. It's hard to test all the different execution permutations, or to figure out which are possible. I need a more systematic approach.
 
 # Vitest Fake Timers
 
-* Vitest fake timers gives you some tools
-* In theory should be able to use `vi.runAllTicks()` to run all pending microtasks. In practice it does nothing because Vitest doesn't fake the Node `nextTick` function. Apparently, too many things break if you do that.
-* Means you need to run microtasks the natural way by returning control to the event loop
-* Vitest has many utilities for manipulating time and invoking faked timers. The async variants of these methods execute via the event loop so will run pending microtasks as well.
-* The least intrusive is `vi.advanceTimersByTimeAsync(0)`. This leaves current time as-is so will just execute pending microtasks.
-* If you use timers, e.g. `setTimeout` or `setInterval`, you can pass the number of milliseconds to advance time, triggering any timers due within that time period (including any new ones scheduled by code triggered by the existing timers).
-* If you don't want to keep track of time passing you can use `vi.advanceTimersToNextTimerAsync()` to move time on to fire the next timer due.
-* Next level up is `vi.runOnlyPendingTimers()` which will move time on to the last timer due, so executing all existing timers, but not any added later than the current last pending.
-* Finally there's `vi.runAllTimersAsync()` which will keep moving time on and executing timers until there are no timers left. Don't try this with `setInterval` or your test will fail when you hit the infinite execution limit (10,000 timers by default).
-* When multiple micro-tasks are pending all will run in scheduler determined order
+Vitest provides [fake timers](https://vitest.dev/api/vi.html#vi-usefaketimers) which mocks calls to the runtime's timers. This gives you some control over the scheduler. 
+
+In theory, you can use `vi.runAllTicks()` to run all pending microtasks. In practice it does nothing because Vitest doesn't fake the Node `nextTick` function by default. Apparently, too many things [break](https://vitest.dev/config/faketimers.html#faketimers-tofake) if you do that.
+
+You can still force microtasks to run the natural way by returning control to the event loop. Vitest has many utilities for manipulating time and invoking faked timers. The async variants of these methods execute via the event loop so will run pending microtasks as well. The least intrusive is `vi.advanceTimersByTimeAsync(0)`. This leaves current time unchanged so won't execute any timer callbacks but will run pending microtasks.
+
+If you use timers, e.g. `setTimeout` or `setInterval`, you can pass the number of milliseconds to advance time, triggering any timers due within that time period (including any new ones scheduled by code triggered by the existing timers).
+
+If you don't want to keep track of time passing you can use `vi.advanceTimersToNextTimerAsync()` to move time on to fire the next timer due.
+
+The next level up is `vi.runOnlyPendingTimers()` which will move time on to the last timer due, so executing all existing timers, but not any added later than the current last pending.
+
+Finally, there's `vi.runAllTimersAsync()` which will keep moving time on and executing timers until there are no timers left. Don't try this with `setInterval` or your test will fail when you hit the infinite execution limit (10,000 timers by default).
+
+When multiple microtasks or jobs are pending, they will all be executed in the scheduler defined order. There's no way to choose which operation to run next.
 
 # Mock Delays
 
-* To do better need to introduce time delay for async ops and then advance time explicitly
-* Wrappers for event log and blob store low level interfaces. Use `setTimeout` to forward call to wrapped interface after a delay. 
-* Natural seam in architecture for insertion of mocks
-* Reflects real world problems. Interfaces are abstractions over calling network API. You really do see a wide range of delays. Any sequence of operations we can induce by introducing delays can and will happen in the real world
-* Beware! The fake timers implementation treats calls to `setTimeout` with a delay of 0ms triggered by advancing time as if they had a delay of 1ms.
-* Caused some fun with `DelayBlobStore` and `DelayEventLog`. Useful to have wrapper in place and then be selective about whether you introduce a delay or not. Delay of 0 now has significantly different behavior compared with regular async call. 
+We can do better by defining time delays for each operation and then advancing time explicitly. The event sourced spreadsheet data implementation is built on `EventLog` and `BlobStore` interfaces. I already have simple reference implementations that I use when unit testing. 
+
+These interfaces are a natural seam in the architecture for insertion of mocks. They also reflect real world problems. In a real implementation the interfaces are abstractions over calling a network API. Calls over a network really do see a wide range of delays. Any sequence of operations we can induce by introducing delays to network calls can and will happen in the real world.
+
+I've created delay wrappers that use `setTimeout` to return results from the wrapped interface after a delay.
+
+```ts
+export class DelayEventLog<T extends LogEntry> implements EventLog<T> {
+  constructor(base: EventLog<T>, delay: number=0) {
+    this.base = base;
+    this.delay = delay;
+  }
+
+  delay: number;
+
+  addEntry(entry: T, sequenceId: SequenceId, snapshotId?: SequenceId): ResultAsync<AddEntryValue,AddEntryError> {
+    return delayResult(this.base.addEntry(entry, sequenceId, snapshotId), this.delay);
+  }
+
+  setMetadata(sequenceId: SequenceId, metadata: LogMetadata): ResultAsync<void,MetadataError> {
+    return delayResult(this.base.setMetadata(sequenceId, metadata), this.delay);
+  }
+
+  query(start: SequenceId | 'snapshot' | 'start', end: SequenceId | 'end', snapshotId?: SequenceId): ResultAsync<QueryValue<T>,QueryError> {
+    return delayResult(this.base.query(start, end, snapshotId), this.delay);
+  }
+
+  truncate(start: SequenceId): ResultAsync<void,TruncateError> {
+    return delayResult(this.base.truncate(start), this.delay);
+  }
+
+  private base: EventLog<T>;
+}
+```
+
+The interfaces use `ResultAsync` types to represent the pending result or error from each async method. The `delayResult` helper calls the wrapped method once the `setTimeout` callback is triggered.
+
+```ts
+export function delayPromise<T>(value: T, delay: number): Promise<T> {
+  return new Promise<T>((resolve) => {
+    setTimeout(() => resolve(value), delay);
+  })
+}
+
+export function delayResult<T,E>(result: ResultAsync<T,E>, delay: number): ResultAsync<T,E> {
+  if (delay == 0)
+    return result;
+  const promiseLike = result.then<Result<T,E>,never>((r) => delayPromise(r, delay));
+  return new ResultAsync(Promise.resolve(promiseLike));
+}
+```
+
+Be careful with delays of zero. My first attempt at this didn't have any special case handling. The fake timers implementation treats zero delay timers created in dependent operations as if they had a delay of 1ms. 
+
+It's useful to put a delay wrapper in place with an initial delay of 0 and then be selective about where you introduce real delays. It took me a long time to figure out why `vi.advanceTimersByTimeAsync(0)` wasn't running all the pending operations. 
 
 # Code Coverage
 
