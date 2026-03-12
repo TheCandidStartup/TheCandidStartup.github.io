@@ -63,7 +63,8 @@ The first operation in the chain takes a reference to the current content object
 ```ts
 setCellValueAndFormat(row: number, column: number, value: CellValue, format: CellFormat): ResultAsync<void,SpreadsheetDataError> {
   const curr = this.content;
-  const entry: SetCellValueAndFormatLogEntry = { type: 'SetCellValueAndFormat', row, column, value, format };
+  const entry: SetCellValueAndFormatLogEntry = 
+    { type: 'SetCellValueAndFormat', row, column, value, format };
 
   return this.addEntry(curr, entry).map((addEntryValue) => {
     if (this.isCompatibleLog(curr)) {
@@ -175,9 +176,107 @@ Be careful with delays of zero. My first attempt at this didn't have any special
 
 It's useful to put a delay wrapper in place with an initial delay of 0 and then be selective about where you introduce real delays. It took me a long time to figure out why `vi.advanceTimersByTimeAsync(0)` wasn't running all the pending operations. 
 
+# Coalescing setViewport calls
+
+The `setViewport` method tells the spreadsheet engine which area of the spreadsheet you're interested in. It kicks off a chain of two operations which eventually loads the data needed from the blob store. 
+
+```ts
+  setViewport(viewport: SpreadsheetViewport|undefined): void { 
+    this.content = { ...this.content, viewport, mapLoadStatus: ok(false) };
+    this.notifyListeners();
+    const curr = this.content;
+
+    void this.syncLogsPromise.then(() => {
+      if (this.isCompatibleViewport(curr)) {
+        const segment = this.content.logSegment;
+        void segment.tileMap.loadTiles(segment.snapshot, curr.viewport).then((result) => {
+          if (this.isCompatibleViewport(curr)) {
+            this.content = { ...this.content, mapLoadStatus: result }
+            this.notifyListeners();
+          }
+        })
+      }
+    });
+  }
+```
+
+The spreadsheet UI calls `setViewport` whenever the visible spreadsheet area changes. That happens a lot when you're scrolling through a line at a time. 
+
+The UI is notified whenever the content changes. This happens twice during `setViewport`. At the start we mark the content as stale. The UI can display a loading status if it wants. Once the data has loaded we mark the content as complete (or unavailable) and notify the UI so it can update itself. 
+
+Multiple `setViewport` calls are allowed to overlap, with operations from earlier calls abandoned if they see that the desired viewport has changed. There are two ways that overlapping `setViewport` calls can interfere with each other. We want to test them both.
+
+# Test Harness
+
+The spreadsheet engine accesses low level functionality through abstract interfaces. That makes it easy to hook up reference implementations suitable for unit testing and add delay wrappers where needed.
+
+```ts
+  const blobStore = new DelayBlobStore(new SimpleBlobStore);
+  const worker = new SimpleWorker<PendingWorkflowMessage>;
+  const host = new SimpleWorkerHost(worker);
+  const log = new  SimpleEventLog<SpreadsheetLogEntry>(host);
+
+  const data = new EventSourcedSpreadsheetData(log, blobStore, host, {viewportEmpty: true});
+  await vi.advanceTimersByTimeAsync(0);
+
+  const mock = vi.fn();
+  const unsubscribe = data.subscribe(mock);
+```
+
+We can then create an instance of the engine, wait for any pending microtasks to complete and then subscribe to be notified when content changes.
+
+# Natural Test
+
+The test case that you would naturally write covers one of the interfering sequences of operations.
+
+```ts
+  data.setViewport({ rowMinOffset: 0, columnMinOffset: 0, width: 100, height: 100 });
+  data.setViewport({ rowMinOffset: 100, columnMinOffset: 0, width: 100, height: 100 });
+  expect(mock).toBeCalledTimes(2);
+
+  await vi.advanceTimersByTimeAsync(0);
+  expect(mock).toBeCalledTimes(3);
+
+  // Validate that loaded content matches second viewport
+```
+
+You call `setViewport` twice. In each case the current viewport is updated, listeners are notified and the first async operation is scheduled. You expect the mock listener to be called twice. 
+
+Calling `vi.advanceTimersByTimeAsync` runs all the async operations. The work for the first call to `setViewport` is abandoned at the first operation because the viewport has changed. The two operations for the second `setViewport` run to completion resulting in one additional notification. 
+
+# Delay Test
+
+The other interesting case is where the second `setViewport` is called when the first call has completed its first operation and is waiting for the second to run.
+
+```ts
+  blobStore.delay = 100;
+  data.setViewport({ rowMinOffset: 0, columnMinOffset: 0, width: 100, height: 100 });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(mock).toBeCalledTimes(1);
+
+  blobStore.delay = 0;
+  data.setViewport({ rowMinOffset: 100, columnMinOffset: 0, width: 100, height: 100 });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(mock).toBeCalledTimes(3);
+
+  await vi.advanceTimersByTimeAsync(100);
+  expect(mock).toBeCalledTimes(3);
+
+// Validate that loaded content matches second viewport
+```
+
+We can simulate this case by adding a delay to the blob store, making the first call to `setViewport` and then allowing pending operations to run. We only see one notification because the chain of operations is waiting at `loadTiles`. 
+
+We then make the second call to `setViewport` with a delay of zero and again run pending operations. All the operations for the second call complete with two additional notifications.
+
+Finally, we advance time so that the first call's second operation can run and abandon because the viewport has changed.
+
 # Code Coverage
 
 * Useful tool to validate that you're exercising all code paths
+* Forces you to look at code with fresh eyes
+* May be missing a test case for an order of operations you hadn't considered
+* May realize that there's an impossible order of operations and you have redundant code
 * Not sufficient by itself. If you haven't included a test for async interference coverage won't tell you that it's missing.
 
 # Vitest Coverage Weirdness
@@ -189,40 +288,16 @@ It's useful to put a delay wrapper in place with an initial delay of 0 and then 
 * If I run coverage at the package level, it reports 100% function coverage.
 * For now, ignoring function coverage at the repo level if statements, branches and lines are all at 100%
 
-# Exhaustive Testing
+# Conclusion
 
-* Review coverage to find code paths not being tested
+* Much better understanding of the tools at my disposal and the kinds of tests I need to write
+* Back to 100% coverage of async interference code paths
 
-## Infinisheet Types
+# TODO
 
-* New types and utilities for `SpreadsheetViewport` and `CellRangeCoords`
-* Trivial unit tests
-* Still worth writing as I caught a logic error in `viewportToCellRange`
-* Defined as an *inclusive* range to match Excel conventions
-* Converting an offset to item where offset is right on the boundary of two cells is treated as start of second cell
-* Need to detect and treat as end of first cell
-* Added tests for `setViewport` and `getViewport` to `SpreadsheetData.interface-test.ts` which covered all implementations. Love it when an investment pays back.
-
-## Event Sourced Spreadsheet Data
-
-* SpreadsheetCellMap
-  * `calcExtents` no longer covered as no longer used
-  * Debated removing it, in the end added a couple of lines to an existing unit test. May come in useful, for debugging if nothing else.
-* SpreadsheetSnapshot
-  * Error handling code uncovered, just passing storage error back up to caller. Defer until a wider look at error handling.
-* SpreadsheetGridTileMap
-  * Couple of logic paths not tested (cases where tile not loaded). Worth adding dedicated unit test.
-  * Error handling as above
-* EventSourcedSpreadsheetWorkflow
-  * Error handling as above
-* EventSourcedSpreadsheetEngine
-  * Error handling as above
-  * Setting viewport to `undefined`
-  * Re-entrant syncLogsAsync calls - realized these should never happen. Caller should not start a new sync while old still in progress. Turned into error.
-  * Async interference between syncLogsAsync and setCellValueAndFormat. Shouldn't happen anymore because setCellValueAndFormat synchronizes access using promise returned from syncLogsAsync. Turned into an error.
 * EventSourcedSpreadsheetData
   * Async interference between syncLogsAsync and setCellValueAndFormat (both success and conflict error paths)
   * setViewport to empty and undefined
-  * Async interference between repeated setViewpoint calls
+
 
 
