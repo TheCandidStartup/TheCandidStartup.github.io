@@ -200,7 +200,7 @@ The `setViewport` method tells the spreadsheet engine which area of the spreadsh
   }
 ```
 
-The spreadsheet UI calls `setViewport` whenever the visible spreadsheet area changes. That happens a lot when you're scrolling through a line at a time. 
+The spreadsheet UI calls `setViewport` whenever the visible spreadsheet area changes. That happens a lot when you're scrolling through a spreadsheet a row at a time. 
 
 The UI is notified whenever the content changes. This happens twice during `setViewport`. At the start we mark the content as stale. The UI can display a loading status if it wants. Once the data has loaded we mark the content as complete (or unavailable) and notify the UI so it can update itself. 
 
@@ -273,31 +273,20 @@ Finally, we advance time so that the first call's second operation can run and a
 
 # Code Coverage
 
-* Useful tool to validate that you're exercising all code paths
-* Forces you to look at code with fresh eyes
-* May be missing a test case for an order of operations you hadn't considered
-* May realize that there's an impossible order of operations and you have redundant code
-* Not sufficient by itself. If you haven't included a test for async interference coverage won't tell you that it's missing.
+[Code Coverage]({% link _posts/2024-03-18-vitest-code-coverage.md %}) is a useful tool to validate that you're exercising all code paths in your unit tests. It also forces you to look at your code with fresh eyes. You may be missing a test case for an order of operations you hadn't considered. Or, you might realize that you're protecting against an impossible order of operations and you have redundant code.
 
-# Vitest Coverage Weirdness
+Remember, that code coverage is not a substitute for independent thought and analysis. If you haven't included a check for async interference, code coverage won't tell you that it's missing.
 
-* To speed things up and look at big picture I'm running a vitest coverage report at the repo level
-* All unit tests in all packages are run and combined into one coverage report
-* Something has changed since I got all my dependencies up to date
-* Files that I haven't touched, that had 100% coverage across the board, are reporting low function coverage, despite having 100% coverage of all the lines in the functions that are supposedly not being called. The corresponding unit test for that file explicitly calls every function. 
-* If I run coverage at the package level, it reports 100% function coverage.
-* For now, ignoring function coverage at the repo level if statements, branches and lines are all at 100%
+# Vitest Code Coverage Weirdness
+
+To speed things up and look at the big picture I'm running a vitest coverage report for my [entire monorepo]({% link _posts/2025-09-08-vitest-3-monorepo-setup.md %}). All unit tests in all packages are run and combined into one coverage report.
+
+Something changed when I got all my dependencies [up to date]({% link _posts/2026-02-16-infinisheet-chore-updates.md %}). Files that I haven't touched, that had 100% coverage across the board, are reporting low function coverage, despite having 100% coverage of all the lines in the functions that are supposedly not being called. The corresponding unit tests for the problem files explicitly call every function.
+
+If I run coverage at the package level, it reports 100% function coverage. For now, I'm ignoring function coverage at the repo level if statements, branches and lines are all at 100%.
 
 # Conclusion
 
-* Much better understanding of the tools at my disposal and the kinds of tests I need to write
-* Back to 100% coverage of async interference code paths
+I have a much better understanding of the tools at my disposal and the kinds of unit tests I need to write. All my async operations have checks for potential async interference. My unit tests have 100% coverage of the code paths through those checks.
 
-# TODO
-
-* EventSourcedSpreadsheetData
-  * Async interference between syncLogsAsync and setCellValueAndFormat (both success and conflict error paths)
-  * setViewport to empty and undefined
-
-
-
+I'm ready to move on to the next feature on my backlog. 
