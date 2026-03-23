@@ -102,9 +102,9 @@ So far my testing has been ad hoc. I write an initial version of each test in a 
 
 # Vitest Fake Timers
 
-Vitest provides [fake timers](https://vitest.dev/api/vi.html#vi-usefaketimers) which mocks calls to the runtime's timers. This gives you some control over the scheduler. 
+Vitest provides [fake timers](https://vitest.dev/api/vi.html#vi-usefaketimers) which mock calls to the runtime's timers. This gives you some control over the scheduler. 
 
-In theory, you can use `vi.runAllTicks()` to run all pending microtasks. In practice it does nothing because Vitest doesn't fake the Node `nextTick` function by default. Apparently, too many things [break](https://vitest.dev/config/faketimers.html#faketimers-tofake) if you do that.
+In theory, you can use `vi.runAllTicks()` to run all pending microtasks. In practice it does nothing because Vitest doesn't fake the NodeJS `nextTick` function by default. Apparently, too many things [break](https://vitest.dev/config/faketimers.html#faketimers-tofake) if you do that.
 
 You can still force microtasks to run the natural way by returning control to the event loop. Vitest has many utilities for manipulating time and invoking faked timers. The async variants of these methods execute via the event loop so will run pending microtasks as well. The least intrusive is `vi.advanceTimersByTimeAsync(0)`. This leaves current time unchanged so won't execute any timer callbacks but will run pending microtasks.
 
@@ -155,7 +155,7 @@ export class DelayEventLog<T extends LogEntry> implements EventLog<T> {
 }
 ```
 
-The interfaces use `ResultAsync` types to represent the pending result or error from each async method. The `delayResult` helper calls the wrapped method once the `setTimeout` callback is triggered.
+The interfaces use `ResultAsync` types to represent the pending result or error from each async method. The `delayResult` helper returns the wrapped result once the `setTimeout` callback is triggered.
 
 ```ts
 export function delayPromise<T>(value: T, delay: number): Promise<T> {
@@ -275,7 +275,7 @@ Finally, we advance time so that the first call's second operation can run and a
 
 [Code Coverage]({% link _posts/2024-03-18-vitest-code-coverage.md %}) is a useful tool to validate that you're exercising all code paths in your unit tests. It also forces you to look at your code with fresh eyes. You may be missing a test case for an order of operations you hadn't considered. Or, you might realize that you're protecting against an impossible order of operations and you have redundant code.
 
-Remember, that code coverage is not a substitute for independent thought and analysis. If you haven't included a check for async interference, code coverage won't tell you that it's missing.
+Remember that code coverage is not a substitute for independent thought and analysis. If you haven't included a check for async interference, code coverage won't tell you that it's missing.
 
 # Vitest Code Coverage Weirdness
 
