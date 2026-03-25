@@ -151,28 +151,26 @@ describe('VirtualSpreadsheet', () => {
 
 Fixtures are a more sophisticated form of setup and teardown hooks. A fixture typically takes the form of an object that the test interacts with. Unit test frameworks will set up the fixtures needed for each test, make them available to the test and then tear them down after each test.
 
-Vitest supports fixtures using the same approach as [Playwright](https://playwright.dev/). The [Vitest documentation](https://vitest.dev/guide/test-context.html#extend-test-context) has some gaps that assume you're familiar with Playwright fixtures. I had to read the [Playwright documentation](https://playwright.dev/docs/test-fixtures) before I fully understood what was going on. 
+Vitest supports fixtures using the same approach as [Playwright](https://playwright.dev/), with [some modifications](https://vitest.dev/guide/test-context.html#builder-pattern) to play nicely with TypeScript type inference. The [Vitest documentation](https://vitest.dev/guide/test-context.html#extend-test-context) has some gaps that assume you're familiar with Playwright fixtures. I had to read the [Playwright documentation](https://playwright.dev/docs/test-fixtures) before I fully understood what was going on. 
 
 In Vitest, fixtures are part of the [test context](https://vitest.dev/guide/test-context.html) object. The test context is provided to every test as an optional argument. You define additional fixtures by creating a custom test. Let's turn our mock scroll function into a fixture.
 
 ```ts
 import { test as baseTest } from 'vitest'
 
-export const test = baseTest.extend({
-  scrollMock: async ({}, use) => {
-    const mock = vi.fn();
-    Element.prototype["scrollTo"] = mock;
+export const test = baseTest.extend('scrollMock', async ({}, { onCleanup }) => {
+  const mock = vi.fn();
+  Element.prototype["scrollTo"] = mock;
 
-    await use(mock);
+  onCleanup(() => void Reflect.deleteProperty(Element.prototype, "scrollTo"));
 
-    Reflect.deleteProperty(Element.prototype, "scrollTo");
-  }
+  return mock;
 })
 ```
 
-There's a lot going on here. You call `extend` on the base `test` and pass in an object. Each fixture is defined as a property whose value is an `async` function. The function has two required arguments. The first is a test context. The fixture can access anything it needs, including other fixtures. The second argument is a `use` callback function. Your fixture implementation should run any setup code needed to initialize the fixture, pass the fixture to `use` and `await` it, then run any teardown code.
+There's a lot going on here. You call `extend` on the base `test` and pass the name of the fixture and an `async` function. The function has two optional arguments. The first is a test context. The fixture can access anything it needs, including other fixtures. The second argument is an `onCleanup` callback function. Your fixture implementation should run any setup code needed to initialize the fixture, call `onCleanup` with any teardown code and then return the fixture. TypeScript will infer the type of the fixture in any test that uses it.
 
-You can define as many fixtures as you like. You can also extend an existing custom test to add more fixtures. You would typically have shared utility code that defines all the fixtures needed for your project. You then import your custom test into each unit test file and use the fixtures in your tests.
+You can define as many fixtures as you like. The `extend` method returns another instance of the test API, so you can chain multiple calls to `extend`.You can also extend an existing custom test to add more fixtures. You would typically have shared utility code that defines all the fixtures needed for your project. You then import your custom test into each unit test file and use the fixtures in your tests.
 
 ```ts
 describe('My Test Suite', () => {
@@ -183,21 +181,19 @@ describe('My Test Suite', () => {
 })
 ```
 
-There's lots of magic happening behind the scenes. Fixtures are only initialized if they're used. You [should use object destructuring](https://vitest.dev/guide/test-context.html#fixture-initialization) to retrieve the fixtures from the context. The getters accessed when destructuring run the corresponding fixture functions (recursively if they depend on other fixtures), returning whatever was passed to the `use` callback. Once the test completes, the functions are resumed so they can cleanup. 
+There's lots of magic happening behind the scenes. Fixtures are only initialized if they're used. You [should use object destructuring](https://vitest.dev/guide/test-context.html#fixture-initialization) to retrieve the fixtures from the context. The getters accessed when destructuring run the corresponding fixture functions (recursively if they depend on other fixtures). Once the test completes, any `onCleanup` functions are run.
 
 So far, I've had no compelling need for fixtures. Most of my tests create a single "fixture" (`SimpleEventLog` in my initial example) that doesn't need any explicit cleanup. It's easier to start each test with an explicit single line fixture creation.
 
 # Context Properties and Projects
 
-You can also extend the test context with regular properties. Anything that isn't a fixture is just added to the context where it can be accessed by each test. 
+You can also extend the test context with regular properties. Anything that isn't a function fixture is just added to the context where it can be accessed by each test. 
 
 ```ts
-export const test = baseTest.extend({
-  baseURL: '/dev'
-})
+export const test = baseTest.extend('baseURL', '/dev');
 ```
 
-This becomes useful for code reuse when combined with Vitest [projects](https://vitest.dev/guide/projects.html). You can define multiple projects which include a common set of unit test files. You can [override](https://vitest.dev/guide/test-context.html#default-fixture) context properties on a per project basis. For example, you could run the same backend test suite against production, staging and dev environments using three projects with a different base URL context property for each. 
+This becomes useful for code reuse when combined with Vitest [projects](https://vitest.dev/guide/projects.html). You can define multiple projects which include a common set of unit test files. You can [override](https://vitest.dev/guide/test-context.html#default-fixture-injected) context properties on a per project basis. For example, you could run the same backend test suite against production, staging and dev environments using three projects with a different base URL context property for each. 
 
 It's good to know that this kind of large scale reuse is possible, but at the moment my code reuse needs are more fine grained.
 
@@ -247,6 +243,27 @@ You get better results when using the Vitest plugin for VS Code.
 {% include candid-image.html src="/assets/images/frontend/refactor-unit-test-detailed-error-vscode.png" alt="Refactored unit test VS Code error reporting" %}
 
 The initial error marker is also inside `expectQueryResult`. However, if you click on it for more detail, you're shown the failing line in the test. Not ideal, but usable. 
+
+# Define Helper
+
+Vitest lets you define a function as a [helper](https://vitest.dev/api/vi.html#vi-defineHelper) by wrapping it with `vi.defineHelper`.
+
+```ts
+const expectQueryResult = vi.defineHelper((result: Result<QueryValue<LogEntry>, QueryError>, 
+  startSequenceId: SequenceId, isComplete: boolean, length: number) => {
+  expect(result.isOk());
+  let value = result._unsafeUnwrap();
+  expect(value.startSequenceId).toEqual(startSequenceId);
+  expect(value.isComplete).toEqual(isComplete);
+  expect(value.entries.length).toEqual(length);
+})
+```
+
+When an assertion fails inside a helper, the error will point to where the helper was called, not inside the helper itself.
+
+{% include candid-image.html src="/assets/images/frontend/unit-test-define-helper-vscode.png" alt="Refactored unit test VS Code error reporting using defineHelper" %}
+
+The internal assertion is displayed as-is against the call to the helper. You should only use helpers when there's no ambiguity about what the cause of the problem is. In this case all three arguments are different types, so it's obvious which argument the failing assertion refers to. Currently, there's no way of seeing the extra detail of which line of the helper failed.
 
 # Deeply Equal
 
