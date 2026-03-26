@@ -232,10 +232,10 @@ The test case that you would naturally write covers one of the interfering seque
 ```ts
   data.setViewport({ rowMinOffset: 0, columnMinOffset: 0, width: 100, height: 100 });
   data.setViewport({ rowMinOffset: 100, columnMinOffset: 0, width: 100, height: 100 });
-  expect(mock).toBeCalledTimes(2);
+  expect(mock).toHaveBeenCalledTimes(2);
 
   await vi.advanceTimersByTimeAsync(0);
-  expect(mock).toBeCalledTimes(3);
+  expect(mock).toHaveBeenCalledTimes(3);
 
   // Validate that loaded content matches second viewport
 ```
@@ -252,15 +252,15 @@ The other interesting case is where the second `setViewport` is called when the 
   blobStore.delay = 100;
   data.setViewport({ rowMinOffset: 0, columnMinOffset: 0, width: 100, height: 100 });
   await vi.advanceTimersByTimeAsync(0);
-  expect(mock).toBeCalledTimes(1);
+  expect(mock).toHaveBeenCalledTimes(1);
 
   blobStore.delay = 0;
   data.setViewport({ rowMinOffset: 100, columnMinOffset: 0, width: 100, height: 100 });
   await vi.advanceTimersByTimeAsync(0);
-  expect(mock).toBeCalledTimes(3);
+  expect(mock).toHaveBeenCalledTimes(3);
 
   await vi.advanceTimersByTimeAsync(100);
-  expect(mock).toBeCalledTimes(3);
+  expect(mock).toHaveBeenCalledTimes(3);
 
 // Validate that loaded content matches second viewport
 ```
