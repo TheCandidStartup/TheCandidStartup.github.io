@@ -176,7 +176,7 @@ You can define as many fixtures as you like. The `extend` method returns another
 describe('My Test Suite', () => {
   test('needs mocked scroll', async ({ scrollMock }) => {
     ...
-    expect(scrollMock).toBeCalledTimes(1);
+    expect(scrollMock).toHaveBeenCalledTimes(1);
   }
 })
 ```
@@ -251,11 +251,11 @@ Vitest lets you define a function as a [helper](https://vitest.dev/api/vi.html#v
 ```ts
 const expectQueryResult = vi.defineHelper((result: Result<QueryValue<LogEntry>, QueryError>, 
   startSequenceId: SequenceId, isComplete: boolean, length: number) => {
-  expect(result.isOk());
+  expect(result.isOk(), "isOk");
   let value = result._unsafeUnwrap();
-  expect(value.startSequenceId).toEqual(startSequenceId);
-  expect(value.isComplete).toEqual(isComplete);
-  expect(value.entries.length).toEqual(length);
+  expect(value.startSequenceId, "startSequenceId").toEqual(startSequenceId);
+  expect(value.isComplete, "isComplete").toEqual(isComplete);
+  expect(value.entries.length, "length").toEqual(length);
 })
 ```
 
@@ -263,7 +263,7 @@ When an assertion fails inside a helper, the error will point to where the helpe
 
 {% include candid-image.html src="/assets/images/frontend/unit-test-define-helper-vscode.png" alt="Refactored unit test VS Code error reporting using defineHelper" %}
 
-The internal assertion is displayed as-is against the call to the helper. You should only use helpers when there's no ambiguity about what the cause of the problem is. In this case all three arguments are different types, so it's obvious which argument the failing assertion refers to. Currently, there's no way of seeing the extra detail of which line of the helper failed.
+The internal assertion is displayed as-is against the call to the helper. You should make sure there's no ambiguity about what the cause of the problem is. The optional string argument to `expect` assertions is useful here. The string is displayed when you click for more detail in VSCode. It's also part of the standard error message when using the command line tools. 
 
 # Deeply Equal
 
@@ -306,7 +306,7 @@ describe('SimpleEventLog', () => {
 }
 ```
 
-The test code looks just as clean as before, but now all the tooling reports the error in the right place. 
+The test code looks just as clean as before, and the tooling naturally reports the error in the right place. 
 
 {% include candid-image.html src="/assets/images/frontend/deeply-equal-error-display.png" alt="Deeply Equal Error Display" %}
 
@@ -358,17 +358,14 @@ These are custom matchers which define `toBeQueryValue` and `toBeInfinisheetErro
 
 You would normally define all your custom matchers as shared utility code. If you include the utility source file in your Vitest [setupFiles](https://vitest.dev/config/#setupfiles) config, it will be run automatically before each test file. This way, just like the built-in assertions, your custom assertions are available in any test file without having to explicitly import anything.
 
-You also need to provide typings, otherwise TypeScript will complain when you try to use your assertions. Copy the boiler plate from the Vitest documentation and include a line for each of your matchers. As long as your `*.d.ts` typing file is included by your `tsconfig.json`, it will be used automatically.
+You also need to provide typings, otherwise TypeScript will complain when you try to use your assertions. Copy the [boiler plate](https://vitest.dev/guide/extending-matchers.html) from the Vitest documentation and include a line for each of your matchers. As long as your `*.d.ts` typing file is included by your `tsconfig.json`, it will be used automatically.
 
 ```ts
-interface CustomMatchers<R = unknown> {
-  toBeQueryValue: (expected: [SequenceId, boolean, number]) => R
-  toBeInfinisheetError: (expectedType: string) => R
-}
-
 declare module 'vitest' {
-  interface Assertion<T = any> extends CustomMatchers<T> {}
-  interface AsymmetricMatchersContaining extends CustomMatchers {}
+  interface Matchers<T = any> {
+    toBeInfinisheetError: (expectedType: string) => R
+    toBeQueryValue: (expected: [SequenceId, boolean, number, SnapshotValue?]) => R
+  }
 }
 ```
 
