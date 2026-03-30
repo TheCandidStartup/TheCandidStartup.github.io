@@ -5,6 +5,13 @@ tags: frontend
 
 I'm a [strong believer]({% link _posts/2024-03-11-bootstrapping-vitest.md %}) in unit tests. I [try to get]({% link _posts/2024-04-02-vitest-mocking-time.md %}) close to 100% code coverage with my tests. Which means I have a lot of unit test code. Normally, you try to minimize duplication, and [Don't Repeat Yourself](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself). That has it's own special challenges when it comes to unit tests.
 
+{% capture note-content %}
+This post describes unit test code reuse with Vitest 1.6 - 4.0. Additional features have been added to Vitest since this post was originally written, with significant changes in Vitest 4.1.
+
+There is an [updated version]({% link _posts/2026-03-30-unit-test-code-reuse.md %}) of this post for Vitest 4.1 and later.
+{% endcapture %}
+{% include candid-note.html content=note-content %}
+
 # Unit Test Code
 
 Unit test code is a very particular thing. It's shaped by the particular unit test framework you're using. In my case that's [Vitest]({% link _posts/2024-03-11-bootstrapping-vitest.md %}). The framework provides an API for describing test suites, test cases and assertions of expected behavior.
