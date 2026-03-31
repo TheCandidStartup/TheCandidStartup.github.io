@@ -53,7 +53,8 @@ Wise words
 {% include candid-image.html src="/assets/images/home-assistant/dhw-flow-tank-temps.png" alt="Flow vs Tank Temps March 27th" %}
 
 * Measured tank temp doesn't quite reach target of 60°C. Heat pump ran on until it hit some internal max temp limit and shut itself down
-* Best guess is that water is getting to 75°C but for whatever reason temperature sensor is seeing 20°C less
+* Temperature sensor is all over the place. Either conditions in the store are turbulent or the sensor is misbehaving
+* Best guess is that water is getting to 75°C but for whatever reason temperature sensor is seeing 20°C less with lots of variation
 * Sensor on other side of an air bubble? Sensor become slightly detached from side of heat exchanger?
 
 # Bleeding Radiators
@@ -77,3 +78,47 @@ Wise words
 * Enough energy to raise temp by 53.4°C
 * If tank equalized before run, would have average temp 78.4°C at end. Not possible given flow temps but probably getting significant heat loss with temps this high. 
 * Did hit 60°C target without hitting heat pump internal limit but still getting close. Still using way too much energy given target.
+
+{% include candid-image.html src="/assets/images/home-assistant/dhw-temps-mar-30.png" alt="Flow vs Tank Temps March 30th" %}
+
+* Still some odd behavior from the temperature sensor as flow temperature ramps up but behaves normally once DHW cycle ends
+* Hard to see what's really going on as myVaillant only updates every 5 minutes
+
+# Eco Mode
+
+* With large hot water cylinder use eco mode to heat most efficiently - low and slow
+* Limits compressor so heat pump operates in it's most efficient range
+* Global setting. No good for us because we need full power during the day for combi mode showers.
+* Can achieve the same effect using noise reduction mode. Also limits compressor. Runs on a schedule.
+* Already using since early days with heat pump to try and improve efficiency
+* Default noise reduction mode is less aggressive than eco mode
+* Can change the `compr. noise reduct.` setting in the heat pump appliance interface (white box, not the SensoComfort). Default is 40%. Taking it to maximum of 60% is equivalent to eco mode.
+* Hoping that heating more slowly will let temperature sensor catch up with actual temperature in the store
+
+# March 31st
+
+* Started DHW run 10 minutes earlier to allow for slower heating
+
+{% include candid-image.html src="/assets/images/home-assistant/dhw-mar-31.png" alt="DHW Run March 31st" %}
+
+* Took 45 minutes compared with previous days 35 minutes
+* Definitely using less power and ramping more gradually
+* 2.357kWh of heat added, 1.217kWh of electricity used, COP 1.94
+* Peak flow and return 73.5°C and 71.2°C
+* Tank temp at start of DHW run 22°C
+* Enough energy to raise temp by 57.6°C
+* Expected average temp at end (before losses) 79.6°C
+* Not much difference in peak temperatures and heat added but definitely more efficient
+
+{% include candid-image.html src="/assets/images/home-assistant/dhw-temps-mar-31.png" alt="Flow vs Tank Temps March 31st" %}
+
+* Longer run gives us more temperature samples. Can see pronounced fluctuations as flow temperature ramps up but again normal once DHW cycle ends
+
+# Home Assistant
+
+* Expected temperature in tank given energy added tracks flow temperature pretty well. A few degrees less early in run, a few degrees more at the end
+* Instead of ending DHW run using the lottery that is the temperature sensor reading, can use Home Assistant to end when we hit a target flow temperature
+* Already use this approach for boost showers using our Home Assistant shower dashboard
+* Want DHW runs to primarily use Vaillant schedule so that they still happen even if something goes wrong with Home Assistant
+* Add a Home Assistant integration that drops target tank temperature when we hit target flow temperature, should indirectly end run
+* Already manipulate target tank temperature for boost showers so should fit in nicely
