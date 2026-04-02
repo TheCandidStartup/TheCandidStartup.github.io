@@ -63,7 +63,7 @@ I used Home Assistant to plot a graph of flow temperature and measured tank temp
 
 The measured tank temp doesn't quite reach the target of 60°C. More importantly, the temperature sensor is all over the place. There's some crazy values reported. Either conditions in the store are turbulent or the sensor is misbehaving.
 
-My best guess is that the store is reaching 70+°C but for whatever reason the temperature sensor is seeing 20°C less with lots of variation. Is the sensor on the other side of an air bubble? Or maybe it's become slightly detached from the side of the heat exchanger? Or perhaps its just a dodgy sensor.
+My best guess is that the store is reaching 70+°C but for whatever reason the temperature sensor is seeing 20°C less with lots of variation. Is the sensor on the other side of an air bubble? Or maybe it's become slightly detached from the side of the heat exchanger? Or perhaps it's just a dodgy sensor.
 
 # Bleeding Radiators
 
@@ -87,7 +87,7 @@ We did hit the 60°C target this time, but we're still adding far more energy th
 
 # Eco Mode
 
-The most efficient way of heating water with a heat pump is to go slowly and stop at the lowest temperature you can. Vaillant heat pumps have an Eco mode that limits the heat pump's compressor to operate in it's most efficient range. This is perfect if you have a large cylinder and can heat all the water you need each day overnight.
+The most efficient way of heating water with a heat pump is to go slowly and stop at the lowest temperature you can. Vaillant heat pumps have an Eco mode that limits the heat pump's compressor to operate in its most efficient range. This is perfect if you have a large cylinder and can heat all the water you need overnight.
 
 The constraints are different with a NanoStore. The one we have holds just enough heat for a quick shower. For a long shower you rely on the heat pump running at full power in "combi" mode. Eco mode is a global setting. There's no convenient way to turn it on for overnight DHW runs and off during the day.
 
@@ -113,17 +113,42 @@ The longer run gives us more temperature samples. You can see pronounced fluctua
 
 # Home Assistant
 
-* Expected temperature in tank given energy added tracks flow temperature pretty well. A few degrees less early in run, a few degrees more at the end
-* Instead of ending DHW run using the lottery that is the temperature sensor reading, can use Home Assistant to end when we hit a target flow temperature
-* Already use this approach for boost showers using our Home Assistant shower dashboard
-* Want DHW runs to primarily use Vaillant schedule so that they still happen even if something goes wrong with Home Assistant
-* Add a Home Assistant integration that drops target tank temperature when we hit target flow temperature, should indirectly end run
-* Already manipulate target tank temperature for boost showers so should fit in nicely
+The theoretical temperature in the tank given energy added tracks flow temperature pretty well. It's a few degrees less early in a run, a few degrees more at the end. Instead of ending the DHW run using the lottery that is the temperature sensor reading, I can use Home Assistant to forcibly end it when we hit a target flow temperature.
+
+I already use this approach for [boost showers]({% link _posts/2026-02-09-heat-geek-nano-store-conclusion.md %}) during the day, so it's not unknown territory. However, I would like the overnight DHW runs to primarily use the Vaillant schedule so that they still happen even if something goes wrong with Home Assistant. 
+
+I added a Home Assistant automation that drops the target tank temperature when we hit the required flow temperature. This will indirectly end the run. I have other automations that manipulate the target tank temperature during the day, so it should fit in nicely. 
+
+```yaml
+triggers:
+  - trigger: numeric_state
+    entity_id:
+      - sensor.emonhp_returnt
+    above: 65
+conditions:
+  - condition: time
+    after: "04:30:00"
+    before: "05:30:00"
+  - condition: numeric_state
+    entity_id: sensor.emonhp_dhw
+    above: 0
+actions:
+  - action: water_heater.set_temperature
+    metadata: {}
+    data:
+      temperature: 40
+    target:
+      entity_id: water_heater.home_domestic_hot_water_0
+```
 
 # April 1st
 
 {% include candid-image.html src="/assets/images/home-assistant/dhw-apr-01.png" alt="DHW Run April 1st" %}
 
-* 1.831kWh heat, 0.931kWh electric, COP 1.97
-* Peak flow and return 67.7 and 65.4
-* Tank start 24.5
+That looks better. We added 1.831kWh heat, using 0.931kWh electricity, for a COP of 1.97. Peak flow and return temperatures are 67.7°C and 65.4°C. The tank started at 24.5°C, gains energy to add 44.8°C, giving a theoretical 69.3°C at the end. The run time is back down below 40 minutes.
+
+# Conclusion
+
+It's well worth bleeding your highest radiator every so often. Trapped air can lead to all kinds of weird behavior. 
+
+My DHW runs are back under control, despite the dodgy temperature sensor. Damon, my installer, has ordered a replacement.
