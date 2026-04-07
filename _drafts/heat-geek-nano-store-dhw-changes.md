@@ -1,6 +1,6 @@
 ---
-title: Heat Geek NanoStore DHW Changes
-tags: gear
+title: Heat Geek NanoStore DHW Update
+tags: gear home-assistant
 ---
 
 Two months ago our prototype Heat Geek NanoStore [was rebuilt]({% link _posts/2026-02-09-heat-geek-nano-store-conclusion.md %}). Everything looked rosy. All of my outstanding issues were resolved. 
@@ -13,7 +13,7 @@ Two months later and, subjectively, everything is still working great. However, 
 
 This is a DHW run on March 27th. I'm trying to heat the NanoStore to 60°C. It never gets there. The heat pump keeps ramping up until eventually it hits a flow temperature of 78°C, triggering some kind of internal limit. The heat pump shuts down until the end of the DHW cycle. 
 
-The red bars are Open Energy Monitoring errors. Their flow meter has stopped working, which is usually caused by [air trapped in the system](https://docs.openenergymonitor.org/heatpumps/removing_air.html#removing-air-from-heating-systems). 
+The red bars are Open Energy Monitoring errors. The flow meter has stopped working, which is usually caused by [air trapped in the system](https://docs.openenergymonitor.org/heatpumps/removing_air.html#removing-air-from-heating-systems). 
 
 {% include candid-image.html src="/assets/images/home-assistant/dhw-jan-29.png" alt="DHW Run January 29th" %}
 
@@ -83,7 +83,7 @@ There was 2.183kWh of heat added, 1.302kWh of electricity used, COP 1.68. Peak f
 
 {% include candid-image.html src="/assets/images/home-assistant/dhw-temps-mar-30.png" alt="Flow vs Tank Temps March 30th" %}
 
-We did hit the 60°C target this time, but we're still adding far more energy than needed and still reaching excessive flow temperatures. There's still some odd behavior from the temperature sensor but not as extreme as before. 
+We did hit the 60°C target this time, but we're still adding far more energy than needed and still reaching excessive flow temperatures. There's some odd behavior from the temperature sensor, but not as extreme as before. 
 
 # Eco Mode
 
@@ -113,7 +113,7 @@ The longer run gives us more temperature samples. You can see pronounced fluctua
 
 # Home Assistant
 
-The theoretical temperature in the tank given energy added tracks flow temperature pretty well. It's a few degrees less early in a run, a few degrees more at the end. Instead of ending the DHW run using the lottery that is the temperature sensor reading, I can use Home Assistant to forcibly end it when we hit a target flow temperature.
+The theoretical temperature in the tank, given energy added, tracks flow temperature pretty well. It's a few degrees less early in a run, a few degrees more at the end. Instead of ending the DHW run using the lottery that is the temperature sensor reading, I can use Home Assistant to forcibly end it when we hit a target flow temperature.
 
 I already use this approach for [boost showers]({% link _posts/2026-02-09-heat-geek-nano-store-conclusion.md %}) during the day, so it's not unknown territory. However, I would like the overnight DHW runs to primarily use the Vaillant schedule so that they still happen even if something goes wrong with Home Assistant. 
 
@@ -146,6 +146,22 @@ actions:
 {% include candid-image.html src="/assets/images/home-assistant/dhw-apr-01.png" alt="DHW Run April 1st" %}
 
 That looks better. We added 1.831kWh heat, using 0.931kWh electricity, for a COP of 1.97. Peak flow and return temperatures are 67.7°C and 65.4°C. The tank started at 24.5°C, gains energy to add 44.8°C, giving a theoretical 69.3°C at the end. The run time is back down below 40 minutes.
+
+# Cold Hard Cash
+
+I have two months of cost data with the rebuilt NanoStore. It's hard to say what impact, if any, the changes had on cost. The seasonal reduction in heating demand and increase in solar generation have a much bigger impact. 
+
+| Month | Old Gas | New Gas | Old Elec | New Elec | Old Total | New Total | Reduction |
+|-|-|-|-|-|-|-|-|
+| November | 85.12 | 11.26 | 40.47 | 92.22 | 125.59 | 103.34 | 18% |
+| December | 101.96 | 11.42 | 43.00 | 111.43 | 144.96 | 122.85 | 15% |
+| January | 134.25 | 11.88 | 44.08 | 138.02 | 178.33 | 149.90 | 16% |
+| *February* | 108.09 | 10.31 | 37.32 | 101.27 | 145.41 | 111.58 | 23% |
+| *March* | 79.18 | 11.32 | 36.67 | 62.03 | 115.85 | 73.35 | 37% |
+
+It's clear that we saw a small reduction in costs even during the coldest months and that we should see more savings as more of our demand can be met using our home battery. In March, we had 21 days where all, or nearly all, of our imported electricity was at off-peak prices. 
+
+There's another £100 in annual savings when I get round to replacing our gas hob and removing the gas supply. 
 
 # Conclusion
 
