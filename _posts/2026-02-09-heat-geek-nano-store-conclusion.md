@@ -181,7 +181,7 @@ Octopus, our energy provider, beat us to it. Our Direct Debit is currently £150
 
 We still have a gas hob for cooking. Most of our gas bill is made up of standing charges. We're waiting to see what happens with the promised new low standing charge tariffs before deciding whether to switch to an induction hob and disconnect the gas supply.
 
-Our monthly costs are lower but not as dramatic as the Octopus direct debit crystal ball suggests. On the other hand, we've only just got the hot water sorted out, which will lower our electricity consumption even further for future months.
+Our monthly costs are lower but not as dramatic as the Octopus direct debit crystal ball suggests. On the other hand, we've only just got the hot water sorted out, which will lower our electricity consumption even further for [future months]({% link _posts/2026-04-07-heat-geek-nano-store-dhw-update.md %}).
 
 # MiniStore vs NanoStore
 
