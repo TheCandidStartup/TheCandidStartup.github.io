@@ -28,7 +28,7 @@ In some cases security updates require a major version upgrade. For example, `js
 
 If you look at the detail of the stuck alerts, dependabot says that it can't update the transitive dependency to a patched version because pnpm requires a lower version. 
 
-Things get awkward when you have a transitive dependency with a fixed version but the direct dependency that relies on it hasn't been updated or hasn't updated the minimum acceptable version. Sometimes, pnpm will update the transitive dependency anyway, other times it won't.
+Things get awkward when you have a transitive dependency with a later version but the direct dependency that relies on it hasn't been updated or hasn't updated the minimum acceptable version. Sometimes, pnpm will update the transitive dependency anyway, other times it won't.
 
 For example,`picomatch` has a security issue fixed in version `4.0.4`. For most dependents, pnpm has already updated `picomatch` to `4.0.4`. However, for Vite it's been left at `4.0.3`.
 
@@ -71,7 +71,7 @@ Packages: -2
 
 This time `pnpm-lock.yaml` is updated and I can see that `picomatch 4.0.3` is no longer used.
 
-Gradually accumulating forced overrides in `pnpm-workspace.yaml` is a maintenance nightmare. Fortunately, you don't have to. You can now remove the override from `pnpm-workspace.yaml`. It was only needed to nudge pnpm to use the version it should have picked up anyway. Now that it's found the correct version, it won't downgrade to an earlier version.
+Gradually accumulating forced overrides in `pnpm-workspace.yaml` is a maintenance nightmare. Fortunately, you don't have to. You can remove the override from `pnpm-workspace.yaml`. It was only needed to nudge pnpm to use the version it should have picked up anyway. Now that it's found the correct version, it won't downgrade to an earlier version.
 
 ```
 % pnpm install
