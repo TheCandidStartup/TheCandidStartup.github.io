@@ -1,6 +1,6 @@
 ---
 title: Updating Transitive Dependencies with pnpm
-tags: frontend infinisheet
+tags: front-end infinisheet
 thumbnail: /assets/images/frontend/npm-package.png
 ---
 
