@@ -5,6 +5,7 @@ thumbnail: /assets/images/infinisheet/tracer-bullet-thumbnail.png
 ---
 
 wise words
+
 * Next step on tracer bullet journey
 * Have a structure in place for multi-chunk snapshots with separate blobs representing individual tiles of content in spreadsheet space
 * Currently each snapshot is a single tile holding all the data
@@ -59,7 +60,8 @@ export class SpreadsheetGridTileMap implements SpreadsheetTileMap {
 * The only difference is that the snapshots are divided into tiles that need to be iterated over
 * The first question is whether we need to support different files sizes in the source and destination snapshots. We definitely want this eventually but to start off with we'll assume the size is fixed for the lifetime of the spreadsheet.
 * Then we need to decide how much of the spreadsheet coordinate space to create tiles for, whether we leave out tiles with no content, whether we shrink tiles to fit content and so on.
-* Again, we start simple and create fixed sized tiles that cover the entire space from `(0,0)` to maximum `(rowCount, colCount)`, regardless of whether cells are occupied or not.  
+* Again, we start simple and create fixed sized tiles that cover the entire space from `(0,0)` to maximum `(rowCount, colCount)`, regardless of whether cells are occupied or not.
+* Still need to be careful as source snapshot may cover less space than snapshot being written if changes have added new cells outside the previous area.
 
 ```ts
 async saveSnapshot(srcSnapshot: SpreadsheetSnapshot|undefined, 
@@ -74,7 +76,7 @@ async saveSnapshot(srcSnapshot: SpreadsheetSnapshot|undefined,
   for (let row = 0; row < rowCount; row += this.tileHeight) {
     for (let col = 0; col < colCount; col += this.tileWidth) {
       const cellMap = new SpreadsheetCellMap;
-      if (srcSnapshot) {
+      if (srcSnapshot && row < srcSnapshot.rowCount && col < srcSnapshot.colCount) {
         const blob = await srcSnapshot.loadTile(row, col, this.tileHeight, this.tileWidth);
         if (blob.isErr())
           return err(blob.error);
@@ -98,7 +100,7 @@ async saveSnapshot(srcSnapshot: SpreadsheetSnapshot|undefined,
 ```
 
 * We iterate over the grid of tiles, loading each tile from the source snapshot, adding changes for that tile and writing it to the destination snapshot.
-* I updated `SpreadsheetCellMap.loadAsSnapshot` to take an optional cell extents filter.
+* I updated `SpreadsheetCellMap.loadAsSnapshot` to take an optional cell extents filter. Entries within the tile's extents are added to the tile's cell map and offset so that the entry at `(rowMin,columnMin)` is at `(0,0)` in the local space of the tile.
 
 ## Loading Tiles
 
@@ -126,8 +128,8 @@ async loadTiles(snapshot: SpreadsheetSnapshot,
       const key = rowColCoordsToRef(row, col);
       let cellMap = this.map.get(key);
       if (!cellMap) {
-        const rowStart = tileRowStart * this.tileHeight;
-        const colStart = tileColStart * this.tileWidth;
+        const rowStart = row * this.tileHeight;
+        const colStart = col * this.tileWidth;
         const blob = await snapshot.loadTile(rowStart, colStart, 
           this.tileHeight, this.tileWidth);
         if (blob.isErr())
@@ -225,3 +227,7 @@ entries(snapshotIndex: number)  {
 * The default value for the `Treturn` parameter is `any`. If you try returning `{ done: true }` you get a very long TypeScript error which ends up telling you that an undefined `value` is not compatible with `any`. If, like most, you don't have a return value you need to pass `undefined` as the second parameter.
 
 * The only tricky part in the main implementation is that some entries may be undefined at the specified snapshot index. We need to keep advancing the map iterator until we find a defined value or we're done.
+
+# Unit Tests
+
+* Updated existing tests to use 2x2 tiles and ensure that entries span multiple tiles.
