@@ -8,7 +8,7 @@ After some [refactoring]({% link _posts/2026-03-09-infinisheet-decoupling-event-
 
 {% include candid-image.html src="/assets/images/infinisheet/event-sourced-spreadsheet-data-tracer-bullet.svg" alt="Event Sourced Spreadsheet Data Tracer Bullet Development" %}
 
-I have a structure in place to support multi-chunk snapshots with separate blobs representing individual tiles of content in spreadsheet space. Currently, each snapshot is a single tile holding all the data. I should be able to switch out the current implementation with one that supports multiple tiles. In theory, with a minimum of fuss.
+I have a structure in place to support multi-chunk snapshots with separate blobs representing individual tiles of content in spreadsheet space. Currently, each snapshot is a single tile holding all the data. In theory, it should be simple to switch out the current implementation with one that supports multiple tiles.
 
 # Grid Tile Format
 
@@ -54,7 +54,7 @@ The map represents a grid of tiles indexed by row and column. Each tile stores c
 
 Saving a multi-tile snapshot was a little more complex than I expected. The `saveSnapshot` interface hasn't changed. You load from an existing snapshot (if any), apply any changes to it and then save a new snapshot. The only difference is that the snapshots are divided into tiles that need to be iterated over.
 
-The first question is whether we need to support different tile sizes in the source and destination snapshots. We definitely want this eventually, but to start off with we'll assume the size is fixed for the lifetime of the spreadsheet.
+The first question is whether we need to support different tile sizes in the source and destination snapshots. We definitely want this eventually, but to start off we'll assume the size is fixed for the lifetime of the spreadsheet.
 
 Then we need to decide how much of the spreadsheet coordinate space to create tiles for, whether we leave out tiles with no content, whether we shrink tiles to fit content and so on. Again, we start simple and create fixed sized tiles that cover the entire space from `(0,0)` to maximum extents `(rowCount, colCount)`, regardless of whether cells are occupied or not.
 
@@ -177,7 +177,7 @@ loadAsSnapshot(src: SpreadsheetTileMap, changes: SpreadsheetCellMap,
 
 I had to add two new methods to `SpreadsheetCellMap`. First, an iterator over all entries visible at the specified snapshot index, and second the ability to add individual entries as if they were part of the snapshot. 
 
-Once gain there's no attempt at optimization. If no changes are applied to a tile, I could reuse the existing tile rather than copying. Tiles are immutable once loaded.
+Once again there's no attempt at optimization. If no changes are applied to a tile, I could reuse the existing tile rather than copying. Tiles are immutable once loaded.
 
 # Spreadsheet Cell Map Iterator
 
@@ -191,7 +191,7 @@ Eventually I ended up searching for `JavaScript iterator protocol` and found [ex
 
 There's no point in repeating or summarizing what it says there. Go [read it](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols) and come back.
 
-My iteration needs to return both key and value. I also need to start the iteration by passing in the log index corresponding to the data I want to iterate over. I can't start the iteration using the `Symbol.iterator` entry point as that doesn't take any arguments.
+My iteration needs to return both key and value. I also need to start the iteration by passing in the index corresponding to the data I want to iterate over. I can't start the iteration using the `Symbol.iterator` entry point as that doesn't take any arguments.
 
 I'm going to copy what `Map` does. It has an `entries()` method which returns an iterator over key and value. I just need to add a `snapshotIndex` argument and return an iterator over `[row: number, column: number, value: CellData]`.
 
