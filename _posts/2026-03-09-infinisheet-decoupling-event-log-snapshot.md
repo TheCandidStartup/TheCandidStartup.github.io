@@ -125,4 +125,4 @@ I had to be more precise about which content object I used in each async operati
 
 # Next Time
 
-Thinking about all the different ways that async operations can be interleaved makes my head hurt. Which is a clear sign that I need to strengthen my unit test suite. We'll look at that next time.
+Thinking about all the different ways that async operations can be interleaved makes my head hurt. Which is a clear sign that I need to strengthen my unit test suite. We'll look at that [next time]({% link _posts/2026-03-23-asynchronous-unit-tests-vitest.md %}).

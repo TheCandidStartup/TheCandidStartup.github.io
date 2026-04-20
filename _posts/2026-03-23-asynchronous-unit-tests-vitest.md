@@ -289,4 +289,4 @@ If I run coverage at the package level, it reports 100% function coverage. For n
 
 I have a much better understanding of the tools at my disposal and the kinds of unit tests I need to write. All my async operations have checks for potential async interference. My unit tests have 100% coverage of the code paths through those checks.
 
-I'm ready to move on to the next feature on my backlog. 
+I'm ready to move on to the [next feature]({% link _posts/2026-04-20-infinisheet-multi-tile-snapshots.md %}) on my backlog. 
