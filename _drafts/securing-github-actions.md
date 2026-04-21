@@ -66,6 +66,8 @@ steps:
 
 {% include candid-image.html src="/assets/images/github/commit-sha.png" alt="Commit SHA" %}
 
+# Dependabot Updates
+
 * You might think this will become a nightmare to maintain. However, you can [configure Dependabot](https://docs.github.com/en/actions/reference/security/secure-use#keeping-the-actions-in-your-workflows-secure-and-up-to-date) to create PRs to keep your actions up to date. Like other version updates, a branch is created and workflows triggered by code changes are run.
 
 ```yaml
@@ -83,6 +85,7 @@ updates:
 
 * Obviously, you've gained nothing if you just blindly upgrade. It's sensible to wait a few days as a cooldown, as well as reviewing the changes in the release.
 * If your SHA references a commit with a release tag, Dependabot will create a PR to upgrade to the latest tagged commit. It will also update the tag comment to match.
+* Dependabot immediately created update PRs for all my actions. Actions run in their own sandboxes with their own version of NodeJS. GitHub [recently deprecated](https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/) Node20, prompting a spate of updates by action maintainers to move to Node24. Something that I was blissfully unaware of until Dependabot brought it to my attention. 
 * Be careful. Dependabot doesn't look for the `Latest` tag. Dependabot created a PR that would upgrade to `pnpm/action-setup` v6.0.0. However, v6.0.0 is a test release that works with a pnpm 11 beta. The v5.0.0 release is the one with the `Latest` tag. I updated to v5.0.0 by hand. 
 
 # Pull Request Target
