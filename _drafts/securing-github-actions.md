@@ -43,6 +43,47 @@ Found two issues, in my GitHub workflows, both real ones.
 # Pin Third Party Actions
 
 * Use two third party actions. Neither has the GitHub marketplace verified creator badge.
+* Replace versioning by tag
+
+```yaml
+permissions:
+  pull-requests: write
+steps:
+  - uses: kentaro-m/auto-assign-action@v2.0.0
+```
+
+* With versioning by SHA
+
+```yaml
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: kentaro-m/auto-assign-action@f4648c0a9fdb753479e9e75fc251f507ce17bb7e # v2.0.0
+```
+
+* Pins version used to specific commit. It's helpful to include the corresponding release tag as a comment.
+* To find SHA need to go to action's [repo](https://github.com/kentaro-m/auto-assign-action), then [releases](https://github.com/kentaro-m/auto-assign-action/releases), then the [commit](https://github.com/kentaro-m/auto-assign-action/commit/f4648c0a9fdb753479e9e75fc251f507ce17bb7e) corresponding to the release you want. Click on the copy icon (two squares at bottom right) to copy the full SHA. 
+
+{% include candid-image.html src="/assets/images/github/commit-sha.png" alt="Commit SHA" %}
+
+* You might think this will become a nightmare to maintain. However, you can [configure Dependabot](https://docs.github.com/en/actions/reference/security/secure-use#keeping-the-actions-in-your-workflows-secure-and-up-to-date) to create PRs to keep your actions up to date. Like other version updates, a branch is created and workflows triggered by code changes are run.
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:23"
+    cooldown:
+      default-days: 7
+```
+
+* Obviously, you've gained nothing if you just blindly upgrade. It's sensible to wait a few days as a cooldown, as well as reviewing the changes in the release.
+* If your SHA references a commit with a release tag, Dependabot will create a PR to upgrade to the latest tagged commit. It will also update the tag comment to match.
+* Be careful. Dependabot doesn't look for the `Latest` tag. Dependabot created a PR that would upgrade to `pnpm/action-setup` v6.0.0. However, v6.0.0 is a test release that works with a pnpm 11 beta. The v5.0.0 release is the one with the `Latest` tag. I updated to v5.0.0 by hand. 
 
 # Pull Request Target
 
@@ -50,4 +91,14 @@ Found two issues, in my GitHub workflows, both real ones.
 * My auto-assign workflow does
 * [Post](https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/) from time `pull-request-target` was introduced explains it better
 * Problem comes when you checkout code from an external pull request and try building it. Lots of ways for attacker to steal secrets that workflow has access to.
-* In my case all I'm doing is adding a reviewer to every pull request created
+* In my case all I'm doing is adding a reviewer to every pull request created. Doesn't need to touch fork referenced by pull request. In fact, with permissions restricted to the pull request itself, it doesn't have any access to code. 
+* For future reference. If you do need to analyze content of pull request and then update pull requests with results, the recommendation is to use two separate workflows. The analysis part is triggered by `pull-request` and has no access to branch target. Effectively analysis runs in a sandbox. Upload results as artifact at end of workflow. Trigger a second workflow on completion of the first, which downloads results and updates pull request.
+
+# Conclusion
+
+It's well worth getting ahead of the curve and taking basic steps to secure your GitHub Actions.
+1. Enable CodeQL scanning of your actions
+2. Make sure all actions have the minimum permissions needed
+3. Pin third party action versions to a SHA
+4. Enable Dependabot GitHub Actions updates with a cooldown
+5. Review changes before committing
