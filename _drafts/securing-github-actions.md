@@ -9,11 +9,11 @@ As we make one route more difficult, attackers will switch to another. One alter
 
 The simplest mitigation is to increase friction in the publishing process. For example, by requiring manual sign off with two factor authentication. Unfortunately, GitHub [doesn't support](https://github.com/orgs/community/discussions/174507) using both trusted publishing and 2FA. Hopefully this will be addressed soon.
 
-Attackers can achieve a better payback by compromising the build and publishing workflow itself. GitHub Actions, like the name suggests, builds workflows out of combinations of actions. GitHub provides some basic actions of it's own together with a thriving marketplace for third party actions. A compromise of a popular action would have a huge blast radius. 
+Attackers can achieve a better payback by compromising the build and publishing workflow itself. GitHub Actions, like the name suggests, builds workflows out of combinations of actions. GitHub provides some basic actions of its own together with a thriving marketplace for third party actions. A compromise of a popular action would have a huge blast radius. 
 
 GitHub  recently published a [roadmap](https://github.blog/news-insights/product-news/whats-coming-to-our-github-actions-2026-security-roadmap/) for improved GitHub actions security, with changes available within 6 months. The big surprise for me is that, contrary to what you'd expect from the trusted publishing hype, GitHub actions builds are not deterministic/reproducible. 
 
-Most of the heavy lifting is done by individual actions whose code is retrieved at runtime from their own repos. Typically, version tags are used to determine the version of each action used. Tags can be moved between commits, so an attacker could push their own changes to a compromised action repo and then move the current release tag to the compromised version.
+Most of the heavy lifting is done by individual actions whose code is retrieved at runtime from their own repos. Typically, version tags are used to determine the version of each action used. Tags can be moved between commits, so an attacker could push their own changes to a compromised action repo and then move the current release tag to the compromised version. Any build will look exactly the same as an uncompromised one. 
 
 The roadmap includes improvements to action dependency management as well as more fine grained permissions. More recently, GitHub put out a blog post on [things that you can do now](https://github.blog/security/supply-chain-security/securing-the-open-source-supply-chain-across-github/). There is also existing [security guidance](https://docs.github.com/en/actions/reference/security/secure-use) in the GitHub Actions documentation.
 
