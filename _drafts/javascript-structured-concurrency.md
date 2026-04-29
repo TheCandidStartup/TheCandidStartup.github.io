@@ -4,9 +4,18 @@ tags: typescript
 thumbnail: /assets/images/frontend/ts-logo-128.png
 ---
 
-wise words
+Over time I've come to realize that there's [more to error-handling in concurrent programs](https://blog.nelhage.com/post/concurrent-error-handling/) than [rejected promises or async Results]({% link _posts/2025-05-19-asynchronous-typescript.md %}). The code I'm writing is all a bit ad-hoc. Especially when it comes to object lifetimes.
 
-* Over time have come to realize that there's [more to error-handling in concurrent programs](https://blog.nelhage.com/post/concurrent-error-handling/) than [rejected promises or async Results]({% link _posts/2025-05-19-asynchronous-typescript.md %}). The code I'm writing is all a bit ad-hoc. Especially when it comes to object lifetimes.
+As I'm using TypeScript, I start a concurrent operation by calling an async function which returns a promise. Sometimes I need the result immediately and await promise completion before proceeding. No issues here, but no real concurrency either. 
+
+At the other end of the spectrum, the function is a fire-and-forget operation and I leave the promise dangling. I don't care what the result is, so why slow things down by waiting for it? However, I get nagging warnings from eslint if it realizes that a promise was ignored.
+
+Things get more complex with true concurrent code, where multiple async functions are active at the same time, interacting with shared state. There are multiple promises to manage with varying lifetimes. The functions may [interfere]({% link _posts/2026-03-09-infinisheet-decoupling-event-log-snapshot.md %}) with each other, with changes made by one function resulting in other functions becoming redundant. 
+
+All of which made it the perfect time to be introduced to njs's seminal [essay](https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/) on structured concurrency. 
+
+{% include candid-image.html src="/assets/images/typescript/trio-nursery-schematic.svg" alt="Structured Concurrency" %}
+
 * All the cool young languages are using [structured concurrency](https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/)
   * Lifetime of concurrent operations tied to lexical scope
   * Defines parent-child relationship between concurrent "tasks"
@@ -15,6 +24,9 @@ wise words
   * Scope is implicit context accessible to descendants. No need to explicitly propagate timeouts, etc. down call stack.
 * Python "async with" syntax makes it easy to bolt onto the existing concurrency constructs
 * Common pattern is to fan out a bunch of concurrent operations and then wait for them to complete
+
+{% include candid-image.html src="/assets/images/typescript/trio-nursery-code-paths.svg" alt="Structured Concurrency in Trio" %}
+
 * Can get messy in real life, especially if the network is involved
 * Any task can succeed, fail or never complete
 * Critical to think about [timeouts](https://vorpus.org/blog/timeouts-and-cancellation-for-humans/)
@@ -47,7 +59,7 @@ wise words
 * Effection talk a lot about the cost of manually propagating abort signals down call chain. Easy to forget to pass down when abort signals are usually optional arguments.
 * If you believe cancellation is important and you're prepared to rewrite, then just make them required arguments. 
 * Can add a little bit of abstraction and introduce a `Scope` object. Every function takes scope as a mandatory argument.
-* Scope encapsulates an abort signal, default timeout, a list of promises to wait on when scope ends, maybe generic context management like Effection.
+* Scope encapsulates an abort signal, default timeout, a list of promises to wait on when scope ends, maybe generic context management like Effection, retry policies, token buckets, ...
 * Starts "tasks" as normal, getting a promise back. If you don't want to deal with promise explicitly, add it to the current scope to take care of. 
 * Ability to create child scopes with linked signals. All the things in the structured concurrency playbook. 
 * Cost is simple calling convention, much less intrusive than rewriting everything as an async generator.
