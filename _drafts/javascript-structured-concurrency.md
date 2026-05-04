@@ -18,7 +18,7 @@ All of which made it the perfect time to be [introduced](https://blog.nelhage.co
 
 # Structured Concurrency
 
-The basic premise is simple. Forty years ago we replaced ad-hoc flow control using `goto` with structured flow control using if, loops and functions. In the same way, we should replace ad-hoc concurrency with higher level structured concurrency primitives.
+The basic premise is simple. Forty years ago we replaced ad-hoc flow control using `goto` with structured flow control using *if*, loops and functions. In the same way, we should replace ad-hoc concurrency with higher level structured concurrency primitives.
 
 {% include candid-image.html src="/assets/images/typescript/control-schematics.svg" alt="Structured Flow Control" attrib="[njs blog](https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/)" %}
 
@@ -43,7 +43,7 @@ I like the ideas behind structured concurrency and I'd like to have access to so
 1. Explicit end of concurrent execution tied to lexical scope or object lifetime
 2. Parent-Child hierarchy of concurrent tasks
 3. Propagation of errors from child to parent
-4. Timeouts for all low level operations
+4. Timeouts for all operations
 5. Cancellation of unwanted tasks
 
 # JavaScript Runtime
@@ -52,13 +52,13 @@ What does the standard JavaScript runtime provide?
 
 Concurrency is built on promises, most often combined with async/await primitives. A promise is not a "task". A promise is a placeholder for a value that is available now or in the future. A promise [does not own the work that led to it](https://blog.gaborkoos.com/posts/2025-12-23-Cancellation-In-JavaScript-Why-Its-Harder-Than-It-Looks/). You can't cancel a promise.
 
-The contract is that promises will eventually resolve and either produce a value or be rejected. The JavaScript runtime recently added the concept of an [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) which can be passed to potentially blocking operations. The operation tests the signal on a regular basis to determine whether it should abort.
+The contract is that promises will eventually resolve and either produce a value or be rejected. The JavaScript runtime recently added the concept of an [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) which can be passed to potentially blocking operations. The operation tests the signal on a regular basis to determine whether it should abort, with the expectation that the corresponding promise will quickly reject.
 
 Callers can use an [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) to trigger a linked signal and cancel the operation. With the latest runtime you can create an `AbortSignal` that is [triggered after a timeout](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static) and [combine](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/any_static) multiple `AbortSignals` into one.
 
 You get an assortment of tools that provide most of the features I'm looking for. There's a parent-child relationship between caller and callee of async functions. Errors propagate from callee to caller. Abort signals and controllers provide timeout and cancellation support. The only thing missing is execution lifetime management.  
 
-The downside is the tools need discipline to use in a structured way. The JavaScript runtime doesn't provide anyway to find lexical scopes higher up the call chain. You need to explicitly pass the relevant scope, like the current abort signal, down the chain. You need to be disciplined about awaiting every promise at the latest possible time. 
+The downside is the tools need discipline to use in a structured way. The JavaScript runtime doesn't provide any way to find lexical scopes higher up the call chain. You need to explicitly pass the relevant scope, like the current abort signal, down the chain. You need to be disciplined about awaiting every promise at the latest possible time. 
 
 The ideal is language integrated features that do the right thing without needing a lot of boiler plate throughout the entire code base.
 
@@ -102,7 +102,7 @@ The `useScope` call returns a special action object which the runtime interprets
 
 There's lots of hype comparing this approach to the doom of the [await event horizon](https://frontside.com/blog/2023-12-11-await-event-horizon/). Your promise may never settle, there are no guarantees!
 
-Of course, correctly written code will eventually settle, and if it supports `AbortSignal` will be just as responsive as generator. Any real world project will eventually call into third party or system APIs that use async/await/abort. You're still relying on that code being correctly written.
+Of course, correctly written code will eventually settle, and if it supports `AbortSignal` will be just as responsive as a generator. Any real world project will eventually call into third party or system APIs that use async/await/abort. You're still relying on that code being correctly written.
 
 Rewriting your entire code base to use generators is even more intrusive than passing abort signals down the call stack. Effection does make it easier to be confident that the code you write is correct, with less boiler plate than the native approach.
 
@@ -110,16 +110,18 @@ Again, I'm writing a library, I don't want to constrain client choices. Exposing
 
 I use a `Result` based approach for typed handling of expected errors. Checking and propagating errors is part of the cost of doing business. Also supporting a `CanceledError` is not much extra effort.
 
-Effection talk a lot about the cost of manually propagating abort signals down the call chain. It's easy to forget to pass the signal on when abort signals are usually optional arguments.
+Effection talks a lot about the cost of manually propagating abort signals down the call chain. It's easy to forget to pass the signal on when abort signals are usually optional arguments.
 
 # Explicit Scope
 
-If you believe cancellation support is important and you're prepared to rewrite your existing code, then the simplest solution is just to make abort signals required arguments. We can add a little bit of abstraction and introduce a `Scope` object. Rather than rewriting code to use Effect's DSL or Effection's async generator based pseudo-DSL, require every function to take a mandatory scope argument. TypeScript will complain if you forget to pass it down.
+If you believe cancellation support is important and you're prepared to rewrite your existing code, then the simplest solution is just to make abort signals required arguments. 
+
+We can add a little bit of abstraction and introduce a `Scope` object. Rather than rewriting code to use Effect's DSL or Effection's async generator based pseudo-DSL, require every function to take a mandatory scope argument. TypeScript will complain if you forget to pass it down.
 
 The scope object can encapsulate all the structured concurrency concerns. We can start simple with scope as a wrapper around an abort signal, together with a list of promises to wait on when the scope ends. Here's a sketch of what it might look like to use a system like this.
 
 ```ts
-withScope(parentScope, (scope) => {
+await withScope(parentScope, (scope) => {
   scope.addPromise(myFunc(scope));
   scope.addPromise(myOtherFunc(scope));
 })
@@ -128,18 +130,18 @@ withScope(parentScope, (scope) => {
 You could optionally apply a timeout to the entire scope, internally combining an explicit abort signal with a timeout signal.
 
 ```ts
-withScope(parentScope, (scope) => {
+await withScope(parentScope, (scope) => {
   scope.addPromise(myFunc(scope));
   scope.addPromise(myOtherFunc(scope));
 }, { timeout: 10000 })
 ```
 
-It would be simple to add some sort of task abstraction which then opens the door for retry policies.
+It would be simple to add some sort of task abstraction, which then opens the door for retry policies.
 
 ```ts
 type Task<T,E> = (scope: Scope) => Promise<Result<T,E>>
 
-withScope(parentScope, (scope) => {
+await withScope(parentScope, (scope) => {
   scope.startSoon(myFunc);
   scope.startSoon(myOtherFunc);
 }, { timeout: 10000, retry: { times: 3, backoff: "exponential" }})
@@ -148,7 +150,7 @@ withScope(parentScope, (scope) => {
 You still have direct access to the promises returned by each async function or task. Write normal async/await code with the security of knowing that everything will be cleaned up at the end of the scope.
 
 ```ts
-withScope(parentScope, (scope) => {
+await withScope(parentScope, async (scope) => {
   scope.startSoon(myFunc);
   const result = await scope.startSoon(myOtherFunc);
   if (result.isErr()) {
@@ -159,7 +161,9 @@ withScope(parentScope, (scope) => {
 }, { autoCancelOnError: false })
 ```
 
-The `withScope` utility function creates a new child scope, calls the lambda passed to it and then cleans up at the end. The scope could automatically cancel other tasks if any You can nest `withScope` blocks lexically, or create `Scope` objects directly for more control. You have all the features in the structured concurrency playbook at the cost of a simple calling convention. 
+The `withScope` utility function creates a new child scope, calls the lambda passed to it and then cleans up at the end. The scope could automatically cancel other tasks, if any. You can nest `withScope` blocks lexically, or create `Scope` objects directly for more control. 
+
+You have all the features in the structured concurrency playbook at the cost of a simple calling convention. 
 
 It's important that functions check the scope for cancellation at appropriate moments. For example, before calling blocking IO and in compute intensive loops. Most of the time this can be handled by using scope aware wrapper functions for system APIs like `sleep` and `fetch`. 
 
