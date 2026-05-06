@@ -66,7 +66,74 @@ export function withScope<R>(parentScope: ConcurrencyScope | null,
 * In general, there is no meaningful runtime check for the void case
 * Even worse any body that doesn't match the promise overload will match the void overload, regardless of what it returns. Countless ways that caller can screw up.
 * If I want to support special case void body behavior, need a special case `withVoidScope` utility function
-* Is there any point in trying to specialize based on return type?
+* Is there any point in trying to specialize? Probably more confusing that useful. Better to have multiple `withScope` variants for each variation in runtime behavior needed.
 * Perhaps have `withScope` always propagate on whatever body returns and cancel anything still active. Concentrate on lifetime management part.
-* Do I need `withScopeAsync` for bodies that return `PromiseLike` and `withScope` for everything else?
-* Have other variants of `withScope` or explicit control via options if you want different behavior.
+* Crucial insight was to start with most generic version: `body` that returns some `R` and `withScope` that returns `Promise<R>`. By using `await` to create `Promise<R>` from `R`, we get promise flattening for free. Just need appropriate overloads to make it visible to caller.
+
+```ts
+export function withScope<R extends PromiseLike<unknown>>(parentScope: ConcurrencyScope | null, 
+  body: (scope: ConcurrencyScope) => R, options?: ConcurrencyScopeOptions): Promise<InferPromiseLikeType<R>>;
+export async function withScope<R>(parentScope: ConcurrencyScope | null, 
+  body: (scope: ConcurrencyScope) => R, options?: ConcurrencyScopeOptions): Promise<R>;
+export async function withScope<R>(parentScope: ConcurrencyScope | null, 
+  body: (scope: ConcurrencyScope) => R, options?: ConcurrencyScopeOptions): Promise<R>
+{
+  const scope = new ConcurrencyScope(parentScope, options);
+  const ret = await body(scope);
+  scope.cancel();
+  await scope.allSettled();
+  return ret;
+}
+```
+
+Added a second variant, `withScopeAsync` that returns a `ResultAsync`. Works with any body that returns a `Result` in some form, whether synchronously, as a `Promise`, `PromiseLike` or `ResultAsync`.
+
+```ts
+export function withScopeAsync<R extends ResultAsync<unknown, unknown>>(parentScope: ConcurrencyScope | null, 
+  body: (scope: ConcurrencyScope) => R, options?: ConcurrencyScopeOptions): R;
+export function withScopeAsync<R extends Promise<Result<unknown, unknown>>>(parentScope: ConcurrencyScope | null, 
+  body: (scope: ConcurrencyScope) => R, options?: ConcurrencyScopeOptions): ResultAsync<InferPromiseOkTypes<R>,InferPromiseErrTypes<R>>
+export function withScopeAsync<R extends Result<unknown, unknown>>(parentScope: ConcurrencyScope | null, 
+  body: (scope: ConcurrencyScope) => R, options?: ConcurrencyScopeOptions): ResultAsync<InferOkTypes<R>,InferErrTypes<R>>
+export function withScopeAsync<R extends PromiseLike<Result<unknown, unknown>> | Result<unknown, unknown>>(parentScope: ConcurrencyScope | null, 
+  body: (scope: ConcurrencyScope) => R, options?: ConcurrencyScopeOptions): ResultAsync<unknown,unknown>
+{
+  const scope = new ConcurrencyScope(parentScope, options);
+
+  return new ResultAsync((async () => {
+    const ret = await body(scope);
+    scope.cancel();
+    await scope.allSettled();
+    return ret;
+  })())
+}
+```
+
+# Generic Error Handling
+
+* Went down a rabbit hole trying to support automatic propagation of errors from any promises/tasks that fail.
+* Started by adding type parameter for expected errors. You can then have type system check that task/promise added to scope has valid error and make it clear to client which errors they need to check for at end of scope.
+* Doesn't work. Generic error parameter propagates everywhere, including into type of scope being passed down call chain. Ends up being tremendously fiddly with any addition of new error type having to propagate everywhere. If we have calling convention that everyone passes scope down the call chain there should be a single type of scope suitable for use everywhere that doesn't change.
+* All for something that is of minor utility. Primary error handling in `Result` based system should be where result is returned. e.g. In the body.
+* Looking at aggregated errors for all promises in scope only useful for debugging or for simple case of checking that all fire and mostly forget tasks have completed.
+* Already have a base error type, `InfinisheetError` with a discriminated union tag. Hard code that type into `ConcurrencyScope`. Then do runtime narrowing if needed.
+
+```ts
+  async anyError(): Promise<Result<void,InfinisheetError>> {
+    const results = await Promise.all(this.promises);
+    for (const result of results) {
+      if (result.isErr())
+        return err(result.error);
+    }
+    return ok();
+  }
+```
+
+* Sort of thing you could do. In this case check if any of the promises in the scope returned errors.
+* Unoptimized: Only have to wait for first error returned, then can cancel rest.
+
+# Unexpected Errors
+
+* Using error included in `Result` for expected errors, any exceptions or rejected promises are unexpected errors. Outside the visibility of the type system.
+* Unexpected errors should just propagate through scope, while ensuring everything is canceled.
+* try - finally
