@@ -1,9 +1,10 @@
 ---
 title: InfiniSheet Structured Concurrency
 tags: infinisheet
+thumbnail: /assets/images/typescript/structured-concurrency-logo.png
 ---
 
-I'm putting my [TypeScript Structured Concurrency]({% link _posts/2026-05-04-typescript-structured-concurrency.md %}) sketch into practice on my [InfiniSheet]({% link _topics/infinisheet.md %}) project. The first step is to flesh out the sketch with real code for the crucial types and functions. 
+I'm putting my [TypeScript Structured Concurrency]({% link _posts/2026-05-04-typescript-structured-concurrency.md %}) sketch into practice on my [InfiniSheet]({% link _topics/infinisheet.md %}) project. The first step is to flesh it out with real code for the crucial types and functions. 
 
 # Concurrency Scope
 
@@ -11,7 +12,7 @@ I started with a simple skeleton implementation of a concurrency scope class. Th
 
 ```ts
 export class ConcurrencyScope {
-  constructor(parent: ConcurrencyScope | null, options?: ConcurrencyScopeOptions) {
+  constructor(parent: ConcurrencyScope | null, options: ConcurrencyScopeOptions = {}) {
     this.parent = parent;
     this.options = options;
     this.promises = [];
@@ -23,7 +24,7 @@ export class ConcurrencyScope {
   async anyError(): Promise<Result<void,unknown>>;
 
   readonly parent: ConcurrencyScope | null;
-  readonly options?: ConcurrencyScopeOptions | undefined;
+  readonly options: ConcurrencyScopeOptions;
   private promises: PromiseLike<Result<unknown,unknown>>[];
 }
 ```
@@ -48,7 +49,9 @@ Here's what my first attempt at a `startSoon` method looked like.
 
 The `R extends PromiseLike<Result<unknown,unknown>>` syntax is the standard way of constraining generic types. I don't care what the value and error types are, I just care that the task function passed in returns a promise to some instance of the `Result` type.
 
-If I call `startSoon` with a task that returns`ResultAsync<number,string>`, I get an incomprehensible multi-line TypeScript error telling me that it's not compatible with `PromiseLike<Result<unknown,unknown>>`. The weird thing is that `ResultAsync<number,string>` is compatible with `PromiseLike<Result<number,string>>`, and `PromiseLike<Result<number,string>>` is compatible with `PromiseLike<Result<unknown,unknown>>`. TypeScript seems to get confused determining compatibility if you try to do it in one step.
+If I call `startSoon` with a task that returns`ResultAsync<number,string>`, I get an incomprehensible multi-line TypeScript error telling me that it's not compatible with `PromiseLike<Result<unknown,unknown>>`. The weird thing is that `ResultAsync<number,string>` is compatible with `PromiseLike<Result<number,string>>`, and `PromiseLike<Result<number,string>>` is compatible with `PromiseLike<Result<unknown,unknown>>`. 
+
+TypeScript seems to get confused determining compatibility if you try to do it in one step.
 
 # Overloads
 
@@ -74,7 +77,7 @@ This naturally does a two-step type comparison. TypeScript first checks that the
 
 # withScope
 
-The client's main interaction with the scope system is via the `withScope` utility function. It establishes a new lexical scope, executes a body lambda function and waits for completion of any tasks started in the scope before exiting. 
+The client's main interaction with the scope system is via the `withScope` utility function. It establishes a new lexical scope, executes a body lambda function and waits for completion of any tasks started in the scope. 
 
 ```ts
 await withScope(parentScope, (scope) => {
@@ -120,9 +123,7 @@ It doesn't work. TypeScript refuses to narrow the type in the else clause. I had
 
 The problem is that there's [various ways](https://typescript-eslint.io/rules/strict-void-return) that a function with a return type of void can actually return something other than `undefined` at runtime. The simplest is that TypeScript lets you pass a function that returns anything to something that expects a void function.
 
-This is why TypeScript refuses to narrow the types. The way to think about void functions is that the *caller* should ignore any return value. In general, there is no meaningful runtime check for the void case.
-
-Even worse any body that doesn't match the promise overload will match the void overload, regardless of what it returns. There's countless ways for a caller to screw up. 
+This is why TypeScript refuses to narrow the types. The way to think about void functions is that the *caller* should ignore any return value. In general, there is no meaningful runtime check for the void case. Even worse, any body that doesn't match the promise overload will match the void overload, regardless of what it returns. There's countless ways for a caller to screw up. 
 
 # Radical Simplicity
 
@@ -130,7 +131,11 @@ Does it make sense to vary behavior so much at runtime? It's probably more confu
 
 Let's start again with the simplest form of `withScope`. The only structured concurrency feature missing from the JavaScript runtime is execution lifetime management. Let's concentrate on that. 
 
-We can have `withScope` always propagate whatever the body returns and cancel anything still active. In general, if the body returns `R`, `withScope` should return `Promise<R>`. It turns out that this form of `withScope` can handle most cases. The crucial insight is that using `await` (which is equivalent to `Promise.resolve`) to create a `Promise<R>` from `R` gives you [promise flattening](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/Promise#the_resolve_function) for free. You just need the appropriate overloads to make it visible to the caller.
+We can have `withScope` always propagate whatever the body returns and cancel anything still active. The assumption here is that any errors you care about will have been explicitly handled in the body.
+
+In general, if the body returns `R`, `withScope` should return `Promise<R>`. In most cases, `R` will be some form of `Result`, but there's no need to enforce that. 
+
+It turns out that this form of `withScope` can handle most cases. The crucial insight is that using `await` (which is equivalent to `Promise.resolve`) to create a `Promise<R>` from `R` gives you [promise flattening](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/Promise#the_resolve_function) for free. You just need the appropriate overloads to make it visible to the caller.
 
 ```ts
 export function withScope<R extends PromiseLike<unknown>>
@@ -154,13 +159,13 @@ export async function withScope<R>
 }
 ```
 
-We can then use options whenever we want to vary runtime behavior. For example, if we don't want to cancel active tasks on exit, instead waiting for them to complete before moving on.
+We can then use options whenever we want to vary runtime behavior. For example, if we don't want to cancel active tasks on exit.
 
 ```ts
 await withScope(null, (scope) => {
   void scope.startSoon(myFunc);
   void scope.startSoon(myOtherFunc);
-}, { noCancelOnExit: true })
+}, { cancelOnExit: false })
 ```
 
 I added a second variant, `withScopeAsync`, that returns a `ResultAsync`. It works with any body that returns a `Result` in some form, whether synchronously, as a `Promise`, `PromiseLike` or `ResultAsync`.
@@ -187,10 +192,11 @@ export function withScopeAsync<R extends PromiseLike<Result<unknown, unknown>> |
     options?: ConcurrencyScopeOptions): ResultAsync<unknown,unknown>
 {
   const scope = new ConcurrencyScope(parentScope, options);
+  const { cancelOnExit = true } = scope.options;
 
   return new ResultAsync((async () => {
     const ret = await body(scope);
-    if (!options?.noCancelOnExit)
+    if (cancelOnExit)
       scope.cancel();
     await scope.allSettled();
     return ret;
@@ -198,31 +204,87 @@ export function withScopeAsync<R extends PromiseLike<Result<unknown, unknown>> |
 }
 ```
 
-# Generic Error Handling
+# Infer Types
 
-* Went down a rabbit hole trying to support automatic propagation of errors from any promises/tasks that fail.
-* Started by adding type parameter for expected errors. You can then have type system check that task/promise added to scope has valid error and make it clear to client which errors they need to check for at end of scope.
-* Doesn't work. Generic error parameter propagates everywhere, including into type of scope being passed down call chain. Ends up being tremendously fiddly with any addition of new error type having to propagate everywhere. If we have calling convention that everyone passes scope down the call chain there should be a single type of scope suitable for use everywhere that doesn't change.
-* All for something that is of minor utility. Primary error handling in `Result` based system should be where result is returned. e.g. In the body.
-* Looking at aggregated errors for all promises in scope only useful for debugging or for simple case of checking that all fire and mostly forget tasks have completed.
-* Already have a base error type, `InfinisheetError` with a discriminated union tag. Hard code that type into `ConcurrencyScope`. Then do runtime narrowing if needed.
+You may have noticed my casual use of utility types like `InferPromiseLikeType<R>`. These are used to extract type parameters from more complex types, using the TypeScript [conditional types](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html) feature.
 
 ```ts
+type InferPromiseLikeType<R> = R extends PromiseLike<infer T> ? T : never;
+```
+
+This is a common TypeScript idiom that I didn't think too much about. It turns out there's a subtle trick when it comes to more complex cases. The original version of utilities for extracting value and error from a `Promise<Result>` looked like this.
+
+```ts
+type InferPromiseOkTypes<R> = R extends Promise<Result<infer T, unknown>> ? T : never;
+type InferPromiseErrTypes<R> = R extends Promise<Result<unknown, infer E>> ? E : never;
+```
+
+This looks like a simple extension of the idiom to pull out a type one level deeper. However, it all went wrong when I threw this test case at it.
+
+```ts
+function myFunc(_scope: ConcurrencyScope): Promise<Result<boolean,ValidationError>> {
+  return Promise.resolve(ok(true));
+}
+
+function myOtherFunc(_scope: ConcurrencyScope): ResultAsync<number,StorageError> {
+  return okAsync(4);
+}
+
+const result = await withScopeAsync(null, async (scope) => {
+  const ret = scope.startSoon(myFunc);
+  const result = await scope.startSoon(myOtherFunc);
+  if (result.isErr())
+    return result;
+  return await ret;
+})
+```
+
+The return type of the body function, as determined by TypeScript, is `Promise<Result<boolean,ValidationError> |  Err<number,StorageError>>`. The return type from `withScopeAsync` should be `ResultAsync<number|boolean, ValidationError|StorageError>`. My typings came up with `ResultAsync<never,never>`. They couldn't handle the more complex union return type.
+
+TypeScript has a [distributive conditional types](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types) feature that should help with unions. The conditional is checked against each type in the union separately, with the results combined together. It doesn't do anything in my case because the union is nested within the outer `Promise`. 
+
+The trick is to rewrite the utility types to unwrap the nested types one step at a time.
+
+```ts
+export type InferOkTypes<R> = R extends Result<infer T, unknown> ? T : never;
+export type InferErrTypes<R> = R extends Result<unknown, infer E> ? E : never;
+export type InferPromiseOkTypes<R> = R extends Promise<infer T> ? InferOkTypes<T> : never;
+export type InferPromiseErrTypes<R> = R extends Promise<infer T> ? InferErrTypes<T> : never;
+```
+
+We first extract the value of the promise, `Result<boolean,ValidationError> |  Err<number,StorageError>`. The `InferOkTypes` conditional is applied separately to each side of the union, extracting `boolean` and `number` which are combined as `boolean | number`. The same happens with `InferErrTypes`.
+
+The final inferred type, `ResultAsync<number|boolean, ValidationError|StorageError>`, is exactly what we want. All without the caller having to write any explicit types.
+
+# Generic Error Handling
+
+I went down a rabbit hole trying to support automatic propagation of errors from any promises/tasks that fail. I started by adding a `ConcurrencyScope<E>` type parameter for expected errors. You can then have the type system check that any tasks/promises added to the scope have compatible error types. It also makes it clear to the client which errors they need to check for at the end of the scope.
+
+It didn't work. The generic error type parameter propagates everywhere, including into the type of the scope being passed down the call chain. That makes it really painful to use. If you add some new code with new error types down the call tree, you end up having to propagate the new error type everywhere. 
+
+If we have a calling convention that everyone passes a scope down the call chain, it needs to be a fixed, simple type that you don't have to think about.
+
+I also realized that generic error handling is of very little use. The primary error handling in `Result` based system should be where the result is returned. Callers handle errors explicitly and where needed manually propagate them up the call stack.
+
+Looking at aggregated errors for all promises in the scope is only useful for debugging or for the simple case of checking that all fire and mostly forget tasks have completed.
+
+I already have a base error type, `InfinisheetError`, with a discriminated union tag. All errors within InfiniSheet are implementations of `InfinisheetError`. Instead of using a generic error parameter, I can hard code it as `InfinisheetError`. If I want any generic error handling, I can use runtime type checks.
+
+```ts
+  private promises: PromiseLike<Result<unknown,InfinisheetError>>[];
+
   async anyError(): Promise<Result<void,InfinisheetError>> {
     const results = await Promise.all(this.promises);
     for (const result of results) {
-      if (result.isErr())
+      if (result.isErr() && result.error.type !== 'CancelError')
         return err(result.error);
     }
     return ok();
   }
 ```
 
-* Sort of thing you could do. In this case check if any of the promises in the scope returned errors.
-* Unoptimized: Only have to wait for first error returned, then can cancel rest.
+For example, this utility returns any error returned by any promise/task in the scope, ignoring cancellation.
 
-# Unexpected Errors
+# Conclusion
 
-* Using error included in `Result` for expected errors, any exceptions or rejected promises are unexpected errors. Outside the visibility of the type system.
-* Unexpected errors should just propagate through scope, while ensuring everything is canceled.
-* try - finally
+That was harder than I was expecting. Lots of false starts and dead ends. Plenty of TypeScript learning moments too. However, I'm happy with where we ended up. I think there's a good foundation to build on, next time. 
