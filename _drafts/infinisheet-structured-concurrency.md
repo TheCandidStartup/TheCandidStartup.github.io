@@ -127,7 +127,7 @@ This is why TypeScript refuses to narrow the types. The way to think about void 
 
 # Radical Simplicity
 
-Does it make sense to vary behavior so much at runtime? It's probably more confusing than useful. It might be better to have multiple `withScope` variants for each variation in runtime behavior needed.
+Does it make sense to automatically vary behavior so much at runtime? It's probably more confusing than useful. It might be better to have multiple `withScope` variants for each variation in runtime behavior needed.
 
 Let's start again with the simplest form of `withScope`. The only structured concurrency feature missing from the JavaScript runtime is execution lifetime management. Let's concentrate on that. 
 
@@ -135,7 +135,7 @@ We can have `withScope` always propagate whatever the body returns and cancel an
 
 In general, if the body returns `R`, `withScope` should return `Promise<R>`. In most cases, `R` will be some form of `Result`, but there's no need to enforce that. 
 
-It turns out that this form of `withScope` can handle most cases. The crucial insight is that using `await` (which is equivalent to `Promise.resolve`) to create a `Promise<R>` from `R` gives you [promise flattening](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/Promise#the_resolve_function) for free. You just need the appropriate overloads to make it visible to the caller.
+It turns out that this form of `withScope` can handle most cases. The crucial insight is that using `await` (which is equivalent to `Promise.resolve`) to create a `Promise<R>` from `R` gives you [promise flattening](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/Promise#the_resolve_function) for free. You just need the appropriate overloads to make it the typing clear.
 
 ```ts
 export function withScope<R extends PromiseLike<unknown>>
@@ -287,4 +287,4 @@ For example, this utility returns any error returned by any promise/task in the 
 
 # Conclusion
 
-That was harder than I was expecting. Lots of false starts and dead ends. Plenty of TypeScript learning moments too. However, I'm happy with where we ended up. I think there's a good foundation to build on, next time. 
+That was harder than I was expecting. Lots of false starts and dead ends. Plenty of TypeScript learning moments too. However, I'm happy with where we ended up. I think there's a good foundation to build on next time. 
