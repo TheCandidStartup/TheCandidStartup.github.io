@@ -169,4 +169,4 @@ It's important that functions check the scope for cancellation at appropriate mo
 
 # Conclusion
 
-I'm excited. I think I can provide the structured concurrency I need with some simple utilities and a calling convention. Next time we'll see how well that works out in reality.
+I'm excited. I think I can provide the structured concurrency I need with some simple utilities and a calling convention. [Next time]({% link _posts/2026-05-11-infinisheet-structured-concurrency.md %}) we'll see how well that works out in reality.
