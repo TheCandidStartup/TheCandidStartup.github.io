@@ -32,4 +32,19 @@ wise words
 * Wasn't going anywhere by myself. Now about 7.45am. GP surgery didn't open until 8am and no idea if I could get a same day appointment. Lucy had time to drive me to walk-in clinic or GP but only if we left immediately.
 * Lucy dropped me off and headed into work.
 * Luckily only 5 ahead of me at the walk-in clinic. 
-* After 15 minutes or so saw the nurse for triage. 
+* After 15 minutes or so saw the nurse for triage
+* Got my first real dose of sympathy for the day and confirmation that I needed to see the doctor
+* Back to the waiting room for another 15 minute wait
+* The doctor started with a cranial nerve exam to confirm that I didn't sustain any brain damage when I fell
+* Then moved on to check my very limited shoulder joint movement and to make me swear when he poked a particularly tender bit
+* Seemed happy with diagnosis of frozen shoulder
+* Walk-in clinic is limited in what it can do. He had a choice of three drugs he could prescribe to get me through the weekend. Would have to go to my GP on Monday.
+* The menu included Naproxen, Cocodamol and Diazepam
+* Naproxen is a NSAID, like a super strong version of Ibuprofen. The Doctor ruled it out as it can increase blood pressure and I'm already on a medication for high blood pressure.
+* Cocodamol is a mixture of paracetamol and codeine. Codeine is an opioid painkiller. You can buy cocodamol over the counter in pharmacies. I've also heard lots of stories from friends and relatives about side effects.
+* That leaves Diazepam. Diazepam is the same drug as Valium. It has lots of effects. In my case, the main purpose is as a muscle relaxant. A lot of the pain is caused by all the muscles around the shoulder tensing up and spasming to try and protect it. Making the whole area incredibly tender.
+* I left with a prescription for 6 diazepam tablets.
+* Got an uber home. Hardest part was fastening the seat belt
+* Nearest pharmacy is 5 minutes walk, so headed over once the prescription appeared in the NHS app after a couple of hours.
+* Took 3 diazepam that day (maximum dose). Almost instant muscle relaxant effect while also making me very drowsy. Slept well that night for the first time in days.
+* That left 3 tablets to make it to Monday. Decided to take one each evening to ensure a reasonable night.
