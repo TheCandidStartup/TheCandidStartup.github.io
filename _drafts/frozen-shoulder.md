@@ -48,3 +48,11 @@ wise words
 * Nearest pharmacy is 5 minutes walk, so headed over once the prescription appeared in the NHS app after a couple of hours.
 * Took 3 diazepam that day (maximum dose). Almost instant muscle relaxant effect while also making me very drowsy. Slept well that night for the first time in days.
 * That left 3 tablets to make it to Monday. Decided to take one each evening to ensure a reasonable night.
+* To get an on the day "emergency" GP appointment you need to hit the phone lines when they open at 8am. Then be prepared to wait in a queue while hoping there will be some appointments left when you get to the front. 
+* As I knew I'd need to see a GP after my visit to the walk-in clinic, I rang the same day to see if I could prebook a slot. No dice.
+* I made my first call at 7.59am in case they opened the lines early. A few redials later and I got through at almost exactly 8am. Second in the queue. Result. Got an appointment for 9am that morning.
+* GP checked my range of movement (less than 10 degrees). Prodded and poked, finding the incredibly tender spot where the biceps tendon connects to the shoulder. Overall summary: "that's pretty rubbish". 
+* Short term: 14 days supply of diazepam  and 19 days of Naproxen. More important to get pain and inflammation under control than worrying about blood pressure.
+* Movement so limited will make an urgent referral to specialist. In this case urgent could be weeks/months. However, another GP at the practice is qualified to perform steroid injections which could be done much more quickly. Will see if he's willing to do it.
+* Next day get a call saying that there's an appointment available at 4.45pm same day for an injection. Unfortunately, not at my local surgery. Fortunately, Lucy wasn't working that day and was able to drive me.
+* 
