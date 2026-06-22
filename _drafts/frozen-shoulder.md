@@ -55,4 +55,14 @@ wise words
 * Short term: 14 days supply of diazepam  and 19 days of Naproxen. More important to get pain and inflammation under control than worrying about blood pressure.
 * Movement so limited will make an urgent referral to specialist. In this case urgent could be weeks/months. However, another GP at the practice is qualified to perform steroid injections which could be done much more quickly. Will see if he's willing to do it.
 * Next day get a call saying that there's an appointment available at 4.45pm same day for an injection. Unfortunately, not at my local surgery. Fortunately, Lucy wasn't working that day and was able to drive me.
-* 
+* Ten minute wait and then called through
+* Doctor did a quick check of my range of movement, rattled through a list of possible problems from the procedure (1 in 2000 chance of infection in the joint, damage to tissue around joint if you have too many injections, surgeons will not perform joint surgery for 6 months after an injection)
+* Antiseptic wipe to entry point at back of shoulder, "you'll feel a sharp scratch", then straight in. No anaesthetic. Could feel the needle going in but not really any pain. All over after 30 seconds.
+* Told to do nothing for 48 hours then start exercises. Warned that it may take two weeks for full effect. Steroid injection reduces inflammation and buys you time to get the joint moving again. It's the exercises that make the difference.
+* Started exercises again after 48 hours. Tenderness and pain on any movement reduced day by day. No real change in range of movement for a week, then started seeing steady improvement. Over did the exercises and had a couple of days of things getting worse again, then back to improvement.
+* Continued with one diazepam in the evening to help with sleep for a week. Didn't need it any more after that.
+* Kept going with the Naproxen until I ran out, then switched to 3 x 400mg Ibuprofen. Wanted to keep on top of inflammation.
+* After week of Ibuprofen decided to switch to taking them on demand.
+* Gradually deteriorated over next two days with increase in tenderness and no improvements to range of motion
+* Started Ibuprofen again but didn't seem to make any difference
+* Range of motion determined by stopping when I feel pain. Realized that is due to muscles around shoulder spasming rather than shoulder itself.
