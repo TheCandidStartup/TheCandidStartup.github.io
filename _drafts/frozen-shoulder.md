@@ -48,6 +48,7 @@ wise words
 * Nearest pharmacy is 5 minutes walk, so headed over once the prescription appeared in the NHS app after a couple of hours.
 * Took 3 diazepam that day (maximum dose). Almost instant muscle relaxant effect while also making me very drowsy. Slept well that night for the first time in days.
 * That left 3 tablets to make it to Monday. Decided to take one each evening to ensure a reasonable night.
+* Had to dig to the bottom of my wardrobe to find clothes I could wear. Needed something that I could carefully slide my bad arm into the sleeve, wrap around my back, get my other arm in and then fasten at the front. Found some old Autodesk and AWS swag. A zipped hoodie and a track suit top. Couldn't face trying to get a shirt on.
 * To get an on the day "emergency" GP appointment you need to hit the phone lines when they open at 8am. Then be prepared to wait in a queue while hoping there will be some appointments left when you get to the front. 
 * As I knew I'd need to see a GP after my visit to the walk-in clinic, I rang the same day to see if I could prebook a slot. No dice.
 * I made my first call at 7.59am in case they opened the lines early. A few redials later and I got through at almost exactly 8am. Second in the queue. Result. Got an appointment for 9am that morning.
@@ -59,10 +60,18 @@ wise words
 * Doctor did a quick check of my range of movement, rattled through a list of possible problems from the procedure (1 in 2000 chance of infection in the joint, damage to tissue around joint if you have too many injections, surgeons will not perform joint surgery for 6 months after an injection)
 * Antiseptic wipe to entry point at back of shoulder, "you'll feel a sharp scratch", then straight in. No anaesthetic. Could feel the needle going in but not really any pain. All over after 30 seconds.
 * Told to do nothing for 48 hours then start exercises. Warned that it may take two weeks for full effect. Steroid injection reduces inflammation and buys you time to get the joint moving again. It's the exercises that make the difference.
-* Started exercises again after 48 hours. Tenderness and pain on any movement reduced day by day. No real change in range of movement for a week, then started seeing steady improvement. Over did the exercises and had a couple of days of things getting worse again, then back to improvement.
+* Started exercises again after 48 hours. Tenderness and pain on any movement reduced day by day. No real change in range of movement for a week, then started seeing steady improvement.
 * Continued with one diazepam in the evening to help with sleep for a week. Didn't need it any more after that.
+* Up to this point had been walking with my arm pressed against my side. Not ideal. Felt good enough to try walking with arm placed normally, gently swinging as I walked. Managed 200m.
+* That clearly overdid it. Had a couple of days of things getting worse again, then back to improvement.
 * Kept going with the Naproxen until I ran out, then switched to 3 x 400mg Ibuprofen. Wanted to keep on top of inflammation.
+* Range of motion continuing to increase, able to walk normally without problems, getting dressed no longer major drama, even able to get my backpack on again. Able to wear shirts rather than my increasingly grubby track suit top.
 * After week of Ibuprofen decided to switch to taking them on demand.
 * Gradually deteriorated over next two days with increase in tenderness and no improvements to range of motion
 * Started Ibuprofen again but didn't seem to make any difference
 * Range of motion determined by stopping when I feel pain. Realized that is due to muscles around shoulder spasming rather than shoulder itself.
+* Went back to Physio and messaged GP via NHS app to ask for another Naproxen prescription
+* Prescription came through same day. Got a Physio appointment for a couple of days later.
+* Physio said that latest research showed gentle movement as effective, or more effective, than pushing to limits. Move within comfortable range, little and often. Also start simple resistance work to try to build muscles around shoulder back up. Pushing gently against a wall for a few seconds in each direction. Will naturally find that you start doing more as shoulder improves.
+* Seems to be working. Taking two Naprozen a day, morning and evening. Each dose effective for up to 12 hours. Following the exercise regime. Am finding that I use my bad arm more often, without really thinking about it. I can reach my face, cut up food for myself, even type again. Sometimes I try to do something and it doesn't work but so far without any setbacks.
+* Range of movement improving everywhere apart from out to the side. There still limited to at most 30 degrees, and more like 15 comfortably.
