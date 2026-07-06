@@ -3,21 +3,27 @@ title: Frozen Shoulder
 tags: health
 ---
 
-wise words
+My last post was on May 11th, two months ago. I had a good routine, posting weekly, excluding vacations. Then it all went wrong.
 
-* Last post May 11
-* Had been experiencing issues with my left shoulder for months
-* Pain coming on after some minutes while swimming
-* Onset sooner and sooner
-* Eventually had to modify my stroke to be able to swim at all
-* Orienteering in rough scottish forests over easter. Lots of falls, always landing on my left side
-* Also starting to notice reduced range of motion
-* Went to Physio on May 13 - diagnosed early stages of frozen shoulder
+I had been experiencing issues with my left shoulder for months. I would start to feel pain after a few minutes while swimming. Gradually the pain free time reduced and eventually I had to modify my stroke to be able to swim at all.
+
+Over the Easter weekend I was orienteering in rough Scottish forests. I fell over a lot, inevitably landing on my left side each time. 
+
+I started to  notice a reduced range of motion in everyday life.
+
+# Frozen Shoulder
+
+{% include candid-image.html src="/assets/images/health/Gray327.png" alt="Capsule of shoulder joint" attrib="Henry Vandyke Carter - Henry Gray (1918), Anatomy of the Human Body: Gray's Anatomy, Plate 327, Public Domain" %}
+
+I went to the physio on May 13th. She diagnosed the early stages of [frozen shoulder](https://en.wikipedia.org/wiki/Adhesive_capsulitis_of_the_shoulder). 
 * Had same problem in same shoulder 13 years ago
 * Remember it being annoying rather than anything else
 * Eventually sorted after a steroid injection into the shoulder joint performed at my GP surgery
 * Physio suggested exercises to use full range of movement to try and stop it getting worse
 * Over next two days everything accelerated, drastic reduction in range of motion and increasing pain if I pushed too far
+
+# Crisis
+
 * On morning of May 15 it all went horribly wrong
 * Dress like Steve Jobs. Found something I like and wear it all the time. T-shirt and a black crew neck wool sweater.
 * Increasingly hard to get dressed. This morning it was incredibly difficult, even with Lucy helping me.
