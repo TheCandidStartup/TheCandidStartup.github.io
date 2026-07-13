@@ -59,17 +59,26 @@ I had to dig to the bottom of my wardrobe to find clothes I could wear. I needed
 
 # GP
 
-* To get an on the day "emergency" GP appointment you need to hit the phone lines when they open at 8am. Then be prepared to wait in a queue while hoping there will be some appointments left when you get to the front. 
-* As I knew I'd need to see a GP after my visit to the walk-in clinic, I rang the same day to see if I could prebook a slot. No dice.
-* I made my first call at 7.59am in case they opened the lines early. A few redials later and I got through at almost exactly 8am. Second in the queue. Result. Got an appointment for 9am that morning.
-* GP checked my range of movement (less than 10 degrees). Prodded and poked, finding the incredibly tender spot where the biceps tendon connects to the shoulder. Overall summary: "that's pretty rubbish". 
-* Short term: 14 days supply of diazepam  and 19 days of Naproxen. More important to get pain and inflammation under control than worrying about blood pressure.
-* Movement so limited will make an urgent referral to specialist. In this case urgent could be weeks/months. However, another GP at the practice is qualified to perform steroid injections which could be done much more quickly. Will see if he's willing to do it.
-* Next day get a call saying that there's an appointment available at 4.45pm same day for an injection. Unfortunately, not at my local surgery. Fortunately, Lucy wasn't working that day and was able to drive me.
-* Ten minute wait and then called through
-* Doctor did a quick check of my range of movement, rattled through a list of possible problems from the procedure (1 in 2000 chance of infection in the joint, damage to tissue around joint if you have too many injections, surgeons will not perform joint surgery for 6 months after an injection)
-* Antiseptic wipe to entry point at back of shoulder, "you'll feel a sharp scratch", then straight in. No anaesthetic. Could feel the needle going in but not really any pain. All over after 30 seconds.
-* Told to do nothing for 48 hours then start exercises. Warned that it may take two weeks for full effect. Steroid injection reduces inflammation and buys you time to get the joint moving again. It's the exercises that make the difference.
+Regular GP appointments have at least a two week lead time. To get an on the day "emergency" GP appointment you need to hit the phone lines when they open at 8am. Then be prepared to wait in a queue while hoping there will be some appointments left when you get to the front.
+
+As I knew I'd need to see a GP after my visit to the walk-in clinic, I rang that day to see if I could prebook an emergency slot. No dice. The phone lottery is the only way.
+
+I made my first call at 7.59am in case they opened the lines early. A few redials later and I finally got through at almost exactly 8am. Second in the queue. Result. Got an appointment for 9am that morning.
+
+The GP checked my range of movement and concluded it was less than 10 degrees. He prodded and poked, finding the incredibly tender spot where the biceps tendon connects to the shoulder. Overall summary: "that's pretty rubbish".
+
+For the short term I get a new prescription for 14 diazepam tablets and 56 Naproxen. The GP wasn't worried about my high blood pressure and thought it more important to get the pain and inflammation under control.
+
+The range of movement is limited enough for an urgent referral to a specialist. Unfortunately, even urgent cases can take weeks or months to be seen. However, there is another GP at the practice qualified to perform steroid injections, which could be done much more quickly. They'll get back to me.
+
+Next day I get a call saying that there's an appointment available at 4.45pm same day for an injection. Unfortunately, not at my local surgery. Fortunately, Lucy wasn't working that day and was able to drive me.
+
+There was a ten minute wait and then I was called through. The doctor did a quick check of my range of movement, rattled through a list of possible problems from the procedure: 1 in 2000 chance of infection in the joint, damage to tissue around joint if you have too many injections, surgeons will not perform joint surgery for 6 months after an injection.
+
+I agreed to go head. He applied an antiseptic wipe to the entry point at the back of shoulder, told me that I'd "feel a sharp scratch", then straight in. No anaesthetic. I could feel the needle going in but not really any pain. All over in 30 seconds.
+
+I was told to do nothing for 48 hours, then start exercises. I was also warned that it may take two weeks to feel the full effect. The steroid injection reduces inflammation and buys you time to get the joint moving again. It's the exercises that make the difference.
+
 * Started exercises again after 48 hours. Tenderness and pain on any movement reduced day by day. No real change in range of movement for a week, then started seeing steady improvement.
 * Continued with one diazepam in the evening to help with sleep for a week. Didn't need it any more after that.
 * Up to this point had been walking with my arm pressed against my side. Not ideal. Felt good enough to try walking with arm placed normally, gently swinging as I walked. Managed 200m.
