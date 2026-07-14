@@ -17,7 +17,7 @@ I went to the physio on May 13th. She diagnosed the early stages of [frozen shou
 
 I had the same problem in the same shoulder 13 years ago. I'd forgotten which shoulder it was but the physio's notes from the time confirmed that it was the same one. I remember it being annoying rather than anything else. It was eventually sorted out after a steroid injection into the shoulder joint performed at my GP surgery. Apparently, it's unusual to have it in the same shoulder twice.
 
-The physio suggested some exercises to use the range of movement remaining to try and stop it getting worse. Unfortunately, over the next two days everything accelerated, with a drastic reduction in range of motion and increasing pain if I pushed too far.
+The physio suggested some exercises to use the range of movement remaining and stop it getting worse. Unfortunately, over the next two days everything accelerated, with a drastic reduction in range of motion and increasing pain if I pushed too far.
 
 # Crisis
 
@@ -33,11 +33,13 @@ I lay on the floor while Lucy dialled 111 (the UK number for urgent medical help
 
 I wasn't going anywhere by myself. It's now about 7.45am. The GP surgery didn't open until 8am and I had no idea whether I'd be able to get a same day appointment. Lucy had time before work to drive me to the walk-in clinic or GP but only if we left immediately.
 
-The walk-in clinic seemed like the obvious choice. Lucy dropped me off and headed into work. Luckily, there were only 5 people ahead of me in the queue. After 15 minutes I was called in to see the triage nurse. I got my first real dose of sympathy for the day and confirmation that I needed to see the doctor.
+The walk-in clinic seemed like the obvious choice. Lucy dropped me off and headed into work. In my case, walking is done slowly, with great care, and with my left arm clamped against my side. It's surprising how unbalanced that makes you feel.
+
+Luckily, there were only 5 people ahead of me in the queue. After 15 minutes I was called in to see the triage nurse. I got my first real dose of sympathy for the day and confirmation that I needed to see the doctor.
 
 Back to the waiting room for another 15 minute wait. The doctor started with a cranial nerve exam to confirm that I didn't sustain any brain damage when I fell. He then moved on to check my very limited shoulder joint movement and make me swear when he poked a particularly tender bit. He seemed happy with the diagnosis of frozen shoulder.
 
-I hadn't appreciated that the walk-in clinic is very limited in what they can do. In my case, he gave me a choice of three drugs that he could prescribe to get me through the weekend. I would have to go to my GP on Monday. 
+I hadn't appreciated that the walk-in clinic is very limited in what they can do. In my case, he gave me a choice of three drugs that he could prescribe to get me through the next 48 hours. I would have to go to my GP on Monday. 
 
 # Drugs
 
@@ -51,7 +53,7 @@ That left [Diazepam](https://www.nhs.uk/medicines/diazepam/). Diazepam is the sa
 
 I left with a prescription for 6 diazepam tablets and got an Uber home. The hardest part was fastening the seat belt.
 
-My nearest pharmacy is 5 minutes walk, so I headed over once the prescription appeared in the NHS app after a couple of hours. I took 3 diazepam that day (maximum dose). There was an almost instant muscle relaxant effect while also making me very drowsy. I slept well that night for the first time in days.
+My nearest pharmacy is 5 minutes walk, so I staggered over once the prescription appeared in the NHS app after a couple of hours. I took 3 diazepam that day (maximum dose). There was an almost instant muscle relaxant effect while also making me very drowsy. I slept well that night for the first time in days.
 
 That left me 3 tablets to make it to Monday. I decided to take one each evening to ensure a reasonable night's sleep.
 
@@ -59,7 +61,7 @@ I had to dig to the bottom of my wardrobe to find clothes I could wear. I needed
 
 # GP
 
-Regular GP appointments have at least a two week lead time. To get an on the day "emergency" GP appointment you need to hit the phone lines when they open at 8am. Then be prepared to wait in a queue while hoping there will be some appointments left when you get to the front.
+Regular GP appointments have at least a two week lead time. To get an on-the-day "emergency" GP appointment you need to hit the phone lines when they open at 8am. Then be prepared to wait in a queue while hoping there will be some appointments left when you get to the front.
 
 As I knew I'd need to see a GP after my visit to the walk-in clinic, I rang that day to see if I could prebook an emergency slot. No dice. The phone lottery is the only way.
 
@@ -71,25 +73,33 @@ For the short term I get a new prescription for 14 diazepam tablets and 56 Napro
 
 The range of movement is limited enough for an urgent referral to a specialist. Unfortunately, even urgent cases can take weeks or months to be seen. However, there is another GP at the practice qualified to perform steroid injections, which could be done much more quickly. They'll get back to me.
 
+# Steroid Injection
+
 Next day I get a call saying that there's an appointment available at 4.45pm same day for an injection. Unfortunately, not at my local surgery. Fortunately, Lucy wasn't working that day and was able to drive me.
 
-There was a ten minute wait and then I was called through. The doctor did a quick check of my range of movement, rattled through a list of possible problems from the procedure: 1 in 2000 chance of infection in the joint, damage to tissue around joint if you have too many injections, surgeons will not perform joint surgery for 6 months after an injection.
+There was a ten minute wait and then I was called through. The doctor did a quick check of my range of movement, then rattled through a list of possible problems from the procedure: 1 in 2000 chance of infection in the joint, damage to tissue around joint if you have too many injections, surgeons will not perform joint surgery for 6 months after an injection.
 
-I agreed to go head. He applied an antiseptic wipe to the entry point at the back of shoulder, told me that I'd "feel a sharp scratch", then straight in. No anaesthetic. I could feel the needle going in but not really any pain. All over in 30 seconds.
+I agreed to go head. He applied an antiseptic wipe to the entry point at the back of my shoulder, told me that I'd "feel a sharp scratch", then straight in. No anaesthetic. I could feel the needle going in but not really any pain. All over in 30 seconds.
 
 I was told to do nothing for 48 hours, then start exercises. I was also warned that it may take two weeks to feel the full effect. The steroid injection reduces inflammation and buys you time to get the joint moving again. It's the exercises that make the difference.
 
-* Started exercises again after 48 hours. Tenderness and pain on any movement reduced day by day. No real change in range of movement for a week, then started seeing steady improvement.
-* Continued with one diazepam in the evening to help with sleep for a week. Didn't need it any more after that.
-* Up to this point had been walking with my arm pressed against my side. Not ideal. Felt good enough to try walking with arm placed normally, gently swinging as I walked. Managed 200m.
-* That clearly overdid it. Had a couple of days of things getting worse again, then back to improvement.
-* Kept going with the Naproxen until I ran out, then switched to 3 x 400mg Ibuprofen. Wanted to keep on top of inflammation.
-* Range of motion continuing to increase, able to walk normally without problems, getting dressed no longer major drama, even able to get my backpack on again. Able to wear shirts rather than my increasingly grubby track suit top.
-* After week of Ibuprofen decided to switch to taking them on demand.
-* Gradually deteriorated over next two days with increase in tenderness and no improvements to range of motion
-* Started Ibuprofen again but didn't seem to make any difference
-* Range of motion determined by stopping when I feel pain. Realized that is due to muscles around shoulder spasming rather than shoulder itself.
-* Went back to Physio and messaged GP via NHS app to ask for another Naproxen prescription
+# Ups and Downs
+
+I started exercises again after 48 hours. The tenderness and pain on any movement reduced day by day. There was no real change in range of movement for a week, then I started seeing a steady improvement. I continued with one diazepam in the evening to help with sleep for a week. I didn't need it any more after that.
+
+Up to this point I had continued walking with my arm pressed against my side. I felt good enough to try walking with the arm placed normally, gently swinging as I walked. I managed 200m.
+
+That clearly overdid it. I had a couple of days of things getting worse again, then back to improvement.
+
+I kept going with the Naproxen until I ran out, then switched to 3 x 400mg Ibuprofen. I wanted to keep on top of the inflammation.
+
+Range of motion continued to increase, I was able to walk normally without problems, getting dressed was no longer a major drama, and I was even able to get my backpack on again. I was particularly grateful that I was able to wear shirts rather than my increasingly grubby track suit top.
+
+After a week of full dose Ibuprofen I decided to switch to taking them on demand. Things gradually deteriorated over the next two days with an increase in tenderness and no further improvements to range of motion. I started regular Ibuprofen again but it didn't seem to make any difference.
+
+I determined my maximum range of motion by stopping when I felt pain. I realized that the pain is due to muscles around the shoulder spasming rather than the shoulder itself.
+
+I went back to the physio and messaged the GP via the NHS app to ask for another Naproxen prescription. 
 * Prescription came through same day. Got a Physio appointment for a couple of days later.
 * Physio said that latest research showed gentle movement as effective, or more effective, than pushing to limits. Move within comfortable range, little and often. Also start simple resistance work to try to build muscles around shoulder back up. Pushing gently against a wall for a few seconds in each direction. Will naturally find that you start doing more as shoulder improves.
 * Seems to be working. Taking two Naprozen a day, morning and evening. Each dose effective for up to 12 hours. Following the exercise regime. Am finding that I use my bad arm more often, without really thinking about it. I can reach my face, cut up food for myself, even type again. Sometimes I try to do something and it doesn't work but so far without any setbacks.
