@@ -85,7 +85,7 @@ I was told to do nothing for 48 hours, then start exercises. I was also warned t
 
 # Ups and Downs
 
-I started exercises again after 48 hours. The tenderness and pain on any movement reduced day by day. There was no real change in range of movement for a week, then I started seeing a steady improvement. I continued with one diazepam in the evening to help with sleep for a week. I didn't need it any more after that.
+I started exercises again a couple of days later. The tenderness and pain on movement reduced day by day. There was no real change in range of movement for a week, then I started seeing a steady improvement. I continued with one diazepam in the evening to help with sleep for a week. I didn't need it any more after that.
 
 Up to this point I had continued walking with my arm pressed against my side. I felt good enough to try walking with the arm placed normally, gently swinging as I walked. I managed 200m.
 
@@ -97,10 +97,19 @@ Range of motion continued to increase, I was able to walk normally without probl
 
 After a week of full dose Ibuprofen I decided to switch to taking them on demand. Things gradually deteriorated over the next two days with an increase in tenderness and no further improvements to range of motion. I started regular Ibuprofen again but it didn't seem to make any difference.
 
-I determined my maximum range of motion by stopping when I felt pain. I realized that the pain is due to muscles around the shoulder spasming rather than the shoulder itself.
+# Reset
 
-I went back to the physio and messaged the GP via the NHS app to ask for another Naproxen prescription. 
-* Prescription came through same day. Got a Physio appointment for a couple of days later.
-* Physio said that latest research showed gentle movement as effective, or more effective, than pushing to limits. Move within comfortable range, little and often. Also start simple resistance work to try to build muscles around shoulder back up. Pushing gently against a wall for a few seconds in each direction. Will naturally find that you start doing more as shoulder improves.
-* Seems to be working. Taking two Naprozen a day, morning and evening. Each dose effective for up to 12 hours. Following the exercise regime. Am finding that I use my bad arm more often, without really thinking about it. I can reach my face, cut up food for myself, even type again. Sometimes I try to do something and it doesn't work but so far without any setbacks.
-* Range of movement improving everywhere apart from out to the side. There still limited to at most 30 degrees, and more like 15 comfortably.
+I determine my maximum range of motion by stopping when I feel pain. I found that I can move much further if I lift my left arm using my right. The pain that's stopping me is due to muscles around the shoulder spasming under load. 
+
+Time to reset what I'm doing. I booked another physio appointment for two days later. I also messaged the GP via the NHS app to ask for another Naproxen prescription. The prescription came through the same day.
+
+The physio told me that the latest research shows gentle movement to be as effective, or more effective, than pushing to limits. Move within the comfortable range, little and often. Use supported lifts to move further as long as it's still comfortable. Finally, start simple resistance work to try to build the muscles around the shoulder back up. For example, pushing gently against a wall for a few seconds in each direction. 
+
+It seems to be working. I'm taking one Naproxen in the morning, with another in the evening if I need it. Each dose is effective for up to 12 hours. I'm following the exercise regime. I'm finding that I use my left arm more often, without really thinking about it. I can reach my face, cut up food for myself, even type for a few minutes at a time. Sometimes I try to do something and it doesn't work but so far without any setbacks.
+
+My range of movement is improving everywhere. Swinging front and back works best. I can swing forwards over 90 degrees with assistance. Worst is out to the side. There I'm still limited to at most 45 degrees with assistance, and more like 20 degrees without. All my exercise comes from walking, so far up to two hours at a time. 
+
+# Blogging
+
+# Prognosis
+
