@@ -3,11 +3,11 @@ title: Frozen Shoulder
 tags: health
 ---
 
-My last post was on May 11th, two months ago. Up till then I had a good routine, posting weekly, excluding vacations. Then it all went wrong.
+My last post was on May 11th, two months ago. Until then I had a good routine, posting weekly, excluding vacations. Then it all went wrong.
 
 I had been experiencing issues with my left shoulder for months. I would start to feel pain after a few minutes while swimming. Gradually the pain free time reduced and eventually I had to modify my stroke to be able to swim at all.
 
-Over the Easter weekend I was orienteering in rough Scottish forests. I fell over a lot, inevitably landing on my left side each time. I then started to notice a reduced range of motion in everyday life.
+Over the Easter weekend I went orienteering in rough Scottish forests. I fell over a lot, inevitably landing on my left side each time. After that I started to notice a reduced range of motion in everyday life.
 
 # Frozen Shoulder
 
@@ -27,7 +27,7 @@ I have the same clothing philosophy as Steve Jobs. I found something I like and 
 
 We got it done, but I've never experienced pain like it. Lucy said I went completely white. I was sweating like crazy. I felt nauseous and went into the bathroom to throw up. Nothing happened, so I staggered back out and then my legs collapsed underneath me. I smashed my head into the wall as I went down. Inevitably onto my left side.
 
-"Why did you do that?", asked Lucy. I really don't know. 
+"Why did you do that?", asked Lucy. I really don't know why it happened.
 
 I lay on the floor while Lucy dialled 111 (the UK number for urgent medical help that isn't life-threatening). She took the call handler through what had happened and after going through the script that checks for a heart attack suggested that I needed to be seen by my GP or at the walk-in clinic in town. Ideally, within the next 2 hours.
 
@@ -53,7 +53,7 @@ That left [Diazepam](https://www.nhs.uk/medicines/diazepam/). Diazepam is the sa
 
 I left with a prescription for 6 diazepam tablets and got an Uber home. The hardest part was fastening the seat belt.
 
-My nearest pharmacy is 5 minutes walk, so I staggered over once the prescription appeared in the NHS app after a couple of hours. I took 3 diazepam that day (maximum dose). There was an almost instant muscle relaxant effect while also making me very drowsy. I slept well that night for the first time in days.
+My nearest pharmacy is 5 minutes walk, so I staggered over after a couple of hours, once the prescription appeared in the NHS app. I took 3 diazepam that day (maximum dose). There was an almost instant muscle relaxant effect while also making me very drowsy. I slept well that night for the first time in days.
 
 That left me 3 tablets to make it to Monday. I decided to take one each evening to ensure a reasonable night's sleep.
 
@@ -63,7 +63,7 @@ I had to dig to the bottom of my wardrobe to find clothes I could wear. I needed
 
 Regular GP appointments have at least a two week lead time. To get an on-the-day "emergency" GP appointment you need to hit the phone lines when they open at 8am. Then be prepared to wait in a queue while hoping there will be some appointments left when you get to the front.
 
-As I knew I'd need to see a GP after my visit to the walk-in clinic, I rang that day to see if I could prebook an emergency slot. No dice. The phone lottery is the only way.
+As I knew I'd need to see a GP after my visit to the walk-in clinic, I rang on Friday to see if I could prebook an emergency slot for Monday. No dice. The phone lottery is the only way.
 
 I made my first call at 7.59am in case they opened the lines early. A few redials later and I finally got through at almost exactly 8am. Second in the queue. Result. Got an appointment for 9am that morning.
 
@@ -118,3 +118,5 @@ You're reading this, so clearly I've started blogging again. It's going to take 
 # Prognosis
 
 Most people make a full recovery from frozen shoulder. However, it does take time. Given the stage I'm at now, it can take between 4 and 24 months.
+
+Fingers crossed that I'm at the near end of that range.
