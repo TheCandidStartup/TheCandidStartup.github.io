@@ -105,11 +105,16 @@ Time to reset what I'm doing. I booked another physio appointment for two days l
 
 The physio told me that the latest research shows gentle movement to be as effective, or more effective, than pushing to limits. Move within the comfortable range, little and often. Use supported lifts to move further as long as it's still comfortable. Finally, start simple resistance work to try to build the muscles around the shoulder back up. For example, pushing gently against a wall for a few seconds in each direction. 
 
-It seems to be working. I'm taking one Naproxen in the morning, with another in the evening if I need it. Each dose is effective for up to 12 hours. I'm following the exercise regime. I'm finding that I use my left arm more often, without really thinking about it. I can reach my face, cut up food for myself, even type for a few minutes at a time. Sometimes I try to do something and it doesn't work but so far without any setbacks.
+It seems to be working. I'm taking one Naproxen in the morning, with another in the evening if I need it. Each dose is effective for up to 12 hours.
 
-My range of movement is improving everywhere. Swinging front and back works best. I can swing forwards over 90 degrees with assistance. Worst is out to the side. There I'm still limited to at most 45 degrees with assistance, and more like 20 degrees without. All my exercise comes from walking, so far up to two hours at a time. 
+I'm following the exercise regime. I'm finding that I use my left arm more often, without really thinking about it. I can reach my face, cut up food for myself, even type for a few minutes at a time. Sometimes I try to do something and it doesn't work but so far without any setbacks.
+
+My range of movement is improving everywhere. Swinging front and back works best. I can swing forwards over 90 degrees with assistance. Worst is out to the side. There I'm still limited to at most 45 degrees with assistance, and more like 20 degrees without. All my exercise comes from walking, up to two hours at a time. 
 
 # Blogging
 
+You're reading this, so clearly I've started blogging again. It's going to take some time to get back to my previous weekly cadence. Currently I can  type for 20 minutes at a time before my left arm seizes up. I'll post on an ad-hoc basis for now.
+
 # Prognosis
 
+Most people make a full recovery from frozen shoulder. However, it does take time. Given the stage I'm at now, it can take between 4 and 24 months.
