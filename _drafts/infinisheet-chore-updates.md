@@ -196,7 +196,7 @@ Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)
 * Don't need to do the 4 React 18 to 19 packages at all. I develop against React 18, then upgrade to React 19 in my test matrix.
 * Naturally I test local build for each update before pushing and checking that GitHub actions builds succeed
 
-# Lerna-Lite
+# Lerna-Lite 5
 
 * Major version update because Node 22 is now minimum dependency. Matches what I already do.
 
@@ -210,7 +210,7 @@ Done in 4.3s using pnpm v10.28.2
 
 * Looks like lerna-lite has lost some weight, which is great
 
-# jsdom
+# jsdom 30
 
 * Major version bump all due to Node 22 being the minimum dependency
 
@@ -268,7 +268,7 @@ Done in 1.7s using pnpm v10.28.2
 
 * There's a new major version of pnpm too. I'll tackle that after some more of the low hanging fruit.
 
-# Testing Library
+# Testing Library 7
 
 * `@testing-library/jest-dom` has a new major version because `@testing-library/dom` is now a peer dependency. I already have it as a direct dev dependency so nothing else needed.
 
@@ -280,3 +280,218 @@ Packages: +68 -119
 Done in 1.6s using pnpm v10.28.2
 ```
 
+# pnpm 11
+
+* This time I remembered to update `.tool-versions` after installing latest pnpm
+
+```
+% asdf install pnpm 11.21.0                     
+Downloading pnpm v11.21.0 from https://registry.npmjs.org/pnpm/-/pnpm-11.21.0.tgz
+Using ASDF_DOWNLOAD_PATH: /Users/tim/.asdf/downloads/pnpm/11.21.0
+% asdf current
+nodejs          22.23.2         /Users/tim/GitHub/infinisheet/.tool-versions
+pnpm            11.21.0         /Users/tim/GitHub/infinisheet/.tool-versions
+% pnpm -v
+11.21.0
+```
+
+* There are lots of minor changes to config with a codemod to apply them
+
+```
+% pnpx codemod run pnpm-v10-to-v11
+Packages: +3
+Downloading @codemod.com/cli-darwin-arm64@1.13.18: 39.32 MB/39.32 MB, done
+Progress: resolved 7, reused 0, downloaded 3, added 3, done
+[1/2] 🔍 Resolving package from registry: https://app.codemod.com ...
+[2/2] 🏁 Running codemod: pnpm-v10-to-v11
+Workflow started cff47dff-b62a-441a-8d41-2ff0baa8eec9
+⏺ Run pnpm v10 → v11 migration
+
+  ⚠  Shell command requires approval
+  Step: Run pnpm v10 → v11 migration
+  Node: Migrate to pnpm v11
+  Command:
+    node -e "import(require('url').pathToFileURL(process.env.CODEMOD_PATH+'/dist/index.js').href)"
+
+> Run this command? Yes
+
+pnpm v11 migration complete. Run your package manager's install command to refresh the lockfile.
+Workflow completed in 19.0s
+
+Run summary
+  Modified     0
+  Unmodified   0
+```
+
+* The run summary suggests nothing has changed but git shows that my old `.npmrc` file has been deleted with the `engine-strict` flag moved into `pnpm-workspace.yaml`, together with some existing options being restructured.
+
+```yaml
+engineStrict: true
+allowBuilds:
+  '@swc/core': true
+  esbuild: true
+```
+
+* Migration script ends by suggesting you run install
+
+```
+% pnpm install
+Scope: all 9 workspace projects
+✔ The modules directories will be removed and reinstalled from scratch. Proceed? Yes
+Recreating /Users/tim/GitHub/infinisheet/node_modules
+✓ Lockfile passes supply-chain policies (798 entries in 13.5s)
+Lockfile is up to date, resolution step is skipped
+Packages: +711
+Downloading @swc/core-darwin-arm64@1.15.47: 10.57 MB/10.57 MB, done
+Downloading storybook@9.1.20: 9.97 MB/9.97 MB, done
+Progress: resolved 711, reused 0, downloaded 711, added 711, done
+node_modules/.pnpm/@swc+core@1.15.47/node_modules/@swc/core: Running postinstall script, done in 749ms
+node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild: Running postinstall script, done in 1.2s
+node_modules/.pnpm/esbuild@0.28.1/node_modules/esbuild: Running postinstall script, done in 950ms
+
+Done in 20.8s using pnpm v11.21.0
+```
+
+* Seems like enough has changed internally to require all packages to be reinstalled
+* No change to lock file
+* Running install again tells me everything is up to date
+* I had to bump the version of pnpm installed in my GitHub actions workflows manually
+* pnpm 11 supports a new `setup` action which installs NodeJS and pnpm in a single action. It's pretty new, so I'll stick with the current process for now. Also feel more comfortable letting the official GitHub action handle NodeJS install.
+
+# Storybook 10
+
+* Main change is moving to a pure ESM distribution. That means dropping support for earlier versions of Node and requiring all config files to be valid ESM. My project has been pure ESM from the start, so should be fine.
+* There's a [migration script](https://storybook.js.org/docs/releases/migration-guide#automatic-upgrade) which will do anything needed for you let's give it a whirl. 
+
+```
+% pnpm dlx storybook@10.5.6 upgrade
+Downloading storybook@10.5.6: 6.06 MB/6.06 MB, done
+Packages: +71
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 141, reused 49, downloaded 30, added 71, done
+✔ Choose which packages to build (Press <space> to select, <a> to toggle all, <i> to invert selection) 
+All packages were added to allowBuilds with value false.
+[WARN] 3 deprecated subdependencies found: glob@7.2.3, inflight@1.0.6, rimraf@2.6.3
+Packages: +201
+Progress: resolved 271, reused 144, downloaded 65, added 131, done
+✔ Choose which packages to build (Press <space> to select, <a> to toggle all, <i> to invert selection) esbuild
+✔ The next packages will now be built: esbuild.
+Do you approve? Yes
+
+┌  Storybook upgrade - v10.5.6
+│
+◐  Detecting projects: 1 projects│
+●  Loading main config failed as the file does not seem to be valid ESM. Trying a
+│  temporary fix, please ensure the main config is valid ESM.
+◇  1 project detected
+│
+●  Upgrading from 9.1.20 to 10.5.6
+│
+◆  Updated package versions in package.json files
+│
+◆  1 automigration(s) detected
+│
+◇  Select automigrations to run
+│  fix-faux-esm-require
+│
+◆  Completed automigrations for /apps/storybook/.storybook
+│
+◇  Dependencies installed
+│
+▲  Since you are in a monorepo, we advise you to deduplicate your dependencies. We
+│  can do this for you but it might take some time.
+│
+◇  Execute pnpm run dedupe?
+│  Yes
+│
+│  Deduplicating dependencies...
+│
+│  ✓ Lockfile passes supply-chain policies (verified 10s ago)
+│
+│  Progress: resolved 1, reused 0, downloaded 0, added 0
+│
+│  Progress: resolved 278, reused 201, downloaded 0, added 0
+│
+│  Progress: resolved 626, reused 522, downloaded 0, added 0
+│
+│  [WARN] 2 deprecated subdependencies found: @types/parse-path@7.1.0,
+│  tsconfck@3.1.6
+│
+│  Packages: -68
+│  --------------------------------------------------------------------
+│
+│  Progress: resolved 802, reused 704, downloaded 0, added 0, done
+│
+
+│
+│  Dependencies deduplicated
+│
+◇  Checking the health of your project(s)..
+│
+│  Your Storybook project looks good!
+│
+◇  Your project(s) have been upgraded successfully! 🎉
+│
+│  If you want to learn more about the automigrations that executed in your
+│  project(s), please check the following links:
+│  • fix-faux-esm-require:
+│  https://storybook.js.org/docs/faq#how-do-i-fix-module-resolution-in-special-environments
+│
+│  For a full list of changes, please check our migration guide:
+│  https://storybook.js.org/docs/releases/migration-guide?ref=upgrade
+│
+└  Storybook upgrade completed!
+```
+
+*  Don't know what the package build question was about. The only option was `esbuild` and you couldn't progress without selecting it. Presumably building the migration script?
+* I also seem to have acquired another two deprecated dependencies.
+* Turns out my config file isn't pure ESM. I added some boilerplate copied from the Storybook manual to handle module resolution in a monorepo. The boilerplate made use of require. The migration fixed it up.
+
+```ts
+// This file has been automatically migrated to valid ESM format by Storybook.
+import { createRequire } from "node:module";
+import { join, dirname } from "path";
+
+const require = createRequire(import.meta.url);
+
+function getAbsolutePath(value: string): any {
+  return dirname(require.resolve(join(value, "package.json")));
+}
+```
+
+* That works but seems kind of ugly. The example boilerplate in the manual has been updated for ESM so I switched to that.
+
+```ts
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const getAbsolutePath = (packageName: string) =>
+  dirname(fileURLToPath(import.meta.resolve(`${packageName}/package.json`)));
+```
+
+# ESLint 10
+
+* Another dependency dropping support for old versions of Node. Also drops support for the old config file format (which we migrated away from a while back).
+
+```
+% pnpm update --latest eslint @eslint/js        
+✓ Lockfile passes supply-chain policies (verified 54m ago)
+[WARN] "@eslint/js@>=9.39.5 <10.0.0-0" was updated to 10.0.1, not 9.39.5, to match the version preferred by your manifests and already installed dependencies. To use 9.39.5, add an override to pnpm-workspace.yaml: overrides: { "@eslint/js@>=9.39.5 <10.0.0-0": "9.39.5" }
+[WARN] "eslint@>=9.39.5 <10.0.0-0" was updated to 10.8.0, not 9.39.5, to match the version preferred by your manifests and already installed dependencies. To use 9.39.5, add an override to pnpm-workspace.yaml: overrides: { "eslint@>=9.39.5 <10.0.0-0": "9.39.5" }
+[WARN] 2 deprecated subdependencies found: @types/parse-path@7.1.0, tsconfck@3.1.6
+Progress: resolved 789, reused 0, downloaded 2, added 0, done
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+Packages: +20 -33
+Done in 3.1s using pnpm v11.21.0
+
+% pnpm peers check
+Issues with peer dependencies found
+
+✕ unmet peer eslint
+  Installed: 10.8.0
+  Wanted:
+    "^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7":
+      eslint-plugin-react@7.37.5
+```
+
+* Looks like `eslint-plugin-react` doesn't support ESLint 10 yet. There's an [open PR](https://github.com/jsx-eslint/eslint-plugin-react/pull/4022) that is being actively worked on. Will have to leave this one for now.
