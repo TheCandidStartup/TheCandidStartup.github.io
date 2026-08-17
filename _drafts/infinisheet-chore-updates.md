@@ -444,7 +444,7 @@ Do you approve? Yes
 ```
 
 *  Don't know what the package build question was about. The only option was `esbuild` and you couldn't progress without selecting it. Presumably building the migration script?
-* I also seem to have acquired another two deprecated dependencies.
+* We seem to have got rid of our original 3 deprecated dependencies and replaced them with two new ones
 * Turns out my config file isn't pure ESM. I added some boilerplate copied from the Storybook manual to handle module resolution in a monorepo. The boilerplate made use of require. The migration fixed it up.
 
 ```ts
@@ -495,3 +495,133 @@ Issues with peer dependencies found
 ```
 
 * Looks like `eslint-plugin-react` doesn't support ESLint 10 yet. There's an [open PR](https://github.com/jsx-eslint/eslint-plugin-react/pull/4022) that is being actively worked on. Will have to leave this one for now.
+
+# TypeScript 6 - 7
+
+* TypeScript 7 includes a complete rewrite of the TypeScript compiler in Go. The aim is to be as backwards compatible as possible. However, they are taking the opportunity to jettison a lot of legacy features.
+* Recommended approach is to migrate via TypeScript 6. TypeScript 6 uses the existing JavaScript codebase while supporting the same reduced feature set as TypeScript 7.
+* Why is that any better if you have to fix errors due to removed features anyway? There's a [big difference](https://codingdunia.com/blog/typescript-7-migration-guide/#what-breaks-when-you-upgrade) in developer experience between a feature that the compiler understands and provides a targeted deprecation warning for, and a feature that just looks like a synxtax error.
+* TypeScript 7 was only released a month ago, current release is 7.0.2. I'd like to give it some more bake time. Does make sense to move to TypeScript 6 now.
+
+```
+% pnpm update typescript@6              
+✓ Lockfile passes supply-chain policies (verified 19h ago)
+[WARN] 2 deprecated subdependencies found: @types/parse-path@7.1.0, tsconfck@3.1.6
+Progress: resolved 803, reused 0, downloaded 0, added 0, done
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+Packages: +22 -21
+Done in 3.5s using pnpm v11.21.0
+% pnpm peers check
+Issues with peer dependencies found
+
+✕ unmet peer typescript
+  Installed: 6.0.3
+  Wanted:
+    ^5.0.0:
+      tsconfck@3.1.6
+```
+
+* That's one of the deprecated dependencies.
+* `tsconfck` is deprecated because it is no longer maintained. It doesn't support anything later than TypeScript 5.
+* Time to figure out where that deprecated dependency is coming from.
+
+```
+% pnpm ls --depth Infinity tsconfck
+Legend: production dependency, optional only, dev only
+
+root /Users/tim/GitHub/infinisheet (PRIVATE)
+│
+│   devDependencies:
+└─┬ vite-tsconfig-paths@6.1.1
+  └── tsconfck@3.1.6
+```
+
+* `vite-tsconfig-paths` is a Vite plugin I use to enable Vite to resolve paths in the same way that TypeScript does.
+* The maintainer [doesn't seem interested](https://github.com/aleclarson/vite-tsconfig-paths/pull/220) in removing the deprecated dependency.
+* Apparently Vite 8 has native support for this feature, so looks like my best bet is to try moving to Vite 8 first.
+
+# Vite  8
+
+* Vite 7 and earlier are built around the `rollup` bundler, with the `esbuild` and `swc` bundlers used for more limited use cases where speed is vital. In Vite 8 both are replaced by `rolldown`, a Rust based rewrite of `rollup`.
+* Rolldown is much faster (removing the need for `esbuild` and `swc`).
+* This is a big change, particularly as I rely on several `rollup` plugins. However, `rolldown` is meant to be API compatible with `rollup`, so my plugins should still work.
+
+```
+% pnpm update vite@8             
+✓ Lockfile passes supply-chain policies (verified 20h ago)
+[WARN] 2 deprecated subdependencies found: @types/parse-path@7.1.0, tsconfck@3.1.6
+Progress: resolved 831, reused 0, downloaded 0, added 0, done
+Packages: +20 -11
+Downloading @rolldown/binding-darwin-arm64@1.2.3: 7.23 MB/7.23 MB, done
+Done in 4.1s using pnpm v11.21.0
+```
+
+* Full prod build including unit and playwright tests completes successfully
+* My package build uses `rollup` directly so I need to switch that over manually
+* Vite produces runtime warnings with pointers to work I still need to do
+
+```
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vite.config.ts:17:23). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+│
+▲  Vite The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig
+│  paths resolution natively via the resolve.tsconfigPaths option. You can remove
+│  the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
+│
+▲  Vite [vite:react-swc] We recommend switching to `@vitejs/plugin-react` for
+│  improved performance as no swc plugins are used. More information at
+│  https://vite.dev/rolldown
+```
+
+* I replaced `__dirname` with `import.meta.dirname` in all my vite config files as requested.
+* Removed use of `vite-tsconfig-paths` plugin in all my Vite and Vitest config files. Replaced with `resolve.tsconfigPaths` option. 
+
+```ts
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true
+  }
+})
+```
+
+* Removed `vite-tsconfig-paths` from package.json and with it the deprecated dependency that was blocking update to TypeScript 6.
+
+```
+% pnpm remove -r vite-tsconfig-paths
+Scope: all 9 workspace projects
+✓ Lockfile passes supply-chain policies (verified 4h ago)
+[WARN] 1 deprecated subdependencies found: @types/parse-path@7.1.0
+.                                        |  -13 -
+Progress: resolved 828, reused 707, downloaded 0, added 0, done
+Done in 2.8s using pnpm v11.21.0
+```
+
+* Fixed another native config loader warning. I was importing shared `vitest.config.ts` config without specifying the `.ts` file extension. 
+* Adding `.ts` leads to a TypeScript error. This time I held my nose and did what TypeScript wants, importing as `vitest.config.js`.
+* Replaced `plugin-react-swc` with standard `plugin-react`. Standard plugin now as fast as swc.
+
+```
+% pnpm remove -r @vitejs/plugin-react-swc
+Scope: all 9 workspace projects
+✓ Lockfile passes supply-chain policies (verified 26m ago)
+[WARN] 1 deprecated subdependencies found: @types/parse-path@7.1.0
+.                                        |   -5 -
+Progress: resolved 812, reused 702, downloaded 0, added 0, done
+Done in 4.3s using pnpm v11.21.0
+
+% pnpm add -D @vitejs/plugin-react
+[ERR_PNPM_ADDING_TO_ROOT] Running this command will add the dependency to the workspace root, which might not be what you want - if you really meant it, make it explicit by running this command again with the -w flag (or --workspace-root). If you don't want to see this warning anymore, you may set the ignore-workspace-root-check setting to true.
+
+% pnpm add -D -w @vitejs/plugin-react
+✓ Lockfile passes supply-chain policies (verified 2m ago)
+[WARN] 1 deprecated subdependencies found: @types/parse-path@7.1.0
+Progress: resolved 813, reused 0, downloaded 0, added 0, done
+
+devDependencies:
++ @vitejs/plugin-react ^6.0.5
+
+Packages: +1
++
+Done in 4.8s using pnpm v11.21.0
+```
