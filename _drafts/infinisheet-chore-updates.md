@@ -1,24 +1,19 @@
 ---
 title: >
-  Chore Updates: Vite 8, TypeScript 6, Storybook 10
+  Updates: Vite 8, TypeScript 6, Storybook 10, pnpm 11
 tags: infinisheet
 thumbnail: /assets/images/frontend/npm-package.png
 ---
 
-wise words
+My [frozen shoulder]({% link _posts/2026-07-17-frozen-shoulder.md %}) problem means I haven't had a chance to keep dependencies up to date on my [InfiniSheet]({% link _topics/infinisheet.md %}) project. I tried to keep applying dependabot automated updates but hit a problem with some builds in my test matrix failing.
 
-* Given frozen shoulder haven't had a chance to keep dependencies up to date
-* Tried to keep applying dependabot automated updates but hit a problem with some builds in my test matrix failing
-* First problem was `api-extractor` complaining of API changes for my packages when built against React 19
-* Didn't have the time or energy to figure it out, so removed from test matrix
-* Then found that my Node 24 builds were hanging during Playwright install
-* Again removed from test matrix
-* Single remaining test matrix build seemed to work but dependabot had seemingly given up in disgust and stopped trying to apply updates
-* Also have about 30 outstanding security issues due to out of date dependencies, together with many dependabot failures to update transitive dependencies
-* So left it until my shoulder improved enough to have a proper go. May take some time.
-* Also get the fun of doing first significant round of updates since switching to `pnpm`
+The first problem was `api-extractor` complaining of API changes for my packages when built against React 19. I didn't have the time or energy to figure it out, so removed React 19 from the build matrix. Then I found out that my Node 24 builds were hanging during Playwright install. So I removed that build too. 
 
-Let's see what we've got outstanding
+The single remaining build continued to work but dependabot had seemingly given up in disgust and stopped trying to apply updates. I also have about 30 outstanding security issues due to out of date dependencies, together with many dependabot failures to update transitive dependencies.
+
+I left it until my shoulder improved enough to have a proper go. It may take some time. I also get the fun of doing the first significant round of updates since [switching]({% link _posts/2026-02-23-securing-npm-supply-chain.md %}) to `pnpm`.
+
+Let's see what we've got outstanding.
 
 ```
 % pnpm outdated
@@ -91,9 +86,7 @@ Let's see what we've got outstanding
 
 # Minor Updates
 
-* As usual, addressed minor updates first
-* Was nervous about doing everything in one go given issues I'd been having and number of packages to update
-* Decided to have a go anyway. If it doesn't work can roll back and try individually.
+As usual, I addressed minor updates first. I was nervous about doing everything in one go given the issues I'd been having and the number of packages to update. I decided to have a go anyway. If it doesn't work we can roll back and try updating packages individually.
 
 ```
 % pnpm update 
@@ -106,9 +99,7 @@ node_modules/.pnpm/esbuild@0.28.1/node_modules/esbuild: Running postinstall scri
 Done in 12.6s using pnpm v10.28.2
 ```
 
-* Lots of packages changed but seemed to go smoothly
-* Hopefully the deprecated subdependencies warning will go once everything is updated
-* Built went as normal up to the point where `api-extractror` validates that the API hasn't changed 
+Lots of packages have changed but the update seemed to go smoothly. Hopefully the deprecated subdependencies warning will go once everything else is updated. The build proceeds as normal up to the point where `api-extractror` validates that the API hasn't changed.
 
 ```
 packages/react-virtual-scroll prodapi$ api-extractor run
@@ -121,12 +112,9 @@ packages/react-virtual-scroll prodapi$ api-extractor run
 └─ Failed in 1s at /Users/tim/GitHub/infinisheet/packages/react-virtual-scroll
 ```
 
-* Same error that I'd seen in my React 19 builds, but this time against React 18
-* Best case scenario is that something has changed in the React 19 API that my packages depend on, that was later backported to React 18
-* The change in the signature is that `JSX.Element` is now imported from `react` rather than `react/jsx-runtime`. This now matches the import in my source code. Assume this is some cleanup in a recent version of API extractor
-* I updated my saved API signature to match the changes
+This is the same error I saw in my React 19 builds, but this time against React 18. The change in the signature is that `JSX.Element` is now imported from `react` rather than `react/jsx-runtime`. This now matches the import in my source code. I assume this is some cleanup in a recent version of API extractor.
 
-* Only other thing to do was to install playwright binaries
+I updated my saved API signature to match the changes. The only other thing I needed to do was install playwright binaries.
 
 ```
 % pnpm exec playwright install
@@ -136,19 +124,17 @@ Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)
 ...
 ```
 
-* After that local build completed without problems. Unit and Playwright tests all pass.
+After that the build completes without problems. Unit and Playwright tests all pass.
 
 # Entering the Matrix
 
-* Pushed changes and confirmed that GitHub actions build completes OK
-* Hopefully `api-extractor` and Playwright updates will have fixed the other builds in the test matrix
-* Restored React 19 and Node 24 builds
-* To my surprise everything completed successfully
-* All outstanding security issues gone too
+I pushed the changes and confirmed that the single remaining GitHub actions build completes OK. Hopefully `api-extractor` and Playwright updates will have fixed the other builds in the matrix.
+
+I restored React 19 and Node 24 builds. To my surprise everything completed successfully. All the outstanding security issues have gone too.
 
 # Picking Battles
 
-* Just the major updates to do now
+That leaves the major updates outstanding.
 
 ```
 % pnpm outdated
@@ -191,14 +177,13 @@ Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)
 └─────────────────────────────────┴─────────┴─────────┘
 ```
 
-* Want to apply these in order from simplest to most complex
-* TypeScript and Vite are major architectural changes, so will leave those to last
-* Don't need to do the 4 React 18 to 19 packages at all. I develop against React 18, then upgrade to React 19 in my test matrix.
-* Naturally I test local build for each update before pushing and checking that GitHub actions builds succeed
+I want to apply these in order from simplest to most complex. TypeScript and Vite are major architectural changes, so will leave those to last.
+
+I don't need to do the four React 18 to 19 packages at all. I develop against React 18, then upgrade to React 19 in my build matrix.
 
 # Lerna-Lite 5
 
-* Major version update because Node 22 is now minimum dependency. Matches what I already do.
+This is a major version update because Node 22 is now a minimum dependency. Which matches what I already do.
 
 ```
 % pnpm update --latest @lerna-lite/cli @lerna-lite/version
@@ -208,11 +193,11 @@ Packages: +83 -179
 Done in 4.3s using pnpm v10.28.2
 ```
 
-* Looks like lerna-lite has lost some weight, which is great
+Looks like `lerna-lite` has lost some weight, which is great.
 
 # jsdom 30
 
-* Major version bump all due to Node 22 being the minimum dependency
+Another major version bump due to Node 22 being the minimum dependency.
 
 ```
 % pnpm update --latest jsdom              
@@ -226,7 +211,7 @@ Expected version: ^22.22.2 || ^24.15.0 || >=26.0.0
 Got: v22.22.0
 ```
 
-* A friendly reminder that I should also update my development version of NodeJS 22 to latest LTS
+A friendly reminder that I should also update my development version of NodeJS 22 to the latest LTS build.
 
 ```
 % asdf install nodejs 22.23.2
@@ -248,7 +233,7 @@ nodejs          22.22.0         /Users/tim/GitHub/infinisheet/.tool-versions
 pnpm            10.28.2         /Users/tim/GitHub/infinisheet/.tool-versions
 ```
 
-* I'd forgotten that I track the current version in a checked-in file. After updating the file.
+I'd forgotten that I now track the current version in `.tool-versions`. 
 
 ```
 % asdf current
@@ -256,7 +241,7 @@ nodejs          22.23.2         /Users/tim/GitHub/infinisheet/.tool-versions
 pnpm            10.28.2         /Users/tim/GitHub/infinisheet/.tool-versions
 ```
 
-* Trying jsdom once more
+After updating that I successfully updated jsdom.
 
 ```
 % pnpm update --latest jsdom
@@ -266,11 +251,11 @@ Packages: +72 -118
 Done in 1.7s using pnpm v10.28.2
 ```
 
-* There's a new major version of pnpm too. I'll tackle that after some more of the low hanging fruit.
+There's a new major version of pnpm too. I'll tackle that after some more of the low hanging fruit.
 
 # Testing Library 7
 
-* `@testing-library/jest-dom` has a new major version because `@testing-library/dom` is now a peer dependency. I already have it as a direct dev dependency so nothing else needed.
+`@testing-library/jest-dom` has a new major version because `@testing-library/dom` is now a peer dependency. I already have it as a direct dev dependency so nothing else needed.
 
 ```
 % pnpm update --latest @testing-library/jest-dom
@@ -282,7 +267,7 @@ Done in 1.6s using pnpm v10.28.2
 
 # pnpm 11
 
-* This time I remembered to update `.tool-versions` after installing latest pnpm
+This time I remembered to update `.tool-versions` after installing the latest pnpm.
 
 ```
 % asdf install pnpm 11.21.0                     
@@ -295,7 +280,7 @@ pnpm            11.21.0         /Users/tim/GitHub/infinisheet/.tool-versions
 11.21.0
 ```
 
-* There are lots of minor changes to config with a codemod to apply them
+There are lots of minor changes to the config format with a codemod to apply them.
 
 ```
 % pnpx codemod run pnpm-v10-to-v11
@@ -323,7 +308,7 @@ Run summary
   Unmodified   0
 ```
 
-* The run summary suggests nothing has changed but git shows that my old `.npmrc` file has been deleted with the `engine-strict` flag moved into `pnpm-workspace.yaml`, together with some existing options being restructured.
+The run summary suggests nothing has changed but git shows that my old `.npmrc` file has been deleted with the `engine-strict` flag moved into `pnpm-workspace.yaml`, together with some existing options being restructured.
 
 ```yaml
 engineStrict: true
@@ -332,7 +317,7 @@ allowBuilds:
   esbuild: true
 ```
 
-* Migration script ends by suggesting you run install
+The migration script ends by suggesting you run `pnpm install`.
 
 ```
 % pnpm install
@@ -352,16 +337,15 @@ node_modules/.pnpm/esbuild@0.28.1/node_modules/esbuild: Running postinstall scri
 Done in 20.8s using pnpm v11.21.0
 ```
 
-* Seems like enough has changed internally to require all packages to be reinstalled
-* No change to lock file
-* Running install again tells me everything is up to date
-* I had to bump the version of pnpm installed in my GitHub actions workflows manually
-* pnpm 11 supports a new `setup` action which installs NodeJS and pnpm in a single action. It's pretty new, so I'll stick with the current process for now. Also feel more comfortable letting the official GitHub action handle NodeJS install.
+It looks like enough has changed internally to require all packages to be reinstalled. There's no change to the lock file. Running install again tells me everything is up to date.
+
+I had to bump the version of pnpm in my GitHub actions workflows manually. Pnpm 11 supports a new `setup` action which installs NodeJS and pnpm in a single action. It's pretty new, so I'll stick with the current process for now. I also feel more comfortable letting the official GitHub action handle NodeJS install.
 
 # Storybook 10
 
-* Main change is moving to a pure ESM distribution. That means dropping support for earlier versions of Node and requiring all config files to be valid ESM. My project has been pure ESM from the start, so should be fine.
-* There's a [migration script](https://storybook.js.org/docs/releases/migration-guide#automatic-upgrade) which will do anything needed for you let's give it a whirl. 
+The main change is moving to a pure ESM distribution. That means dropping support for earlier versions of Node and requiring all config files to be valid ESM. My project has been pure ESM from the start, so should be fine.
+
+There's a [migration script](https://storybook.js.org/docs/releases/migration-guide#automatic-upgrade) which will do anything needed for you. Let's give it a whirl. 
 
 ```
 % pnpm dlx storybook@10.5.6 upgrade
@@ -443,9 +427,11 @@ Do you approve? Yes
 └  Storybook upgrade completed!
 ```
 
-*  Don't know what the package build question was about. The only option was `esbuild` and you couldn't progress without selecting it. Presumably building the migration script?
-* We seem to have got rid of our original 3 deprecated dependencies and replaced them with two new ones
-* Turns out my config file isn't pure ESM. I added some boilerplate copied from the Storybook manual to handle module resolution in a monorepo. The boilerplate made use of require. The migration fixed it up.
+I don't know what the package build question was about. The only option was `esbuild` and you couldn't progress without selecting it. Looks like Storybook uses a more recent version of `esbuild` and has forced a rebuild of the package?
+
+On the positive side, we've got rid of one of our deprecated dependencies. Two left to go.
+
+It turns out my config file isn't pure ESM. I added some boilerplate copied from the Storybook manual to handle module resolution in a monorepo. The boilerplate made use of `require`. The migration fixed it up.
 
 ```ts
 // This file has been automatically migrated to valid ESM format by Storybook.
@@ -459,7 +445,7 @@ function getAbsolutePath(value: string): any {
 }
 ```
 
-* That works but seems kind of ugly. The example boilerplate in the manual has been updated for ESM so I switched to that.
+That works but seems kind of ugly. The example boilerplate in the manual has been updated for ESM so I switched to that.
 
 ```ts
 import { dirname } from 'node:path';
@@ -471,7 +457,7 @@ const getAbsolutePath = (packageName: string) =>
 
 # ESLint 10
 
-* Another dependency dropping support for old versions of Node. Also drops support for the old config file format (which we migrated away from a while back).
+This is another dependency dropping support for old versions of Node. It also drops support for the old config file format (which we migrated away from a while back).
 
 ```
 % pnpm update --latest eslint @eslint/js        
@@ -494,17 +480,20 @@ Issues with peer dependencies found
       eslint-plugin-react@7.37.5
 ```
 
-* Looks like `eslint-plugin-react` doesn't support ESLint 10 yet. There's an [open PR](https://github.com/jsx-eslint/eslint-plugin-react/pull/4022) that is being actively worked on. Will have to leave this one for now.
+Looks like `eslint-plugin-react` doesn't support ESLint 10 yet. There's an [open PR](https://github.com/jsx-eslint/eslint-plugin-react/pull/4022) that is being actively worked on. Will have to leave this one for now.
 
 # TypeScript 6 - 7
 
-* TypeScript 7 includes a complete rewrite of the TypeScript compiler in Go. The aim is to be as backwards compatible as possible. However, they are taking the opportunity to jettison a lot of legacy features.
-* Recommended approach is to migrate via TypeScript 6. TypeScript 6 uses the existing JavaScript codebase while supporting the same reduced feature set as TypeScript 7.
-* Why is that any better if you have to fix errors due to removed features anyway? There's a [big difference](https://codingdunia.com/blog/typescript-7-migration-guide/#what-breaks-when-you-upgrade) in developer experience between a feature that the compiler understands and provides a targeted deprecation warning for, and a feature that just looks like a synxtax error.
-* TypeScript 7 was only released a month ago, current release is 7.0.2. I'd like to give it some more bake time. Does make sense to move to TypeScript 6 now.
+TypeScript 7 is a complete rewrite of the TypeScript compiler in Go. The aim is to be as backwards compatible as possible. However, they are taking the opportunity to jettison a lot of legacy features.
+
+The recommended approach is to migrate via TypeScript 6. TypeScript 6 uses the existing JavaScript codebase while supporting the same reduced feature set as TypeScript 7.
+
+Why is that any better if you have to fix errors due to removed features anyway? There's a [big difference](https://codingdunia.com/blog/typescript-7-migration-guide/#what-breaks-when-you-upgrade) in developer experience between a feature that the compiler understands and provides a targeted deprecation warning for, and a feature that just looks like a synxtax error.
+
+TypeScript 7 was only released a month ago. The current release is 7.0.2. I'd like to give it some more bake time. However, it does make sense to move to TypeScript 6 now.
 
 ```
-% pnpm update typescript@6              
+% pnpm update typescript@^6              
 ✓ Lockfile passes supply-chain policies (verified 19h ago)
 [WARN] 2 deprecated subdependencies found: @types/parse-path@7.1.0, tsconfck@3.1.6
 Progress: resolved 803, reused 0, downloaded 0, added 0, done
@@ -521,9 +510,7 @@ Issues with peer dependencies found
       tsconfck@3.1.6
 ```
 
-* That's one of the deprecated dependencies.
-* `tsconfck` is deprecated because it is no longer maintained. It doesn't support anything later than TypeScript 5.
-* Time to figure out where that deprecated dependency is coming from.
+That's one of the deprecated dependencies. `tsconfck` is deprecated because it is no longer maintained. It doesn't support anything later than TypeScript 5. Time to figure out where that deprecated dependency is coming from.
 
 ```
 % pnpm ls --depth Infinity tsconfck
@@ -536,15 +523,15 @@ root /Users/tim/GitHub/infinisheet (PRIVATE)
   └── tsconfck@3.1.6
 ```
 
-* `vite-tsconfig-paths` is a Vite plugin I use to enable Vite to resolve paths in the same way that TypeScript does.
-* The maintainer [doesn't seem interested](https://github.com/aleclarson/vite-tsconfig-paths/pull/220) in removing the deprecated dependency.
-* Apparently Vite 8 has native support for this feature, so looks like my best bet is to try moving to Vite 8 first.
+`vite-tsconfig-paths` is a Vite plugin that I use to enable Vite to resolve paths in the same way that TypeScript does. The maintainer [doesn't seem interested](https://github.com/aleclarson/vite-tsconfig-paths/pull/220) in removing the deprecated dependency.
+
+Apparently, Vite 8 has native support for this feature, so looks like my best bet is to try moving to Vite 8 first.
 
 # Vite  8
 
-* Vite 7 and earlier are built around the `rollup` bundler, with the `esbuild` and `swc` bundlers used for more limited use cases where speed is vital. In Vite 8 both are replaced by `rolldown`, a Rust based rewrite of `rollup`.
-* Rolldown is much faster (removing the need for `esbuild` and `swc`).
-* This is a big change, particularly as I rely on several `rollup` plugins. However, `rolldown` is meant to be API compatible with `rollup`, so my plugins should still work.
+Vite 7 and earlier are built around the `rollup` bundler, with the `esbuild` and `swc` bundlers used for more limited use cases where speed is vital. In Vite 8, all three are replaced by `rolldown`, a Rust based rewrite of `rollup`.
+
+Rolldown is much faster (removing the need for `esbuild` and `swc`). This is a big change, particularly as I rely on several `rollup` plugins. However, `rolldown` is meant to be API compatible with `rollup`, so my plugins should still work.
 
 ```
 % pnpm update vite@8             
@@ -556,9 +543,7 @@ Downloading @rolldown/binding-darwin-arm64@1.2.3: 7.23 MB/7.23 MB, done
 Done in 4.1s using pnpm v11.21.0
 ```
 
-* Full prod build including unit and playwright tests completes successfully
-* My package build uses `rollup` directly so I need to switch that over manually
-* Vite produces runtime warnings with pointers to work I still need to do
+A full production build including unit and playwright tests completes first time. My package builds use `rollup` directly so I need to switch that over manually. In addition, there are some runtime warnings with pointers to work I still need to do.
 
 ```
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
@@ -574,8 +559,7 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 │  https://vite.dev/rolldown
 ```
 
-* I replaced `__dirname` with `import.meta.dirname` in all my vite config files as requested.
-* Removed use of `vite-tsconfig-paths` plugin in all my Vite and Vitest config files. Replaced with `resolve.tsconfigPaths` option. 
+I replaced `__dirname` with `import.meta.dirname` in all my vite config files as requested. I removed use of `vite-tsconfig-paths` plugin in all my Vite and Vitest config files and replaced it with the `resolve.tsconfigPaths` option. 
 
 ```ts
 export default defineConfig({
@@ -585,7 +569,7 @@ export default defineConfig({
 })
 ```
 
-* Removed `vite-tsconfig-paths` from package.json and with it the deprecated dependency that was blocking update to TypeScript 6.
+I removed `vite-tsconfig-paths` from package.json and with it the deprecated dependency that was blocking update to TypeScript 6.
 
 ```
 % pnpm remove -r vite-tsconfig-paths
@@ -597,12 +581,12 @@ Progress: resolved 828, reused 707, downloaded 0, added 0, done
 Done in 2.8s using pnpm v11.21.0
 ```
 
-* Fixed another native config loader warning. I was importing shared `vitest.config.ts` config without specifying the `.ts` file extension. 
-* Adding `.ts` leads to a TypeScript error. This time I held my nose and did what TypeScript wants, importing as `vitest.config.js`.
+I also fixed another native config loader warning. I was importing my shared `vitest.config.ts` config without specifying the `.ts` file extension. 
+Adding `.ts` leads to a TypeScript error, which is why I left it off in the first place. This time I held my nose and did what TypeScript wants, importing as `vitest.config.js` (even though it seems ridiculous to import a file with the extension it *would have* if I had run it through the TypeScript compiler).
 
 # Vite plugin-react 6
 
-* Replaced `plugin-react-swc` with standard `plugin-react`. Standard plugin now as fast as swc.
+Finally, I replaced `plugin-react-swc` with the standard `plugin-react`.  The standard plugin has also been re-implemented in Rust, so should now be as fast as SWC.
 
 ```
 % pnpm remove -r @vitejs/plugin-react-swc
@@ -612,9 +596,6 @@ Scope: all 9 workspace projects
 .                                        |   -5 -
 Progress: resolved 812, reused 702, downloaded 0, added 0, done
 Done in 4.3s using pnpm v11.21.0
-
-% pnpm add -D @vitejs/plugin-react
-[ERR_PNPM_ADDING_TO_ROOT] Running this command will add the dependency to the workspace root, which might not be what you want - if you really meant it, make it explicit by running this command again with the -w flag (or --workspace-root). If you don't want to see this warning anymore, you may set the ignore-workspace-root-check setting to true.
 
 % pnpm add -D -w @vitejs/plugin-react
 ✓ Lockfile passes supply-chain policies (verified 2m ago)
@@ -631,11 +612,9 @@ Done in 4.8s using pnpm v11.21.0
 
 # Rollup to Rolldown
 
-* Package builds use Rollup directly as requirements too complex to do through Vite
-* Need to transform and bundle TypeScript source as JavaScript, as well as generating and bundling `.d.ts` type files
-* Rollup has no direct support for type files
-* Need to use a plugin to bundle type files which takes as input the per source file type files generated by the TypeScript compiler
-* Managed to implement with a two pass approach
+Package builds use Rollup directly as my requirements were too complex for Vite. I need to transform and bundle TypeScript source as JavaScript, as well as generating and bundling `.d.ts` type files.
+
+Vite (and Rollup) have no direct support for type files. I use a plugin to bundle type files which takes as input the per source file type files generated by the TypeScript compiler. I use a two pass approach.
 
 ```js
 import typescript from "@rollup/plugin-typescript";
@@ -675,18 +654,21 @@ export default [
 ];
 ```
 
-* The first pass transforms and bundles the TypeScript source code and also uses the TypeScript plugin to generate `.d.ts` files
-* The second pass reads the generated `.d.ts` files, uses the dts plugin to bundle them and then deletes the intermediate generated `.d.ts` files
-* Rolldown is meant to be a drop in replacement, supporting existing rollup plugins, so you might think that this config will just work with rolldown.
-* The problem is that we rely on the passes being executed in series. Rolldown makes aggressive use of concurrency and runs both passes in parallel. There's no way to turn it off. The manual suggests writing your own build script using the Rolldown API if you want more control.
-* As a starting point I can run each pass separately with a separate Rolldown command. 
-* To use Rolldown directly, I first need to add it as a direct dev dependency.
-* The first pass works as expected. No faster than Rollup, presumably because most of the time is spent in the TypeScript plugin. 
-* The second pass doesn't work at all, dying deep inside Rolldown. After chopping down the config file I came to the conclusion that it isn't compatible with `rollup-plugin-dts`.
+The first pass transforms and bundles the TypeScript source code and also uses the TypeScript plugin to generate `.d.ts` files. The second pass reads the generated `.d.ts` files, uses the dts plugin to bundle them and then deletes the intermediate generated `.d.ts` files.
+
+Rolldown is meant to be a drop in replacement, supporting existing rollup plugins, so you might think that this config will just work with rolldown. The problem is that we rely on the passes being executed in series. Rolldown makes aggressive use of concurrency and runs both passes in parallel.
+
+There's no way to turn concurrent execution off. The manual suggests writing your own build script using the Rolldown API if you want more control. As a starting point, I can run each pass separately with separate Rolldown commands. 
+
+To use Rolldown directly, I needed to add it as a direct dev dependency. 
+
+The first pass works as expected. No faster than Rollup, presumably because most of the time is spent in the TypeScript plugin.
+
+The second pass doesn't work at all, dying deep inside Rolldown. After chopping down the config file I came to the conclusion that it isn't compatible with `rollup-plugin-dts`.
 
 # Rolldown DTS Plugin
 
-* Turns out there's a [replacement](https://github.com/sxzz/rolldown-plugin-dts) `rolldown-plugin-dts`. 
+It turns out there's a [replacement](https://github.com/sxzz/rolldown-plugin-dts) `rolldown-plugin-dts`. 
 
 ```
 % pnpm add -D -w rolldown-plugin-dts
@@ -701,7 +683,7 @@ Packages: +10
 Done in 6.7s using pnpm v11.21.0
 ```
 
-* Even better, it handles generation of the intermediate `.d.ts` files for you. It looks like we should be able to build everything using a single pass.
+Even better, it handles generation of the intermediate `.d.ts` files for you. It looks like we should be able to build everything using a single pass.
 
 ```js
 import { defineConfig } from 'rolldown'
@@ -724,21 +706,21 @@ export default defineConfig({
 })
 ```
 
-* It works, or seems like it does. Generates expected `index.js`, `index.js.map` and `index.d.ts`. There's even an option to generate an `index.d.ts.map` which I was never able to do before.
-* Unfortunately, the `index.d.ts` is buggy. The package I tested on imports a type from another package and re-exports it. The export is missing from the Rolldown build. Looking at [open issues](https://github.com/sxzz/rolldown-plugin-dts/issues) for `rolldown-plugin-dts`, there are lots of problems related to exports.
-* Looks like the Rolldown tooling isn't mature enough yet for my purposes. 
-* I kept the option to perform a Rolldown build so that I can easily try again in future, and left the existing Rollup build in place for now.
+It works, or at least looks like it does.  It generates the expected `index.js`, `index.js.map` and `index.d.ts`. There's even an option to generate an `index.d.ts.map` which I was never able to do before.
+
+Unfortunately, the `index.d.ts` is buggy. The package I tested it with imports a type from another package and re-exports it. The export is missing from the Rolldown build. Looking at [open issues](https://github.com/sxzz/rolldown-plugin-dts/issues) for `rolldown-plugin-dts`, there are lots of problems related to exports.
+
+I guess the Rolldown tooling isn't mature enough yet for my purposes. I kept the option to perform a Rolldown build so that I can easily try again in future, and left the existing Rollup build in place for now.
 
 # TypeScript 6
 
-* This time the `pnpm upgrade` works without any dependency issues
-* I use `tsc` to typecheck all my source files and immediately hit my first TypeScript 6 error
+*This time the `pnpm upgrade` works without any dependency issues. I use `tsc` to typecheck all my source files and immediately hit my first TypeScript 6 error.
 
 ```
 │ error TS5101: Option 'baseUrl' is deprecated and will stop functioning in TypeScript 7.0.
 ```
 
-* This is an option in my root tsconfig file
+This is an option in my root tsconfig file
 
 ```json
 {
@@ -751,7 +733,7 @@ export default defineConfig({
 }
 ```
 
-* When I initially set this up, `baseUrl` was a required argument if you wanted to use the `paths` option. Now, they tell me to remove it and add the `baseUrl` prefix to each path.
+When I initially set this up, `baseUrl` was a required option if you wanted to use the `paths` option. Now, they tell me to remove it and add the `baseUrl` prefix to each path.
 
 ```json
 {
@@ -763,21 +745,21 @@ export default defineConfig({
 }
 ```
 
-* Onto the next error
+On to the next error.
 
 ```
 │ src/App.tsx(2,8): error TS2882: Cannot find module or type declarations for side-effect import of '@candidstartup/react-spreadsheet/VirtualSpreadsheet.css'.
 │ src/App.tsx(3,8): error TS2882: Cannot find module or type declarations for side-effect import of './App.css'.
 ```
 
-* This is caused by the following statements in one of my React sample apps
+This is caused by the following statements in one of my React sample apps.
 
 ```ts
 import '@candidstartup/react-spreadsheet/VirtualSpreadsheet.css';
 import './App.css';
 ```
 
-* Obviously, these imports aren't TypeScript source code. They're a signal to the bundler to include these CSS files when the application is built. In previous versions of TypeScript these "side-effect imports" were ignored by the compiler. Now you need to tell the compiler to ignore them. The recommended approach is to add a generic module declaration to a `.d.ts` file that is pulled into each compile. Luckily, I already have one of those for CSS modules which is easy to extend.
+Obviously, these imports aren't TypeScript source code. They're a signal to the bundler to include these CSS files when the application is built. In previous versions of TypeScript these "side-effect imports" were ignored by the compiler. Now you need to tell the compiler to ignore them. The recommended approach is to add a generic module declaration to a `.d.ts` file that is pulled into each compile. Luckily, I already have one of those for CSS modules which is easy to extend.
 
 ```ts
 declare module '*.module.css' {
@@ -789,7 +771,7 @@ declare module '*.module.css' {
 declare module "*.css" {}
 ```
 
-* With that change all files pass type checking. I run into another problem when I try to build a package.
+With that change all files pass type checking. I run into another problem when I try to build a package.
 
 ```
 % pnpm run build              
@@ -801,8 +783,9 @@ of 'tsconfig.build.json' is './src'. The 'rootDir' setting must be explicitly se
 this or another path to adjust your output's file layout.
 ```
 
-* The `rootDir` option was used to be optional. It specifies the root directory that includes all the source code that the compiler will see. The compiler would previously evaluate all the include patterns that you specified for input and work out the most specific directory that included all the source files it found. Apparently, this takes a significant amount of time on large projects, so now you have to specify it explicitly.
-* It's easy enough for my root `tsconfig.json`, used for general purpose tooling like VS Code. The root dir is just the root dir for my entire monorepo.
+The `rootDir` option used to be optional. It specifies the root directory that includes all the source code that the compiler will see. The compiler would previously evaluate all the include patterns that you specified for input and work out the most specific directory that included all the source files it found. Apparently, this takes a significant amount of time on large projects, so now you have to specify it explicitly.
+
+It's easy enough for my root `tsconfig.json`, used for general purpose tooling like VS Code. The root dir is just the root dir for my entire monorepo.
 
 ```json
 {
@@ -815,7 +798,7 @@ this or another path to adjust your output's file layout.
 }
 ```
 
-* When building packages, `rootDir` has another purpose. The output generated into your `dist` directory matches the input directory structure relative to `rootDir`. If you want sensible output, you need to set `rootDir` to your `src` directory. Relative paths are evaluated relative to the tsconfig where they're declared, which means updating the stub `tsconfig.build.json` files for each of my packages.
+When building packages, `rootDir` has another purpose. The output generated into your `dist` directory matches the input directory structure relative to `rootDir`. If you want sensible output, you need to set `rootDir` to your `src` directory. Relative paths are evaluated relative to the tsconfig where they're declared, which means updating the stub `tsconfig.build.json` files for each of my packages.
 
 ```json
 {
@@ -833,9 +816,9 @@ this or another path to adjust your output's file layout.
 
 # Dependabot
 
-The repo is in a much healthier state but I'm still not getting minor update PRs from dependabot. Apparently, dependabot pauses automated checks if there are too many error or too many ignored PRs. I went to "Insights -> Dependency Graph -> Dependabot" and used the manual "Check for Updates" button. 
+The repo is in a much healthier state but I'm still not getting minor update PRs from dependabot. Apparently, dependabot pauses automated checks if there are too many errors or too many ignored PRs. I went to "Insights -> Dependency Graph -> Dependabot" and used the manual "Check for Updates" button. 
 
-That generated a PR with the 11 minor updates since I started this process. Build matrix completed successfully. Just need to commit the PR. That should unpause the weekly automated checks too.
+That generated a PR with the 11 minor updates released since I started this process. The build matrix completed successfully. I just need to commit the PR. That should unpause the weekly automated checks too.
 
 # Conclusion
 
