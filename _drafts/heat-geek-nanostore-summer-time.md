@@ -9,6 +9,8 @@ wise words
 * Remove heating prediction entirely from energy consumption estimate if heating is turned off
 * Home battery management to discharge during the night while above target
 
+{% include candid-image.html src="/assets/images/home-assistant/target-soc-from-forecasts.png" alt="Automation setting target battery SOC from forecasts" %}
+
 # Cost (£)
 
 * Data from Octopus (dashboard + bills)
