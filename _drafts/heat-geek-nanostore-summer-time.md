@@ -1,10 +1,37 @@
 ---
 title: >
-  Heat Geek NanoStore: Summer Time and the Living is Easy
+  Heat Geek NanoStore: Summer Time
 tags: gear home-assistant
 ---
 
 wise words
+
+# DHW
+
+* May 16 after temperature sensor sorted
+* Still using HA automation to stop run when return temperature of 65C hit
+* Added 1.772kWh heat, using 1.019kWh electric for COP of 1.74
+* Heating on, hot water in pipes at end of run dumped into heating circuit
+* Big spike at end means detail during DWH run is squashed down on graph
+* Cold night, 5C outside during 40 minute DHW run
+
+{% include candid-image.html src="/assets/images/home-assistant/dhw-may-16.png" alt="DHW run May 16" %}
+
+* September 2, 14C outside during 40 minute DHW run
+* Added 2.285kWh of heat, using 0.982kWh electric for COP of 2.33
+* Significant improvement in efficiency when warmer outside
+* Heating is off, so no pump running when DHW ends. Hot water sits in the pipes and heat slowly dissipates via convection/conduction along pipes
+* Towel rail in top floor bathroom gets noticeably warmer, none of the other radiators do
+
+{% include candid-image.html src="/assets/images/home-assistant/dhw-sep-2.png" alt="DHW run September 2" %}
+
+# Shower
+
+* July 21, 20C outside, long shower
+
+{% include candid-image.html src="/assets/images/home-assistant/shower-july-21.png" alt="Shower July 21" %}
+
+# Home Assistant
 
 * Remove heating prediction entirely from energy consumption estimate if heating is turned off
 * Home battery management to discharge during the night while above target
