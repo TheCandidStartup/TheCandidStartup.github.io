@@ -6,10 +6,21 @@ tags: gear home-assistant
 
 wise words
 
+# Temperature Sensor
+
+* [Last time]({% link _posts/2026-04-07-heat-geek-nano-store-dhw-update.md %}) left you with a cliff hanger. Had found that the tank temperature sensor was providing erratic values.
+* Was replaced May 15th. I also got them to move the sensor up near the middle of the tank. Previous position at the bottom near cold water inlet was meant to respond quickly when hot water drawn off to start the heat pump. Never responded quickly enough for the heat pump to ramp up in time before the stored hot water ran out. At the same time, had the downside in winter that it would report values lower than 10°C triggering the heat pump to run a frost protection cycle, while the top of the store still had plenty of hot water!
+* We boost the hot water before a shower, so makes more sense to put the sensor where it will more accurately report remaining hot water temperature.
+
+{% include candid-image.html src="/assets/images/home-assistant/dhw-temp-sep-3.png" alt="DHW run flow and tank temperatures, September 2nd" %}
+
+* Sensible looking tank temperature curve (in orange, Vaillant cloud only updates values every 5 minutes). Once DHW run ends (flow temperature shown in blue), temperature equalizes and then stays stable, declining gently.
+* Still use Home Assistant to stop DHW run when flow temperature hits 65°C. Prevents temperature ramping up too high if the sensor goes on the blink again in future.
+
 # DHW
 
+* What's the effect of summer temperatures on DHW runs?
 * May 16 after temperature sensor sorted
-* Still using HA automation to stop run when return temperature of 65C hit
 * Added 1.772kWh heat, using 1.019kWh electric for COP of 1.74
 * Heating on, hot water in pipes at end of run dumped into heating circuit
 * Big spike at end means detail during DWH run is squashed down on graph
@@ -27,7 +38,15 @@ wise words
 
 # Shower
 
-* July 21, 20C outside, long shower
+* As a reminder, here's what happens when showering in winter.
+
+{% include candid-image.html src="/assets/images/home-assistant/back-to-back-boost-shower.png" alt="Back to back Boost Showers" %}
+
+* This is two back to back showers. It takes about 10 minutes after pressing boost for flow temperature to hit 55°C. If you run the shower at its full 8L/min flow rate, you take heat out of the store faster than the heat pump can replenish. The flow rate drops rapidly. After 8 minutes of showering you'll notice the water temperature at the shower head start to drop. 
+* When the first shower ends it takes five minutes to get back up to temperature for the next shower.
+
+* July 21, 20C outside, 25 minute shower
+* What a contrast. The flow temperature keeps going up. The heat pump is providing more heat than needed. You can shower indefinitely with full flow.
 
 {% include candid-image.html src="/assets/images/home-assistant/shower-july-21.png" alt="Shower July 21" %}
 
