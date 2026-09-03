@@ -72,7 +72,7 @@ wise words
 | May | 30.35 | 9.90 | 28.17 | 46.83 | 58.52 | 56.73 | 3% |
 | *June* | 22.40 | 9.57 | 27.40 | 29.94 | 49.80 | 39.51 | 21% |
 | *July* | 18.09 | 9.70 | 31.13 | 35.76 | 49.22 | 45.46 | 8% |
-| *August* | 19.86 | ? | 37.50 | ? | 
+| *August* | 19.86 | 10.03 | 37.50 | 36.55 | 57.36 | 46.58 | 19% | 
 
 # Energy Consumption (kWh)
 
@@ -89,23 +89,35 @@ wise words
 | May | 296 | 16 | 131 | 354 | 427 | 370 | 13% |
 | *June* | 186 | 15 | 125 | 125 | 311 | 140 | 55% |
 | *July* | 145 | 10 | 176 | 207 | 321 | 217 | 32% |
-| *August* | 173 | ? | 263 | ? 
+| *August* | 173 | 14 | 263 | 216 | 436 | 230 | 47% | 
 
 
-# Electric Breakdown
+# Energy Breakdown
 
-* Data from Home Assistant
+* Electrical data from Home Assistant
 * Doesn't exactly match Octopus figures due to different ways of measuring and accounting periods not perfectly aligned
+* Gas from table above using `Old Gas - New Gas` as best guess estimate for gas used for heating (everything apart from cooking)
 
-| Month | Grid Import | Solar Generated | Heat Pump | EV Charging | Other |
-|-|-|-|-|-|-|
-| November | 677 | 55 | 338 | 119 | 267 |
-| December | 782 | 30 | 445 | 116 | 242 |
-| January | 1030 | 39 | 591 | 216 | 253 |
-| February | 663 | 38 | 428 | 42 | 225 |
-| March | 482 | 140 | 323 | 62 | 223 |
-| April | 385 | 206 | 217 | 178 | 169 |
-| May | 358 | 198 | 144 | 269 | 119 | 
-| *June* | 126 | 192 | 59 | 68 | 176 |
-| *July* | 195 | 226 | 47 | 182 | 164 | 
-| *August* | 
+| Month | Old Heat Gas | Grid Import | Solar Generated | Heat Pump | EV Charging | Other | Unit Price | Heat Ratio |
+|-|-|-|-|-|-|-|-|
+| November | 1206 | 677 | 55 | 338 | 119 | 267 | ≈10 | 3.57
+| December | 1475 | 782 | 30 | 445 | 116 | 242 | ≈12 | 3.31
+| January | 1957 | 1030 | 39 | 591 | 216 | 253 | 11.4 | 3.31
+| February | 1567 | 663 | 38 | 428 | 42 | 225 | 12.3 | 3.66
+| March | 1095 | 482 | 140 | 323 | 62 | 223 | 7.9 | 3.39
+| April | 656 | 385 | 206 | 217 | 178 | 169 | 5.2 | 3.02
+| May | 280 | 358 | 198 | 144 | 269 | 119 | 5.0 | 1.94
+| *June* | 171 | 126 | 192 | 59 | 68 | 176 | 3.6 | 2.89
+| *July* | 135 | 195 | 226 | 47 | 182 | 164 | 3.9 | 2.87
+| *August* | 159 | 219 | 188 | 52 | 166 | 183 | 4.3 | 3.06
+
+* Have switched heating from gas to heat pump, heat ratio is `Old Heat Gas / Heat Pump`
+* Massive reduction in energy used
+* As expected greater heat pump efficiency for heating vs DHW results in a higher ratio during the winter months
+* Why is ratio so low for May? My best guess is difference in weather. May 2025 was a record warmth month for the UK with high pressure dominating, so significantly less heating demand than May 2026. Gas use more than halved compared with April, nowhere near that drop in heat pump usage.
+* Compare heat ratio with unit cost ratio to see if you're saving money with a heat pump. If you're on standard price cap in the UK, unit cost ratio is around 3.5. I only beat that for a couple of winter months.
+* Fortunately, I'm on a smart electricity tariff paying 7p a kWh off-peak, 28p a kWh at peak times. Gas is 7p a kWh at all times.
+* Even more fortunately, I have a battery and solar panels. I can switch some of my peak time consumption to off peak prices using the battery. Any solar I consume is free.
+* I've calculated an average unit electricity price for each month using Home Assistant data that tracks my peak and off-peak grid import separately. I only have this data for January onwards, so figures for November and December are estimated.
+* In the winter months my battery runs out before the end of the day requiring some consumption of peak rate electricity. Average unit price is still well below break-even level compared with gas.
+* In the summer months I use effectively zero peak rate electricity which combined with high solar generation results in an average unit price significantly less than gas. More than offsetting the lower heat pump efficiency.
