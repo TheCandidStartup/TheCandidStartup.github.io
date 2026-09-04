@@ -31,8 +31,7 @@ wise words
 * September 2, 14C outside during 40 minute DHW run
 * Added 2.285kWh of heat, using 0.982kWh electric for COP of 2.33
 * Significant improvement in efficiency when warmer outside
-* Heating is off, so no pump running when DHW ends. Hot water sits in the pipes and heat slowly dissipates via convection/conduction along pipes
-* Towel rail in top floor bathroom gets noticeably warmer, none of the other radiators do
+* Heating is off, so no pump running when DHW ends. Hot water sits in the pipes and heat slowly dissipates mainly via convection/conduction along pipes
 
 {% include candid-image.html src="/assets/images/home-assistant/dhw-sep-2.png" alt="DHW run September 2" %}
 
@@ -47,15 +46,93 @@ wise words
 
 * July 21, 20C outside, 25 minute shower
 * What a contrast. The flow temperature keeps going up. The heat pump is providing more heat than needed. You can shower indefinitely with full flow.
+* Flow temperature gently declines in the same way as the summer time DHW run. However, return temp plummets. Heat left in pipes is clearly going somewhere fast.
+* Towel rail in top floor bathroom gets noticeably warmer, none of the other radiators do
+* Assume some sort of convection current got going around the heating circuit. No idea why it doesn't always happen.
 
 {% include candid-image.html src="/assets/images/home-assistant/shower-july-21.png" alt="Shower July 21" %}
 
 # Home Assistant
 
 * Remove heating prediction entirely from energy consumption estimate if heating is turned off
-* Home battery management to discharge during the night while above target
 
 {% include candid-image.html src="/assets/images/home-assistant/target-soc-from-forecasts.png" alt="Automation setting target battery SOC from forecasts" %}
+
+* Home battery management to discharge during the night while above target
+* Using composite automation pattern. List of triggers and then a `choose` action to run code appropriate for each trigger
+* Added a couple more triggers for start of the normal overnight charging period and when battery SOC falls below target
+
+```yaml
+triggers:
+  - trigger: time
+    at: '23:25:00'
+    id: night_start_time
+  - trigger: numeric_state
+    entity_id:
+      - sensor.al5002122110369_instantaneous_battery_soc
+    below: input_number.alpha_ess_target_soc
+    id: soc_below_target
+```
+
+* With corresponding actions. 
+
+```yaml
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - night_start_time
+          - condition: numeric_state
+            entity_id: sensor.al5002122110369_instantaneous_battery_soc
+            above: input_number.alpha_ess_target_soc
+        sequence:
+          - action: input_text.set_value
+            data:
+              value: '00:00'
+            target:
+              entity_id: input_text.alpha_night_charge_time_start
+          - action: input_text.set_value
+            data:
+              value: '00:00'
+            target:
+              entity_id: input_text.alpha_night_charge_time_end
+      - conditions:
+          - condition: trigger
+            id:
+              - soc_below_target
+        sequence:
+          - action: input_text.set_value
+            data:
+              value: '23:30'
+            target:
+              entity_id: input_text.alpha_night_charge_time_start
+          - action: input_text.set_value
+            data:
+              value: '05:30'
+            target:
+              entity_id: input_text.alpha_night_charge_time_end
+```
+
+* Battery API updates all the settings at once, even if you only want to change a subset of them.
+* Refactored automation so that I update helper entities for desired state of battery settings. Change just the subset of settings needed.
+* Then apply the changes once at the end. Gets rid of all the tedious logic that previously had to figure out the values of settings you're not changing.
+
+{% raw %}
+
+```yaml
+  - action: alphaess.setbatterycharge
+    metadata: {}
+    data:
+      enabled: true
+      cp1start: '{{ states(''input_text.alpha_night_charge_time_start'') }}'
+      cp1end: '{{ states(''input_text.alpha_night_charge_time_end'') }}'
+      cp2start: '{{ states(''input_text.alpha_day_charge_time_start'') }}'
+      cp2end: '{{ states(''input_text.alpha_day_charge_time_end'') }}'
+      chargestopsoc: '{{ states(''input_number.alpha_ess_target_soc'') }}'
+```
+
+{% endraw %}
 
 # Cost (£)
 
@@ -92,7 +169,7 @@ wise words
 | *August* | 173 | 14 | 263 | 216 | 436 | 230 | 47% | 
 
 
-# Energy Breakdown
+# Energy Breakdown (kWh)
 
 * Electrical data from Home Assistant
 * Doesn't exactly match Octopus figures due to different ways of measuring and accounting periods not perfectly aligned
@@ -100,16 +177,16 @@ wise words
 
 | Month | Old Heat Gas | Grid Import | Solar Generated | Heat Pump | EV Charging | Other | Unit Price | Heat Ratio |
 |-|-|-|-|-|-|-|-|
-| November | 1206 | 677 | 55 | 338 | 119 | 267 | ≈10 | 3.57
-| December | 1475 | 782 | 30 | 445 | 116 | 242 | ≈12 | 3.31
-| January | 1957 | 1030 | 39 | 591 | 216 | 253 | 11.4 | 3.31
-| February | 1567 | 663 | 38 | 428 | 42 | 225 | 12.3 | 3.66
-| March | 1095 | 482 | 140 | 323 | 62 | 223 | 7.9 | 3.39
-| April | 656 | 385 | 206 | 217 | 178 | 169 | 5.2 | 3.02
-| May | 280 | 358 | 198 | 144 | 269 | 119 | 5.0 | 1.94
-| *June* | 171 | 126 | 192 | 59 | 68 | 176 | 3.6 | 2.89
-| *July* | 135 | 195 | 226 | 47 | 182 | 164 | 3.9 | 2.87
-| *August* | 159 | 219 | 188 | 52 | 166 | 183 | 4.3 | 3.06
+| November | 1206 | 677 | 55 | 338 | 119 | 267 | ≈10p | 3.57
+| December | 1475 | 782 | 30 | 445 | 116 | 242 | ≈12p | 3.31
+| January | 1957 | 1030 | 39 | 591 | 216 | 253 | 11.4p | 3.31
+| February | 1567 | 663 | 38 | 428 | 42 | 225 | 12.3p | 3.66
+| March | 1095 | 482 | 140 | 323 | 62 | 223 | 7.9p | 3.39
+| April | 656 | 385 | 206 | 217 | 178 | 169 | 5.2p | 3.02
+| May | 280 | 358 | 198 | 144 | 269 | 119 | 5.0p | 1.94
+| *June* | 171 | 126 | 192 | 59 | 68 | 176 | 3.6p | 2.89
+| *July* | 135 | 195 | 226 | 47 | 182 | 164 | 3.9p | 2.87
+| *August* | 159 | 219 | 188 | 52 | 166 | 183 | 4.3p | 3.06
 
 * Have switched heating from gas to heat pump, heat ratio is `Old Heat Gas / Heat Pump`
 * Massive reduction in energy used
@@ -121,3 +198,9 @@ wise words
 * I've calculated an average unit electricity price for each month using Home Assistant data that tracks my peak and off-peak grid import separately. I only have this data for January onwards, so figures for November and December are estimated.
 * In the winter months my battery runs out before the end of the day requiring some consumption of peak rate electricity. Average unit price is still well below break-even level compared with gas.
 * In the summer months I use effectively zero peak rate electricity which combined with high solar generation results in an average unit price significantly less than gas. More than offsetting the lower heat pump efficiency.
+
+# Conclusion
+
+* Heat Pump and NanoStore still working well
+* Water heating via NanoStore not as efficient as using a hot water cylinder. Results in significant reduction in overall efficiency for heating and hot water combined. Especially noticeable in the summer when the heating is off.
+* Still saving money compared with gas boiler. Home Battery and Solar are incredibly good at keeping the effective per unit cost of electricity down, especially in summer.
