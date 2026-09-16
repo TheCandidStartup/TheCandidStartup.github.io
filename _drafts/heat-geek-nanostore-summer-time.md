@@ -4,63 +4,81 @@ title: >
 tags: gear home-assistant
 ---
 
-wise words
+Summer time, and the living is easy. My heat pump and Heat Geek NanoStore hot water system were installed last October. [So]({% link _posts/2026-02-09-heat-geek-nano-store-conclusion.md %}) [far]({% link _posts/2026-04-07-heat-geek-nano-store-dhw-update.md %}), I've shown you performance data from the winter months. How does the system behave when the heating is turned off?
 
 # Temperature Sensor
 
-* [Last time]({% link _posts/2026-04-07-heat-geek-nano-store-dhw-update.md %}) left you with a cliff hanger. Had found that the tank temperature sensor was providing erratic values.
-* Was replaced May 15th. I also got them to move the sensor up near the middle of the tank. Previous position at the bottom near cold water inlet was meant to respond quickly when hot water drawn off to start the heat pump. Never responded quickly enough for the heat pump to ramp up in time before the stored hot water ran out. At the same time, had the downside in winter that it would report values lower than 10°C triggering the heat pump to run a frost protection cycle, while the top of the store still had plenty of hot water!
-* We boost the hot water before a shower, so makes more sense to put the sensor where it will more accurately report remaining hot water temperature.
+[Last time]({% link _posts/2026-04-07-heat-geek-nano-store-dhw-update.md %}), I left you with a cliff hanger. I found that the tank temperature sensor was providing erratic readings.
+
+The sensor was replaced on May 15th. I also got them to move the sensor up near the middle of the tank. The previous position near the cold water inlet at the bottom of the tank is meant to respond quickly when hot water is drawn off. The idea is to use that temperature drop to start the heat pump and replace the stored heat being drawn off. However, it never responded quickly enough for the heat pump to ramp up in time before the stored hot water ran out. 
+
+At the same time, the sensor position had the downside in winter that it would eventually report values lower than 10°C. That triggers the heat pump to run a frost protection cycle. Which is pointless as the the top of the store still has plenty of hot water.
+
+As we can't rely on the sensor to respond quickly enough, we boost the hot water before using the shower. It makes more sense to put the sensor where it will more accurately report the remaining hot water temperature.
 
 {% include candid-image.html src="/assets/images/home-assistant/dhw-temp-sep-3.png" alt="DHW run flow and tank temperatures, September 2nd" %}
 
-* Sensible looking tank temperature curve (in orange, Vaillant cloud only updates values every 5 minutes). Once DHW run ends (flow temperature shown in blue), temperature equalizes and then stays stable, declining gently.
-* Still use Home Assistant to stop DHW run when flow temperature hits 65°C. Prevents temperature ramping up too high if the sensor goes on the blink again in future.
+Here's an overnight DHW run. We have a sensible looking tank temperature curve in orange. It's coarse grained because Vaillant cloud only updates values every 5 minutes. The flow temperature from Open Energy Monitoring (updates every 10 seconds) is shown in blue. 
+
+Once the DHW run ends, tank temperature equalizes and then stays stable, declining gently. I still use Home Assistant to stop the DHW run when return temperature hits 65°C. It will continue to prevent temperature ramping up too high if the sensor goes on the blink again in the future.
 
 # DHW
 
-* What's the effect of summer temperatures on DHW runs?
-* May 16 after temperature sensor sorted
-* Added 1.772kWh heat, using 1.019kWh electric for COP of 1.74
-* Heating on, hot water in pipes at end of run dumped into heating circuit
-* Big spike at end means detail during DWH run is squashed down on graph
-* Cold night, 5C outside during 40 minute DHW run
+What's the effect of summer temperatures on DHW runs? This is a run from May 16th,  after the temperature sensor was replaced. It's a cold night, 5°C outside, and the heating is on.
 
 {% include candid-image.html src="/assets/images/home-assistant/dhw-may-16.png" alt="DHW run May 16" %}
 
-* September 2, 14C outside during 40 minute DHW run
-* Added 2.285kWh of heat, using 0.982kWh electric for COP of 2.33
-* Significant improvement in efficiency when warmer outside
-* Heating is off, so no pump running when DHW ends. Hot water sits in the pipes and heat slowly dissipates mainly via convection/conduction along pipes
+We added 1.772kWh heat, using 1.019kWh electric for a COP of 1.74. As the heating is on, the remaining hot water in the pipes is dumped into the heating circuit at the end of the run. That results in a big spike of heat with the graph's Y-axis going up to 60kW.
+
+Compare that to a run from September 2nd. Its 14°C outside and the heating is off.
 
 {% include candid-image.html src="/assets/images/home-assistant/dhw-sep-2.png" alt="DHW run September 2" %}
 
+We added 2.285kWh of heat, using 0.982kWh electric for a COP of 2.33. There's a significant improvement in efficiency when it's warmer outside. 
+
+The heating is off, so there's no heating circuit pump running when the DHW run ends. The remaining hot water sits in the pipes and heat slowly dissipates, mainly via convection/conduction along the pipes. There's no big spike of heat, with the graph's Y-axis going up to 9kW.
+
 # Shower
 
-* As a reminder, here's what happens when showering in winter.
+As a reminder, here's what happens when showering in winter.
 
 {% include candid-image.html src="/assets/images/home-assistant/back-to-back-boost-shower.png" alt="Back to back Boost Showers" %}
 
-* This is two back to back showers. It takes about 10 minutes after pressing boost for flow temperature to hit 55°C. If you run the shower at its full 8L/min flow rate, you take heat out of the store faster than the heat pump can replenish. The flow rate drops rapidly. After 8 minutes of showering you'll notice the water temperature at the shower head start to drop. 
-* When the first shower ends it takes five minutes to get back up to temperature for the next shower.
+This is two back to back showers. It takes about 10 minutes after pressing boost for flow temperature to hit 55°C. If you run the shower at its full 8L/min flow rate, you take heat out of the store faster than the heat pump can replenish. The flow temperature drops rapidly. After 8 minutes of showering you'll notice the water temperature at the shower head start to drop. 
 
-* July 21, 20C outside, 25 minute shower
-* What a contrast. The flow temperature keeps going up. The heat pump is providing more heat than needed. You can shower indefinitely with full flow.
-* Flow temperature gently declines in the same way as the summer time DHW run. However, return temp plummets. Heat left in pipes is clearly going somewhere fast.
-* Towel rail in top floor bathroom gets noticeably warmer, none of the other radiators do
-* Assume some sort of convection current got going around the heating circuit. No idea why it doesn't always happen.
+When the first shower ends, it takes five minutes to get back up to temperature for the next shower. In contrast, here's what a *25 minute* shower looks like on July 21st, when it's 20°C outside.
 
 {% include candid-image.html src="/assets/images/home-assistant/shower-july-21.png" alt="Shower July 21" %}
 
+The flow temperature keeps going up while showering. The heat pump is providing more heat than needed. You can shower indefinitely with full flow.
+
+At the end of the run, flow temperature gently declines in the same way as the summer time DHW run. However, return temperature plummets. The heat left in the pipes is clearly going somewhere fast.
+
+The towel rail in our top floor bathroom gets noticeably warmer, none of the other radiators do. There must be some sort of convection current that gets going around the heating circuit. I've no idea why it doesn't always happen. 
+
 # Home Assistant
 
-* Remove heating prediction entirely from energy consumption estimate if heating is turned off
+I had to make a couple of changes to my Home Assistant setup.
+
+## Heating Forecast
+
+I use the next day's weather forecast to predict how much heating we'll need each hour. That in turn is used to decide how much charge to add to our home battery overnight. We want to leave some room to capture any excess solar generation.
+
+If the heating is off, we won't generate any heat. I can skip the forecast and set the heating estimate to 0.
 
 {% include candid-image.html src="/assets/images/home-assistant/target-soc-from-forecasts.png" alt="Automation setting target battery SOC from forecasts" %}
 
-* Home battery management to discharge during the night while above target
-* Using composite automation pattern. List of triggers and then a `choose` action to run code appropriate for each trigger
-* Added a couple more triggers for start of the normal overnight charging period and when battery SOC falls below target
+## Self Sufficient
+
+In the winter, we always needed to add some charge to the battery overnight. However, in summer the remaining charge in the battery is frequently above the target. During the peak summer months, there are often days when we can be completely self-sufficient, with solar generation exceeding our consumption. 
+
+Our home battery won't discharge during a charging period. During this time we use power from the grid. The behavior makes sense for most cases. You charge overnight on low price electricity. There's no point using battery power when you can use the low price electricity directly.
+
+My solar panels were installed via a government incentive program that pays us for the electricity they generate, regardless of how the power is used. We don't get anything extra for exporting it. In my case, it makes more sense to discharge the battery in the night if we can refill it using solar generation the next day. 
+
+I updated my Home Assistant battery management automation to discharge during the night while we're above the target SOC. The automation uses the composite automation pattern. I have a list of triggers and then a `choose` action to run code appropriate for each trigger.
+
+I added a couple more triggers for the start of the normal overnight charging period and for when battery SOC falls below target.
 
 ```yaml
 triggers:
@@ -74,7 +92,7 @@ triggers:
     id: soc_below_target
 ```
 
-* With corresponding actions. 
+If actual SOC is above target at the start of the charging period, I turn charging off. Once the actual SOC falls to the target SOC, I turn charging back on.
 
 ```yaml
 actions:
@@ -114,9 +132,9 @@ actions:
               entity_id: input_text.alpha_night_charge_time_end
 ```
 
-* Battery API updates all the settings at once, even if you only want to change a subset of them.
-* Refactored automation so that I update helper entities for desired state of battery settings. Change just the subset of settings needed.
-* Then apply the changes once at the end. Gets rid of all the tedious logic that previously had to figure out the values of settings you're not changing.
+The battery API updates all the settings at once, even if you only want to change a subset of them. Previously, each path in the automation had it's own action to call the battery API, with sometimes complex logic to work out the appropriate values for the settings I didn't want to change. 
+
+I refactored the automation so that I update helper entities for the desired state of each battery setting. I can hange just the subset of settings needed. I have a single common action at the end of the automation that applies the current value of all the settings. 
 
 {% raw %}
 
