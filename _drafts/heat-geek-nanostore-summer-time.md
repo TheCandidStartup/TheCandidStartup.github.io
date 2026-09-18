@@ -154,20 +154,22 @@ I refactored the automation so that I update helper entities for the desired sta
 
 # SCOP
 
-* Open Energy Monitoring reports a combined SCOP of 3.57 since installation
-* Disappointing given Heat Geek guarantee of 3.8. Heating only?
-* Looking at heating only, SCOP is 4.14. DHW performance is pulling the overall efficiency down
-* Looking at each season in turn
-* Winter: COP 3.5, Heating 3.8, DHW 2.75
-* Spring: COP 3.8, Heating 4.45, DHW 2.93
-* Summer: COP 2.58, No Heating, DHW 2.58
-* How are we getting DHW so high? Our overnight runs were at best getting 2.33
-* Showers are much more efficient when system running in combi mode, heat exchanger working as designed. Get COP close to 3 for a typical shower.
-* We take enough showers to get overall efficiency closer to shower efficiency
+I have almost a full year's worth of data in Open Energy Monitoring. My combined SCOP (heating and hot water) is 3.57 since installation. Which is a bit disappointing given the Heat Geek guarantee of 3.8. However, that guarantee is based on the original design using a 110L MiniStore for hot water, rather than the experimental 60L NanoStore we ended up with. 
 
-# Cost (£)
+If I look at heating performance only, the SCOP is 4.14. The DHW performance is pulling the overall efficiency down. Looking at each season in turn we have:
+* Winter (Dec-Feb): COP 3.5, Heating 3.8, DHW 2.75
+* Spring (Mar-May): COP 3.8, Heating 4.45, DHW 2.93
+* Summer (Jun-Aug): COP 2.58, No Heating, DHW 2.58
 
-* Data from Octopus (dashboard + bills)
+Which is better DHW performance than I was expecting. The overnight runs get 2.33 at best. The NanoStore is a big heat exchanger and works most efficiently when used as a heat exchanger. That's during a shower, when the system is running in "combi" mode. At full power we use 3kW of electricity to generate 10-11kW of heat. That's an instantaneous COP of 3.5.
+
+The more showers we take, the higher the efficiency.
+
+# Cost
+
+The usual rule of thumb is that you need a SCOP of 3.5 to break even compared with gas. Does my low summer COP mean I'm losing money? Let's have a look. 
+
+Prices in the table are in £ sterling with data from my energy supplier, Octopus (online dashboard + bills).
 
 | Month | Old Gas | New Gas | Old Elec | New Elec | Old Total | New Total | Reduction |
 |-|-|-|-|-|-|-|-|
@@ -182,9 +184,11 @@ I refactored the automation so that I update helper entities for the desired sta
 | *July* | 18.09 | 9.70 | 31.13 | 35.76 | 49.22 | 45.46 | 8% |
 | *August* | 19.86 | 10.03 | 37.50 | 36.55 | 57.36 | 46.58 | 19% | 
 
-# Energy Consumption (kWh)
+We saved money each month compared with the previous year's gas bill. However, it got close, with only small savings in May and July.
 
-* Data from Octopus (dashboard + bills)
+# Energy Consumption
+
+We can remove one variable by looking at energy consumption in kWh rather than cost.
 
 | Month | Old Gas | New Gas | Old Elec | New Elec | Old Total | New Total | Reduction |
 |-|-|-|-|-|-|-|-|
@@ -199,12 +203,13 @@ I refactored the automation so that I update helper entities for the desired sta
 | *July* | 145 | 10 | 176 | 207 | 321 | 217 | 32% |
 | *August* | 173 | 14 | 263 | 216 | 436 | 230 | 47% | 
 
+Now you can see a more consistent reduction in energy use. However, May is still a significant outlier.
 
-# Energy Breakdown (kWh)
+# Energy Breakdown
 
-* Electrical data from Home Assistant
-* Doesn't exactly match Octopus figures due to different ways of measuring and accounting periods not perfectly aligned
-* Gas from table above using `Old Gas - New Gas` as best guess estimate for gas used for heating (everything apart from cooking)
+Let's break down energy usage further so we can compare apples to apples. For electricity, I'm using data from Home Assistant which doesn't exactly match the Octopus figures due to different ways of measuring and accounting periods not being perfectly aligned.
+
+I used `Old Gas - New Gas` from the table above as a best guess estimate for gas used for heating (everything apart from cooking).
 
 | Month | Old Heat Gas | Grid Import | Solar Generated | Heat Pump | EV Charging | Other | Unit Price | Heat Ratio |
 |-|-|-|-|-|-|-|-|
@@ -219,19 +224,22 @@ I refactored the automation so that I update helper entities for the desired sta
 | *July* | 135 | 195 | 226 | 47 | 182 | 164 | 3.9p | 2.87
 | *August* | 159 | 219 | 188 | 52 | 166 | 183 | 4.3p | 3.06
 
-* Have switched heating from gas to heat pump, heat ratio is `Old Heat Gas / Heat Pump`
-* Massive reduction in energy used
-* As expected greater heat pump efficiency for heating vs DHW results in a higher ratio during the winter months
-* Why is ratio so low for May? My best guess is difference in weather. May 2025 was a record warmth month for the UK with high pressure dominating, so significantly less heating demand than May 2026. Gas use more than halved compared with April, nowhere near that drop in heat pump usage.
-* Compare heat ratio with unit cost ratio to see if you're saving money with a heat pump. If you're on standard price cap in the UK, unit cost ratio is around 3.5. I only beat that for a couple of winter months.
-* Fortunately, I'm on a smart electricity tariff paying 7p a kWh off-peak, 28p a kWh at peak times. Gas is 7p a kWh at all times.
-* Even more fortunately, I have a battery and solar panels. I can switch some of my peak time consumption to off peak prices using the battery. Any solar I consume is free.
-* I've calculated an average unit electricity price for each month using Home Assistant data that tracks my peak and off-peak grid import separately. I only have this data for January onwards, so figures for November and December are estimated.
-* In the winter months my battery runs out before the end of the day requiring some consumption of peak rate electricity. Average unit price is still well below break-even level compared with gas.
-* In the summer months I use effectively zero peak rate electricity which combined with high solar generation results in an average unit price significantly less than gas. More than offsetting the lower heat pump efficiency.
+We've switched our heating and hot water from gas to the heat pump. I calculated a heat ratio from `Old Heat Gas / Heat Pump` to see how much energy we've saved. You can immediately see that there's a massive reduction. Reassuringly, the heat ratios are pretty close to the measured seasonal COP.
+
+Most of the low reduction in energy usage for May is down to the amount of EV charging we did. There was a lot of travel that month. However, it doesn't explain everything. The heat ratio for May (which excludes the effect of EV charging) is still low. 
+
+My best guess is a difference in the weather. May 2025 was a record warmth month for the UK with high pressure dominating, so significantly less heating demand than May 2026. Our gas use more than halved for May 2025 compared with April 2025, there was nowhere near that drop this year.
+
+The break even ratio of 3.5 is based on the difference between gas and electricity prices when using a standard "price cap" tariff. Fortunately, I'm on a smart electricity tariff paying 7p a kWh off-peak, 28p a kWh at peak times. Gas is 7p a kWh at all times.
+
+Even more fortunately, I have a battery and solar panels. I can switch some of my peak time consumption to off-peak prices using the battery. Any solar I consume is free. I've calculated an average unit electricity price for each month using Home Assistant data that tracks my peak and off-peak grid import separately. I only have this data for January onwards, so figures for November and December are estimated.
+
+In the winter months my battery runs out before the end of the day, requiring some consumption of peak rate electricity. Average unit price is still well below break-even level compared with gas.
+
+In the summer months I use effectively zero peak rate electricity which combined with high solar generation results in an average unit price significantly less than gas. This more than offsets the lower efficiency DHW only summer COP. 
 
 # Conclusion
 
-* Heat Pump and NanoStore still working well
-* Water heating via NanoStore not as efficient as using a hot water cylinder. Results in significant reduction in overall efficiency for heating and hot water combined. Especially noticeable in the summer when the heating is off.
-* Still saving money compared with gas boiler. Home Battery and Solar are incredibly good at keeping the effective per unit cost of electricity down, especially in summer.
+The heat pump and NanoStore are still working well. As expected, water heating via the NanoStore is not as efficient as using a hot water cylinder. I was surprised that it makes such an impact on the overall efficiency for heating and hot water combined. This is especially noticeable in the summer when the heating is off. 
+
+I'm still saving money compared with the old gas boiler, thanks to my home battery and solar panels.  They're incredibly good at keeping the effective per unit rate of electricity down, especially in summer.
