@@ -10,7 +10,7 @@ Summer time, and the living is easy. My heat pump and Heat Geek NanoStore hot wa
 
 [Last time]({% link _posts/2026-04-07-heat-geek-nano-store-dhw-update.md %}), I left you with a cliff hanger. I found that the tank temperature sensor was providing erratic readings.
 
-The sensor was replaced on May 15th. I also got them to move the sensor up near the middle of the tank. The previous position near the cold water inlet at the bottom of the tank is meant to respond quickly when hot water is drawn off. The idea is to use that temperature drop to start the heat pump and replace the stored heat being drawn off. However, it never responded quickly enough for the heat pump to ramp up in time before the stored hot water ran out. 
+The sensor was replaced on May 15th. I also got them to move the sensor up near the middle of the tank. The previous position, near the cold water inlet at the bottom of the tank, is meant to respond quickly when hot water is drawn off. The idea is to use that temperature drop to start the heat pump and replace the stored heat being drawn off. However, it never responded quickly enough for the heat pump to ramp up in time before the stored hot water ran out. 
 
 At the same time, the sensor position had the downside in winter that it would eventually report values lower than 10°C. That triggers the heat pump to run a frost protection cycle. Which is pointless as the the top of the store still has plenty of hot water.
 
@@ -132,9 +132,9 @@ actions:
               entity_id: input_text.alpha_night_charge_time_end
 ```
 
-The battery API updates all the settings at once, even if you only want to change a subset of them. Previously, each path in the automation had it's own action to call the battery API, with sometimes complex logic to work out the appropriate values for the settings I didn't want to change. 
+The battery API updates all the settings at once, even if you only want to change a subset of them. Previously, each path in the automation had its own action to call the battery API, with sometimes complex logic to work out the appropriate values for the settings I didn't want to change. 
 
-I refactored the automation so that I update helper entities for the desired state of each battery setting. I can hange just the subset of settings needed. I have a single common action at the end of the automation that applies the current value of all the settings. 
+I refactored the automation so that I update helper entities for the desired state of each battery setting. I can change just the subset of settings needed. I have a single common action at the end of the automation that applies the current value of all the settings. 
 
 {% raw %}
 
@@ -151,6 +151,19 @@ I refactored the automation so that I update helper entities for the desired sta
 ```
 
 {% endraw %}
+
+# SCOP
+
+* Open Energy Monitoring reports a combined SCOP of 3.57 since installation
+* Disappointing given Heat Geek guarantee of 3.8. Heating only?
+* Looking at heating only, SCOP is 4.14. DHW performance is pulling the overall efficiency down
+* Looking at each season in turn
+* Winter: COP 3.5, Heating 3.8, DHW 2.75
+* Spring: COP 3.8, Heating 4.45, DHW 2.93
+* Summer: COP 2.58, No Heating, DHW 2.58
+* How are we getting DHW so high? Our overnight runs were at best getting 2.33
+* Showers are much more efficient when system running in combi mode, heat exchanger working as designed. Get COP close to 3 for a typical shower.
+* We take enough showers to get overall efficiency closer to shower efficiency
 
 # Cost (£)
 
