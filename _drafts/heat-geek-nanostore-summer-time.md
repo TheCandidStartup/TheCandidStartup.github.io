@@ -4,7 +4,7 @@ title: >
 tags: gear home-assistant
 ---
 
-Summer time, and the living is easy. My heat pump and Heat Geek NanoStore hot water system were installed last October. [So]({% link _posts/2026-02-09-heat-geek-nano-store-conclusion.md %}) [far]({% link _posts/2026-04-07-heat-geek-nano-store-dhw-update.md %}), I've shown you performance data from the winter months. How does the system behave when the heating is turned off?
+Summer time, and the living is easy. My heat pump and [Heat Geek NanoStore]({% link _posts/2025-11-17-heat-geek-nano-store.md %}) hot water system were [installed]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}) last October. [So]({% link _posts/2026-02-09-heat-geek-nano-store-conclusion.md %}) [far]({% link _posts/2026-04-07-heat-geek-nano-store-dhw-update.md %}), I've shown you performance data from the winter months. How does the system behave when the heating is turned off?
 
 # Temperature Sensor
 
