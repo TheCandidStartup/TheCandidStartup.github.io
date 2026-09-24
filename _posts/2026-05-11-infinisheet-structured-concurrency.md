@@ -135,7 +135,7 @@ We can have `withScope` always propagate whatever the body returns and cancel an
 
 In general, if the body returns `R`, `withScope` should return `Promise<R>`. In most cases, `R` will be some form of `Result`, but there's no need to enforce that. 
 
-It turns out that this form of `withScope` can handle most cases. The crucial insight is that using `await` (which is equivalent to `Promise.resolve`) to create a `Promise<R>` from `R` gives you [promise flattening](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/Promise#the_resolve_function) for free. You just need the appropriate overloads to make it the typing clear.
+It turns out that this form of `withScope` can handle most cases. The crucial insight is that using `await` (which is equivalent to `Promise.resolve`) to create a `Promise<R>` from `R` gives you [promise flattening](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/Promise#the_resolve_function) for free. You just need the appropriate overloads to make the typing clear.
 
 ```ts
 export function withScope<R extends PromiseLike<unknown>>
@@ -264,7 +264,7 @@ It didn't work. The generic error type parameter propagates everywhere, includin
 
 If we have a calling convention that everyone passes a scope down the call chain, it needs to be a fixed, simple type that you don't have to think about.
 
-I also realized that generic error handling is of very little use. The primary error handling in `Result` based system should be where the result is returned. Callers handle errors explicitly and where needed manually propagate them up the call stack.
+I also realized that generic error handling is of very little use. The primary error handling in `Result` based systems should be where the result is returned. Callers handle errors explicitly and where needed manually propagate them up the call stack.
 
 Looking at aggregated errors for all promises in the scope is only useful for debugging or for the simple case of checking that all fire and mostly forget tasks have completed.
 
