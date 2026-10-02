@@ -40,9 +40,10 @@ wise words
 
 {% include candid-image.html src="/assets/images/home-assistant/automation-trace.png" alt="Automation Trace" %}
 
-* Unfortunately the trace doesn't show you which condition failed. However, as `session_energy` was the trigger, and `smart_charge` is always on, it must have been `hypervolt_charging`.
+* Unfortunately, Home Assistant only retains the last 5 traces for each automation. The trace I needed disappeared before I had a chance to look at the failing conditions in detail. However, as `session_energy` was the trigger, and `smart_charge` is always on, it must have been because `hypervolt_charging` was off.
 * Which doesn't make any sense
-* When I check Home Assistant history `hypervolt_charging` and `session_energy` both changed at 13:30:58
+* When I check Home Assistant history `hypervolt_charging` and `session_energy` both turned on at 13:30:58
+* Surely if they both change at the same time, my automation will either see them both on or both off. Right?
 
 # Event State Consistency
 
@@ -91,7 +92,7 @@ LIMIT 500;
 
 * My first thought was to change the `session_energy` trigger so that it fires once `session_energy` is above the threshold for one second. That would give enough time for the `hypervolt_charging` state to be updated.
 * Would work in this case, but what if the `hypervolt_charging` update was delayed for longer? Normally I see `hypervolt_charging` turn on 10-30 seconds before `session_energy` increases. If it can be delayed that long, it can be delayed much longer.
-* In the end I decided to add a second, fallback trigger to the automation. I've only ever seen this happen once, so don't to use a hair-trigger.
+* In the end I decided to add a second, fallback trigger to the automation. I've only ever seen this happen once, so don't need to use a hair-trigger.
 * My new trigger fires if `hypervolt_charging` has been on for two minutes, which should be long enough to ignore any false starts.
 
 {% include candid-image.html src="/assets/images/home-assistant/hypervolt-charging-triggers.png" alt="Hypervolt Charging Triggers" %}
