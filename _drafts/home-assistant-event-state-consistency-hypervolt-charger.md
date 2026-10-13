@@ -58,7 +58,7 @@ wise words
 # Microsecond Resolution
 
 * All times in the Home Assistant UI are shown to the nearest second
-* Internally state timestamps use the python `datetime` type which has microsecond resolution
+* Internally state timestamps use the python [datetime](https://docs.python.org/3/library/datetime.html) type which has microsecond resolution
 * That resolution is preserved when writing history to Home Assistant's database
 
 # SQLite Web
