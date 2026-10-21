@@ -26,8 +26,30 @@ wise words
 * Why does it work? Logic is heating curve produces target flow temperature which is clamped by min/max limits, with result fed into energy integral calculation.
 * If you turn heat curve right down, target temperature from heat curve is low. Set a minimum temperature above that and you can directly control target temperature.
 * Heat pump will still cycle if you set target temperature below minimum that heat pump can produce
-* Trick is to set target temperature to the minimum, extending the cycle time indefinitely if you get it bang on.
+* Trick is to set minimum temperature to match the current flow temperature, extending the cycle time indefinitely if you get it bang on.
 * Problem is flow temperature is a moving target
-* Heat pump runs at minimum power (25% compressor modulation) and you get whatever flow temperature you get depending on local conditions. Even worse, it changes during a run depending on how effective your emitters are to using that heat.
+* Heat pump runs at minimum power (25% compressor modulation) and you get whatever flow temperature you get depending on local conditions. Even worse, it changes during a run depending on how effective your emitters are at using that heat.
 * In my case, at this time of year, flow temp at min power goes up steadily during the cycle.
 * Start with a best case guess (typical observed value) and update regularly once in steady state
+
+* In normal operation energy integral update is suspended during a DHW run and when heating is explicitly turned off. Obviously, house is still losing heat during these periods, so infuriating that heating doesn't come on immediately when requested again.
+* Particularly irritating after DHW runs. Heat pump is already running, house is below temperature, no inefficient compressor startup to go through if heating picks up when DHW turns off.
+* Online searches find nothing when asked how to reset integral. Google AI summary says it can't be done.
+* The trick is to change the parameters that determine target flow temperature, e.g. heating curve and minimum flow temperature. When heating resumes it checks whether parameters were changed and if they have resets energy integral to the starting point. Bingo: heating starts straight away.
+
+* Startup behavior very different for DHW -> Heating vs Standby -> Heating
+* For Standby case flow temperature starts to go up steadily as soon as heat pump has passed startup sequence and started using significant power
+* For DHW case, flow temperature can be 60C+ which stays steady until cold water from the radiators reaches the sensor, at which point it plummets.
+* Wait until temperature below 35C then until flow temperature starts to climb again.
+* Tracking actual flow temperature for first few minutes after DHW run is too risky. What happens if I set min flow temp to 65C and then Vaillant cloud access goes down and I'm left with heating running full blast. Compromise is to use 35C as initial value for DHW case (22C for start from Standby). Will take a significant chunk from energy integral before hitting steady state but as long as I can hold integral from then on should be OK.
+
+* Have to rely on Open Energy Monitoring to determine flow temperature and state of system (DHW, Heating or Standby). Vaillant cloud too infrequently updated, too high latency. 
+* Have direct sensor on the ESBE value to determine when DHW circuit is active. For Heating vs Standby rely on power consumption of heat pump. Treat anything over 400W as actively heating.
+* Managing minimum temperature is a balancing act. Don't want to update too frequently and hit Vaillant API rate limit. Don't want to be too far above current temp as heat pump will ramp up from minimum power. Don't want to be too far below as will eat up energy integral.
+* After lots of trial and error came up with approach where I update minimum if current is over a degree different. I set minimum to 0.5C above actual and the threshold where I will update minimum another 0.5C past that.
+* Idea is that actual will be under minimum roughly for same amount of time that it's over minimum.
+
+* Slowed down rate of progress, but energy integral still being consumed.
+* Temperature measured by OEM is less than the value reported in the Vaillant live monitor. The sensors are in different places (in the airing cupboard vs in the heat pump). There's 10 seconds latency on the OEM data but close to zero for the value used by the heat pump.
+* Live monitor reports target flow temperature to nearest 0.5C. Don't know whether that's just display or actual value used in energy integral calculation.
+* To save my sanity made sure that the minimum I set is also rounded to 0.5C. I account for difference in temperatures measured by vaillant and OEM, I biased the threshold so that OEM actual is between 0.7C below and 0.3C above target.
