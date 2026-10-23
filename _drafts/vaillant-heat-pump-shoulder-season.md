@@ -53,3 +53,16 @@ wise words
 * Temperature measured by OEM is less than the value reported in the Vaillant live monitor. The sensors are in different places (in the airing cupboard vs in the heat pump). There's 10 seconds latency on the OEM data but close to zero for the value used by the heat pump.
 * Live monitor reports target flow temperature to nearest 0.5C. Don't know whether that's just display or actual value used in energy integral calculation.
 * To save my sanity made sure that the minimum I set is also rounded to 0.5C. I account for difference in temperatures measured by vaillant and OEM, I biased the threshold so that OEM actual is between 0.7C below and 0.3C above target.
+
+* Can now run for as long as I like at minimum
+* Problem is that COP gets worse the longer you let it run. Starts at 5.5+ and then degrades to 4.5
+* Flow temperature keeps going up (flattens out at around 34C)
+* DeltaT stays pretty much the same, around 2C. Maybe a little wider at higher flow temp but not significant
+* As flow temp goes up, the heat pump draws more power to support the higher temperature, even though compressor is at the same minimum 25% rate throughout.
+
+* Can actually get better efficiency by letting heat pump cycle, so it spends more time at the most efficient flow temperatures
+* Put a cap on increase in minimum flow temperature. Doesn't stop temperature going up, but does mean energy integral gets consumed, triggering end of cycle.
+* Keep heating active so pump keeps working. Wait for flow temp to fall back to 23C, ready to start again.
+* Tried resetting energy integral by messing with heat curve but couldn't get it to work without turning off heating, waiting a few minutes for everything to settle down and then restarting.
+* Tried increasing flow temp to 35C so that energy integral would quickly fall back to starting point. Instead, this immediately starts a new heating cycle *without* resetting energy integral. Starts with current value so you get a really short cycle.
+* In the end left minimum flow temp at level it reached (typically limit of 30C) and let energy integral fall back naturally. Usually gets back to start around the time that flow temp gets back to 23C.
