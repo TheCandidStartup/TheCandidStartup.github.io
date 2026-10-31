@@ -144,3 +144,33 @@ heat being directed somewhere internal. Takes 5 minutes to get back to normal.
 * Starting DHW with 30C+ flow temp avoids wasteful ramp up, shortens time needed for DHW
 * Starting follow on heating cycle with flow temp at 65C and high compressor modulation avoids the startup dip
 * Could work out heat lost during setback period and then start pre-DHW cycle to replace it all.
+
+# Predicting Overnight Energy Requirement
+
+* Use weather forecast at 21:30 to predict heat loss through until 5:30
+* Diff from outside temp to 14C each hour, sum up, multiply by 300W
+* Gives me twice as much heat, compared with what I put in by running a heat cycle whenever inside temperature drops too low
+* For first trial dropped heat loss to 150W but compensated by using apparent temperature in forecast to try and factor in effect of wind
+* Still too much
+* Looked in detail at model for calculating apparent temperature. Looks at expected heat loss from your face when walking at 3mph.
+* Always lower than air temperature, even when no wind, like last night. Not appropriate.
+* Conversely during the last storm that came through, could barely maintain overnight temperature while generating 41kWh of heat over 8 hours at 7C outside
+* That's 730W per degree using 14C baseline or 570W using actual 16C maintained (if you assume negligible passive heating)
+
+# Heat Loss Calculation
+
+* [Heat Loss](https://www.heatgeek.com/articles/heat-geeks-guide-to-understanding-heat-loss-calculations) per degree = Fabric Loss + Air Change Loss
+* Fabric Loss = Sum(Surface Area * U value) for all external walls/roofs/floors/doors/windows
+* Air Change Loss = Volume of Air * ACH * 0.33 where ACH = Air Changes per Hour
+* Heat Geek Design provided to me just gives final heat loss figure + heat loss for each room
+* Don't have volume, surface area or U values used so can't see how accurate 300W figure is, or balance between air loss and fabric loss
+* The internet says a house like mine (1930s semi with cavity wall insulation + double glazing) is typically one third air loss, two thirds fabric loss
+* Previous guidance suggests using an ACH of 1.5 for older houses. Latest thinking says this can be a significant overestimate and upgraded house like mine could be as low as 0.5.
+* High wind has a big impact on ACH for older houses, in worst cases going as high a 6.
+* Looking at plans for my house I reckon volume is about 200m3, which is 66W with an ACH of 1
+* If I assume 0.5 ACH in the still conditions where I "measured" actual 150W per degree heat loss, ends up with 33W air loss, 117W fabric loss, potential heat loss range of 150W to 315W depending on wind
+* If I go with rule of thumb that air loss is a third I get 50W air loss, 100W fabric loss (ACH=0.75) with a possible range of 150W to 400W
+* If Heat Geek used the old guidance of ACH 1.5, that would give 100W air loss and with the thirds rule of thumb 200W fabric loss which is suspiciously on the money for the 300W figure.
+* Another quick snapshot this morning in still conditions with no significant solar gain has 8kWh of heat generated over 6 hours at 8C outside. Which is 220W per degree with a 14C basis.
+* 13.49kWH over 12 hours at 8C outside -> 187W
+* 6kWh over 12 hours at 9C outside (6pm->6am) -> 100W (significant solar gain during day, could heat have lingered in fabric?)
