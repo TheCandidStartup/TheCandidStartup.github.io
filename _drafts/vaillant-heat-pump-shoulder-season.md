@@ -136,19 +136,50 @@ heat being directed somewhere internal. Takes 5 minutes to get back to normal.
 * Roller coaster first 20 minutes until system hits steady state
 * Want at least 20 minutes after hitting steady state to payback startup costs
 * Instant COP declines as flow temperature continues to rise, with reduction in overall COP after another 20-40 minutes
-* Don't cut heating cycles short, don't let them run indefinitely
+* Tried forcing cycling after 80 minutes run time with same approach of letting energy integral naturally run down and restart.
+* You're ending cycle before you've delivered enough heat, so you don't want to wait too long before starting the next. 
+* Even with 20-30 minutes off time, flow temperature doesn't drop enough. Falls back about the same amount as the initial ramp up at start of cycle. You go through all the shutdown and startup costs to end up in steady state no more efficient than when you stopped.
+* Does work really well when you don't need that much heat and minimum 40 minute cycle delivers enough heat for an hour or more of down time. 
 * Question now is how to best schedule heating cycles through day
 * Is current approach of DHW + temperature threshold good enough?
 
 * Best efficiency at night by scheduling heating cycle that transitions into DHW and back to heating
 * Starting DHW with 30C+ flow temp avoids wasteful ramp up, shortens time needed for DHW
 * Starting follow on heating cycle with flow temp at 65C and high compressor modulation avoids the startup dip
-* Could work out heat lost during setback period and then start pre-DHW cycle to replace it all.
+* Can work out heat lost during setback period and then start pre-DHW cycle to replace it all.
 
 # Predicting Overnight Energy Requirement
 
 * Use weather forecast at 21:30 to predict heat loss through until 5:30
 * Diff from outside temp to 14C each hour, sum up, multiply by 300W
+
+# Home Assistant Implementation
+
+* Do all the calculations in a template and put result in a variable that other actions can use
+* Define variables action lets you define multiple variables
+
+```yaml
+variables:
+  variable1: "First value"
+  variable2: "second value"
+```
+
+* First try was to put template logic at top of yaml then return results by defining as many variables as I needed to capture everything
+* Didn't work. Action expects explicit yaml for variable definitions with separate templates allowed for each value.
+* Have to put all the logic in a value definition and return output of template as a single variable
+
+```yaml
+variables:
+  output: >
+    {% set v = 0 %}
+    {# Calculate whatever v should be #}
+    {{ v }}
+```
+* Have to respect indentation of outer structure and indent each line twice
+* Visual editor keeps removing line breaks making it hard to manage
+
+# Results
+
 * Gives me twice as much heat, compared with what I put in by running a heat cycle whenever inside temperature drops too low
 * For first trial dropped heat loss to 150W but compensated by using apparent temperature in forecast to try and factor in effect of wind
 * Still too much
@@ -197,7 +228,84 @@ heat being directed somewhere internal. Takes 5 minutes to get back to normal.
 * Loss=300W, TFlow=50.6C, HC=1.25
 * Loss=500W, TFlow=65.1C, HC=2
 
+* Max target flow temperature set to 55C. If we get a super cold day that is also blowing a gale, we have a wood burner to top up heat
 * To a first approximation, ACH [scales linearly](https://industrialmonitordirect.com/blogs/knowledgebase/estimating-building-air-exchange-as-wind-speed-changes) with wind speed. `ACHactual = ACHref * Vactual / Vref`
 * UK guidance uses 4.5m/s (16 kn/h) as basis for ACH in heat loss calculations
 * Also matches observed experience of minimum heat loss below this speed
 * Use ACH=0.5, Speed = 16km/h as basis. Anything below that speed also uses ACH=0.5. Anything above that speed scales ACH linearly. 
+* Updated heating forecast logic for overnight runs and extracted as a separate script to make it easier to test/manage
+
+# Home Assistant Implementation
+
+* Define fields for start and end times so you can calculate forecast over any time you want
+
+```yaml
+fields:
+  start:
+    selector:
+      datetime: {}
+    name: Start
+    required: true
+  end:
+    selector:
+      datetime: {}
+    name: End
+    required: true
+```
+
+* Selector defines input control shown in form when you run script manually
+* Each field has a name and a key. Key defaults to lower case version of name.
+* Can access value of field in any template in the script
+* Docs bit vague on how you do that
+* First thought was as a variable using the key name
+* Put a test case together, ran the script and got error message that `start` was undefined
+* Wasted an awful lot of time trying to figure out how to get hold of field values
+* In the end seems to be some sort of bug when manually running the script. When you run it, form pops up to set field values with button to run actions.
+* Typically first run after making a change it runs as if you didn't set any values in the UI. Run it again and `start` variable is defined and it works.
+* My script compares a `datetime` from the forecast with `start` and `end` to see if it's relevant
+* Kept getting type errors in comparison
+* Whatever selector you use, field values are passed through as strings. You need to add an `as_datetime` filter.
+* The `datetime` produced by a field selector doesn't include a timezone. The `datetime` from the weather forecast does. I had to use `as_local` to add the local time zone to the field value before I could use it in a comparison.
+
+* Lots of ideas on how I can reuse script: schedule heating during the day, deciding when to use normal heating, adjusting heat curve to match wind
+* Want to calculate and return a few different things from the script
+* Should be easy. Response from script is a key/value map that gets assigned to a variable in the calling automation
+* You define the response by assigning it to a variable and specifying the variable name to return in the Stop action
+* So back to figuring out how to write a template that defines multiple variables in a Define Variables action
+* A key/value map variable looks like this
+
+```yaml
+variables:
+  response:
+    key1: "First value"
+    key2: "second value"
+```
+
+* I went down a rabbit hole trying to first define a `run` variable that contains multiple values from my forecast template, then using per key templates to extract the appropriate value from `run`.
+* Pulling my hair out trying to build a json string value in `run` that `from_json` would accept.
+* Kept ending up with double quoted strings
+* The trick is to use `{% set %}` and `{% endset }` around the JSON and then return the defined variable
+* To my surprise, Home Assistant parses the JSON automatically and defines a variable with the corresponding key/value map
+
+```yaml
+variables:
+  result: >
+    {# Calculate sum=9.2 and count=8 using Jinja variables #}
+    {% set ret %}
+    { 
+      "heat_kwh": {{ sum }}, 
+      "count": {{ count }} 
+    } 
+    {% endset %} 
+    {{ ret }}
+```
+
+*  Results in 
+
+```yaml
+variables:
+  result:
+    heat_kwh: 9.2
+    count: 8
+```
+
