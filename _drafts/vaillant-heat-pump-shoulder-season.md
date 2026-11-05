@@ -4,64 +4,81 @@ title: >
 tags: gear home-assistant
 ---
 
-wise words
+We're often told that heat pumps run best low and slow. The advice is to leave the heating on all the time and let the heat pump use weather compensation to add just the right amount of heat. It's clearly going to be more efficient to have the heat pump running at minimum power 24/7, than at twice the power for half the time. 
 
-* Heating off in the summer. Hot water in pipes between heat pump and DHW system just sits there at end of DHW run.
-* In early shoulder season could do with that heat to give the house a little boost in the morning
-* Run a single heating cycle after DHW run to get left over heat into heating circuit
+What happens when you need *less* heat than the minimum power provides? The heat pump cycles on and off. At the most marginal times of year, it can be on for 20 minutes at a time or less.
 
-* Heat Pump wants to run low and slow
-* Advice to have heating on all the time
-* More efficient to have heat pump running at minimum power 24/7 than at twice the power half the time
-* All makes sense but what happens when you need less heat than minimum power provides
-* This is shoulder season
-* Heat pump cycles on and off - at most marginal times of year can be on for 30 minutes at a time or less
+Welcome to shoulder season.
 
+# Shoulder Season
 
-# Anatomy of heating cycle
+The heating has been switched off all summer. The heat pump has been relegated to domestic hot water (DHW) runs. At the end of each run the water in the circuit is at 50-60°C. The heat just sits there, slowly radiating away from the insulated pipes on the outside of the house. Most days we're more concerned with keeping cool rather than worrying about wasted heat.
 
-* Initial fast ramp up to 40% compressor modulation, about 800W of power
-* Hold steady for 2 or 3 minutes. Presumably building up performance data history for pid controller
-* Now apply pid logic to adjust compressor modulation to try and match target temperature
-* About 10 minutes in there seems to be some kind of internal gear change. Flow temperature from the heat pump loses momentum, presumably
-heat being directed somewhere internal. Takes 5 minutes to get back to normal.
-* Now transition into steady state running
-* Ideally heat pump will have zeroed in on compressor modulation required to maintain desired flow temp
-* In shoulder season HP ends up at minimum 25% modulation and flow temperature slowly rises until energy integral ends the cycle
+As the nights start drawing in, we could make use of that heat to give the house a little boost. I added a simple Home Assistant automation to turn the heating on during each DHW run and then turn it off at the end of the heating cycle.
+
+That got me thinking. What else could I do to put off the moment when I had to turn the heating on fully?
+
+Shoulder season has a wide diurnal range. Temperatures drop overnight and the house needs additional heating in the morning. However, the house soon warms up with the heating hardly needed during the middle of the day. On sunny days there's masses of solar gain and the heating may not be needed at all. 
+
+Can we extend the idea of a post-DHW heating cycle to run the heat pump at minimum power until the house is up to temperature, then stop? When (or if)the temperature falls below a threshold, run another heating cycle.
+
+This is similar to Vaillant's [expanded mode](https://energy-stats.uk/sensocomfort-room-temp-mod-inactive-active-or-expanded/#Room_Temp_Mod_Expanded) but with the heat pump forced to run as efficiently as possible. Expanded mode is a blunt instrument with the heat pump forced to stop outside a very narrow range of temperatures, which can lead to short cycles.
+
+# Anatomy of a Heating Cycle
+
+To understand why short cycles are so bad, we need to understand what happens during a heating cycle. 
+
+Vaillant heat pumps control their heat output by modulating the performance of the compressor which drives the movement of heat. The compressor can modulate smoothly between 25% and 100% of its full power.
+
+Each heating cycle starts with the heat pump ramping up quickly to around 40% compressor modulation. This draws around 800W of electrical power on my 7kW model. After a couple of minutes the heat pump controller will adjust the modulation to try and hit a target flow temperature. The target temperature is determined by Vaillant's weather compensation logic and depends on the user's heat curve setting, the current outdoor temperature and the desired indoor temperature.
+
+If the current flow temperature is below target, the compressor will modulate up. If it's above target, the compressor will modulate down. If it's a long way from target, the change will be more aggressive. During shoulder season, the compressor will eventually end up at 25% modulation, with the flow temperature continuing to rise above the target temperature. 
 
 {% include candid-image.html src="/assets/images/home-assistant/heat-cycle-may-day-12c.png" alt="Heat Cycle 12C outside" %}
 
-* During mild weather the initial 2 minute burst gets flow temp above target
-* Compressor modulates down to minimum but its too late, temp keeps climbing
-* Gear change is very pronounced with flow temperature dropping and then recovering
-* Heat pump is working extra hard during the dip, using more power, which accentuates the dip in COP
-* Barely gets through it's startup sequence, in extreme cases doesn't get into steady state running at all
-* Instant COP outside the dip well over 5
+During mild weather the initial 2 minute burst immediately gets the flow temperature above target. The compressor modulates down to the minimum level but it's too late, the flow temperature keeps climbing. There's an initial burst of heat, followed by a very pronounced dip in performance after the first 10 minutes. The heat pump reaches a steady state, with consistent heat output, after 20 minutes. 
+
+When short cycling, the heat pump doesn't make it through the dip, resulting in a low coefficient of performance (COP) for the cycle as a whole. In contrast, if allowed to run for another 20 minutes at steady state, my heat pump achieves a COP well over 5. 
 
 {% include candid-image.html src="/assets/images/home-assistant/heat-cycle-may-night-6c.png" alt="Heat Cycle 6C outside" %}
 
-* During cold weather, flow temp is still below target after initial burst
-* pid controller ramps up compressor until target is hit
-* Now ramps down to minimum but flow temp keeps sailing up
-* Instant COP in steady state below 5
+During colder weather, the flow temperature is still below target after the initial burst. The compressor ramps up aggressively until the target is hit and then modulates down. Of course, the flow temperature continues to sail up beyond the target because the compressor can't modulate down enough.
 
-# Shoulder Season Mode
+# Energy Integral
 
-* Also have solar gain, wide diurnal range, heating hardly needed during middle of day
-* Have set back overnight for sleeping comfort
-* Can we extend idea of post DHW heating cycle to run heat pump at minimum power until house is up to temperature, then stop
-* Once temp falls below threshold, run another heating cycle
-* Similar to expanded mode but heat pump forced to run at minimum power with no cycles
-* Expanded mode more of a blunt instrument. Still uses energy integral cycle but adds a hard stop once above desired range, then resume once below.
+[Energy Integral](https://energy-stats.uk/vaillant-arotherm-firmware-351-06-07-problems-energy-integral/) is the mechanism Vaillant uses to control cycling of the heat pump when the minimum modulation produces too much heat. Energy integral is implemented as a counter. Every few seconds the difference between the current flow temperature and the target flow temperature is added to the counter. 
+
+If the current flow temperature is too high, the counter goes up. The heating cycle starts with the counter at -60 (can be configured in the settings). If the counter goes over zero, the heating cycle ends. If the current flow temperature is too low, the counter goes down. Once it reaches the starting value, another heating cycle is started.
+
+This system ensures that the average flow temperature matches the target, while smoothing out the effects of short term deviations in flow temperature.
 
 # Hacking the Heat Pump
 
-* How energy integral works
-* How Havenwise overrides standard logic
-* Why does it work? Logic is heating curve produces target flow temperature which is clamped by min/max limits, with result fed into energy integral calculation.
-* If you turn heat curve right down, target temperature from heat curve is low. Set a minimum temperature above that and you can directly control target temperature.
-* Heat pump will still cycle if you set target temperature below minimum that heat pump can produce
-* Trick is to set minimum temperature to match the current flow temperature, extending the cycle time indefinitely if you get it bang on.
+I'm particularly annoyed by the heat pump's behavior in colder weather. It wastes energy ramping the modulation up to exceed the target temperature as soon as possible. Then wastes more energy because the cycle is then shorter than it would otherwise need to be. 
+
+Is there some way I can hack the heat pump to force it to run at minimum modulation? Unfortunately, there are no settings that let you directly control the compressor level. Everything goes through the weather compensation and energy integral logic.  
+
+Then I read about [Havenwise](https://energy-stats.uk/havenwise-review-vaillant-heat-pump/).
+
+# Havenwise
+
+Havenwise is a cloud based system that takes over control of your heat pump. It uses the same myVaillant API as Home Assistant does. So, how does it work?
+
+The flow of logic in the heat pump is as follows.
+1. Use Heating Curve parameter together with outside temperature and desired temperature to calculate target flow temperature.
+2. Clamp the target so that it doesn't exceed the range defined by the min and max flow temperature parameters.
+3. Feed target and current flow temperatures into energy integral logic which decides how to modulate the compressor and when to end the heating cycle.
+
+Havenwise set the heating curve to it's lowest possible value of 0.1. This produces an incredibly low target flow temperature. Set a minimum temperature above that and you can directly control target temperature. 
+
+Havenwise sidesteps Vaillant's weather compensation logic and uses it's own to directly drive target flow temperature. However, it still relies on Vaillant's energy integral logic to achieve the target flow temperature and handle cycling. 
+
+I want to go one step further. 
+
+# One Step Beyond
+
+The heat pump will cycle if you set target temperature below the minimum that the heat pump can produce. The trick is to keep setting the target temperature to match the current flow temperature. This will extend the cycle time indefinitely if you get it bang on.
+
 * Problem is flow temperature is a moving target
 * Heat pump runs at minimum power (25% compressor modulation) and you get whatever flow temperature you get depending on local conditions. Even worse, it changes during a run depending on how effective your emitters are at using that heat.
 * In my case, at this time of year, flow temp at min power goes up steadily during the cycle.
@@ -168,6 +185,8 @@ variables:
 * Didn't work. Action expects explicit yaml for variable definitions with separate templates allowed for each value.
 * Have to put all the logic in a value definition and return output of template as a single variable
 
+{% raw %}
+
 ```yaml
 variables:
   output: >
@@ -175,6 +194,9 @@ variables:
     {# Calculate whatever v should be #}
     {{ v }}
 ```
+
+{% endraw %}
+
 * Have to respect indentation of outer structure and indent each line twice
 * Visual editor keeps removing line breaks making it hard to manage
 
@@ -281,10 +303,12 @@ variables:
     key2: "second value"
 ```
 
+{% raw %}
+
 * I went down a rabbit hole trying to first define a `run` variable that contains multiple values from my forecast template, then using per key templates to extract the appropriate value from `run`.
 * Pulling my hair out trying to build a json string value in `run` that `from_json` would accept.
 * Kept ending up with double quoted strings
-* The trick is to use `{% set %}` and `{% endset }` around the JSON and then return the defined variable
+* The trick is to use `{% set %}` and `{% endset %}` around the JSON and then return the defined variable
 * To my surprise, Home Assistant parses the JSON automatically and defines a variable with the corresponding key/value map
 
 ```yaml
@@ -299,6 +323,8 @@ variables:
     {% endset %} 
     {{ ret }}
 ```
+
+{% endraw %}
 
 *  Results in 
 
