@@ -20,7 +20,7 @@ That got me thinking. What else could I do to put off the moment when I had to t
 
 Shoulder season has a wide diurnal range. Temperatures drop overnight and the house needs additional heating in the morning. However, the house soon warms up with the heating hardly needed during the middle of the day. On sunny days there's masses of solar gain and the heating may not be needed at all. 
 
-Can we extend the idea of a post-DHW heating cycle to run the heat pump at minimum power until the house is up to temperature, then stop? When (or if)the temperature falls below a threshold, run another heating cycle.
+Can we extend the idea of a post-DHW heating cycle to run the heat pump at minimum power until the house is up to temperature, then stop? When (or if) the temperature falls below a threshold, run another heating cycle.
 
 This is similar to Vaillant's [expanded mode](https://energy-stats.uk/sensocomfort-room-temp-mod-inactive-active-or-expanded/#Room_Temp_Mod_Expanded) but with the heat pump forced to run as efficiently as possible. Expanded mode is a blunt instrument with the heat pump forced to stop outside a very narrow range of temperatures, which can lead to short cycles.
 
@@ -30,25 +30,27 @@ To understand why short cycles are so bad, we need to understand what happens du
 
 Vaillant heat pumps control their heat output by modulating the performance of the compressor which drives the movement of heat. The compressor can modulate smoothly between 25% and 100% of its full power.
 
-Each heating cycle starts with the heat pump ramping up quickly to around 40% compressor modulation. This draws around 800W of electrical power on my 7kW model. After a couple of minutes the heat pump controller will adjust the modulation to try and hit a target flow temperature. The target temperature is determined by Vaillant's weather compensation logic and depends on the user's heat curve setting, the current outdoor temperature and the desired indoor temperature.
+Each heating cycle starts with the heat pump ramping up quickly to around 40% compressor modulation. This draws around 800W of electrical power on my 7kW Vaillant Arotherm Plus. After a couple of minutes the heat pump controller will adjust the modulation to try and hit a target flow temperature. The target temperature is determined by Vaillant's weather compensation logic and depends on the user's heat curve setting, the current outdoor temperature and the desired indoor temperature.
 
-If the current flow temperature is below target, the compressor will modulate up. If it's above target, the compressor will modulate down. If it's a long way from target, the change will be more aggressive. During shoulder season, the compressor will eventually end up at 25% modulation, with the flow temperature continuing to rise above the target temperature. 
+If the current flow temperature is below target, the compressor will modulate up. If it's above target, the compressor will modulate down. If it's a long way from target, the change will be more aggressive. During shoulder season, the compressor will eventually end up at 25% modulation, with the flow temperature continuing to rise above the target temperature.
+
+The higher the flow temperature, the more power consumed by the heat pump and the lower the efficiency. We want to maximize the time that the heat pump spends operating at low flow temperatures.
 
 {% include candid-image.html src="/assets/images/home-assistant/heat-cycle-may-day-12c.png" alt="Heat Cycle 12C outside" %}
 
-During mild weather the initial 2 minute burst immediately gets the flow temperature above target. The compressor modulates down to the minimum level but it's too late, the flow temperature keeps climbing. There's an initial burst of heat, followed by a very pronounced dip in performance after the first 10 minutes. The heat pump reaches a steady state, with consistent heat output, after 20 minutes. 
+In mild weather the initial 2 minute burst immediately gets the flow temperature above target. The compressor modulates down to the minimum level but it's too late, the flow temperature keeps climbing. There's an initial burst of heat, followed by a very pronounced dip in performance after the first 10 minutes. The heat pump reaches a steady state, with consistent heat output, after 20 minutes. 
 
 When short cycling, the heat pump doesn't make it through the dip, resulting in a low coefficient of performance (COP) for the cycle as a whole. In contrast, if allowed to run for another 20 minutes at steady state, my heat pump achieves a COP well over 5. 
 
 {% include candid-image.html src="/assets/images/home-assistant/heat-cycle-may-night-6c.png" alt="Heat Cycle 6C outside" %}
 
-During colder weather, the flow temperature is still below target after the initial burst. The compressor ramps up aggressively until the target is hit and then modulates down. Of course, the flow temperature continues to sail up beyond the target because the compressor can't modulate down enough.
+During colder weather, the flow temperature is still below target after the initial burst. The compressor ramps up aggressively until the target is hit and then modulates down. Of course, the flow temperature continues to sail up beyond the target because the compressor can't modulate down enough. The dip is still there but much less pronounced.
 
 # Energy Integral
 
 [Energy Integral](https://energy-stats.uk/vaillant-arotherm-firmware-351-06-07-problems-energy-integral/) is the mechanism Vaillant uses to control cycling of the heat pump when the minimum modulation produces too much heat. Energy integral is implemented as a counter. Every few seconds the difference between the current flow temperature and the target flow temperature is added to the counter. 
 
-If the current flow temperature is too high, the counter goes up. The heating cycle starts with the counter at -60 (can be configured in the settings). If the counter goes over zero, the heating cycle ends. If the current flow temperature is too low, the counter goes down. Once it reaches the starting value, another heating cycle is started.
+If the current flow temperature is too high, the counter goes up. The heating cycle starts with the counter at -60 (can be configured in the settings). If the counter goes over zero, the heating cycle ends. If the current flow temperature is too low, the counter goes down. Once it reaches the starting value, another heating cycle can begin.
 
 This system ensures that the average flow temperature matches the target, while smoothing out the effects of short term deviations in flow temperature.
 
@@ -69,20 +71,40 @@ The flow of logic in the heat pump is as follows.
 2. Clamp the target so that it doesn't exceed the range defined by the min and max flow temperature parameters.
 3. Feed target and current flow temperatures into energy integral logic which decides how to modulate the compressor and when to end the heating cycle.
 
-Havenwise set the heating curve to it's lowest possible value of 0.1. This produces an incredibly low target flow temperature. Set a minimum temperature above that and you can directly control target temperature. 
+Havenwise sets the heating curve to its lowest possible value of 0.1. This produces a target flow temperature just above the desired temperature. Set a minimum temperature above that and you can directly control target temperature. 
 
-Havenwise sidesteps Vaillant's weather compensation logic and uses it's own to directly drive target flow temperature. However, it still relies on Vaillant's energy integral logic to achieve the target flow temperature and handle cycling. 
+Havenwise sidesteps Vaillant's weather compensation logic and uses its own to directly drive target flow temperature. However, it still relies on Vaillant's energy integral logic to achieve the target flow temperature and handle cycling. 
 
 I want to go one step further. 
 
 # One Step Beyond
 
-The heat pump will cycle if you set target temperature below the minimum that the heat pump can produce. The trick is to keep setting the target temperature to match the current flow temperature. This will extend the cycle time indefinitely if you get it bang on.
+The heat pump will cycle if you set target temperature below the minimum that the heat pump can produce. The heat pump will ramp up aggressively if you set the target temperature too far above the current flow temperature. The trick is to keep setting the target temperature to match the current flow temperature. This will avoid any aggressive changes in modulation and extend the cycle time indefinitely if you get it bang on.
 
-* Problem is flow temperature is a moving target
-* Heat pump runs at minimum power (25% compressor modulation) and you get whatever flow temperature you get depending on local conditions. Even worse, it changes during a run depending on how effective your emitters are at using that heat.
-* In my case, at this time of year, flow temp at min power goes up steadily during the cycle.
-* Start with a best case guess (typical observed value) and update regularly once in steady state
+The problem is that flow temperature is a moving target. The heat pump runs at minimum power (25% compressor modulation) and you get whatever flow temperature you get depending on local conditions. Even worse, it changes during a run depending on how effective your emitters are at using that heat.
+In my case, at this time of year, flow temperature at minimum power goes up steadily throughout the cycle.
+
+I have to rely on Open Energy Monitoring (OEM) to determine flow temperature and state of the system (DHW, Heating or Standby). Vaillant cloud is too infrequently updated, with too high latency before changes are visible. My Open Energy Monitoring install includes a direct sensor on the ESBE valve to determine when the DHW circuit is active.  For Heating vs Standby, I use the power consumption of the heat pump, treating anything over 400W as actively heating.
+
+Managing the target temperature is a balancing act. I don't want to update too frequently and hit Vaillant API rate limits. I don't want to be too far above the current flow temperature and cause the heat pump to modulate up. I don't want to be too far below as that will eat up the energy integral.
+
+After lots of trial and error I came up with an approach where I update the minimum flow temperature if the current flow temperature is over a degree different. I set minimum to 0.5°C above current and define a threshold where I will update minimum again another 0.5°C past that. The idea is that current flow temperature will be under target for same amount of time that it's over target. 
+
+The threshold is stored in a helper entity in Home Assistant with a trigger than runs an update automation whenever the current flow temperature goes above the threshold. This restricts updates to at most once per degree of increase.
+
+# Refining the Strategy
+
+It *almost* works. The compressor settles at 25% modulation and the cycle length is extended. However, energy integral is still being consumed. The temperature measured by OEM is less than the value reported in the Vaillant live monitor. 
+
+There's lots of reasons why the values might not match. The sensors are in different places (in the airing cupboard vs in the heat pump). There's 10 seconds latency on the OEM data but close to zero for the value used by the heat pump. The sensors aren't explicitly calibrated to match each other.
+
+The live monitor reports target flow temperature to the nearest 0.5C. I don't know whether that's just for display or applied to the actual value used in the energy integral calculation. To save my sanity I made sure that the minimum I set is also rounded to 0.5C. To account for the differences in temperatures measured by Vaillant and OEM, I biased the threshold so that the OEM value stays between 0.7C below and 0.3C above target.
+
+I can now run for as long as I like at minimum power. However, I realized that the compressor doesn't reach minimum modulation until steady state running, 20 minutes into the cycle. Unsurprisingly, if you keep target close to actual, the Vaillant controller will keep modulation steady. It drifts gradually down whenever we update the minimum to above the current value. 
+
+I switched strategy for the first 10 minutes of a cycle, or until electrical power falls below 600W. During this time we keep the target flow temperature just below the current flow temperature. Energy integral is consumed, but slowly. The heat pump ramps down to minimum modulation straight after the initial burst. 
+
+# When DHW seques into Heating
 
 * In normal operation energy integral update is suspended during a DHW run. Obviously, house is still losing heat during these periods, so infuriating that heating doesn't come on immediately when requested again.
 * Heat pump is already running, house is below temperature, no inefficient compressor startup to go through if heating picks up when DHW turns off.
@@ -95,18 +117,8 @@ The heat pump will cycle if you set target temperature below the minimum that th
 * Wait until temperature below 35C then until flow temperature starts to climb again.
 * Tracking actual flow temperature for first few minutes after DHW run is too risky. What happens if I set min flow temp to 65C and then Vaillant cloud access goes down and I'm left with heating running full blast. Compromise is to use 35C as initial value for DHW case (22C for start from Standby). Will take a significant chunk from energy integral before hitting steady state but as long as I can hold integral from then on should be OK.
 
-* Have to rely on Open Energy Monitoring to determine flow temperature and state of system (DHW, Heating or Standby). Vaillant cloud too infrequently updated, too high latency. 
-* Have direct sensor on the ESBE value to determine when DHW circuit is active. For Heating vs Standby rely on power consumption of heat pump. Treat anything over 400W as actively heating.
-* Managing minimum temperature is a balancing act. Don't want to update too frequently and hit Vaillant API rate limit. Don't want to be too far above current temp as heat pump will ramp up from minimum power. Don't want to be too far below as will eat up energy integral.
-* After lots of trial and error came up with approach where I update minimum if current is over a degree different. I set minimum to 0.5C above actual and the threshold where I will update minimum another 0.5C past that.
-* Idea is that actual will be under minimum roughly for same amount of time that it's over minimum.
+# Long Cycles
 
-* Slowed down rate of progress, but energy integral still being consumed.
-* Temperature measured by OEM is less than the value reported in the Vaillant live monitor. The sensors are in different places (in the airing cupboard vs in the heat pump). There's 10 seconds latency on the OEM data but close to zero for the value used by the heat pump.
-* Live monitor reports target flow temperature to nearest 0.5C. Don't know whether that's just display or actual value used in energy integral calculation.
-* To save my sanity made sure that the minimum I set is also rounded to 0.5C. To account for difference in temperatures measured by vaillant and OEM, I biased the threshold so that OEM actual is between 0.7C below and 0.3C above target.
-
-* Can now run for as long as I like at minimum
 * Problem is that COP gets worse the longer you let it run. Starts at 5.5+ and then degrades to 4.5
 * Flow temperature keeps going up (flattens out at around 34C)
 * DeltaT stays pretty much the same, around 2C. Maybe a little wider at higher flow temp but not significant
@@ -118,9 +130,6 @@ The heat pump will cycle if you set target temperature below the minimum that th
 * Explicitly resetting energy integral can only be done by turning off heating, waiting a few minutes for everything to settle down and then restarting.
 * Tried increasing flow temp to 35C so that energy integral would quickly fall back to starting point. Instead, this immediately starts a new heating cycle *without* resetting energy integral. Starts with current value so you get a really short cycle.
 * In the end left minimum flow temp at level it reached (typically limit of 30C) and let energy integral fall back naturally. Usually gets back to start around the time that flow temp gets back to 23C.
-
-* Current strategy for managing minimum flow temp stops the energy integral from being consumed. However, realized that compressor doesn't reach minimum modulation until steady state running. Unsurprisingly, if you keep target close to actual, the pid controller will keep modulation steady. It's not incentivized to drop it until we hit the limit for moving the target up.
-* Switched my strategy for the first 10 minutes of a cycle, or until HP electrical power falls below 600W. During this time we keep target just below actual. Energy integral is consumed, but slowly. pid controller always ramps down after the initial burst.
 
 # The Dip
 
@@ -146,6 +155,7 @@ The heat pump will cycle if you set target temperature below the minimum that th
 * Some of the heat that would otherwise go into heating water is taken by the additional coolant
 * Combination of heat taken up by coolant, water reaching consistent temperature triggering payback of out performance causes dip
 * Maybe
+
 
 # Reflection
 
