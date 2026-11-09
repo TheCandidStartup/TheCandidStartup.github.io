@@ -36,19 +36,19 @@ If the current flow temperature is below target, the compressor will modulate up
 
 The higher the flow temperature, the more power consumed by the heat pump and the lower the efficiency. We want to maximize the time that the heat pump spends operating at low flow temperatures.
 
-{% include candid-image.html src="/assets/images/home-assistant/heat-cycle-may-day-12c.png" alt="Heat Cycle 12C outside" %}
+{% include candid-image.html src="/assets/images/home-assistant/heat-cycle-may-day-12c.png" alt="Heat Cycle 12°C outside" %}
 
-In mild weather the initial 2 minute burst immediately gets the flow temperature above target. The compressor modulates down to the minimum level but it's too late, the flow temperature keeps climbing. There's an initial burst of heat, followed by a very pronounced dip in performance after the first 10 minutes. The heat pump reaches a steady state, with consistent heat output, after 20 minutes. 
+In mild weather, the initial two minute burst immediately gets the flow temperature above target. The compressor modulates down to the minimum level but it's too late, the flow temperature keeps climbing. There's an initial burst of heat, followed by a very pronounced dip in performance after the first 10 minutes. The heat pump reaches a steady state, with consistent heat output, after 20 minutes. 
 
 When short cycling, the heat pump doesn't make it through the dip, resulting in a low coefficient of performance (COP) for the cycle as a whole. In contrast, if allowed to run for another 20 minutes at steady state, my heat pump achieves a COP well over 5. 
 
-{% include candid-image.html src="/assets/images/home-assistant/heat-cycle-may-night-6c.png" alt="Heat Cycle 6C outside" %}
+{% include candid-image.html src="/assets/images/home-assistant/heat-cycle-may-night-6c.png" alt="Heat Cycle 6°C outside" %}
 
 During colder weather, the flow temperature is still below target after the initial burst. The compressor ramps up aggressively until the target is hit and then modulates down. Of course, the flow temperature continues to sail up beyond the target because the compressor can't modulate down enough. The dip is still there but much less pronounced.
 
 # Energy Integral
 
-[Energy Integral](https://energy-stats.uk/vaillant-arotherm-firmware-351-06-07-problems-energy-integral/) is the mechanism Vaillant uses to control cycling of the heat pump when the minimum modulation produces too much heat. Energy integral is implemented as a counter. Every few seconds the difference between the current flow temperature and the target flow temperature is added to the counter. 
+[Energy Integral](https://energy-stats.uk/vaillant-arotherm-firmware-351-06-07-problems-energy-integral/) is the mechanism Vaillant uses to control cycling of the heat pump when the minimum modulation produces too much heat. Energy integral is implemented as a counter. Every minute the average difference between the current flow temperature and the target flow temperature is added to the counter. 
 
 If the current flow temperature is too high, the counter goes up. The heating cycle starts with the counter at -60 (can be configured in the settings). If the counter goes over zero, the heating cycle ends. If the current flow temperature is too low, the counter goes down. Once it reaches the starting value, another heating cycle can begin.
 
@@ -86,9 +86,9 @@ In my case, at this time of year, flow temperature at minimum power goes up stea
 
 I have to rely on Open Energy Monitoring (OEM) to determine flow temperature and state of the system (DHW, Heating or Standby). Vaillant cloud is too infrequently updated, with too high latency before changes are visible. My Open Energy Monitoring install includes a direct sensor on the ESBE valve to determine when the DHW circuit is active.  For Heating vs Standby, I use the power consumption of the heat pump, treating anything over 400W as actively heating.
 
-Managing the target temperature is a balancing act. I don't want to update too frequently and hit Vaillant API rate limits. I don't want to be too far above the current flow temperature and cause the heat pump to modulate up. I don't want to be too far below as that will eat up the energy integral.
+Managing the target temperature is a balancing act. I don't want to update too frequently and hit Vaillant API rate limits. I don't want to be too far above the current flow temperature and cause the heat pump to modulate up. I don't want to be too far below as that will eat up the energy integral. My starting energy integral is configured to -100 which gives me more wiggle room. 
 
-After lots of trial and error I came up with an approach where I update the minimum flow temperature if the current flow temperature is over a degree different. I set minimum to 0.5°C above current and define a threshold where I will update minimum again another 0.5°C past that. The idea is that current flow temperature will be under target for same amount of time that it's over target. 
+After lots of trial and error I came up with an approach where I update the minimum flow temperature if the current flow temperature is over a degree different. I set minimum to 0.5°C above current and define a threshold where I will update minimum again another 0.5°C past that. The idea is that current flow temperature will be under target for the same amount of time that it's over target. 
 
 The threshold is stored in a helper entity in Home Assistant with a trigger than runs an update automation whenever the current flow temperature goes above the threshold. This restricts updates to at most once per degree of increase.
 
@@ -98,53 +98,36 @@ It *almost* works. The compressor settles at 25% modulation and the cycle length
 
 There's lots of reasons why the values might not match. The sensors are in different places (in the airing cupboard vs in the heat pump). There's 10 seconds latency on the OEM data but close to zero for the value used by the heat pump. The sensors aren't explicitly calibrated to match each other.
 
-The live monitor reports target flow temperature to the nearest 0.5C. I don't know whether that's just for display or applied to the actual value used in the energy integral calculation. To save my sanity I made sure that the minimum I set is also rounded to 0.5C. To account for the differences in temperatures measured by Vaillant and OEM, I biased the threshold so that the OEM value stays between 0.7C below and 0.3C above target.
+The live monitor reports target flow temperature to the nearest 0.5°C. I don't know whether that's just for display or applied to the actual value used in the energy integral calculation. To save my sanity I made sure that the minimum I set is also rounded to 0.5°C. To account for the differences in temperatures measured by Vaillant and OEM, I biased the threshold so that the OEM value stays between 0.7°C below and 0.3°C above target.
 
-I can now run for as long as I like at minimum power. However, I realized that the compressor doesn't reach minimum modulation until steady state running, 20 minutes into the cycle. Unsurprisingly, if you keep target close to actual, the Vaillant controller will keep modulation steady. It drifts gradually down whenever we update the minimum to above the current value. 
+I can now run for as long as I like at minimum power. However, I realized that the compressor doesn't reach minimum modulation until steady state running, 20 minutes into the cycle. Unsurprisingly, if you keep target close to actual, the Vaillant controller will keep modulation steady. It drifts gradually down as, on average, flow temperature is slightly over target.
 
 I switched strategy for the first 10 minutes of a cycle, or until electrical power falls below 600W. During this time we keep the target flow temperature just below the current flow temperature. Energy integral is consumed, but slowly. The heat pump ramps down to minimum modulation straight after the initial burst. 
 
-# When DHW seques into Heating
-
-* In normal operation energy integral update is suspended during a DHW run. Obviously, house is still losing heat during these periods, so infuriating that heating doesn't come on immediately when requested again.
-* Heat pump is already running, house is below temperature, no inefficient compressor startup to go through if heating picks up when DHW turns off.
-* The trick is simply to turn the heating off, wait for heat pump to go into idle state, then turn back on. Heating starts immediately with energy integral reset.
-* Leave heating "off" by default. Turn on when needed to trigger a heating cycle, then turn off when cycle ends. Use DHW run and inside temperature below threshold as triggers.
-
-* Startup behavior very different for DHW -> Heating vs Standby -> Heating
-* For Standby case flow temperature starts to go up steadily as soon as heat pump has passed startup sequence and started using significant power
-* For DHW case, flow temperature can be 60C+ which stays steady until cold water from the radiators reaches the sensor, at which point it plummets.
-* Wait until temperature below 35C then until flow temperature starts to climb again.
-* Tracking actual flow temperature for first few minutes after DHW run is too risky. What happens if I set min flow temp to 65C and then Vaillant cloud access goes down and I'm left with heating running full blast. Compromise is to use 35C as initial value for DHW case (22C for start from Standby). Will take a significant chunk from energy integral before hitting steady state but as long as I can hold integral from then on should be OK.
-
-# Long Cycles
-
-* Problem is that COP gets worse the longer you let it run. Starts at 5.5+ and then degrades to 4.5
-* Flow temperature keeps going up (flattens out at around 34C)
-* DeltaT stays pretty much the same, around 2C. Maybe a little wider at higher flow temp but not significant
-* As flow temp goes up, the heat pump draws more power to support the higher temperature, even though compressor is at the same minimum 25% rate throughout.
-
-* Can actually get better efficiency by letting heat pump cycle, so it spends more time at the most efficient flow temperatures
-* Put a cap on increase in minimum flow temperature. Doesn't stop temperature going up, but does mean energy integral gets consumed, triggering end of cycle.
-* Keep heating active so pump keeps working. Wait for flow temp to fall back to 23C, ready to start again.
-* Explicitly resetting energy integral can only be done by turning off heating, waiting a few minutes for everything to settle down and then restarting.
-* Tried increasing flow temp to 35C so that energy integral would quickly fall back to starting point. Instead, this immediately starts a new heating cycle *without* resetting energy integral. Starts with current value so you get a really short cycle.
-* In the end left minimum flow temp at level it reached (typically limit of 30C) and let energy integral fall back naturally. Usually gets back to start around the time that flow temp gets back to 23C.
-
 # The Dip
 
-* Obsessed by the dip in heat pump performance after 10 minutes
-* Not just my heat pump - see the same thing for lots of other Vaillants on HeatPumpMonitor.org
-* Also lots of Vaillants that don't have a dip. They have initial ramp up of power, then fall gracefully back to steady state
-* Also weather dependent. Dip is most pronounced during mild conditions, as it gets colder it becomes more of a plateau
+{% include candid-image.html src="/assets/images/home-assistant/heat-cycle-may-day-12c.png" alt="The Dip" %}
+
+I've become obsessed with the dip in heat pump performance during startup. It's not just my heat pump. You can see the same thing for lots of other Vaillants on [HeatPumpMonitor.org](https://heatpumpmonitor.org/).
+
+There's also lots of Vaillants that don't have a dip. They have the same initial ramp up of power, then fall gracefully back into a steady state. It's also weather dependent. The dip is most pronounced during mild conditions, as it gets colder it becomes more of a plateau.
+
+After comparing a lot of different systems, I think I understand what's going on. It's all to do with system volume and how quickly flow temperature ramps up. 
+
+At the start of a cycle, flow temperature shoots up as the compressor is driven to an initial 40% modulation. My system quickly establishes a deltaT between flow and return of 3.5°C. It then takes two minutes before the return temperature goes up. 
+
+The system flow rate is 20L/min, which means there's 40L of water in the pipes on the shortest path around the heating circuit. It's an open loop system with radiators. The radiators have a volume of 50L, for a total system volume of 90L. 
+
+
+* Overnight initial ramp 12 to 17, then 23 peak before plateau
+* Daytime initial ramp 20 to 24, then 26 peak before dip
 * Initially assumed that compressor was modulating up during dip due to increased power consumption
 * When I stood and watched what was happening on live monitor, saw that compressor ramped down to 25% in first few minutes and stayed there through the run. The extra power consumption is because the heat pump is working extra hard.
 
-* At start of cycle flow temperature shoots up as compressor driven to initial 40% modulation
+
 * It takes 2 minutes before return temperature goes up
-* Flow rate is 20L/min, which means there's 40L of water on shortest path round heating circuit
-* Radiators are plumbed BBOE (bottom to bottom opposite ends) so minimum path is pipes + along the bottom of each radiator
-* Radiators have a volume of 50L which suggests a total volume of up to 90L
+* Flow rate is 20L/min, which means there's 40L of water in the pipes on shortest path round heating circuit
+* Radiators have a volume of 50L which suggests a total volume of 90L
 * As the water continues to circulate cold water from the top of the radiators is mixed in to return flow
 * The heat pump doesn't have to work hard to raise the temperature of cold water by 2-3 degrees
 * Flow temp rises very quickly, faster than return temp. Heat pump is overperforming due to inertia of cold water. Will have to be paid back.
@@ -156,192 +139,29 @@ I switched strategy for the first 10 minutes of a cycle, or until electrical pow
 * Combination of heat taken up by coolant, water reaching consistent temperature triggering payback of out performance causes dip
 * Maybe
 
+# Managing a Full Cycle
 
-# Reflection
-
-* Can run heating cycle at minimum (after inescapable startup ramp) for as long as I want
+* Can turn on heating and run heat pump indefinitely at close to minimum modulation
 * Roller coaster first 20 minutes until system hits steady state
 * Want at least 20 minutes after hitting steady state to payback startup costs
-* Instant COP declines as flow temperature continues to rise, with reduction in overall COP after another 20-40 minutes
-* Tried forcing cycling after 80 minutes run time with same approach of letting energy integral naturally run down and restart.
-* You're ending cycle before you've delivered enough heat, so you don't want to wait too long before starting the next. 
-* Even with 20-30 minutes off time, flow temperature doesn't drop enough. Falls back about the same amount as the initial ramp up at start of cycle. You go through all the shutdown and startup costs to end up in steady state no more efficient than when you stopped.
-* Does work really well when you don't need that much heat and minimum 40 minute cycle delivers enough heat for an hour or more of down time. 
-* Question now is how to best schedule heating cycles through day
-* Is current approach of DHW + temperature threshold good enough?
+* End cycle once heat pump has been active for at least 40 minutes and current temperature is above threshold
+* Can't just turn heating off. If you do, pump stops running and we're wasting the heat that we've built up in the circuit.
+* Want to keep pump running until the residual heat has been emitted.
+* I leave target flow temperature at it's current value so that the energy integral keeps going up as flow temperature falls. I don't want the energy integral logic to start another heating cycle before I'm ready.
+* Once flow temperature falls below 23°C, I turn the heating off.
+* Once the current temperature falls below my threshold range, I turn the heating back on. Fortunately, Vaillant resets the energy integral counter back to its starting position as long as the heating has been off for a few minutes. The new cycle starts immediately.
 
-* Best efficiency at night by scheduling heating cycle that transitions into DHW and back to heating
-* Starting DHW with 30C+ flow temp avoids wasteful ramp up, shortens time needed for DHW
-* Starting follow on heating cycle with flow temp at 65C and high compressor modulation avoids the startup dip
-* Can work out heat lost during setback period and then start pre-DHW cycle to replace it all.
+# Special Cases
 
-# Predicting Overnight Energy Requirement
+* On rare occasions a heating cycle may end prematurely. Perhaps I didn't manage the energy integral well enough, or maybe Vaillant's API had an outage and I failed to increase the minimum flow temperature when needed. 
+* If the heat pump goes inactive and the current temperature is still below threshold, I drop minimum flow temperature to 20°C. This brings down the energy integral quite rapidly. Typically, the heat pump will start a new cycle after 20 minutes or so, at which point I start managing minimum flow temperature again. 
 
-* Use weather forecast at 21:30 to predict heat loss through until 5:30
-* Diff from outside temp to 14C each hour, sum up, multiply by 300W
+* In normal operation, with heating on all the time, energy integral update is suspended during a DHW run. Obviously, house is still losing heat during these periods, so infuriating that heating doesn't come on immediately when requested again.
+* Heat pump is already running, house is below temperature, no inefficient compressor startup to go through if heating picks up when DHW turns off.
+* I turn heating on whenever a DHW run starts. The energy integral resets and the heat pump naturally transitions into heating when the DHW run ends. 
 
-# Home Assistant Implementation
-
-* Do all the calculations in a template and put result in a variable that other actions can use
-* Define variables action lets you define multiple variables
-
-```yaml
-variables:
-  variable1: "First value"
-  variable2: "second value"
-```
-
-* First try was to put template logic at top of yaml then return results by defining as many variables as I needed to capture everything
-* Didn't work. Action expects explicit yaml for variable definitions with separate templates allowed for each value.
-* Have to put all the logic in a value definition and return output of template as a single variable
-
-{% raw %}
-
-```yaml
-variables:
-  output: >
-    {% set v = 0 %}
-    {# Calculate whatever v should be #}
-    {{ v }}
-```
-
-{% endraw %}
-
-* Have to respect indentation of outer structure and indent each line twice
-* Visual editor keeps removing line breaks making it hard to manage
-
-# Results
-
-* Gives me twice as much heat, compared with what I put in by running a heat cycle whenever inside temperature drops too low
-* For first trial dropped heat loss to 150W but compensated by using apparent temperature in forecast to try and factor in effect of wind
-* Still too much
-* Looked in detail at model for calculating apparent temperature. Looks at expected heat loss from your face when walking at 3mph.
-* Always lower than air temperature, even when no wind, like last night. Not appropriate.
-* Conversely during the last storm that came through, could barely maintain overnight temperature while generating 41kWh of heat over 8 hours at 7C outside
-* That's 730W per degree using 14C cutoff
-
-# Heat Loss Calculation
-
-* [Heat Loss](https://www.heatgeek.com/articles/heat-geeks-guide-to-understanding-heat-loss-calculations) per degree = Fabric Loss + Air Change Loss
-* Fabric Loss = Sum(Surface Area * U value) for all external walls/roofs/floors/doors/windows
-* Air Change Loss = Volume of Air * ACH * 0.33 where ACH = Air Changes per Hour
-* Heat Geek Design provided to me just gives final heat loss figure + heat loss for each room
-* Don't have volume, surface area or U values used so can't see how accurate 300W figure is, or balance between air loss and fabric loss
-* The internet says a house like mine (1930s semi with cavity wall insulation + double glazing) is typically one third air loss, two thirds fabric loss
-* UK guidance suggests using an ACH of 1.5 for older houses. Latest thinking says this can be a significant overestimate and upgraded house like mine could be as low as 0.5.
-* High wind has a big impact on ACH for older houses, in worst cases going as high a 6.
-* Looking at plans for my house I reckon volume is about 200m3, which is 66W with an ACH of 1
-* If I assume 0.5 ACH in the still conditions where I "measured" actual 150W per degree heat loss, ends up with 33W air loss, 117W fabric loss, potential heat loss range of 150W to 513W depending on wind
-* If I go with rule of thumb that air loss is a third I get 50W air loss, 100W fabric loss (ACH=0.75) with a possible range of 150W to 496W
-* If Heat Geek used the standard guidance of ACH 1.5, that would give 100W air loss and with the thirds rule of thumb 200W fabric loss which is suspiciously on the money for the 300W figure.
-* Another quick snapshot this morning in still conditions with no significant solar gain has 8kWh of heat generated over 6 hours at 8C outside. Which is 220W per degree with a 14C basis.
-* 13.49kWH over 12 hours at 8C outside -> 187W
-* 6kWh over 12 hours at 9C outside (6pm->6am) -> 100W (significant solar gain during day, could heat have lingered in fabric?)
-* Where does 14C cutoff come from? It's to allow for heat generated by occupancy. Assumption is you get 3 degrees for free. If its 14C outside, it'll be 17C inside without any additional heating. With a 300W loss, that's 900W of occupancy heating, which seems high. However, does seem to work in practice.
-* Human body produces about 100W, with 3 occupants that's 300W. Base electrical load for house is about 200W. Overnight figure (when heat pump not running). Fridge, freezer, lots of devices on standby. Ultimately all of that energy is converted to heat.
-* Let's assume 500W for occupancy. That's 166W per degree for a 14C cutoff.
-* That's nicely within the "measured" range of heat loss that I'm seeing in still conditions
-* With 0.5 ACH, would break down as 33W air loss and 133W fabric loss. 
-* Fabric loss calculation depends on knowing U values. In practice have to use best guess values for type of building construction, erring on the side of caution. Typically 20-50% too high. 200W is a 50% increase on 133W, so still within the realms of plausibility.
-* Gives me a range of heat loss between 166W and 529W.
-* Let's look at data from storm again. We have 41kWh heat generated over 8 hours at 7C. That's 5.1kW per hour, or 5.6kW including occupancy. With a 10C deltaT between inside and outside, we get 560W heat loss. Close enough to my expected maximum of 529W given margin of error in my "measurements".
-
-* Total emitters (all steel rads) output 11710W at dt50 (radiator 50C hotter than room temperature)
-* Plug that into a [heating calculator](https://heatpumptools.co.uk/radiator-flow-temperature-calculator/) and it suggest a flow temp of 50.8C for design temp of -3C outside.
-* Looking back at last winter, heat pump actually ran with flow temp of about 38C at -3C
-* If I reduce heat loss in calculator by `166/300`, it gives me a flow temperature of, drum roll please, 38.7C.
-* My installer recommended a heat curve of 0.7 which is where I've settled. If this was based on design, why is flow temp so much lower
-* Using equation that calculates flow temperature given Vaillant Heat Curve and inside and outside temperatures
-* `TFlow = a * (HC * (Tset - Tout))^b + Tset` where `a = 2.55` and `b=0.78`
-* A heat curve of 0.7 would give, drum roll please, 38.7C at design temperatures
-* Which suggests installer knew that calculated heat loss was a massive overestimate. You'd need a heating curve of 1.25 to get a flow temperature of 50.6C.
-
-* Loss=166W, TFlow=38.7C, HC=0.7
-* Loss=300W, TFlow=50.6C, HC=1.25
-* Loss=500W, TFlow=65.1C, HC=2
-
-* Max target flow temperature set to 55C. If we get a super cold day that is also blowing a gale, we have a wood burner to top up heat
-* To a first approximation, ACH [scales linearly](https://industrialmonitordirect.com/blogs/knowledgebase/estimating-building-air-exchange-as-wind-speed-changes) with wind speed. `ACHactual = ACHref * Vactual / Vref`
-* UK guidance uses 4.5m/s (16 kn/h) as basis for ACH in heat loss calculations
-* Also matches observed experience of minimum heat loss below this speed
-* Use ACH=0.5, Speed = 16km/h as basis. Anything below that speed also uses ACH=0.5. Anything above that speed scales ACH linearly. 
-* Updated heating forecast logic for overnight runs and extracted as a separate script to make it easier to test/manage
-
-# Home Assistant Implementation
-
-* Define fields for start and end times so you can calculate forecast over any time you want
-
-```yaml
-fields:
-  start:
-    selector:
-      datetime: {}
-    name: Start
-    required: true
-  end:
-    selector:
-      datetime: {}
-    name: End
-    required: true
-```
-
-* Selector defines input control shown in form when you run script manually
-* Each field has a name and a key. Key defaults to lower case version of name.
-* Can access value of field in any template in the script
-* Docs bit vague on how you do that
-* First thought was as a variable using the key name
-* Put a test case together, ran the script and got error message that `start` was undefined
-* Wasted an awful lot of time trying to figure out how to get hold of field values
-* In the end seems to be some sort of bug when manually running the script. When you run it, form pops up to set field values with button to run actions.
-* Typically first run after making a change it runs as if you didn't set any values in the UI. Run it again and `start` variable is defined and it works.
-* My script compares a `datetime` from the forecast with `start` and `end` to see if it's relevant
-* Kept getting type errors in comparison
-* Whatever selector you use, field values are passed through as strings. You need to add an `as_datetime` filter.
-* The `datetime` produced by a field selector doesn't include a timezone. The `datetime` from the weather forecast does. I had to use `as_local` to add the local time zone to the field value before I could use it in a comparison.
-
-* Lots of ideas on how I can reuse script: schedule heating during the day, deciding when to use normal heating, adjusting heat curve to match wind
-* Want to calculate and return a few different things from the script
-* Should be easy. Response from script is a key/value map that gets assigned to a variable in the calling automation
-* You define the response by assigning it to a variable and specifying the variable name to return in the Stop action
-* So back to figuring out how to write a template that defines multiple variables in a Define Variables action
-* A key/value map variable looks like this
-
-```yaml
-variables:
-  response:
-    key1: "First value"
-    key2: "second value"
-```
-
-{% raw %}
-
-* I went down a rabbit hole trying to first define a `run` variable that contains multiple values from my forecast template, then using per key templates to extract the appropriate value from `run`.
-* Pulling my hair out trying to build a json string value in `run` that `from_json` would accept.
-* Kept ending up with double quoted strings
-* The trick is to use `{% set %}` and `{% endset %}` around the JSON and then return the defined variable
-* To my surprise, Home Assistant parses the JSON automatically and defines a variable with the corresponding key/value map
-
-```yaml
-variables:
-  result: >
-    {# Calculate sum=9.2 and count=8 using Jinja variables #}
-    {% set ret %}
-    { 
-      "heat_kwh": {{ sum }}, 
-      "count": {{ count }} 
-    } 
-    {% endset %} 
-    {{ ret }}
-```
-
-{% endraw %}
-
-*  Results in 
-
-```yaml
-variables:
-  result:
-    heat_kwh: 9.2
-    count: 8
-```
+* Startup behavior very different for DHW -> Heating vs Standby -> Heating
+* For DHW case, flow temperature can be 60C+ which stays steady until cold water from the radiators reaches the sensor, at which point it plummets.
+* Wait until temperature below 35C then until flow temperature starts to climb again.
+* Tracking actual flow temperature for first few minutes after DHW run is too risky. What happens if I set min flow temp to 65C and then Vaillant cloud access goes down and I'm left with heating running full blast. Compromise is to use 35C as initial value for DHW case. Will take a significant chunk from energy integral before hitting steady state but as long as I can hold integral from then on should be OK.
 
