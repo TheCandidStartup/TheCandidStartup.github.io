@@ -102,22 +102,40 @@ The live monitor reports target flow temperature to the nearest 0.5°C. I don't 
 
 I can now run for as long as I like at minimum power. However, I realized that the compressor doesn't reach minimum modulation until steady state running, 20 minutes into the cycle. Unsurprisingly, if you keep target close to actual, the Vaillant controller will keep modulation steady. It drifts gradually down as, on average, flow temperature is slightly over target.
 
-I switched strategy for the first 10 minutes of a cycle, or until electrical power falls below 600W. During this time we keep the target flow temperature just below the current flow temperature. Energy integral is consumed, but slowly. The heat pump ramps down to minimum modulation straight after the initial burst. 
+I switched strategy for the first 30 minutes of a cycle. Whenever electrical power is above 600W, we set the target flow temperature just below the current flow temperature. Energy integral is consumed, but slowly. The heat pump ramps down to minimum modulation straight after the initial burst, and if anything causes modulation to start trending up before we get to steady state running.
 
 # The Dip
 
-{% include candid-image.html src="/assets/images/home-assistant/heat-cycle-may-day-12c.png" alt="The Dip" %}
+{% include candid-image.html src="/assets/images/home-assistant/managed-heat-cycle-nov-10.png" alt="The Dip" %}
 
-I've become obsessed with the dip in heat pump performance during startup. It's not just my heat pump. You can see the same thing for lots of other Vaillants on [HeatPumpMonitor.org](https://heatpumpmonitor.org/).
+I'm pretty close to creating my perfect heat cycle. However, it still has a dip in performance ten minutes after startup. I've become obsessed with figuring out why. It's not just my heat pump. You can see the same thing for lots of other Vaillants on [HeatPumpMonitor.org](https://heatpumpmonitor.org/).
 
-There's also lots of Vaillants that don't have a dip. They have the same initial ramp up of power, then fall gracefully back into a steady state. It's also weather dependent. The dip is most pronounced during mild conditions, as it gets colder it becomes more of a plateau.
+There's also lots of Vaillants that don't have a dip. They have the same initial ramp up of power, but then fall gracefully back into a steady state. It's also weather dependent. The dip is most pronounced during mild conditions, as it gets colder (6°C in this example), it becomes more of a plateau.
 
-After comparing a lot of different systems, I think I understand what's going on. It's all to do with system volume and how quickly flow temperature ramps up. 
+After comparing a lot of different systems, I have some theories, but no solutions. I think it all comes down to system design. If you have low system volume, and a minimal set of emitters, you're likely to have a dip. Simple open loop systems with radiators, like mine, have dips. Large houses with underfloor heating don't. 
 
 At the start of a cycle, flow temperature shoots up as the compressor is driven to an initial 40% modulation. My system quickly establishes a deltaT between flow and return of 3.5°C. It then takes two minutes before the return temperature goes up. 
 
+# The Theory
+
 The system flow rate is 20L/min, which means there's 40L of water in the pipes on the shortest path around the heating circuit. It's an open loop system with radiators. The radiators have a volume of 50L, for a total system volume of 90L. 
 
+It's important to understand the limitations of the monitoring system. Flow temperature is measured as water leaves the heat pump and enters the heating circuit. Return temperature is measured as water leaves the heating circuit to return to the heat pump. The [assumption](https://docs.openenergymonitor.org/heatpumps/basics.html) is that heat emitted into the house is `(FlowT - ReturnT) * Flow Rate * Specific Heat Capacity`. In particular, that the deltaT between flow and return is due to heat transfer into the house from your emitters.
+
+This is only true when you've reached a steady state after startup, or when looking at the heat cycle as a whole. The first five minutes of the cycle is a great example. It looks like there's a massive spike in heat with better performance than any other point in the cycle. When I first saw this, it made me wonder whether I should restrict the heat pump to running for five minutes at a time. 
+
+In reality, there's virtually no heat emitted in the first few minutes. It takes two minutes for any of the hot water entering the heating circuit to make it to the end of the circuit. During that time you're just measuring the deltaT between the incoming hot water and the cold water that's sitting in the pipes and radiators. It takes around five minutes before all of the cold water has been displaced and the heating circuit is up to temperature. 
+
+After the first two minutes, flow temperature goes up rapidly. It's easy for the heat pump to raise the temperature of the returned water by 3°C, even as it's ramping down. However, once all the cold water has gone, flow temperature flattens out and deltaT narrows to a more normal 2°C. Vaillant heat pumps maintain a constant flow rate with a deltaT of 2°C at low flow temperatures and up to 5°C at high flow temperatures. 
+
+At this point all the water in the heating circuit has passed through the heat pump once. The momentum from that initial round trip keeps going, with flow and return temperatures rising in tandem. After five minutes and another round trip, we hit the dip. The heat pump finally has to pay back the initial rapid rise in flow temperature. 
+
+# The Physics
+
+Heat pumps work by pumping coolant around an evaporate/condense cycle. 
+* As temperatures go up, the heat pump needs more coolant in the circuit which it draws from an internal reservoir
+* Some of the heat that would otherwise go into heating water is taken by the additional coolant
+* Combination of heat taken up by coolant, water reaching consistent temperature triggering payback of out performance causes dip
 
 * Overnight initial ramp 12 to 17, then 23 peak before plateau
 * Daytime initial ramp 20 to 24, then 26 peak before dip
@@ -133,10 +151,7 @@ The system flow rate is 20L/min, which means there's 40L of water in the pipes o
 * Flow temp rises very quickly, faster than return temp. Heat pump is overperforming due to inertia of cold water. Will have to be paid back.
 * Once it modulates down to 25%, power consumption is only a little over 400W, deltaT hits 3 degrees, creating the massive spike in COP
 * As all the water reaches temperature, compressor has to work harder.
-* Heat pump works by pumping coolant around an evaporate/condense cycle
-* As temperatures go up, the heat pump needs more coolant in the circuit which it draws from an internal reservoir
-* Some of the heat that would otherwise go into heating water is taken by the additional coolant
-* Combination of heat taken up by coolant, water reaching consistent temperature triggering payback of out performance causes dip
+
 * Maybe
 
 # Managing a Full Cycle
