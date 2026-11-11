@@ -176,5 +176,24 @@ Once the flow temperature falls below 23°C, I turn the heating off. Once the cu
 
 * Running in shoulder mode for the last few weeks
 * Been working well. Consistently getting heat cycles with COP well over 5.
-* Less cycles overall. No pointless heating cycles when there's high solar gain.
-* Will be interesting to see what happens when it gets colder. Need to figure out when it makes sense to transition to full heating.
+* Less cycles overall. No short cycles. No pointless heating cycles when there's high solar gain.
+* Indoor temperature stays within a 0.4°C range
+* Longer time between cycles means lower flow temperature at start of cycle and more time overall at more efficient lower flow temperatures
+* Comparison of two cycles using normal Vaillant logic and shoulder mode. Both cycles at similar times of day, 4.5°C outside, 16.8-17.2°C inside, light winds, overcast sky, minimal solar gain
+
+{% include candid-image.html src="/assets/images/home-assistant/normal-heating-cycle.png" alt="Normal Heating Cycle" %}
+
+The normal heating cycle looks great. Consistent heat output and electricity use once we hit steady state. Barely any dip. The standard Vaillant logic ramps the compressor up to quickly get to target flow temperature, that ramps down once it overshoots. The dip coincides with the compressor modulating down, when the heat pump has plenty of spare capacity. Have I been wasting my time?
+
+The downside is that COP after 30 minutes, when the system has settled into steady state, is only 4.3. Electricity consumption peaks at 1250W before falling back to a steady 650W. The overall COP for an hour's running time is 4.23.
+
+{% include candid-image.html src="/assets/images/home-assistant/shoulder-heating-cycle.png" alt="Shoulder Mode Heating Cycle" %}
+
+The shoulder mode cycle looks more messy with a pronounced dip. Flow temperatures are kept as low as possible, only getting close to the normal cycle after an hour's running time. 
+
+The COP after 30 minutes is 5.0. Electricity consumption peaks at 850W before falling back to 500W and then steadily climbing with flow temperature over the course of an hour to 650W. The overall COP for an hour's running time is 4.62.
+
+The really interesting thing is when you look at heat output over the course of the full day. The standard logic outputs 25% more heat, with shorter gaps between cycles. The weird thing is that the indoor temperature measured by the thermostat is the same. 
+
+* Suspect difference is due to scheduling heating cycles based on thermostat rather than weather compensation. Shoulder mode is heating the air but not running long enough to heat the fabric of the building. This is the "more comfortable" heat that heat pumps are said to provide. 
+* Will be interesting to see what happens as it gets even colder. Need to figure out when it makes sense to transition to full heating.
