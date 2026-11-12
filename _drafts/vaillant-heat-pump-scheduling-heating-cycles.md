@@ -108,7 +108,7 @@ variables:
 * Let's look at data from storm again. We have 41kWh heat generated over 8 hours at 7C. That's 5.1kW per hour, or 5.6kW including occupancy. With a 10C deltaT between inside and outside, we get 560W heat loss. Close enough to my expected maximum of 529W given margin of error in my "measurements".
 
 * Total emitters (all steel rads) output 11710W at dt50 (radiator 50C hotter than room temperature)
-* Plug that into a [heating calculator](https://heatpumptools.co.uk/radiator-flow-temperature-calculator/) and it suggest a flow temp of 50.8C for design temp of -3C outside.
+* Plug that into a [heating calculator](https://heatpumptools.co.uk/radiator-flow-temperature-calculator/) with my 6110W heating requirement and it suggests a flow temp of 49.8C for design temp of -3C outside.
 * Looking back at last winter, heat pump actually ran with flow temp of about 38C at -3C
 * If I reduce heat loss in calculator by `166/300`, it gives me a flow temperature of, drum roll please, 38.7C.
 * My installer recommended a heat curve of 0.7 which is where I've settled. If this was based on design, why is flow temp so much lower
