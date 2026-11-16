@@ -20,9 +20,9 @@ That got me thinking. What else could I do to put off the moment when I had to t
 
 Shoulder season has a wide diurnal range. Temperatures drop overnight and the house needs additional heating in the morning. However, the house soon warms up with the heating hardly needed during the middle of the day. On sunny days there's masses of solar gain and the heating may not be needed at all. 
 
-Can we extend the idea of a post-DHW heating cycle to run the heat pump at minimum power until the house is up to temperature, then stop? When (or if) the temperature falls below a threshold, run another heating cycle.
+Can we extend the idea of a post-DHW heating cycle to run the heat pump at minimum power until the house is up to temperature, then stop? When the temperature falls below a threshold, run another heating cycle.
 
-This is similar to Vaillant's [expanded mode](https://energy-stats.uk/sensocomfort-room-temp-mod-inactive-active-or-expanded/#Room_Temp_Mod_Expanded) but with the heat pump forced to run as efficiently as possible. Expanded mode is a blunt instrument with the heat pump forced to stop outside a very narrow range of temperatures, which can lead to short cycles.
+This is similar to Vaillant's [expanded mode](https://energy-stats.uk/sensocomfort-room-temp-mod-inactive-active-or-expanded/#Room_Temp_Mod_Expanded) but with the heat pump forced to run as efficiently as possible. Expanded mode is a blunt instrument with the heat pump forced to stop outside a very narrow range of temperatures, which can lead to short cycles. We can do better.
 
 # Anatomy of a Heating Cycle
 
@@ -30,7 +30,7 @@ To understand why short cycles are so bad, we need to understand what happens du
 
 Vaillant heat pumps control their heat output by modulating the performance of the compressor which drives the movement of heat. The compressor can modulate smoothly between 25% and 100% of its full power.
 
-Each heating cycle starts with the heat pump ramping up quickly to around 40% compressor modulation. This draws around 800W of electrical power on my 7kW Vaillant Arotherm Plus. After a couple of minutes the heat pump controller will adjust the modulation to try and hit a target flow temperature. The target temperature is determined by Vaillant's weather compensation logic and depends on the user's heat curve setting, the current outdoor temperature and the desired indoor temperature.
+Each heating cycle starts with the heat pump ramping up quickly to around 40% compressor modulation. This draws around 800W of electrical power on my [7kW Vaillant Arotherm Plus]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}). After a couple of minutes the heat pump controller will adjust the modulation to try and hit a target flow temperature. The target temperature is determined by Vaillant's weather compensation logic and depends on the user's heat curve setting, the current outdoor temperature and the desired indoor temperature.
 
 If the current flow temperature is below target, the compressor will modulate up. If it's above target, the compressor will modulate down. If it's a long way from target, the change will be more aggressive. During shoulder season, the compressor will eventually end up at 25% modulation, with the flow temperature continuing to rise above the target temperature.
 
@@ -64,7 +64,7 @@ Then I read about [Havenwise](https://energy-stats.uk/havenwise-review-vaillant-
 
 # Havenwise
 
-Havenwise is a cloud based system that takes over control of your heat pump. It uses the same myVaillant API as Home Assistant does. So, how does it work?
+Havenwise is a cloud based system that takes over control of your heat pump. It uses the same [myVaillant]({% link _posts/2025-11-03-home-assistant-heat-pump-myvaillant-emoncms-met-office.md %}) API as Home Assistant does. So, how does it work?
 
 The flow of logic in the heat pump is as follows.
 1. Use Heating Curve parameter together with outside temperature and desired temperature to calculate target flow temperature.
@@ -84,9 +84,9 @@ The heat pump will cycle if you set target temperature below the minimum that th
 The problem is that flow temperature is a moving target. The heat pump runs at minimum power (25% compressor modulation) and you get whatever flow temperature you get depending on local conditions. Even worse, it changes during a run depending on how effective your emitters are at using that heat.
 In my case, at this time of year, flow temperature at minimum power goes up steadily throughout the cycle.
 
-I have to rely on Open Energy Monitoring (OEM) to determine flow temperature and state of the system (DHW, Heating or Standby). Vaillant cloud is too infrequently updated, with too high latency before changes are visible. My Open Energy Monitoring install includes a direct sensor on the ESBE valve to determine when the DHW circuit is active.  For Heating vs Standby, I use the power consumption of the heat pump, treating anything over 400W as actively heating.
+I have to rely on [Open Energy Monitoring]({% link _posts/2025-11-10-open-energy-monitoring.md %}) (OEM) to determine flow temperature and state of the system (DHW, Heating or Standby). MyVaillant is too infrequently updated, with too high latency before changes are visible. My Open Energy Monitoring install includes a direct sensor on the ESBE valve to determine when the DHW circuit is active.  For Heating vs Standby, I use the power consumption of the heat pump, treating anything over 400W as actively heating.
 
-Managing the target temperature is a balancing act. I don't want to update too frequently and hit Vaillant API rate limits. I don't want to be too far above the current flow temperature and cause the heat pump to modulate up. I don't want to be too far below as that will eat up the energy integral. My starting energy integral is configured to -100 which gives me more wiggle room. 
+Managing the target temperature is a balancing act. I don't want to update too frequently and hit Vaillant API rate limits. I don't want to be too far above the current flow temperature and cause the heat pump to modulate up. I don't want to be too far below as that will eat up the energy integral. Fortunately, my starting energy integral is configured to -100 which gives me more wiggle room. 
 
 After lots of trial and error I came up with an approach where I update the minimum flow temperature if the current flow temperature is over a degree different. I set minimum to 0.5°C above current and define a threshold where I will update minimum again another 0.5°C past that. The idea is that current flow temperature will be under target for the same amount of time that it's over target. 
 
@@ -94,13 +94,13 @@ The threshold is stored in a helper entity in Home Assistant with a trigger than
 
 # Refining the Strategy
 
-It *almost* works. The compressor settles at 25% modulation and the cycle length is extended. However, energy integral is still being consumed. The temperature measured by OEM is less than the value reported in the Vaillant live monitor. 
+It *almost* works. The compressor settles at 25% modulation and the cycle length is extended. However, energy integral is still being consumed. It turns out that the temperature measured by OEM is less than the value reported in the Vaillant live monitor. 
 
 There's lots of reasons why the values might not match. The sensors are in different places (in the airing cupboard vs in the heat pump). There's 10 seconds latency on the OEM data but close to zero for the value used by the heat pump. The sensors aren't explicitly calibrated to match each other.
 
 The live monitor reports target flow temperature to the nearest 0.5°C. Testing confirms that the min flow temperature parameter used in the energy integral calculation is rounded down to the nearest 0.5°C. To save my sanity I made sure that the minimum I set is also rounded to 0.5°C. To account for the differences in temperatures measured by Vaillant and OEM, I biased the threshold so that the OEM value stays between 0.7°C below and 0.3°C above target.
 
-I can now run for as long as I like at minimum power. However, I realized that the compressor doesn't reach minimum modulation until steady state running, 20 minutes into the cycle. Unsurprisingly, if you keep target close to actual, the Vaillant controller will keep modulation steady. It drifts gradually down as, on average, flow temperature is slightly over target.
+I can now run for as long as I like at minimum power. However, I realized that the compressor doesn't reach minimum modulation until steady state running, 20 minutes into the cycle. Unsurprisingly, if you keep target close to actual, the Vaillant controller will keep modulation steady. It only drifts down gradually as, on average, flow temperature is slightly over target.
 
 I switched strategy for the first 30 minutes of a cycle. Whenever electrical power is above 600W, we set the target flow temperature just below the current flow temperature, forcing the compressor to modulate down. Energy integral is consumed, but slowly. The heat pump ramps down to minimum modulation straight after the initial burst. 
 
@@ -126,7 +126,7 @@ This is only true when you've reached a steady state after startup, or when look
 
 In reality, there's virtually no heat emitted in the first few minutes. It takes two minutes for any of the hot water entering the heating circuit to make it to the end of the circuit. During that time you're just measuring the deltaT between the incoming hot water and the cold water that's been sitting in the pipes and radiators. It takes around five minutes before all of the cold water has been displaced and the heating circuit is up to temperature. 
 
-After the first two minutes, flow temperature goes up rapidly. It's easy for the heat pump to raise the temperature of the returned water by 3°C, even as it's ramping down. However, once all the cold water has gone, flow temperature flattens out and deltaT narrows to a more normal 2°C. Vaillant heat pumps maintain a constant flow rate with a deltaT of 2°C at low flow temperatures and up to 5°C at high flow temperatures. 
+After the first two minutes, flow temperature goes up rapidly. It's easy for the heat pump to raise the temperature of the returned water by 3°C, even as it's ramping down. However, once all the cold water has gone, flow temperature flattens out and deltaT narrows to a more normal 2°C. Vaillant heat pumps maintain a constant flow rate with an expected deltaT of 2°C at low flow temperatures and up to 5°C at high flow temperatures. 
 
 At this point all the water in the heating circuit has passed through the heat pump once. The momentum from that initial round trip keeps going, with flow and return temperatures rising in tandem. Flow temperature is rising faster than the heat pump can sustain. After five minutes and another round trip, the momentum has dissipated. The heat pump finally has to pay back the initial rapid rise in flow temperature. We hit the dip. 
 
@@ -166,17 +166,15 @@ If the heat pump goes inactive and the current temperature is still below thresh
 
 # DHW
 
-In normal operation, with heating on all the time, energy integral update is suspended during a DHW run. Obviously, the house is still losing heat during these periods, so it's infuriating if the heating doesn't come on immediately when the DHW run ends.
-
-The heat pump is already running and the house is below temperature. There's no compressor startup to go through if the heating picks up immediately when the DHW cycle ends.
+In normal operation, with heating on all the time, energy integral update is suspended during a DHW run. Obviously, the house is still losing heat during these periods, so it's infuriating if the heating doesn't come on immediately when the DHW run ends. The heat pump is already running and the house is below temperature. There's no compressor startup to go through if the heating picks up immediately when the DHW cycle ends.
 
 My automation turns the heating on (if not on already) whenever a DHW run starts. The energy integral resets and the heat pump naturally transitions into heating when the DHW run ends. 
 
 Startup behavior is very different when transitioning from DHW into Heating compared with Standby into Heating. For the DHW case, flow temperature can be 60°C or more. This stays steady for the first 30 seconds of the heating cycle until cold water from the radiators reaches the heat pump, at which point the flow temperature plummets.
 
-We wait until the flow temperature is below 35°C then again until flow temperature starts to climb again. Updating minimum flow temperature to track current flow temperature is too risky for the first few minutes after a DHW run. What happens if I set min flow temperature to 65°C and then Vaillant cloud access goes down and I'm left with heating running full blast? 
+We wait until the flow temperature is below 35°C, then wait until flow temperature starts to climb again. Updating minimum flow temperature to track current flow temperature is too risky for the first few minutes after a DHW run. What happens if I set min flow temperature to 65°C and then Vaillant cloud access goes down and I'm left with heating running full blast? 
 
-The compromise is to use 35°C as an initial value. This will take a significant chunk from the energy integral before bottoming out and starting to climb again. At this point we resume updating minimum flow temperature. As long as we can hold the integral steady after that, it works OK.
+The compromise is to use 35°C as an initial value. This will take a significant chunk from the energy integral before bottoming out. At this point we resume updating minimum flow temperature. As long as we can hold the integral steady after that, it works OK.
 
 # Locking On
 
@@ -190,11 +188,11 @@ In the worst case, with a flow temperature continually 0.15°C above target, it 
 
 # Compare and Contrast
 
-Here's a comparison of two cycles using normal Vaillant logic and shoulder mode. Finding equivalent conditions was tricky. Eventually I found two cycles at similar times of day, a consistent 4.5°C outside, 16.8-17.2°C inside. There are light winds, an overcast sky, and no solar gain.
+Here's a comparison of two cycles using normal Vaillant logic and what I'm calling shoulder mode. Finding equivalent conditions was tricky. Eventually I found two cycles at similar times of day, a consistent 4.5°C outside, 16.8-17.2°C inside. There are light winds, an overcast sky, and no solar gain.
 
 {% include candid-image.html src="/assets/images/home-assistant/normal-heating-cycle.png" alt="Normal Heating Cycle" %}
 
-The normal heating cycle *looks* great. Consistent heat output and electricity use once we hit steady state. Barely any dip. The standard Vaillant logic ramps the compressor up to quickly get to target flow temperature, that ramps down once it overshoots. The dip coincides with the compressor modulating down, when the heat pump has plenty of spare capacity.
+The normal heating cycle *looks* great. Consistent heat output and electricity use once we hit steady state. Barely any dip. The standard Vaillant logic ramps the compressor up to quickly get to target flow temperature, then ramps down once it overshoots. The dip coincides with the compressor modulating down, when the heat pump has plenty of spare capacity.
 
 The downside is that COP after 30 minutes, when the system has settled into steady state, is only 4.3. Electricity consumption peaks at 1250W before falling back to a steady 650W. The overall COP for an hour's running time is 4.23.
 
@@ -210,7 +208,7 @@ I've been running in shoulder mode for a few weeks. It's been working well. I'm 
 
 There are less cycles overall,  no short cycles and no pointless heating cycles when there's high solar gain. The indoor temperature stays within a 0.4°C range.
 
-The longer time between cycles means lower flow temperatures at the start of the next cycle and so more time spent at efficient low flow temperatures.
+The longer time between cycles also means lower flow temperatures at the start of the next cycle and so more time spent at efficient low flow temperatures.
 
 Initially, I thought I'd turn the heating on properly once the weather turns consistently cold. Now I'm wondering how far I can push things. 
 
