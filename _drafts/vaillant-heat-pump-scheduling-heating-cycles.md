@@ -110,12 +110,12 @@ variables:
 * Total emitters (all steel rads) output 11710W at dt50 (radiator 50C hotter than room temperature)
 * Plug that into a [heating calculator](https://heatpumptools.co.uk/radiator-flow-temperature-calculator/) with my 6110W heating requirement and it suggests a flow temp of 49.8C for design temp of -3C outside.
 * Looking back at last winter, heat pump actually ran with flow temp of about 38C at -3C
-* If I reduce heat loss in calculator by `166/300`, it gives me a flow temperature of, drum roll please, 38.7C.
+* If I reduce heat loss in calculator by `166/300`, it gives me a flow temperature of, drum roll please, 38.5C.
 * My installer recommended a heat curve of 0.7 which is where I've settled. If this was based on design, why is flow temp so much lower
 * Using equation that calculates flow temperature given Vaillant Heat Curve and inside and outside temperatures
 * `TFlow = a * (HC * (Tset - Tout))^b + Tset` where `a = 2.55` and `b=0.78`
-* A heat curve of 0.7 would give, drum roll please, 38.7C at design temperatures
-* Which suggests installer knew that calculated heat loss was a massive overestimate. You'd need a heating curve of 1.25 to get a flow temperature of 50.6C.
+* A heat curve of 0.7 would give, 37C at design temperature
+* Which suggests installer knew that calculated heat loss was a massive overestimate. You'd need a heating curve of 1.3 to get a flow temperature of 49.4C.
 
 * Loss=166W, TFlow=38.7C, HC=0.7
 * Loss=300W, TFlow=50.6C, HC=1.25
@@ -206,3 +206,58 @@ variables:
     count: 8
 ```
 
+* Good test of solar gain, November 10th. Blue sky and sunshine all day. No wind. Between 2°C and 5°C outside.
+* Heating cycle ended at 10am and then had enough solar gain to keep house warm until 3pm
+* Average temperatures for each hour 2.5, 3.5, 4.5, 5 and 5. House at 17°C.
+* Two people in the house, so assume 400W from occupancy.
+* Heat loss should be `(14.5 + 13.5 + 12.5 + 12 + 12) * 166Wh - 5 * 400Wh = 8.7kWh`
+* Calculating solar gain from building orientation and glazing is complex. Use generation from solar panels as a proxy.
+* Generation from solar panels during this time is 4.8kWh. So, can use forecast solar generation * 1.8 as an estimate for solar gain.
+
+| Heat Curve | Design Flow Temp |
+| 0.6 | 34.7 |
+| 0.65 | 35.9 |
+| 0.7 | 37.0 | 
+| 0.75 | 38.1 |
+| 0.8 | 39.2 |
+| 0.85 | 40.2 | 
+| 0.9 | 41.3 |
+| 1.0 | 43.4 | 
+| 1.6 | 55.1 |
+
+* Heating Calculator: design heat loss = 20*heat loss, -3C design outside, 17C room temp, heating balance temp set to get constant gains of 500W (e.g. 14C at 166W), flow return deltaT=5
+
+| Heat Loss | Design Flow Temp | Heat Curve |
+| 150 | 34.8 | 0.6
+| 160 | 35.7 | 0.65
+| 166 | 36.2 | 0.65
+| 170 | 36.5 | 0.7
+| 180 | 37.5 | 0.7
+| 190 | 38.4 | 0.75
+| 200 | 39.2 | 0.8
+| 250 | 43.5 |
+| 300 | 47.4 | 
+| 350 | 51.3 | 
+| 400 | 55 | 
+
+* Trying to work out what heat curve will produce required heat over forecast period
+* Required heat already takes constant gains into account
+* Treat heat curve logic as machine that will produce `x * deltaT` watts
+* Vaillant logic doesn't handle constant gains apart from turning off heat pump at threshold outdoor temperature
+* Rerun calculation *without constant gains* to get design flow temp for given value of `x`
+* Calculate total `deltaT` over forecast period, then `x = heat required / total deltaT`
+
+| Heat Loss | Design Flow Temp | Heat Curve |
+| 150 | 37 | 0.7
+| 160 | 37.9 | 0.75
+| 166 | 38.5 | 0.75
+| 170 | 38.8 | 0.8
+| 180 | 39.7 | 0.8
+| 190 | 40.7 | 0.85
+| 200 | 41.4 | 0.9
+| 250 | 45.5 |
+| 300 | 49.4 | 
+| 350 | 53.2 | 
+| 400 | 56.8 | 
+| 450 | 60.3 |
+| 500 | 63.8 | 

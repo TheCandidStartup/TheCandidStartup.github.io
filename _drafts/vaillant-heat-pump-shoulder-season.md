@@ -68,7 +68,7 @@ Havenwise is a cloud based system that takes over control of your heat pump. It 
 
 The flow of logic in the heat pump is as follows.
 1. Use Heating Curve parameter together with outside temperature and desired temperature to calculate target flow temperature.
-2. Clamp the target so that it doesn't exceed the range defined by the min and max flow temperature parameters.
+2. Clamp the target so that it doesn't exceed the range defined by the Min and Max Flow Temperature parameters.
 3. Feed target and current flow temperatures into energy integral logic which decides how to modulate the compressor and when to end the heating cycle.
 
 Havenwise sets the heating curve to its lowest possible value of 0.1. This produces a target flow temperature just above the desired temperature. Set a minimum temperature above that and you can directly control target temperature. 
@@ -98,7 +98,7 @@ It *almost* works. The compressor settles at 25% modulation and the cycle length
 
 There's lots of reasons why the values might not match. The sensors are in different places (in the airing cupboard vs in the heat pump). There's 10 seconds latency on the OEM data but close to zero for the value used by the heat pump. The sensors aren't explicitly calibrated to match each other.
 
-The live monitor reports target flow temperature to the nearest 0.5°C. I don't know whether that's just for display or applied to the actual value used in the energy integral calculation. To save my sanity I made sure that the minimum I set is also rounded to 0.5°C. To account for the differences in temperatures measured by Vaillant and OEM, I biased the threshold so that the OEM value stays between 0.7°C below and 0.3°C above target.
+The live monitor reports target flow temperature to the nearest 0.5°C. Testing confirms that the min flow temperature parameter used in the energy integral calculation is rounded down to the nearest 0.5°C. To save my sanity I made sure that the minimum I set is also rounded to 0.5°C. To account for the differences in temperatures measured by Vaillant and OEM, I biased the threshold so that the OEM value stays between 0.7°C below and 0.3°C above target.
 
 I can now run for as long as I like at minimum power. However, I realized that the compressor doesn't reach minimum modulation until steady state running, 20 minutes into the cycle. Unsurprisingly, if you keep target close to actual, the Vaillant controller will keep modulation steady. It drifts gradually down as, on average, flow temperature is slightly over target.
 
@@ -158,32 +158,43 @@ I leave the target flow temperature at it's last value so that the energy integr
 
 Once the flow temperature falls below 23°C, I turn the heating off. Once the current temperature falls below my threshold range, I turn the heating back on. Fortunately, Vaillant resets the energy integral counter back to its starting position as long as the heating has been off for a few minutes. The new cycle starts immediately.
 
-# Special Cases
+# Premature End of Cycle
 
-* On rare occasions a heating cycle may end prematurely. Perhaps I didn't manage the energy integral well enough, or maybe Vaillant's API had an outage and I failed to increase the minimum flow temperature when needed. 
-* If the heat pump goes inactive and the current temperature is still below threshold, I drop minimum flow temperature to 20°C. This brings down the energy integral quite rapidly. Typically, the heat pump will start a new cycle after 20 minutes or so, at which point I start managing minimum flow temperature again. 
+On rare occasions a heating cycle may end prematurely. Perhaps I didn't manage the energy integral well enough, or maybe Vaillant's API had an outage and I failed to increase the minimum flow temperature when needed. 
 
-* In normal operation, with heating on all the time, energy integral update is suspended during a DHW run. Obviously, house is still losing heat during these periods, so infuriating that heating doesn't come on immediately when requested again.
-* Heat pump is already running, house is below temperature, no inefficient compressor startup to go through if heating picks up when DHW turns off.
-* I turn heating on whenever a DHW run starts. The energy integral resets and the heat pump naturally transitions into heating when the DHW run ends. 
+If the heat pump goes inactive and the current temperature is still below threshold, I drop minimum flow temperature to 20°C. This brings down the energy integral quite rapidly. Typically, the heat pump will start a new cycle after 20 minutes or so, at which point I start managing minimum flow temperature again. 
 
-* Startup behavior very different for DHW -> Heating vs Standby -> Heating
-* For DHW case, flow temperature can be 60C+ which stays steady until cold water from the radiators reaches the sensor, at which point it plummets.
-* Wait until temperature below 35C then until flow temperature starts to climb again.
-* Tracking actual flow temperature for first few minutes after DHW run is too risky. What happens if I set min flow temp to 65C and then Vaillant cloud access goes down and I'm left with heating running full blast. Compromise is to use 35C as initial value for DHW case. Will take a significant chunk from energy integral before hitting steady state but as long as I can hold integral from then on should be OK.
+# DHW
 
-# Conclusion
+In normal operation, with heating on all the time, energy integral update is suspended during a DHW run. Obviously, the house is still losing heat during these periods, so it's infuriating if the heating doesn't come on immediately when the DHW run ends.
 
-* Running in shoulder mode for the last few weeks
-* Been working well. Consistently getting heat cycles with COP well over 5.
-* Less cycles overall. No short cycles. No pointless heating cycles when there's high solar gain.
-* Indoor temperature stays within a 0.4°C range
-* Longer time between cycles means lower flow temperature at start of cycle and more time overall at more efficient lower flow temperatures
-* Comparison of two cycles using normal Vaillant logic and shoulder mode. Both cycles at similar times of day, 4.5°C outside, 16.8-17.2°C inside, light winds, overcast sky, minimal solar gain
+The heat pump is already running and the house is below temperature. There's no compressor startup to go through if the heating picks up immediately when the DHW cycle ends.
+
+My automation turns the heating on (if not on already) whenever a DHW run starts. The energy integral resets and the heat pump naturally transitions into heating when the DHW run ends. 
+
+Startup behavior is very different when transitioning from DHW into Heating compared with Standby into Heating. For the DHW case, flow temperature can be 60°C or more. This stays steady for the first 30 seconds of the heating cycle until cold water from the radiators reaches the heat pump, at which point the flow temperature plummets.
+
+We wait until the flow temperature is below 35°C then again until flow temperature starts to climb again. Updating minimum flow temperature to track current flow temperature is too risky for the first few minutes after a DHW run. What happens if I set min flow temperature to 65°C and then Vaillant cloud access goes down and I'm left with heating running full blast? 
+
+The compromise is to use 35°C as an initial value. This will take a significant chunk from the energy integral before bottoming out and starting to climb again. At this point we resume updating minimum flow temperature. As long as we can hold the integral steady after that, it works OK.
+
+# Locking On
+
+As the weather has turned colder over the last few days, my heating cycles have extended to the point where the flow temperature stops rising. The heat pump has found a flow temperature that it can sustain at minimum modulation. If this is above the target temperature, energy integral will be consumed and the heating cycle may end prematurely. 
+
+I need to find the lowest flow temperature that is a multiple of 0.5°C and that the heat pump can lock onto. I updated my strategy so that if the current flow temperature settles in the range between minimum and threshold, and is more than 0.15°C above target, I push minimum up another 0.5°C. 
+
+Typically, compressor modulation will end up slightly above minimum, at 26% or 27%. This lets the heat pump modulate slightly up and down to stay locked onto the target temperature.
+
+In the worst case, with a flow temperature continually 0.15°C above target, it would take 11 hours to burn through 100 energy integral.
+
+# Compare and Contrast
+
+Here's a comparison of two cycles using normal Vaillant logic and shoulder mode. Finding equivalent conditions was tricky. Eventually I found two cycles at similar times of day, a consistent 4.5°C outside, 16.8-17.2°C inside. There are light winds, an overcast sky, and no solar gain.
 
 {% include candid-image.html src="/assets/images/home-assistant/normal-heating-cycle.png" alt="Normal Heating Cycle" %}
 
-The normal heating cycle looks great. Consistent heat output and electricity use once we hit steady state. Barely any dip. The standard Vaillant logic ramps the compressor up to quickly get to target flow temperature, that ramps down once it overshoots. The dip coincides with the compressor modulating down, when the heat pump has plenty of spare capacity. Have I been wasting my time?
+The normal heating cycle *looks* great. Consistent heat output and electricity use once we hit steady state. Barely any dip. The standard Vaillant logic ramps the compressor up to quickly get to target flow temperature, that ramps down once it overshoots. The dip coincides with the compressor modulating down, when the heat pump has plenty of spare capacity.
 
 The downside is that COP after 30 minutes, when the system has settled into steady state, is only 4.3. Electricity consumption peaks at 1250W before falling back to a steady 650W. The overall COP for an hour's running time is 4.23.
 
@@ -193,7 +204,14 @@ The shoulder mode cycle looks more messy with a pronounced dip. Flow temperature
 
 The COP after 30 minutes is 5.0. Electricity consumption peaks at 850W before falling back to 500W and then steadily climbing with flow temperature over the course of an hour to 650W. The overall COP for an hour's running time is 4.62.
 
-The really interesting thing is when you look at heat output over the course of the full day. The standard logic outputs 25% more heat, with shorter gaps between cycles. The weird thing is that the indoor temperature measured by the thermostat is the same. 
+# Conclusion
 
-* Suspect difference is due to scheduling heating cycles based on thermostat rather than weather compensation. Shoulder mode is heating the air but not running long enough to heat the fabric of the building. This is the "more comfortable" heat that heat pumps are said to provide. 
-* Will be interesting to see what happens as it gets even colder. Need to figure out when it makes sense to transition to full heating.
+I've been running in shoulder mode for a few weeks. It's been working well. I'm consistently getting heat cycles with COP well over 5.
+
+There are less cycles overall,  no short cycles and no pointless heating cycles when there's high solar gain. The indoor temperature stays within a 0.4°C range.
+
+The longer time between cycles means lower flow temperatures at the start of the next cycle and so more time spent at efficient low flow temperatures.
+
+Initially, I thought I'd turn the heating on properly once the weather turns consistently cold. Now I'm wondering how far I can push things. 
+
+To be continued.
