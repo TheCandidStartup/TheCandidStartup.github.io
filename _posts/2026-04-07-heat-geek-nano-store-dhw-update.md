@@ -1,6 +1,6 @@
 ---
 title: Heat Geek NanoStore DHW Update
-tags: gear home-assistant
+tags: heat-pump home-assistant
 ---
 
 Two months ago our prototype Heat Geek NanoStore [was rebuilt]({% link _posts/2026-02-09-heat-geek-nano-store-conclusion.md %}). Everything looked rosy. All of my outstanding issues were resolved. 

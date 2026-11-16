@@ -1,6 +1,6 @@
 ---
 title: Open Energy Monitoring
-tags: gear home-assistant
+tags: heat-pump home-assistant
 ---
 
 I touched on [Open Energy Monitoring](https://openenergymonitor.org/) briefly when talking about my [heat pump install]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}) and [Home Assistant integration]({% link _posts/2025-11-03-home-assistant-heat-pump-myvaillant-emoncms-met-office.md %}). It's worth a deeper dive.

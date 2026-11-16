@@ -1,6 +1,6 @@
 ---
 title: Vaillant aroTHERM plus 7kW Air Source Heat Pump
-tags: gear
+tags: heat-pump gear
 ---
 
 Like many houses in the UK, we rely on a gas combi boiler for heating and hot water. I know that continuing to burn gas is not sustainable in the long term. However, I couldn't see the point in switching while the grid is still burning gas to generate electricity. 

@@ -1,6 +1,6 @@
 ---
 title: Heat Pump Cold Weather Performance
-tags: gear home-assistant
+tags: heat-pump home-assistant
 ---
 
 We had a cold snap here in the UK. Over a few days, temperatures dropped from consistently over 10°C, to days at or below freezing. Perfect weather for dialing in a [heat pump]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}). 

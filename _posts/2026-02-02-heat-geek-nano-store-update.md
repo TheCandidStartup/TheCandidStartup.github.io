@@ -1,6 +1,6 @@
 ---
 title: Heat Geek NanoStore Update
-tags: gear
+tags: heat-pump
 ---
 
 It's been more than two months since my post about our [prototype Heat Geek NanoStore]({% link _posts/2025-11-17-heat-geek-nano-store.md %}). At the end of that post, we were waiting for a new diverting valve and extra insulation to be installed, while also looking ahead to colder weather. 

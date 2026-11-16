@@ -1,7 +1,7 @@
 ---
 title: >
   Vaillant Heat Pump: Shoulder Season
-tags: gear home-assistant
+tags: heat-pump home-assistant
 ---
 
 We're often told that heat pumps run best low and slow. The advice is to leave the heating on all the time and let the heat pump use weather compensation to add just the right amount of heat. It's clearly going to be more efficient to have the heat pump running at minimum power 24/7, than at twice the power for half the time. 

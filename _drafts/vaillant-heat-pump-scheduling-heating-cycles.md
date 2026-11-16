@@ -1,7 +1,7 @@
 ---
 title: >
   Vaillant Heat Pump: Scheduling Heating Cycles
-tags: gear home-assistant
+tags: heat-pump home-assistant
 ---
 
 wise words

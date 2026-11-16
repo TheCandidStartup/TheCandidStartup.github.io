@@ -1,6 +1,6 @@
 ---
 title: Heat Geek NanoStore
-tags: gear
+tags: heat-pump
 ---
 
 A few weeks ago I described our [heat pump installation]({% link _posts/2025-10-27-vaillant_arotherm_heat_pump.md %}), which included a mystery hot water system. The mystery hot water system, as some of you already guessed, is a prototype Heat Geek NanoStore. 

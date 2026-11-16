@@ -1,7 +1,7 @@
 ---
 title: >
   Home Assistant Heat Pump: myVAILLANT, Emoncms and Met Office
-tags: home-assistant
+tags: heat-pump
 thumbnail: /assets/images/home-assistant/logo.png
 ---
 
