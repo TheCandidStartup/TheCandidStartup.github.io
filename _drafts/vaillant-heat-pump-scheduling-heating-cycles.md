@@ -38,7 +38,7 @@ wise words
 
 # Predicting Overnight Energy Requirement
 
-* Use weather forecast at 21:30 to predict heat loss through until 5:30
+* Use weather forecast at 21:30 to predict heat loss from 21:00 through until 5:00
 * Diff from outside temp to 14C each hour, sum up, multiply by 300W
 
 # Home Assistant Implementation
@@ -111,10 +111,10 @@ variables:
 * Plug that into a [heating calculator](https://heatpumptools.co.uk/radiator-flow-temperature-calculator/) with my 6110W heating requirement and it suggests a flow temp of 49.8C for design temp of -3C outside.
 * Looking back at last winter, heat pump actually ran with flow temp of about 38C at -3C
 * If I reduce heat loss in calculator by `166/300`, it gives me a flow temperature of, drum roll please, 38.5C.
-* My installer recommended a heat curve of 0.7 which is where I've settled. If this was based on design, why is flow temp so much lower
+* My installer recommended a heat curve of 0.7 which is where I've settled. If this was based on design, why is flow temp so much lower?
 * Using equation that calculates flow temperature given Vaillant Heat Curve and inside and outside temperatures
 * `TFlow = a * (HC * (Tset - Tout))^b + Tset` where `a = 2.55` and `b=0.78`
-* A heat curve of 0.7 would give, 37C at design temperature
+* A heat curve of 0.7 would give 37C at design temperature
 * Which suggests installer knew that calculated heat loss was a massive overestimate. You'd need a heating curve of 1.3 to get a flow temperature of 49.4C.
 
 * Loss=166W, TFlow=38.7C, HC=0.7
@@ -181,6 +181,7 @@ variables:
 * Kept ending up with double quoted strings
 * The trick is to use `{% set %}` and `{% endset %}` around the JSON and then return the defined variable
 * To my surprise, Home Assistant parses the JSON automatically and defines a variable with the corresponding key/value map
+* Or maybe HA is parsing as python literal maps and arrays which just happen to have same syntax as JSON?
 
 ```yaml
 variables:
@@ -261,3 +262,88 @@ variables:
 | 400 | 56.8 | 
 | 450 | 60.3 |
 | 500 | 63.8 | 
+
+* Overnight run 17 Nov
+* Heat Required 17.5kWh
+* Calculated heat curve 1.1
+* Heating much too quickly
+* Dropped heat curve to 0.85 at 1:48, then to 0.75 at 2:16
+* Still generated 18.438kWh overall
+
+| Time | Current Temp | Desired Temp | Outside Temp | DeltaT | Heat Generated | Target Flow Temp | Average Flow Temp | Flow Temp Profile | Steady State
+| 23:30 | 15.8 | 15 | 1.7 | 6 (startup) | 3.311 | 35.67 | 29.5 | 15 -> 37 | Ramping up
+| 00:00 | 15.6 | 15.5 | 1.6 | 2.56 | 1.858 | 36.9 | 35.9 | 37 -> 34.8 | Ramping down
+| 00:30 | 16.3 | 15.5 | 1.6 | 2.24 | 1.633 | 36.9 | 34.8 | 34.8 | 850W -> 35.0 -> 3150W
+| 01:00 | 16.4 | 16 | 1.6 | Defrost | 1.950* | 36.42 | 34.8 | 34.8 -> 14.5 -> 38.3 | Defrost
+| 01:30 | 16.6 | 16 | 1.3 | 2.14 | 1.599 | 34.28 -> 32.58 | 36.4 | 38.3 -> 34.8 | Ramping down
+| 02:00 | 16.8 | 16.5 | 1.0 | 1.82 | 1.022* | 35.55 -> 33.78 | 32.1 | 34.8 -> 12.9 -> 34.5 -> 32.9 | 700W -> 34.2 -> 2550W
+| 02:30 | 16.9 | 16.5 | 1.0 | 1.84 | 1.722 | 33.78 | 33.7 | 34.6 -> 34.5 -> 33.3 -> 34.3 | 660W -> 33.2 -> 2550W
+| 03:00 | 16.9 | 17 | 0.8 | Defrost | 1.773* | 34.89 | 33.0 | 34.3 -> 8.6 -> 37.0 | Defrost
+| 03:30 | 16.9 | 17 | 0.7 | 2.23 | 1.585 | 34.97 | 35.3 | 37.0 -> 34.6 | 820W -> 34.5 -> 3100W
+| 04:00 | 16.9 | 17 | 0.7 | 2.24 | 1.457 | 34.97 | 32.9 | 34.6 -> 13.9 -> 36.0 | 820W -> 34.5 -> 3100W
+| 04:30 | 17 | 17 | 0.8
+
+* Active mode reducing flow temp when current temp above desired
+* Still more heat than needed judging by rate of temperature increase
+* Assumed deltaT of 5 at design temp of -3°C when using heating calculator to determine flow temp for given heat output
+* Biggest deltaT I saw was 2.24 at 0.7°C with a flow temp of 34.5°C. Not convinced we'll actually see 5 at -3°C
+* Try redoing calculation with 0.7°C as design temperature, then adjust heat loss until we get 34.5°C out.
+* Get 168w/k heat loss
+* Heat Curve at 0.7°C design temperature
+
+| Heat Curve | Design Flow Temp | Heat Loss
+| 0.6 | 32.1 | 137
+| 0.65 | 33.1 | 150
+| 0.7 | 34.0 | 162
+| 0.75 | 35.0 | 175
+| 0.8 | 35.9 | 187
+| 0.85 | 36.8 | 200
+| 0.9 | 37.7 | 212
+| 0.95 | 38.6 | 225
+| 1.0 | 39.5 | 238
+| 1.05 | 40.4 | 251
+| 1.1 | 41.2 | 263
+
+* How does that compare with actual measured heat output at steady state? What heat curve and heat loss coefficient would that correspond to?
+* Steady state is when flow temp, heat output and outside temperature (OAT) have all been stable for an hour. Then take values in the middle of the hour.
+* `HLC = output / (17-OAT)`
+* Heat Curve is one whose calculated flow temp is closest to actual
+* Heat curves are spaced so that flow temperatures for neighbouring curves are about 1°C apart
+* HC error is value to add to calculated flow temp to get actual
+* Ordered by heat curve, then HLC for samples with same heat curve
+
+| Outside | Flow Temp | DeltaT | Output | Heat Loss Coefficient | Heat Curve | HC Error
+| 1.6 | 30.9 | 1.90 | 2550 | 166 | 0.55 | 0.4
+| 1.9 | 32.5 | 2.02 | 2800 | 185 | 0.65 | 0.36
+| 0.5 | 34.03 | 2.29 | 3190 | 193 | 0.7 | -0.16
+| 1.9 | 32.99 | 2.17 | 3000 | 199 | 0.7 | -0.05
+| 3.4 | 31.96 | 2.00 | 2760 | 203 | 0.7 | 0.17
+| 3.4 | 32.12 | 2.02 | 2790 | 205 | 0.7 | 0.33
+| 0.7 | 34.5 | 2.24 | 3100 | 190 | 0.75 | -0.47
+| 5.8 | 31.9 | 1.89 | 2630 | 235 | 0.85 | 0.11
+| 2.7 | 35.42 | 2.45 | 3400 | 238 | 0.9 | -0.29
+| 1.7 | 38.13 | 2.84 | 3960 | 259 | 1.0 | -0.28
+
+* Reality is messy so some outliers (e.g heat curve 0.75 with smaller HLC than the heat curve 0.7 samples)
+* Heating Curve logic apparently implemented using lookup tables. Wouldn't be surprised if inputs and outputs rounded to nearest 0.5°C. Another source of errors.
+* Feel confident about the heat curve 0.7 values. Nice error bracket. Happy to go with actual HLC of 200W for 0.7 heat curve.
+* Actual HLC is higher than all the calculations I tried. 
+* For 0.7 heat curve I calculated 150, 162, 166 and 170.
+* Makes sense if you think about what the heating calculator is for. Used by heating engineer to size radiators for each room. If like rest of heat loss calculation, will be conservative.
+* Explains why heating overnight so over the top
+* How come heat curve of 0.7 worked last winter if actual HLC for house is 166W?
+* I initially ran in inactive mode and tried dialling in the curve. Reduced it to 0.55 at one point but kept running in days house too cold.
+* Based on measurements in table above 0.55 is right for a HLC of 166W. However, that only applies in light wind. On a windy day, ACH will be higher and could easily need 200W or more.
+* In the end I went back to 0.7 and Active mode. Active mode adjusts flow temperature by [up to 3°C](https://energy-stats.uk/sensocomfort-room-temp-mod-inactive-active-or-expanded/#More_Inactive_versus_Active), which is equivalent to 3 steps of heating curve. i.e. Active mode and heat curve of 0.7 effectively adjusts heat curve between 0.55 and 0.85.
+
+# Defrosts
+
+* Never thought I'd be running in shoulder mode when defrosts happen
+* Defrost effectively starts the heating cycle again, taking flow temperature down to 15°C or less
+* Current logic only moves target temperature up. After defrost, heat pump's logic ramps up quickly to get back to where it was. Inevitably overshoots by a couple of degrees and ratcheting target temperature higher.
+* Have a limit of 700W where I stop increasing, but still not ideal
+* Interestingly, the crazy ramp means the heat pump ends up putting out more heat than without the defrost (at terrible efficiency)
+* Updated my heat pump state template sensor to distinguish between Active and Defrost states. Defrost if enough power for heat pump to be active but return temperature is higher than flow.
+* During the day I don't need the aggressive ramp up. Treat end of defrost like a new heating cycle and reset target.
+* Can add 10% margin when deciding between shoulder or normal heating to account for possibility of defrosts. Continuous minimum running only needed below 2°C outside, so definitely in defrost territory when at the limit.
+* For overnight running where we want to hit temperature at fixed time, can still ramp up aggressively to get back what we lost. Probably try tempering a little, setting target to ramp to a couple of degrees below target to allow for overshoot.
