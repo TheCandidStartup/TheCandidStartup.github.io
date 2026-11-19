@@ -347,3 +347,38 @@ variables:
 * During the day I don't need the aggressive ramp up. Treat end of defrost like a new heating cycle and reset target.
 * Can add 10% margin when deciding between shoulder or normal heating to account for possibility of defrosts. Continuous minimum running only needed below 2°C outside, so definitely in defrost territory when at the limit.
 * For overnight running where we want to hit temperature at fixed time, can still ramp up aggressively to get back what we lost. Probably try tempering a little, setting target to ramp to a couple of degrees below target to allow for overshoot.
+
+# Scheduling
+
+* Divide day into three periods
+  * Overnight: 21:00 - 5:00
+  * Day: 5:00 - 15:00
+  * Evening: 15:00 - 21:00
+
+* Overnight have heating turned off from 21:00 to 23:30 (Eco setback mode)
+* Need to add enough heat to get house back to temperature by 4:40 when DHW run starts before cheap rate ends at 5:30
+* Run forecast to predict heat needed and then work out when minimum modulation run needs to start to deliver heat required
+* If earlier than 23:30 turn the heating on instead. Adjust heat curve so that it delivers required heat.
+* Heating schedule set up to gradually go from 15°C to 17°C over course of the night
+* Work out `DesiredTemp - OAT` for each hour and sum up
+* Divide total heat required by sum to get heat loss coefficient needed
+* `HeatCurve = 0.7 * HLC / 200`
+
+* During day expect OAT to climb with possibility of solar gain
+* Use forecast to predict total heat needed, compare with heat delivered at minimum modulation + solar gain
+* Allow a 10% margin in case of defrosts. Heat pump first runs continually at 2°C so definitely in defrost territory if close to limit.
+* Otherwise turn heating on and select heat curve
+* Not trying to put exact amount of heat in each hour. Happy to dip below target first thing in morning knowing house will catch up during day.
+
+* During evening expect temperature to fall with negligible solar gain
+* Same routine to choose between shoulder mode and heating
+
+# Alternative Heat Cycle Implementation
+
+* Instead of having explicit threshold helper to trigger on, create a template sensor `FlowTempErr = FlowTemp - MinFlowTemp`
+* Can then create trigger on `FlowTempErr > 0.3` and get rid of helper
+* Easy to add multiple triggers on different thresholds. 
+* `FlowTempErr > 1.3` when driving down to minimum modulation.
+* `FlowTempErr < -1.0` to handle dips and flow temp dropping as modulation drive down
+* Could create an integral sensor over `FlowTempErr` and have my own energy integral. Adjust flow temp if integral about to overflow.
+* Need some shenanigans to reset integral whenever heating starts
